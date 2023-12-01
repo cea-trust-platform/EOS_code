@@ -1,0 +1,2 @@
+StiffenedGas  WaterLiquid  EOS_StiffenedGas  Water  Unknown  2  Water.data  Liquid
+StiffenedGas  WaterVapor   EOS_StiffenedGas  Water  Unknown  2  Water.data  Vapor

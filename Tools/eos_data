@@ -1,0 +1,150 @@
+#!/bin/bash
+#
+# Definition and modification of  Data  user directory : $USER_EOS_DATA
+#
+#
+# Usage :  ! Use  script-shell eos_data  in shell SH, KSH, ZSH or BASH
+#
+#          The calling syntaxe is :
+#
+#          source  eos_data [-help]
+#            or
+#          source  eos_data {new or old Data user directory}
+#
+#
+# Here is an example of use :  
+#
+# step 1 : Initialisation
+#          e.g. cd /tmp
+#               source  eos_data  essai
+#
+# step 2 : Physical Data modifications of Thermodynamic Model (T.M.)
+#          e.g.   modification in  essai/EOS_Refprop directory
+#          - first  : modify physical data 
+#          . second : modify file  essai/EOS_Refprop/index.eos
+#
+# final step : Data regeneration for EOS library
+#          e.g. cd /tmp
+#               source  eos_data  essai
+#
+#
+prog=`basename $0`
+
+
+#
+#
+# Fonction  help
+f_help() {
+   echo
+   echo " HELP eos_data SCRIPT"
+   echo " --------------------"
+   echo
+   echo " The calling syntaxe of eos_data is available in SH, KSH, ZSH or BASH :"
+   echo " > source  eos_data [-help]"
+   echo "     or"
+   echo " > source  eos_data {new or old Data user directory}"
+   echo 
+   echo 
+   echo " Here is an example of use :"
+   echo " > step 1 : Initialisation"
+   echo "            e.g. cd /tmp"
+   echo "                 source  eos_data  essai"
+   echo 
+   echo " > step 2 : Physical Data modifications of Thermodynamic Model (T.M.)"
+   echo "            e.g.   modification in  essai/EOS_Refprop directory"
+   echo "            - first  : modify physical data"
+   echo "            . second : modify file  essai/EOS_Refprop/index.eos"
+   echo 
+   echo " > final step : Data regeneration for EOS library"
+   echo "            e.g. cd /tmp"
+   echo "                 source  eos_data  essai"
+   echo 
+   echo 
+}
+
+
+if [ "$!" = "" ]; then
+   echo
+   echo " <Error $prog> : source  eos_data  is compulsory"
+   echo " =================================================="
+   f_help
+   exit 1
+fi
+
+which eos 1>/dev/null 2>&1 ; ier=$?
+if [ $ier -ne 0 ]; then
+   echo
+   echo " <Error $prog> : EOS software not found, initiate this software"
+   echo " ================================================================="
+   return 1
+else
+   #
+   rep_eos=`which eos | xargs dirname | xargs dirname`
+   if [ $# -eq 0 ]; then
+      f_help
+      return 0
+
+   elif [ $# -gt 1 ]; then
+      echo
+      echo " <Error $prog> : number of parameters greater than 1"
+      echo " ======================================================"
+      f_help
+      return 1
+
+   else
+      if [ `echo $1 | tr '[A-Z]' '[a-z]' | sed -e 's/^-*//' |\
+              cut -c -1` = "h"  ]; then
+         f_help
+         return 0
+      fi
+
+      rep_ued=$1
+      if [ ! -d ${rep_ued} ]; then
+         mkdir $rep_ued 1>/dev/null 2>&1; ier=$?
+         if [ $ier -ne 0 ]; then
+            echo " <Error $prog> : directory '${rep_ued}' not created"
+            echo " ======================================================"
+            return 2
+         fi
+         echo
+         echo " Directory ${rep_ued}  created"
+      fi
+      rep_ued=`(cd $1 ; pwd)`
+   fi
+   #
+   export USER_EOS_DATA=$rep_ued
+   echo
+   echo " User EOS  Data  directory is  $USER_EOS_DATA"
+   #
+   # EOS directory
+   rep_insta=`which eos|xargs dirname|xargs dirname`
+   # Data original directory
+   rep_data_o=$rep_insta/data
+   #
+   if [ ! -f $rep_ued/index.eos ]; then
+      echo
+      echo " - Copy data in User EOS  Data  directory"
+      (cd $rep_data_o ;  tar pcf - . 2>/dev/null) | (cd $USER_EOS_DATA ; tar pxf -)
+   fi
+   #
+   if [ -d $rep_eos/data/EOS_Ipp ]; then
+      if [ ! -d $rep_ued/EOS_Ipp ]; then
+         mkdir $rep_ued/EOS_Ipp
+      fi
+      if [ ! -f $rep_ued/EOS_Ipp/index.eos ]; then
+         touch $rep_ued/EOS_Ipp/index.eos
+      fi
+   fi
+   #
+   echo
+   echo " - Build User EOS  Data"
+   (cd $rep_ued ;
+    echo " ... Build file  index.eos"      ;
+    sh mk_index_eos . index.eos            ;
+    echo " ... Build file  index.eos.conv" ;
+    sh mk_index_eos_conv . index.eos       ;
+   )
+fi
+echo " ... Normal end  $prog ..."
+echo
+return 0

@@ -1,0 +1,64 @@
+\documentclass[12pt]{article} 
+
+\title{Users Guide.}
+\author{Philippe Emonot}
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+
+\section{Introduction}
+The EOS component has been designed to enable all Neptune applications (and others) to share basic fluids properties, to add new fluids in the component without changing the clients, and to support mixings.
+
+\section{Creating an EOS.}
+Basicaly one can create an EOS by giving a string to specify one particular implementation and an array of strings ({\em Strings}) to configure that particular implementation. Currently, available EOS are :
+\begin{itemize}
+\item PerfectGaz
+\item Cathare\_Steam
+\item Cathare\_Liquid\_Water
+\item Thetis\_Steam
+\item Thetis\_Liquid\_Water
+\end{itemize}
+
+\subsection{C++}
+\begin{verbatim}
+#include ``EOS.hxx''
+EOS cathare_water(``Cathare_Water'');
+...
+AString str;
+cin >> str;
+EOS users_eos(str.aschar());
+...
+\end{verbatim}
+\subsection{Python}
+\begin{verbatim}
+from EOS import *
+cathare_water=EOS(``Cathare_Water'')
+...
+str=AString()
+read(str)
+users_eos=EOS(str.aschar())
+...
+\end{verbatim}
+\section{Using a EOS.}
+EOS can be used at three different levels :
+\begin{itemize}
+\item point level
+\item field level
+\item fields level
+\end{itemize}
+
+At the point level, one can compute four kind of properties :
+\begin{itemize}
+\item saturation properties (compute\_{\em x}\_sat(p)) {\em x}=''rho\_l'',''rho\_v''
+\item phase properties (compute\_{\em x}(p,h); compute\_{\em x}(p,T)) {\em x}=''T'', 
+\item mixing properties (compute\_{\em x}(p,h,C\_0,...), compute\_{\em x}(p,h,C\_0,...))
+\item first order derivatives (compute\_d\_{\em x}\_sat\_d\_p(p))
+\end{itemize}
+
+\subsection{C++}
+\subsection{Python}
+
+\end{document}

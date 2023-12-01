@@ -1,0 +1,233 @@
+%=======================================================================
+\documentclass[12pt,a4paper]{article} 
+
+\usepackage[dvips]{graphicx}
+\usepackage{ifpdf}
+\usepackage[dvips,
+bookmarks,
+bookmarksopen,
+backref,
+colorlinks,linkcolor={blue},citecolor={blue},urlcolor={blue},
+]{hyperref}
+
+\setlength{\paperwidth} {21cm}
+\setlength{\oddsidemargin} {0.cm}
+\setlength{\textwidth} {16cm}
+\setlength{\marginparsep} {0cm}
+\setlength{\marginparwidth} {0cm}
+\setlength{\headheight} {0.0cm}  
+\setlength{\textheight} {24.cm}
+
+
+%=======================================================================
+
+\title{EOS installation guide EOS 1.5.0}
+
+%=======================================================================
+
+\begin{document}
+
+\maketitle
+%\newpage
+\vspace{2.cm}
+\tableofcontents
+
+\newpage
+%
+%*************************************************
+\section{Introduction}
+%*************************************************
+%
+The root directory of your distribution is the directory "eos", called
+\$NEPTUNE\_ROOT thereafter.
+This file has been produced from: \\
+\$NEPTUNE\_ROOT/Doc/Environnement/Environnement.tex
+
+%
+%*************************************************
+\section {Process of EOS installation}
+%*************************************************
+%
+At first the configure stage attempts to define values for the variables used
+during compilation and installation. The configure stage uses shell-script
+and CMAKE.  This configure stage adds the plugins if needed and build 
+automatically the Makefile in each required directory. 
+
+The compilation is the second stage, at the end of this stage the EOS library
+is made. The doxygen documentation is also made.
+
+Then installation and test are the next stages. 
+
+The summary of the process in shell langage is :
+\begin{verbatim}
+  cd eos
+  ./configure {options}
+  make
+  make install
+  make check
+\end{verbatim}
+
+%*************************************************
+\section {Configure Options}
+%*************************************************
+
+For an overview of the options, use:
+\begin{verbatim}
+  ./configure --help
+\end{verbatim}
+
+
+\subsection {Supply options by argument or by file}
+%---------------------------
+The options may be supplied to the configure script by argument or by
+file. By default, this file is \verb|user_env.txt| and it is located in
+\$NEPTUNE\_ROOT directory.  You can use another location and another 
+file's name by using:
+\begin{verbatim}
+  ./configure --user-env-file=<path>/<file>
+\end{verbatim}
+For example, you can write the line \verb|--prefix=<path>| in this file
+instead of using \verb|configure --prefix=<path>|.
+The arguments of this file are read before the configure command
+arguments. Therefore, if you use \verb|configure --prefix=<path2>|, the
+\verb|<path2>| is used instead of the path defined in this file.
+
+
+\subsection {Location of installed files}
+%---------------------------
+By default, the installation made with \verb|make install| will install
+the package's files in \$NEPTUNE\_ROOT.  You can specify an other 
+installation directory by using the configure option :
+\begin{verbatim}
+--prefix=<path>.
+\end{verbatim}
+
+
+
+\subsection {Compilers}
+%---------------------------
+The compilers are guessed at the configure stage by cmake.
+You can change the default C++, C or fortran compiler by
+using the configure options :
+\begin{verbatim}
+ ./configure --cxx=<my_c++_compiler>
+             --cc=<my_c_compiler> 
+             --fc=<my_fortran_compiler>
+\end{verbatim}
+
+You can also override the choices made by configure using environment variables :
+\begin{verbatim}
+ CXX=<my_c++_compiler> CC=<my_c_compiler> FC=<my_fortran_compiler> ./configure
+\end{verbatim}
+Nevertheless, with cmake, you must remove the file CMakeCache.txt if
+the configure has already been done. This method to force the
+compilers is not recommanded.
+
+General compilation options may be added with  \verb|--add_cppflags=<opt1>,<opt2>,...|
+
+
+
+\subsection {Libraries}
+%---------------------------
+Two libraries are built : a dynamic library libshared\_eos and
+a static library libstatic\_eos.a
+
+
+%*************************************************
+\section {Thermodynamic Models as Plugins}
+%*************************************************
+Four Thermodynamic Models (T.M.) are available as plugins:
+- Refprop-9.1
+- Cathare-1.5.b  from  1.5.b release of CATHARE2 code
+- Cathare2       from  last version  of CATHARE2 code
+- Thetis-2.1.b
+
+To use them, there are four options to add in stage configure :
+\begin{verbatim}
+--with-cathare=<path>/<file.tgz>/<file.tar.bz2>
+--with-cathare2=<path>/<file.tgz>/<file.tar.bz2>
+--with-refprop=<path>/<file.tgz>/<file.tar.bz2>
+--with-thetis=<path>/<file.tgz>/<file.tar.bz2>
+\end{verbatim}
+
+
+
+%*************************************************
+\section {Interpolator}
+%*************************************************
+
+Interpolator is build with the configure option --with-interpolator
+Prerequisite softwares HDF5 and MED-3 are compulsory
+
+
+%*************************************************
+\section {EOS GUI}
+%*************************************************
+
+EOS GUI is build by default or when \verb|--with-gui| is given in configur stage.
+For EOS GUI, some softwares are required : SWIG, QT4, pyQt, python-devel,
+gnuplot. Two softwares are optional : HDF5, MED-3
+
+The configure option  --without-gui  diseables the EOS GUI.
+
+There are two methods to build EOS GUI :
+\begin{itemize}
+\item with prerequisite softwares HDF5 and MED, the configure options 
+  \verb|--with-gui --with-hdf5={path_hdf5} and -with-med={path_med}| are required
+\item without HDF5 and MED, nothing to do except to define \verb|--with-gui| configure 
+  option
+\end{itemize}
+
+In order to run the EOS GUI, you can use the eos\_gui script located in the bin
+directory or use the eos script with the option gui : "eos gui"
+
+
+
+
+%*************************************************
+\section {Prerequisites}
+%*************************************************
+
+
+
+\subsection {MPI}
+%---------------------------
+For some operating systems (O.S.), HDF5 software is installed in parallel mode 
+with MPI; on this O.S. and for MPI library non standard installation a new
+optional option \verb|--with-mpi={path_mpi}\verb|  is introduced, and also derivatives
+options \\ \verb|--with-mpi-lib={path2_mpi}/lib| 
+           \verb|--with-mpi-include={path3_mpi}/include|
+
+
+\subsection {SWIG}
+%---------------------------
+Non standard SWIG installation requires a new option
+\verb|--with-swig-exec={fic_swig}|
+
+
+
+%
+%*************************************************
+\section{API python}
+%*************************************************
+%
+
+The EOS python API is not yet available.
+The configure option \verb|--with-api-python| is required. Some
+products are needed : SWIG, python-devel.
+
+
+
+
+%
+%*************************************************
+\section{Documentation}
+%*************************************************
+%
+The main documentation page is in \$NEPTUNE\_ROOT/index.html or in \\
+\$NEPTUNE\_PREFIX/Doc/index.html.
+One part of the documentation is generated by doxygen (used by default)
+and the other part is build with latex (\verb|--with-doc-latex|, unused by
+default). 
+
+\end{document}

@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# work directory
+dirt=$1
+# file
+index_eos=$2
+
+diro=`pwd`
+cd $dirt
+
+if [ -f ${index_eos}        ]; then  rm ${index_eos}        ; fi
+if [ -f ${index_eos}.method ]; then  rm ${index_eos}.method ; fi
+
+for dir in `find . -name "EOS*" -type d | sort` ; do
+   for index in $dir/${index_eos} ; do
+      while read line ; do
+         if [ ! -z "$line" ] ; then
+            echo $line >> ${index_eos}
+            method=`echo $line | awk '{print $1}'`
+            if [ -f ${index_eos}.method ] ; then
+               if [ -z `grep $method ${index_eos}.method` ] ; then
+                  echo $method >> ${index_eos}.method
+               fi
+            else
+               echo $method >> ${index_eos}.method
+            fi
+         fi
+      done <$index
+   done
+done 
+cd $diro
+
+

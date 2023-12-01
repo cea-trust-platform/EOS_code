@@ -1,0 +1,1163 @@
+# -*- coding: utf-8 -*-
+#****************************************************************************
+# Copyright (c) 2015 - 2016, CEA
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#*****************************************************************************
+
+
+# First automatic generation "Wed Jul 29 14:23:34 2009"
+# from reading ui file 'eos_qt4_a.ui'
+# by  PyQt4 UI code generator 4.3
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+try :
+   from StringIO import StringIO
+   from PyQt4 import QtCore, QtGui # python 2
+   from PyQt4.QtGui import QMainWindow, QWidget, QApplication, QLabel, \
+                           QComboBox, QFrame, QPushButton, QLineEdit, \
+                           QListWidget, QAbstractItemView, QGroupBox, \
+                           QRadioButton, QCheckBox
+   import cPickle
+except :
+   from io import StringIO
+   from PyQt5 import QtCore, QtGui # python 3
+   from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QLabel, \
+                               QComboBox, QFrame, QPushButton, QLineEdit, \
+                               QListWidget, QAbstractItemView, QGroupBox, \
+                               QRadioButton, QCheckBox
+   import pickle as cPickle
+
+import eosHelp4 , eosRunFunction, os, eosAva
+import eosPrint4, eosFileManager
+import sys
+
+user = os.getenv('USER')
+
+class Ui_NEPTUNE_EOS(QMainWindow):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        self.setupUi(self)
+
+    def modiposi(self,theW,dx,dy):
+            therect = theW.geometry()
+            (ax,ay,aw,ah) = therect.getRect()
+            ax = ax+dx
+            ay = ay+dy
+            theW.setGeometry(ax,ay,aw,ah)
+        
+    def resizeEvent(self,eee1):
+        sold = eee1.oldSize()
+        snew = eee1.size()
+        xold = sold.width()
+        xnew = snew.width()
+        ynew = snew.height()
+        yold = sold.height()
+        d1   = self.listWidget1.size()
+        x1   = d1.width()
+        y1   = d1.height()
+        dx   = xnew-xold
+        dy   = ynew-yold
+        if xold>0:
+            self.listWidget1.resize(QtCore.QSize(x1+dx,y1+dy))
+            self.modiposi(self.PushButtonQuit,0,dy)
+            self.modiposi(self.PushButtonGo,0,dy)
+            
+            self.modiposi(self.PushButtonHelp,0,0)
+            self.modiposi(self.PushButtonFileM,0,0)
+            
+            self.modiposi(self.groupBox1,0,dy)
+            
+            self.modiposi(self.PushButtonRedef,0,dy)
+            self.modiposi(self.PushButtonAdd,0,dy)
+            self.modiposi(self.PushButtonDel,0,dy)
+            self.modiposi(self.PushButtonFuncInfo,0,dy)
+            
+            self.modiposi(self.TextLabelNept,dx,0)
+            self.modiposi(self.TextLabelLogoN,0,dy)
+            self.modiposi(self.TextLabelLogoC,dx,dy)
+            self.modiposi(self.TextLabelLogoE,dx,dy)
+            self.modiposi(self.TextLabelLogoF,dx,dy)
+            self.modiposi(self.TextLabelLogoI,dx,dy)
+            self.modiposi(self.TextLabelLogoEOS,0,0)
+
+    def setupUi(self, NEPTUNE_EOS):
+        NEPTUNE_EOS.setObjectName("NEPTUNE_EOS")
+        NEPTUNE_EOS.resize(QtCore.QSize(QtCore.QRect(0,0,920,594).size()).expandedTo(NEPTUNE_EOS.minimumSizeHint()))
+        NEPTUNE_EOS.setMinimumSize (920,594)
+
+        self.ava = eosAva.EosAvailable()
+
+        self.LogoN = QtGui.QPixmap()
+        self.LogoN.load("logo_neptune.png")
+        if not self.LogoN.load("logo_neptune.png"):
+            self.LogoN.load("@EOS_DOC_GUI_DIR@/logo_neptune.png")
+        self.LogoN2 = self.LogoN.scaled(220,30,QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
+        self.TextLabelLogoN = QLabel(NEPTUNE_EOS)
+        self.TextLabelLogoN.setGeometry(QtCore.QRect(5,555,220,30))
+        self.TextLabelLogoN.setObjectName("TextLabelLogoN")
+        self.TextLabelLogoN.setPixmap(self.LogoN2)
+
+        self.LogoC = QtGui.QPixmap()
+        self.LogoC.load("logo_cea.png")
+        if not self.LogoC.load("logo_cea.png"):
+            self.LogoC.load("@EOS_DOC_GUI_DIR@/logo_cea.png")
+        self.LogoC2 = self.LogoC.scaled(41,30,QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
+        self.TextLabelLogoC = QLabel(NEPTUNE_EOS)
+        self.TextLabelLogoC.setGeometry(QtCore.QRect(780,555,41,30))
+        self.TextLabelLogoC.setObjectName("TextLabelLogoC")
+        self.TextLabelLogoC.setPixmap(self.LogoC2)
+
+        self.LogoE = QtGui.QPixmap()
+        self.LogoE.load("logo_edf.png")
+        if not self.LogoE.load("logo_edf.png"):
+            self.LogoE.load("@EOS_DOC_GUI_DIR@/logo_edf.png")
+        self.LogoE2 = self.LogoE.scaled(41,30,QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
+        self.TextLabelLogoE = QLabel(NEPTUNE_EOS)
+        self.TextLabelLogoE.setGeometry(QtCore.QRect(820,555,41,30))
+        self.TextLabelLogoE.setObjectName("TextLabelLogoE")
+        self.TextLabelLogoE.setPixmap(self.LogoE2)
+
+        self.LogoF = QtGui.QPixmap()
+        self.LogoF.load("logo_framatome.png")
+        if not self.LogoF.load("logo_framatome.png"):
+            self.LogoF.load("@EOS_DOC_GUI_DIR@/logo_framatome.png")
+        self.LogoF2=self.LogoF.scaled(71,30,QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
+        self.TextLabelLogoF = QLabel(NEPTUNE_EOS)
+        self.TextLabelLogoF.setGeometry(QtCore.QRect(845,555,101,50))
+        self.TextLabelLogoF.setObjectName("TextLabelLogoF")
+        self.TextLabelLogoF.setPixmap(self.LogoF2)
+
+        self.LogoI = QtGui.QPixmap()
+        self.LogoI.load("logo_irsn.png")
+        if not self.LogoI.load("logo_irsn.png"):
+            self.LogoI.load("@EOS_DOC_GUI_DIR@/logo_irsn.png")
+        self.LogoI2 = self.LogoI.scaled(71,30,QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
+        self.TextLabelLogoI = QLabel(NEPTUNE_EOS)
+        self.TextLabelLogoI.setGeometry(QtCore.QRect(845,555,71,15))
+        self.TextLabelLogoI.setObjectName("TextLabelLogoI")
+        self.TextLabelLogoI.setPixmap(self.LogoI2)
+
+        self.LogoEOS = QtGui.QPixmap()
+        self.LogoEOS.load("logo_eos.png")
+        if not self.LogoEOS.load("logo_eos.png"):
+            self.LogoEOS.load("@EOS_DOC_GUI_DIR@/logo_eos.png")
+        self.LogoEOS2=self.LogoEOS.scaled(100,100,QtCore.Qt.KeepAspectRatio,QtCore.Qt.SmoothTransformation)
+        self.TextLabelLogoEOS = QLabel(NEPTUNE_EOS)
+        self.TextLabelLogoEOS.setGeometry(QtCore.QRect(45,12,100,100))
+        self.TextLabelLogoEOS.setObjectName("TextLabelLogoEOS")
+        self.TextLabelLogoEOS.setPixmap(self.LogoEOS2)
+
+        self.ComboBoxFluid = QComboBox(NEPTUNE_EOS)
+        self.ComboBoxFluid.setGeometry(QtCore.QRect(20,140,161,22))
+        self.ComboBoxFluid.setObjectName("ComboBoxFluid")
+
+        self.ComboBoxMeth = QComboBox(NEPTUNE_EOS)
+        self.ComboBoxMeth.setGeometry(QtCore.QRect(20,200,161,22))
+        self.ComboBoxMeth.setObjectName("ComboBoxMeth")
+
+        self.ComboBoxRef = QComboBox(NEPTUNE_EOS)
+        self.ComboBoxRef.setGeometry(QtCore.QRect(20,260,161,22))
+        self.ComboBoxRef.setObjectName("ComboBoxRef")
+
+        self.ComboBoxThQ = QComboBox(NEPTUNE_EOS)
+        self.ComboBoxThQ.setGeometry(QtCore.QRect(20,350,161,22))
+        self.ComboBoxThQ.setObjectName("ComboBoxThQ")
+        self.ComboBoxThQ.setObjectName("ComboBoxThQ")
+
+        self.ComboBoxVar1 = QComboBox(NEPTUNE_EOS)
+        self.ComboBoxVar1.setGeometry(QtCore.QRect(200,120,340,22))
+        self.ComboBoxVar1.setObjectName("ComboBoxVar1")
+
+        self.ComboBoxVar2 = QComboBox(NEPTUNE_EOS)
+        self.ComboBoxVar2.setGeometry(QtCore.QRect(545,120,185,22))
+        self.ComboBoxVar2.setObjectName("ComboBoxVar2")
+
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.TextLabelFluid = QLabel(NEPTUNE_EOS)
+        self.TextLabelFluid.setFont(font)
+        self.TextLabelFluid.setGeometry(QtCore.QRect(20,110,161,31))
+        self.TextLabelFluid.setFrameShape(QFrame.Box)
+        self.TextLabelFluid.setFrameShadow(QFrame.Raised)
+        self.TextLabelFluid.setLineWidth(3)
+        self.TextLabelFluid.setScaledContents(False)
+        self.TextLabelFluid.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelFluid.setWordWrap(False)
+        self.TextLabelFluid.setMargin(1)
+        self.TextLabelFluid.setObjectName("TextLabelFluid")
+
+        self.TextLabelMeth = QLabel(NEPTUNE_EOS)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.TextLabelMeth.setFont(font)
+        self.TextLabelMeth.setGeometry(QtCore.QRect(20,170,161,31))
+        self.TextLabelMeth.setFrameShape(QFrame.Box)
+        self.TextLabelMeth.setFrameShadow(QFrame.Raised)
+        self.TextLabelMeth.setLineWidth(3)
+        self.TextLabelMeth.setScaledContents(False)
+        self.TextLabelMeth.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelMeth.setWordWrap(False)
+        self.TextLabelMeth.setMargin(1)
+        self.TextLabelMeth.setObjectName("TextLabelMeth")
+
+        self.TextLabelRef = QLabel(NEPTUNE_EOS)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.TextLabelRef.setFont(font)
+        self.TextLabelRef.setGeometry(QtCore.QRect(20,230,161,31))
+        self.TextLabelRef.setFrameShape(QFrame.Box)
+        self.TextLabelRef.setFrameShadow(QFrame.Raised)
+        self.TextLabelRef.setLineWidth(3)
+        self.TextLabelRef.setScaledContents(False)
+        self.TextLabelRef.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelRef.setWordWrap(False)
+        self.TextLabelRef.setMargin(1)
+        self.TextLabelRef.setObjectName("TextLabelRef")
+
+        self.TextLabelThQ = QLabel(NEPTUNE_EOS)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.TextLabelThQ.setFont(font)
+        self.TextLabelThQ.setGeometry(QtCore.QRect(20,290,160,61))
+        self.TextLabelThQ.setFrameShape(QFrame.Box)
+        self.TextLabelThQ.setFrameShadow(QFrame.Raised)
+        self.TextLabelThQ.setLineWidth(3)
+        self.TextLabelThQ.setScaledContents(False)
+        self.TextLabelThQ.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelThQ.setWordWrap(True)
+        self.TextLabelThQ.setMargin(1)
+        self.TextLabelThQ.setObjectName("TextLabelThQ")
+
+        self.TextLabelVari = QLabel(NEPTUNE_EOS)
+        font = QtGui.QFont()
+        font.setPointSize(11)
+        font.setItalic(True)
+        self.TextLabelVari.setFont(font)
+        self.TextLabelVari.setGeometry(QtCore.QRect(200,65,340,28))
+        self.TextLabelVari.setFrameShape(QFrame.Box)
+        self.TextLabelVari.setFrameShadow(QFrame.Raised)
+        self.TextLabelVari.setLineWidth(3)
+        self.TextLabelVari.setScaledContents(False)
+        self.TextLabelVari.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelVari.setWordWrap(False)
+        self.TextLabelVari.setMargin(1)
+        self.TextLabelVari.setObjectName("TextLabelVar1")
+
+
+        self.TextLabelVar1 = QLabel(NEPTUNE_EOS)
+        self.TextLabelVar1.setGeometry(QtCore.QRect(200,95,340,25))
+        self.TextLabelVar1.setFrameShape(QFrame.Box)
+        self.TextLabelVar1.setFrameShadow(QFrame.Raised)
+        self.TextLabelVar1.setLineWidth(3)
+        self.TextLabelVar1.setScaledContents(False)
+        self.TextLabelVar1.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelVar1.setWordWrap(False)
+        self.TextLabelVar1.setMargin(1)
+        self.TextLabelVar1.setObjectName("TextLabelVar1")
+
+        self.TextLabelVar2 = QLabel(NEPTUNE_EOS)
+        self.TextLabelVar2.setGeometry(QtCore.QRect(545,95,185,25))
+        self.TextLabelVar2.setFrameShape(QFrame.Box)
+        self.TextLabelVar2.setFrameShadow(QFrame.Raised)
+        self.TextLabelVar2.setLineWidth(3)
+        self.TextLabelVar2.setScaledContents(False)
+        self.TextLabelVar2.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelVar2.setWordWrap(False)
+        self.TextLabelVar2.setMargin(1)
+        self.TextLabelVar2.setObjectName("TextLabelVar2")
+
+        self.TextLabelV2Val = QLabel(NEPTUNE_EOS)
+        self.TextLabelV2Val.setGeometry(QtCore.QRect(730,95,185,25))
+        self.TextLabelV2Val.setFrameShape(QFrame.Box)
+        self.TextLabelV2Val.setFrameShadow(QFrame.Raised)
+        self.TextLabelV2Val.setLineWidth(3)
+        self.TextLabelV2Val.setScaledContents(False)
+        self.TextLabelV2Val.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelV2Val.setWordWrap(False)
+        self.TextLabelV2Val.setMargin(1)
+        self.TextLabelV2Val.setObjectName("TextLabelV2Val")
+
+        self.TextLabelRange = QLabel(NEPTUNE_EOS)
+        self.TextLabelRange.setGeometry(QtCore.QRect(200,145,340,25))
+        self.TextLabelRange.setFrameShape(QFrame.Box)
+        self.TextLabelRange.setFrameShadow(QFrame.Raised)
+        self.TextLabelRange.setLineWidth(3)
+        self.TextLabelRange.setScaledContents(False)
+        self.TextLabelRange.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelRange.setWordWrap(False)
+        self.TextLabelRange.setMargin(1)
+        self.TextLabelRange.setObjectName("TextLabelRange")
+
+        self.TextLabelRange2 = QLabel(NEPTUNE_EOS)
+        self.TextLabelRange2.setGeometry(QtCore.QRect(545,145,370,25))
+        self.TextLabelRange2.setFrameShape(QFrame.Box)
+        self.TextLabelRange2.setFrameShadow(QFrame.Raised)
+        self.TextLabelRange2.setLineWidth(3)
+        self.TextLabelRange2.setScaledContents(False)
+        self.TextLabelRange2.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelRange2.setWordWrap(False)
+        self.TextLabelRange2.setMargin(1)
+        self.TextLabelRange2.setObjectName("TextLabelRange2")
+
+        self.TextLabelDefFunc = QLabel(NEPTUNE_EOS)
+        self.TextLabelDefFunc.setGeometry(QtCore.QRect(200,200,340,28))
+
+        font = QtGui.QFont()
+        font.setPointSize(11)
+        font.setItalic(True)
+        self.TextLabelDefFunc.setFont(font)
+        self.TextLabelDefFunc.setFrameShape(QFrame.Box)
+        self.TextLabelDefFunc.setFrameShadow(QFrame.Raised)
+        self.TextLabelDefFunc.setLineWidth(3)
+        self.TextLabelDefFunc.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelDefFunc.setWordWrap(False)
+        self.TextLabelDefFunc.setObjectName("TextLabelDefFunc")
+
+        self.TextLabelNept = QLabel(NEPTUNE_EOS)
+        self.TextLabelNept.setGeometry(QtCore.QRect(790,17,110,60))
+
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setWeight(75)
+        font.setBold(True)
+        self.TextLabelNept.setFont(font)
+        self.TextLabelNept.setFrameShape(QFrame.Box)
+        self.TextLabelNept.setFrameShadow(QFrame.Sunken)
+        self.TextLabelNept.setAlignment(QtCore.Qt.AlignCenter)
+        self.TextLabelNept.setWordWrap(False)
+        self.TextLabelNept.setObjectName("TextLabelNept")
+
+        font = QtGui.QFont()
+        font.setPointSize(14)
+        font.setWeight(75)
+        font.setBold(True)
+
+        self.PushButtonHelp = QPushButton(NEPTUNE_EOS)
+        self.PushButtonHelp.setGeometry(QtCore.QRect(20,490,60,40))
+        self.PushButtonHelp.setObjectName("PushButtonHelp")
+
+        self.PushButtonFileM = QPushButton(NEPTUNE_EOS)
+        self.PushButtonFileM.setGeometry(QtCore.QRect(120,490,60,40))
+        self.PushButtonFileM.setObjectName("PushButtonFileM")
+
+        self.PushButtonRedef = QPushButton(NEPTUNE_EOS)
+        self.PushButtonRedef.setGeometry(QtCore.QRect(200,370,85,25))
+        self.PushButtonRedef.setObjectName("PushButtonRedef")
+
+        self.PushButtonAdd = QPushButton(NEPTUNE_EOS)
+        self.PushButtonAdd.setGeometry(QtCore.QRect(300,370,75,25))
+        self.PushButtonAdd.setObjectName("PushButtonAdd")
+
+        self.PushButtonDel = QPushButton(NEPTUNE_EOS)
+        self.PushButtonDel.setGeometry(QtCore.QRect(400,370,75,25))
+        self.PushButtonDel.setObjectName("PushButtonDel")
+
+        self.PushButtonGo = QPushButton(NEPTUNE_EOS)
+        self.PushButtonGo.setGeometry(QtCore.QRect(485,410,75,30))
+
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setWeight(75)
+        font.setBold(True)
+        self.PushButtonGo.setFont(font)
+        self.PushButtonGo.setObjectName("PushButtonGo")
+
+        self.PushButtonQuit = QPushButton(NEPTUNE_EOS)
+        self.PushButtonQuit.setGeometry(QtCore.QRect(750,410,75,30))
+
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        font.setWeight(75)
+        font.setBold(True)
+        self.PushButtonQuit.setFont(font)
+        self.PushButtonQuit.setObjectName("PushButtonQuit")
+
+        self.PushButtonFuncInfo = QPushButton(NEPTUNE_EOS)
+        self.PushButtonFuncInfo.setGeometry(QtCore.QRect(485,370,340,25))
+        self.PushButtonFuncInfo.setObjectName("PushButtonFuncInfo")
+
+        self.LineEditV2Val = QLineEdit(NEPTUNE_EOS)
+        self.LineEditV2Val.setGeometry(QtCore.QRect(730,120,185,22))
+        self.LineEditV2Val.setObjectName("LineEditV2Val")
+
+        self.LineEditMin = QLineEdit(NEPTUNE_EOS)
+        self.LineEditMin.setGeometry(QtCore.QRect(200,170,113,22))
+        self.LineEditMin.setObjectName("LineEditMin")
+
+        self.LineEditMin2 = QLineEdit(NEPTUNE_EOS)
+        self.LineEditMin2.setGeometry(QtCore.QRect(545,170,120,22))
+        self.LineEditMin2.setObjectName("LineEditMin2")
+
+        self.LineEditMax = QLineEdit(NEPTUNE_EOS)
+        self.LineEditMax.setGeometry(QtCore.QRect(314,170,113,22))
+        self.LineEditMax.setObjectName("LineEditMax")
+
+        self.LineEditMax2 = QLineEdit(NEPTUNE_EOS)
+        self.LineEditMax2.setGeometry(QtCore.QRect(665,170,125,22))
+        self.LineEditMax2.setObjectName("LineEditMax2")
+
+        self.LineEditStep = QLineEdit(NEPTUNE_EOS)
+        self.LineEditStep.setGeometry(QtCore.QRect(428,170,113,22))
+        self.LineEditStep.setObjectName("LineEditStep")
+
+        self.LineEditStep2 = QLineEdit(NEPTUNE_EOS)
+        self.LineEditStep2.setGeometry(QtCore.QRect(790,170,125,22))
+        self.LineEditStep2.setObjectName("LineEditStep2")
+
+        self.listWidget1 = QListWidget(NEPTUNE_EOS)
+        self.listWidget1.setGeometry(QtCore.QRect(200,232,670,131))
+        self.listWidget1.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.listWidget1.setObjectName("listWidget1")
+        
+        self.groupBox1 = QGroupBox(NEPTUNE_EOS)
+        self.groupBox1.setGeometry(QtCore.QRect(200,410,275,75))
+        self.groupBox1.setAlignment(QtCore.Qt.AlignCenter)
+        self.groupBox1.setObjectName("groupBox1")
+
+        self.radioButtonPrint = QRadioButton(self.groupBox1)
+        self.radioButtonPrint.setGeometry(QtCore.QRect(10,20,100,21))
+        self.radioButtonPrint.setObjectName("radioButtonPrint")
+
+        self.radioButtonWrite = QRadioButton(self.groupBox1)
+        self.radioButtonWrite.setGeometry(QtCore.QRect(10,40,120,21))
+        self.radioButtonWrite.setObjectName("radioButtonWrite")
+
+        self.radioButtonPlot = QRadioButton(self.groupBox1)
+        self.radioButtonPlot.setGeometry(QtCore.QRect(130,20,100,21))
+        self.radioButtonPlot.setObjectName("radioButtonPlot")
+
+        self.checkBox3D = QCheckBox(self.groupBox1)
+        self.checkBox3D.setGeometry(QtCore.QRect(130,40,150,21))
+        self.checkBox3D.setObjectName("checkBox3D")
+
+        self.groupBox = QGroupBox(NEPTUNE_EOS)
+        font = QtGui.QFont()
+        font.setWeight(75)
+        font.setBold(True)
+        self.groupBox.setFont(font)
+        self.groupBox.setGeometry(QtCore.QRect(20,380,161,91))
+        self.groupBox.setObjectName("groupBox")
+
+        self.radioButtonNoDerivative = QRadioButton(self.groupBox)
+        self.radioButtonNoDerivative.setGeometry(QtCore.QRect(10,20,92,21))
+        self.radioButtonNoDerivative.setObjectName("radioButtonNoDerivative")
+        self.radioButtonNoDerivative.setChecked(True)
+
+        self.radioButtonDerivativeP = QRadioButton(self.groupBox)
+        self.radioButtonDerivativeP.setGeometry(QtCore.QRect(10,40,92,21))
+        self.radioButtonDerivativeP.setObjectName("radioButtonDerivativeP")
+
+        self.radioButtonDerivativeH = QRadioButton(self.groupBox)
+        self.radioButtonDerivativeH.setGeometry(QtCore.QRect(10,60,92,21))
+        self.radioButtonDerivativeH.setObjectName("radioButtonDerivativeH")
+
+        self.retranslateUi(NEPTUNE_EOS)
+        if sys.version_info[0] < 3:  # python 2
+           QtCore.QObject.connect(self.PushButtonGo,       QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.GoButton_clicked)
+           QtCore.QObject.connect(self.PushButtonRedef,    QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.RedefButton_clicked)
+           QtCore.QObject.connect(self.PushButtonAdd,      QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.AddButton_clicked)
+           QtCore.QObject.connect(self.PushButtonDel,      QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.DeleteButton_clicked)
+           QtCore.QObject.connect(self.PushButtonHelp,     QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.HelpButton_clicked)
+           QtCore.QObject.connect(self.PushButtonFileM,    QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.FileMButton_clicked)
+           QtCore.QObject.connect(self.PushButtonQuit,     QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.QuitButton_clicked)
+           QtCore.QObject.connect(self.PushButtonFuncInfo, QtCore.SIGNAL("clicked()"), NEPTUNE_EOS.FunctionInformationButton_clicked)
+
+           QtCore.QObject.connect(self.ComboBoxFluid, QtCore.SIGNAL("activated(QString)"), self.Fluid_changed)
+           QtCore.QObject.connect(self.ComboBoxMeth,  QtCore.SIGNAL("activated(QString)"), self.Method_changed)
+           QtCore.QObject.connect(self.ComboBoxThQ,   QtCore.SIGNAL("activated(QString)"), self.Quantity_changed)
+           QtCore.QObject.connect(self.ComboBoxVar1,  QtCore.SIGNAL("activated(QString)"), self.Quantity_changed)
+        else:  # python 3
+           self.PushButtonGo.clicked.connect(NEPTUNE_EOS.GoButton_clicked)
+           self.PushButtonRedef.clicked.connect(NEPTUNE_EOS.RedefButton_clicked)
+           self.PushButtonAdd.clicked.connect(NEPTUNE_EOS.AddButton_clicked)
+           self.PushButtonDel.clicked.connect(NEPTUNE_EOS.DeleteButton_clicked)
+           self.PushButtonHelp.clicked.connect(NEPTUNE_EOS.HelpButton_clicked)
+           self.PushButtonFileM.clicked.connect(NEPTUNE_EOS.FileMButton_clicked)
+           self.PushButtonQuit.clicked.connect(NEPTUNE_EOS.QuitButton_clicked)
+           self.PushButtonFuncInfo.clicked.connect(NEPTUNE_EOS.FunctionInformationButton_clicked)
+
+           self.ComboBoxFluid.activated.connect(self.Fluid_changed)
+           self.ComboBoxMeth.activated.connect(self.Method_changed)
+           self.ComboBoxThQ.activated.connect(self.Quantity_changed)
+           self.ComboBoxVar1.activated.connect(self.Quantity_changed)
+
+
+        QtCore.QMetaObject.connectSlotsByName(NEPTUNE_EOS)
+
+    def retranslateUi(self, NEPTUNE_EOS):
+        NEPTUNE_EOS.setWindowTitle(QApplication.translate("NEPTUNE_EOS","NEPTUNE EOS COMPONENT",None,0)) # UnicodeUTF8
+
+        bleum1 = QtGui.QBrush(QtGui.QColor(135,206,255))
+        bleum1.setStyle(QtCore.Qt.SolidPattern)
+
+        bleum2 = QtGui.QBrush(QtGui.QColor(99,184,255))
+        bleum2.setStyle(QtCore.Qt.SolidPattern)
+
+        bleum3 = QtGui.QBrush(QtGui.QColor(30,144,255))
+        bleum3.setStyle(QtCore.Qt.SolidPattern)
+
+        violm0 = QtGui.QBrush(QtGui.QColor(238, 174, 238))
+        violm0.setStyle(QtCore.Qt.SolidPattern)
+
+        violm1 = QtGui.QBrush(QtGui.QColor(224,102,255))
+        violm1.setStyle(QtCore.Qt.SolidPattern)
+
+        violm2 = QtGui.QBrush(QtGui.QColor(209,95,238))
+        violm2.setStyle(QtCore.Qt.SolidPattern)
+
+        violm3 = QtGui.QBrush(QtGui.QColor(180,82,205))
+        violm3.setStyle(QtCore.Qt.SolidPattern)
+
+        jaunm1 = QtGui.QBrush(QtGui.QColor(255,231, 186))
+        jaunm1.setStyle(QtCore.Qt.SolidPattern)
+
+        jaunm2 = QtGui.QBrush(QtGui.QColor(238, 216, 174))
+        jaunm2.setStyle(QtCore.Qt.SolidPattern)
+
+        jaunm3 = QtGui.QBrush(QtGui.QColor(255, 193,  37))
+        jaunm3.setStyle(QtCore.Qt.SolidPattern)
+
+        jaunm4 = QtGui.QBrush(QtGui.QColor(255, 185,  15))
+        jaunm4.setStyle(QtCore.Qt.SolidPattern)
+
+        oranm1 = QtGui.QBrush(QtGui.QColor(205, 104,  57))
+        oranm1.setStyle(QtCore.Qt.SolidPattern)
+
+        vertm1 = QtGui.QBrush(QtGui.QColor(144, 238, 144))
+        vertm1.setStyle(QtCore.Qt.SolidPattern)
+
+        bleu1 = QtGui.QBrush(QtGui.QColor(0,0,255))
+        bleu1.setStyle(QtCore.Qt.SolidPattern)
+        bleu2 = QtGui.QBrush(QtGui.QColor(85,170,255))
+        bleu2.setStyle(QtCore.Qt.SolidPattern)
+        bleu3 = QtGui.QBrush(QtGui.QColor(134,136,255))
+        bleu3.setStyle(QtCore.Qt.SolidPattern)
+        blanc1 = QtGui.QBrush(QtGui.QColor(255,255,255))
+        blanc1.setStyle(QtCore.Qt.SolidPattern)
+        noir1 = QtGui.QBrush(QtGui.QColor(0,0,0))
+        noir1.setStyle(QtCore.Qt.SolidPattern)
+        rouge1 = QtGui.QBrush(QtGui.QColor(255,0,0))
+        rouge1.setStyle(QtCore.Qt.SolidPattern)
+        vert1 = QtGui.QBrush(QtGui.QColor(156,255,156))
+        vert1.setStyle(QtCore.Qt.SolidPattern)
+        vert2 = QtGui.QBrush(QtGui.QColor(206,189,207))
+        vert2.setStyle(QtCore.Qt.SolidPattern)
+        jaune1 = QtGui.QBrush(QtGui.QColor(255,255,0))
+        jaune1.setStyle(QtCore.Qt.SolidPattern)
+        rose1 = QtGui.QBrush(QtGui.QColor(255,85,255))
+        rose1.setStyle(QtCore.Qt.SolidPattern)
+        palette = QtGui.QPalette()
+
+
+        self.thefluidlist = self.ava.whichFluids()
+        for fli in self.thefluidlist:
+            self.ComboBoxFluid.addItem(QApplication.translate("NEPTUNE_EOS",fli,None,0)) # UnicodeUTF8
+
+        fls = self.ava.which_thmodel()
+        for fli in fls:
+            self.ComboBoxMeth.addItem(QApplication.translate("NEPTUNE_EOS",fli,None,0)) # UnicodeUTF8
+
+        fls = self.ava.whichThQuantities()
+        for fli in fls:
+            self.ComboBoxThQ.addItem(QApplication.translate("NEPTUNE_EOS",fli,None,0)) # UnicodeUTF8
+
+        fls = self.ava.which_fldeq()
+        for fli in fls:
+            self.ComboBoxRef.addItem(QApplication.translate("NEPTUNE_EOS",fli,None,0)) # UnicodeUTF8
+
+        self.ComboBoxVar1.addItem(QApplication.translate("NEPTUNE_EOS","Pressure",None,0)) # UnicodeUTF8
+        self.ComboBoxVar1.addItem(QApplication.translate("NEPTUNE_EOS","Enthalpy",None,0)) # UnicodeUTF8
+        self.ComboBoxVar1.addItem(QApplication.translate("NEPTUNE_EOS","Temperature",None,0)) # UnicodeUTF8
+        self.ComboBoxVar1.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose a thermodynamic variable",None,0)) # UnicodeUTF8
+        
+        self.ComboBoxVar2.addItem(QApplication.translate("NEPTUNE_EOS","Enthalpy",None,0)) # UnicodeUTF8
+        self.ComboBoxVar2.addItem(QApplication.translate("NEPTUNE_EOS","Temperature",None,0)) # UnicodeUTF8
+        
+        self.TextLabelThQ.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose a thermodynamic quantity to compute",None,0)) # UnicodeUTF8
+        self.TextLabelThQ.setText(QApplication.translate("NEPTUNE_EOS","Ouput Thermodynamic Property",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.TextLabelThQ.setAutoFillBackground(True)
+        self.TextLabelThQ.setPalette(palette)
+        
+        self.TextLabelVari.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose Input Thermodynamic Properties",None,0)) # UnicodeUTF8
+        self.TextLabelVari.setText(QApplication.translate("NEPTUNE_EOS","Input Thermodynamic Properties",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2) 
+        self.TextLabelVari.setAutoFillBackground(True)
+        self.TextLabelVari.setPalette(palette)
+        
+          
+        self.TextLabelVar1.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose a thermodynamic variable",None,0)) # UnicodeUTF8
+        self.TextLabelVar1.setText(QApplication.translate("NEPTUNE_EOS","first property : name",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.TextLabelVar1.setAutoFillBackground(True)
+        self.TextLabelVar1.setPalette(palette)
+        
+        self.TextLabelVar2.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose the second Thermodynamic variable",None,0)) # UnicodeUTF8
+        self.TextLabelVar2.setText(QApplication.translate("NEPTUNE_EOS","second property : name",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.TextLabelVar2.setAutoFillBackground(True)
+        self.TextLabelVar2.setPalette(palette)
+        
+        self.TextLabelV2Val.setToolTip(QApplication.translate("NEPTUNE_EOS","Define the second Thermodynamic variable constant value",None,0)) # UnicodeUTF8
+        self.TextLabelV2Val.setText(QApplication.translate("NEPTUNE_EOS","second property : one value",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.TextLabelV2Val.setAutoFillBackground(True)
+        self.TextLabelV2Val.setPalette(palette)
+        
+        self.TextLabelRange.setToolTip(QApplication.translate("NEPTUNE_EOS","Define the thermodynamic variable domain of variation",None,0)) # UnicodeUTF8
+        self.TextLabelRange.setText(QApplication.translate("NEPTUNE_EOS","first property : values range (min, max, nb. steps)",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.TextLabelRange.setAutoFillBackground(True)
+        self.TextLabelRange.setPalette(palette)
+        
+        self.TextLabelRange2.setToolTip(QApplication.translate("NEPTUNE_EOS","Define the second  Thermodynamic variable domain of variation",None,0)) # UnicodeUTF8
+        self.TextLabelRange2.setText(QApplication.translate("NEPTUNE_EOS","second property : values range (min, max, nb. steps)",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.TextLabelRange2.setAutoFillBackground(True)
+        self.TextLabelRange2.setPalette(palette)
+        
+        self.TextLabelDefFunc.setText(QApplication.translate("NEPTUNE_EOS","Defined thermodynamic functions",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,violm0)
+        self.TextLabelDefFunc.setAutoFillBackground(True)
+        self.TextLabelDefFunc.setPalette(palette)
+        
+        self.checkBox3D.setText(QApplication.translate("NEPTUNE_EOS", "3D Plot (two inputs)", None, 0)) # UnicodeUTF8
+
+        self.TextLabelNept.setText(QApplication.translate("NEPTUNE_EOS","Version\n@EOS_VERSION@",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,bleu1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.TextLabelNept.setAutoFillBackground(True)
+        self.TextLabelNept.setPalette(palette)
+        self.TextLabelNept.setGeometry(QtCore.QRect(790,17,110,60))
+
+        
+        self.PushButtonHelp.setText(QApplication.translate("NEPTUNE_EOS","Help",None,0)) # UnicodeUTF8
+        self.PushButtonFileM.setText(QApplication.translate("NEPTUNE_EOS","File\nManager",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.ButtonText,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Button,vert2)
+        self.PushButtonHelp.setAutoFillBackground(True)
+        self.PushButtonHelp.setPalette(palette)
+        self.PushButtonFileM.setAutoFillBackground(True)
+        self.PushButtonFileM.setPalette(palette)
+        
+        self.PushButtonRedef.setText(QApplication.translate("NEPTUNE_EOS","Redefine",None,0)) # UnicodeUTF8
+        self.PushButtonRedef.setToolTip(QApplication.translate("NEPTUNE_EOS","Reload in the GUI widgets the choices and the inputs \n corresponding to the selected function",None,0)) # UnicodeUTF8                
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.ButtonText,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Button,violm0)
+        self.PushButtonRedef.setAutoFillBackground(True)
+        self.PushButtonRedef.setPalette(palette)
+
+        self.PushButtonAdd.setText(QApplication.translate("NEPTUNE_EOS","Add",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.ButtonText,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Button,violm0)
+        self.PushButtonAdd.setAutoFillBackground(True)
+        self.PushButtonAdd.setPalette(palette)
+
+        self.PushButtonDel.setText(QApplication.translate("NEPTUNE_EOS","Delete",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.ButtonText,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Button,violm0)
+        self.PushButtonDel.setAutoFillBackground(True)
+        self.PushButtonDel.setPalette(palette)
+        
+        self.PushButtonGo.setText(QApplication.translate("NEPTUNE_EOS","GO",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.ButtonText,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Button,violm0)
+        self.PushButtonGo.setAutoFillBackground(True)
+        self.PushButtonGo.setPalette(palette)
+
+        self.PushButtonQuit.setText(QApplication.translate("NEPTUNE_EOS","QUIT",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.ButtonText,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Button,vertm1)
+        self.PushButtonQuit.setAutoFillBackground(True)
+        self.PushButtonQuit.setPalette(palette)
+
+        self.TextLabelFluid.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose a Fluid",None,0)) # UnicodeUTF8
+        self.TextLabelFluid.setText(QApplication.translate("NEPTUNE_EOS","Fluid",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,bleum1)
+        self.TextLabelFluid.setAutoFillBackground(True)
+        self.TextLabelFluid.setPalette(palette)
+        
+        self.TextLabelMeth.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose a Thermodynamic Model",None,0)) # UnicodeUTF8
+        self.TextLabelMeth.setText(QApplication.translate("NEPTUNE_EOS","Therm. Model",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,bleum1)
+        self.TextLabelMeth.setAutoFillBackground(True)
+        self.TextLabelMeth.setPalette(palette)
+        
+        self.TextLabelRef.setToolTip(QApplication.translate("NEPTUNE_EOS","Choose a Fluid Equation",None,0)) # UnicodeUTF8
+        self.TextLabelRef.setText(QApplication.translate("NEPTUNE_EOS","Equation of Fluid",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,bleum1)
+        self.TextLabelRef.setAutoFillBackground(True)
+        self.TextLabelRef.setPalette(palette)
+        
+        self.PushButtonFuncInfo.setText(QApplication.translate("NEPTUNE_EOS","Thermodynamic functions informations",None,0))
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.ButtonText,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Button,violm0)
+        self.PushButtonFuncInfo.setAutoFillBackground(True)
+        self.PushButtonFuncInfo.setPalette(palette)
+
+        self.LineEditV2Val.setText(QApplication.translate("NEPTUNE_EOS","0.",None,0)) # UnicodeUTF8
+        self.LineEditMin.setText(QApplication.translate("NEPTUNE_EOS","0.",None,0)) # UnicodeUTF8
+        self.LineEditMax.setText(QApplication.translate("NEPTUNE_EOS","1.",None,0)) # UnicodeUTF8
+        self.LineEditStep.setText(QApplication.translate("NEPTUNE_EOS","0.1",None,0)) # UnicodeUTF8
+        self.LineEditMin2.setText(QApplication.translate("NEPTUNE_EOS","-1",None,0)) # UnicodeUTF8
+        self.LineEditMax2.setText(QApplication.translate("NEPTUNE_EOS","-1",None,0)) # UnicodeUTF8
+        self.LineEditStep2.setText(QApplication.translate("NEPTUNE_EOS","-1",None,0)) # UnicodeUTF8
+        
+        self.groupBox1.setTitle(QApplication.translate("NEPTUNE_EOS","Output type",None,0)) # UnicodeUTF8
+        
+        self.radioButtonPlot.setText(QApplication.translate("NEPTUNE_EOS","Plot",None,0)) # UnicodeUTF8
+        self.radioButtonPrint.setText(QApplication.translate("NEPTUNE_EOS","Print",None,0)) # UnicodeUTF8
+        self.radioButtonWrite.setText(QApplication.translate("NEPTUNE_EOS","Write to file",None,0)) # UnicodeUTF8
+        
+        self.groupBox.setTitle(QApplication.translate("NEPTUNE_EOS","Derivative",None,0)) # UnicodeUTF8
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Foreground,noir1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Background,jaunm2)
+        self.groupBox.setAutoFillBackground(True)
+        self.groupBox.setPalette(palette)
+        
+        self.radioButtonNoDerivative.setText(QApplication.translate("NEPTUNE_EOS","No",None,0)) # UnicodeUTF8
+        self.radioButtonDerivativeP.setText(QApplication.translate("NEPTUNE_EOS","d.../dp",None,0)) # UnicodeUTF8
+        self.radioButtonDerivativeH.setText(QApplication.translate("NEPTUNE_EOS","d.../dh",None,0)) # UnicodeUTF8
+
+
+        #-----------------------------------------------------------
+
+        filesave = 'eosGUI.' + user + '.save'
+        if os.access(filesave,os.F_OK) == 1:
+            with open(filesave,"rb") as f1:
+               dicosave = cPickle.load(f1)
+
+            self.selectedFunction = dicosave["selected"] 
+            self.definedFunction  = dicosave["defined"] 
+            self.detailOfFunction = dicosave["detail"]
+
+            _translate = QtCore.QCoreApplication.translate
+            self.LineEditStep.setText(_translate("Ui_NEPTUNE_EOS",dicosave["var_step"]))
+            self.LineEditMin.setText(_translate("Ui_NEPTUNE_EOS",dicosave["var_min"]))
+            self.LineEditMax.setText(_translate("Ui_NEPTUNE_EOS",dicosave["var_max"]))
+            self.LineEditV2Val.setText(_translate("Ui_NEPTUNE_EOS",dicosave["2d_param_value"]))
+            # GUI without option with two variables
+            try:
+                self.LineEditStep2.setText(_translate("Ui_NEPTUNE_EOS",dicosave["var_step2"]))
+            except:
+                self.LineEditStep2.setText(_translate("Ui_NEPTUNE_EOS","-2"))
+            try:
+                self.LineEditMin2.setText(_translate("Ui_NEPTUNE_EOS",dicosave["var_min2"]))
+            except:
+                self.LineEditMin2.setText(_translate("Ui_NEPTUNE_EOS","-2"))
+            try:
+                self.LineEditMax2.setText(_translate("Ui_NEPTUNE_EOS",dicosave["var_max2"]))
+            except:
+                self.LineEditMax2.setText(_translate("Ui_NEPTUNE_EOS","-2"))
+
+            self.listWidget1.clear()
+            n = len(self.definedFunction)
+            for i in range(n):
+                sss = str(i) + " - " + self.definedFunction[i]
+                self.listWidget1.addItem(QApplication.translate("NEPTUNE_EOS", sss, None, 0)) # UnicodeUTF8
+            n = len(self.selectedFunction)
+            # selectionner dans la listwidget
+            for i in range(n):
+                k = self.selectedFunction[i]
+                selitem= self.listWidget1.item(int(k))
+                selitem.setSelected(True)
+        else:
+            self.definedFunction = []
+            self.detailOfFunction = []
+            self.selectedFunction = []
+            
+    def AddButton_clicked(self):
+        # print "Form1.AddButton_clicked(): Adding a function"
+        d = {}
+        d["Fluid"]               = str(self.ComboBoxFluid.currentText())
+        d["Thermodynamic_Model"] = str(self.ComboBoxMeth.currentText()) 
+        d["Fluid_Equation"]      = str(self.ComboBoxRef.currentText()) 
+        d["Function"]            = str(self.ComboBoxThQ.currentText())
+        d["Variable"]            = str(self.ComboBoxVar1.currentText())
+        d["2d_param"]            = str(self.ComboBoxVar2.currentText())
+        d["2d_param_value"]      = str(self.LineEditV2Val.displayText())
+        d["var_min"]             = str(self.LineEditMin.displayText())
+        d["var_max"]             = str(self.LineEditMax.displayText())
+        d["var_step"]            = str(self.LineEditStep.displayText())
+        d["var_min2"]            = str(self.LineEditMin2.displayText())
+        d["var_max2"]            = str(self.LineEditMax2.displayText())
+        d["var_step2"]           = str(self.LineEditStep2.displayText())
+        if self.radioButtonNoDerivative.isChecked():
+            d["derivative"] = "no"
+        elif self.radioButtonDerivativeP.isChecked():
+            d["derivative"] = "P"
+        elif self.radioButtonDerivativeH.isChecked():
+            d["derivative"] = "h"
+        else:
+            d["derivative"] = "no"
+            
+        if  d["Thermodynamic_Model"] == "External data":
+            fn = QFileDialog.getOpenFileName(QString.null,"*.data",self)
+            if fn.isEmpty():
+                #print "Loading Mesh aborted"
+                theout = eosPrint4.Ui_Form4(parent=self,thetext="No data file selected")
+                theout.show()
+                return
+            d["data_filename"]=str(fn)
+            thefun = d["data_filename"]
+        else:
+            try:
+                b = float(d["2d_param_value"])
+            except:
+                theout = eosPrint4.Ui_Form4(parent=self,thetext="The value of the second parameter \nis not a number")
+                theout.show()
+                return
+            try:
+                b = float(d["var_min"])
+            except:
+                theout = eosPrint4.Ui_Form4(parent=self,thetext="The minimum value of the variable range \nis not a number")
+                theout.show()
+                return
+            try:
+                b = float(d["var_max"])
+            except:
+                theout = eosPrint4.Ui_Form4(parent=self,thetext="The maximum value of the variable range \nis not a number")
+                theout.show()
+                return
+
+            try:
+                b = int(d["var_step"])
+            except:
+                theout = eosPrint4.Ui_Form4(parent=self, 
+                         thetext="The number of steps of the variable range \nis not an integer")
+                theout.show()
+                return
+
+            thefun = d["Fluid"] + " (" + d["Thermodynamic_Model"] + "," + d["Fluid_Equation"]  + ") " \
+                   + d["Function"] + " (" + d["Variable"] + ", from " + d["var_min"] + " to " \
+                   + d["var_max"] +", "+d["var_step"]+" steps) \n    (" + d["2d_param"]
+            if str(self.ComboBoxVar2.currentText()) != "at saturation" and str(self.ComboBoxVar2.currentText()) != "at limit":
+                thefun = thefun + "=" + d["2d_param_value"] + " or from " + d["var_min2"] \
+                       + " to " + d["var_max2"]+", " + d["var_step2"]+" steps)"
+            else:
+                thefun = thefun + ")"
+            if d["derivative"] == "P":
+                thefun = "(d_dp)"+thefun
+            elif d["derivative"] == "h":
+                thefun = "(d_dh)" + thefun
+            
+            
+        self.detailOfFunction.append(d)
+        self.definedFunction.append(thefun)
+        self.listWidget1.clear()
+        n = len(self.definedFunction)
+        for i in range(n):
+            sss = (str(i) + " - " + self.definedFunction[i])
+            self.listWidget1.addItem(QApplication.translate("NEPTUNE_EOS", sss, None, 0)) # UnicodeUTF8
+        pass
+    
+    def DeleteButton_clicked(self):
+        # print "Form1.DeleteButton_clicked(): Deleting a function"
+        # print ("---------"+str(self.listWidget1.currentItem())+str(self.listWidget1.currentText()) )
+        if self.listWidget1.selectedItems() == []:
+            return
+        # print len(self.definedFunction)
+        lis1 = self.definedFunction[0:len(self.definedFunction)]
+        lis2 = self.detailOfFunction[0:len(self.detailOfFunction)]
+        for i in self.listWidget1.selectedItems():
+            k = int(i.text().split(" ")[0])
+            lis1[k] = ""
+        self.definedFunction = []
+        self.detailOfFunction = []
+        for j in range(0,len(lis1)):
+            if lis1[j] != "":
+                self.definedFunction.append(lis1[j])
+                self.detailOfFunction.append(lis2[j])
+            
+        self.listWidget1.clear()
+        n = len(self.definedFunction)
+        for i in range(n):
+            sss = (str(i)+" - "+self.definedFunction[i])
+            self.listWidget1.addItem(QApplication.translate("NEPTUNE_EOS",sss,None,0)) # UnicodeUTF8
+        self.selectedFunction = []
+        pass
+    
+    def RedefButton_clicked(self):
+        #print "REDEFINE BUTTON CLICKED"
+        #print self.listWidget1.selectedItems()
+        self.selectedFunction = []
+        if self.listWidget1.selectedItems() == []:
+            theout = eosPrint4.Ui_Form4(self, thetext="No Function selected")
+            theout.show()
+            return
+        if len(self.listWidget1.selectedItems()) > 1:
+            theout = eosPrint4.Ui_Form4(self, thetext="More than one Functions selected")
+            theout.show()
+            return
+        i = self.listWidget1.selectedItems()[0]
+        k = int(i.text().split(" ")[0])
+        ddd = self.detailOfFunction[k]
+        
+        _translate = QtCore.QCoreApplication.translate
+        self.LineEditMin.setText(_translate("Ui_NEPTUNE_EOS",   ddd["var_min"]))
+        self.LineEditMin2.setText(_translate("Ui_NEPTUNE_EOS",  ddd["var_min2"]))
+        self.LineEditMax.setText(_translate("Ui_NEPTUNE_EOS",   ddd["var_max"]))
+        self.LineEditMax2.setText(_translate("Ui_NEPTUNE_EOS",  ddd["var_max2"]))
+        self.LineEditStep.setText(_translate("Ui_NEPTUNE_EOS",  ddd["var_step"]))
+        self.LineEditStep2.setText(_translate("Ui_NEPTUNE_EOS", ddd["var_step2"]))
+        self.LineEditV2Val.setText(_translate("Ui_NEPTUNE_EOS", ddd["2d_param_value"]))
+
+        if ddd["derivative"] == "no":
+            self.radioButtonNoDerivative.setChecked(True)
+        elif ddd["derivative"] == "P":
+            self.radioButtonDerivativeP.setChecked(True)
+        elif ddd["derivative"] == "h":
+            self.radioButtonDerivativeH.setChecked(True)
+
+        iii = self.thefluidlist.index(ddd["Fluid"])
+        self.ComboBoxFluid.setCurrentIndex(iii)
+        #print "<><><>",self.ComboBoxFluid.count()
+        self.Fluid_changed()
+        
+        nb_thmodel    =  self.ComboBoxMeth.count()
+        thmoddel_list = []
+        for k in range(nb_thmodel):
+            thmoddel_list.append(self.ComboBoxMeth.itemText(k))
+            #print "<><><>",self.ComboBoxMeth.itemText(k)
+        iii = thmoddel_list.index(ddd["Thermodynamic_Model"])
+        self.ComboBoxMeth.setCurrentIndex(iii)
+        self.Method_changed()
+            
+        nb_fldeq =  self.ComboBoxRef.count()
+        fldeq_list = []
+        for k in range(nb_fldeq):
+            fldeq_list.append(self.ComboBoxRef.itemText(k))
+            #print "<><><>",self.ComboBoxMeth.itemText(k)
+        iii = fldeq_list.index(ddd["Fluid_Equation"])
+        self.ComboBoxRef.setCurrentIndex(iii)
+        
+        nbqty =  self.ComboBoxThQ.count()
+        theqtylist = []
+        for k in range(nbqty):
+            theqtylist.append(self.ComboBoxThQ.itemText(k))
+            #print "<><><>",self.ComboBoxMeth.itemText(k)
+        iii = theqtylist.index(ddd["Function"])
+        self.ComboBoxThQ.setCurrentIndex(iii)
+        self.Quantity_changed()
+
+        nbvar =  self.ComboBoxVar1.count()
+        thevarlist = []
+        for k in range(nbvar):
+            thevarlist.append(self.ComboBoxVar1.itemText(k))
+            #print "<><><>",self.ComboBoxMeth.itemText(k)
+        iii = thevarlist.index(ddd["Variable"])
+        self.ComboBoxVar1.setCurrentIndex(iii)
+        self.Quantity_changed()
+        
+        nbvar =  self.ComboBoxVar2.count()
+        thevarlist = []
+        for k in range(nbvar):
+            thevarlist.append(self.ComboBoxVar2.itemText(k))
+            #print "<><><>",self.ComboBoxMeth.itemText(k)
+        iii = thevarlist.index(ddd["2d_param"])
+        self.ComboBoxVar2.setCurrentIndex(iii)
+
+        pass
+    
+    def HelpButton_clicked(self):
+        thehelp = eosHelp4.Ui_Form2(self)
+        thehelp.show()
+        pass
+    
+    def FileMButton_clicked(self):
+        themanager = eosFileManager.Ui_FileManager(self)
+        themanager.show()
+        pass
+    
+    def GoButton_clicked(self):
+        self.selectedFunction=[]
+        if self.listWidget1.selectedItems() == []:
+            theout = eosPrint4.Ui_Form4(self,thetext="No Function selected")
+            theout.show()
+            return
+        for i in self.listWidget1.selectedItems():
+            k = int(i.text().split(" ")[0])
+            self.selectedFunction.append(str(k))
+        
+        plot3D = False
+        if self.checkBox3D.isChecked():
+            # print self.detailOfFunction[i]
+            plot3D = True
+
+        n = len( self.selectedFunction)
+        
+        for j in range(n):
+            i = int(self.selectedFunction[j])
+            if self.detailOfFunction[i]["2d_param"] == "at saturation" or self.detailOfFunction[i]["2d_param"] == "at limit":
+                if plot3D:
+                    theout = eosPrint4.Ui_Form4(parent=self,thetext="no 3D plot for saturated or limit thermodynamic functions")
+                    theout.show()
+                    return
+                print ("Run of " + self.detailOfFunction[i]["Fluid"]                + " ("      \
+                                 + self.detailOfFunction[i]["Thermodynamic_Model"]  + ", "      \
+                                 + self.detailOfFunction[i]["Fluid_Equation"]       + ") "      \
+                                 + self.detailOfFunction[i]["Function"]             + " ("      \
+                                 + self.detailOfFunction[i]["Variable"]             + ", from " \
+                                 + self.detailOfFunction[i]["var_min"]              + " to "    \
+                                 + self.detailOfFunction[i]["var_max"]              + ") "      \
+                                 + self.detailOfFunction[i]["2d_param"])
+            else:
+                print ("Run of " + self.detailOfFunction[i]["Fluid"]                + " ("      \
+                                 + self.detailOfFunction[i]["Thermodynamic_Model"]  + ",  "     \
+                                 + self.detailOfFunction[i]["Fluid_Equation"]       + ")  "     \
+                                 + self.detailOfFunction[i]["Function"]             + " ("      \
+                                 + self.detailOfFunction[i]["Variable"]             + ", from " \
+                                 + self.detailOfFunction[i]["var_min"]              + " to "    \
+                                 + self.detailOfFunction[i]["var_max"]              + ") "      \
+                                 + self.detailOfFunction[i]["2d_param"]             + " ="      \
+                                 + self.detailOfFunction[i]["2d_param_value"]       + " (or varying from " \
+                                 + self.detailOfFunction[i]["var_min2"]             + " to "    \
+                                 + self.detailOfFunction[i]["var_max2"]             + ")")
+            
+
+        if self.radioButtonPlot.isChecked():
+            #print "Run is plotting"
+            eosRunFunction.EosRun(self,self.selectedFunction,self.detailOfFunction,"plot",self.ava,plot3D)
+        elif self.radioButtonPrint.isChecked():
+            #print "Run is printing"
+            eosRunFunction.EosRun(self,self.selectedFunction,self.detailOfFunction,"print",self.ava,plot3D)
+        elif self.radioButtonWrite.isChecked():
+            #print "Run is writing to a file"
+            eosRunFunction.EosRun(self,self.selectedFunction,self.detailOfFunction,"writefile",self.ava,plot3D)
+        else:
+            print ("No Output Type selected")
+            theout = eosPrint4.Ui_Form4(parent=self,thetext="No Output Type selected")
+            theout.show()
+
+        pass
+    
+    def QuitButton_clicked(self):
+        dicosave = {}
+        dicosave["selected"] = self.selectedFunction
+        dicosave["defined"]  = self.definedFunction
+        dicosave["detail"]   = self.detailOfFunction
+        # pour sauver l'etat de quelques valeurs
+        dicosave["2d_param_value"] = str(self.LineEditV2Val.displayText())
+        dicosave["var_min"]        = str(self.LineEditMin.displayText())
+        dicosave["var_max"]        = str(self.LineEditMax.displayText())
+        dicosave["var_step"]       = str(self.LineEditStep.displayText())
+        dicosave["var_min2"]       = str(self.LineEditMin2.displayText())
+        dicosave["var_max2"]       = str(self.LineEditMax2.displayText())
+        dicosave["var_step2"]      = str(self.LineEditStep2.displayText())
+
+        filesave = 'eosGUI.' + user + '.save'
+        with open(filesave,"wb") as f1:
+           cPickle.dump(dicosave,f1)
+        self.close()
+        pass
+    
+    def FunctionInformationButton_clicked(self):
+        if self.listWidget1.selectedItems() == []:
+            return
+        i = self.listWidget1.selectedItems()[0]
+        for i in  self.listWidget1.selectedItems():
+            print (i.text())
+        i = self.listWidget1.selectedItems()[0]
+        i=int(i.text().split(" ")[0])
+        thmod = self.detailOfFunction[i]["Thermodynamic_Model"]
+        thedir = "@EOS_DOC_GUI_DIR@/"
+
+        theout = eosPrint4.Ui_Form3(parent=self, thefile=thedir+"thermodynamic_model_info.txt", lancernavigateur=0)
+        theout.show()
+        pass
+    
+    def Fluid_changed(self):
+        newfluid = str(self.ComboBoxFluid.currentText())
+        
+        self.ava.set_thmodel(newfluid)
+        fls = self.ava.which_thmodel()
+        self.ComboBoxMeth.clear()
+        for fli in fls:
+            self.ComboBoxMeth.addItem(QApplication.translate("NEPTUNE_EOS", fli, None, 0)) # UnicodeUTF8
+            
+        fls = self.ava.which_fldeq()
+        self.ComboBoxRef.clear()
+        for fli in fls:
+            self.ComboBoxRef.addItem(QApplication.translate("NEPTUNE_EOS", fli, None, 0)) # UnicodeUTF8
+            
+        pass
+    
+    def Method_changed(self):
+        fluid     = str(self.ComboBoxFluid.currentText())
+        new_thmod = str(self.ComboBoxMeth.currentText())
+        self.ava.set_fldeq(fluid, new_thmod)
+        fls = self.ava.which_fldeq()
+        self.ComboBoxRef.clear()
+        for fli in fls:
+            self.ComboBoxRef.addItem(QApplication.translate("NEPTUNE_EOS", fli, None, 0)) # UnicodeUTF8
+        
+        pass
+    
+    def Quantity_changed(self):
+        # sert aussi si on change la var thermo
+        q  = str(self.ComboBoxThQ.currentText())
+        qi = q.find("Satura")
+        qj = q.find("Limit")
+        # dans quel etat est ComboBoxVar2 ?
+        ov2 = str(self.ComboBoxVar2.currentText())
+        #ov2i = ov2.find("Enthalpy")
+        ov2j = ov2.find("Temperature")
+        ica = 1
+        if ov2j >=0: ica = 2
+        
+        self.ComboBoxVar2.clear()
+        if qi >= 0:
+            self.ComboBoxVar2.addItem(QApplication. translate("NEPTUNE_EOS", "at saturation", None, 0)) # UnicodeUTF8
+            k = str(self.ComboBoxVar1.currentText())
+            ki =k.find("Enthal")
+            if ki >= 0:
+                theout = eosPrint4.Ui_Form4(parent=self, thetext="Warning, enthalpy is not allowed as variable for saturation quantities")
+                theout.show()
+        elif qj >= 0:
+            self.ComboBoxVar2.addItem(QApplication. translate("NEPTUNE_EOS", "at limit", None, 0)) # UnicodeUTF8
+            k = str(self.ComboBoxVar1.currentText())
+            ki =k.find("Enthal")
+            if ki >= 0:
+                theout = eosPrint4.Ui_Form4(parent=self, thetext="Warning, enthalpy is not allowed as variable for limit quantities")
+                theout.show()
+        else:
+            k = str(self.ComboBoxVar1.currentText())
+            ki =k.find("Pressu")
+            if ki >= 0:
+                if ica == 1:
+                    self.ComboBoxVar2.addItem(QApplication.translate("NEPTUNE_EOS", "Enthalpy",    None, 0)) # UnicodeUTF8
+                    self.ComboBoxVar2.addItem(QApplication.translate("NEPTUNE_EOS", "Temperature", None, 0)) # UnicodeUTF8
+                else:
+                    self.ComboBoxVar2.addItem(QApplication.translate("NEPTUNE_EOS", "Temperature", None, 0)) # UnicodeUTF8
+                    self.ComboBoxVar2.addItem(QApplication.translate("NEPTUNE_EOS", "Enthalpy",    None, 0)) # UnicodeUTF8
+            else:
+                self.ComboBoxVar2.addItem(QApplication.translate("NEPTUNE_EOS", "Pressure", None, 0)) # UnicodeUTF8
+
+        pass

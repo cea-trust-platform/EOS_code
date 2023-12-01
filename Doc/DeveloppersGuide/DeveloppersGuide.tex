@@ -1,0 +1,94 @@
+\documentclass[12pt]{article} 
+
+\title{Developpers Guide.}
+%\author{Philippe Emonot}
+
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+%-----------------------------------------------
+\section{Test d'installation généralisée de eos}
+%-----------------------------------------------
+
+Il est possible de tester l'installation de eos sur de nombreuses
+machines à l'aide des scripts localisées dans le répertoire
+eos/portability.
+
+L'instruction de lancement est {\it sh test0.sh} et les résultats sont
+synthétisés dans une fichier html : nuit\_eos.html. La liste des
+machines et les options asociées pour chaque machine cible sont
+définies dans le script shell test0.sh.
+
+Le script shell test0.sh permet :
+\begin{itemize}
+ \item de créer l'archive eos.tar qui sera testée sur touts les machines cibles,
+ \item de lancer l'installation sur une liste de machines cibles avec
+   les options qui vont bien pour chaque machine.  
+ \item de lancer la concaténation de la fiche de synthèse nuit\_eos.html
+\end{itemize}
+
+Le script shell distrib.sh permet, pour chaque machine cible :
+\begin{itemize}
+ \item de vérifier si la machine est acessible,
+ \item de copier l'archive sur la machine cible,
+ \item de détarer l'archive sur la machine cible,
+ \item de lancer les scripts prepare.sh, configure.sh, make.sh,
+   make\_check.sh et make\_install sur la machine cible
+ \item d'écrire le compte-rendu de l'installation dans le fichier de synthèse nuit\_eos.html
+\end{itemize}
+
+Le script shell prepare.sh permet, sur la machine cible sur laquelle il
+est lancée :
+\begin{itemize}
+ \item de détarer l'archive eos.tar.gz
+\end{itemize}
+
+
+
+
+%-----------------------------------------------
+\section{Installation}
+%-----------------------------------------------
+
+A partir de La version 1.5 il n'y plus qu'une seule méthode d'installation, la méthode de référence utilisant cmake.
+% \item une méthode alternative à l'utilisation de cmake se basant sur
+%   la méthode d'origine d'installation,
+% \item la méthode d'origine d'installation, à ne plus employer de préférence.
+
+Cette installation permet de relancer certaine étape du configure grâce aux commandes suivantes :
+\begin{itemize}
+\item make doc-doxygen : générer la documentation doxygen si l'option --with-doc-doxygen a été levée au configure ;
+\item make doc-latex : générer la documentation latex si l'option --with-doc-latex a été levée au configure ; 
+\end{itemize}
+%\subsection{Installation avec cmake}
+%-----------------------------------------------
+%\subsection{Installation sans cmake}
+%-----------------------------------------------
+%{\bf fonction read\_arg}
+%\begin{itemize}
+% \item lit les options,
+% \item détermine quelle partie de NEPTUNE\_install doit être exécutée
+% \item définit \$eos\_prefix,\$eos\_arch,
+% \item écrit un fichier .eos\_env\_arg 
+%\end{itemize}
+%
+%{\bf configure}
+%\begin{itemize}
+% \item écrit le fichier de configuration
+%   \$eos\_env\_file=.Neptune.bashrc dans le repertoire build
+%   incluant des options passées en argument et des options par défaut.
+% \item source l'enviromment
+% \item efface les précédents fichiers .out et .err s'ils existaient,
+% \item def\_prefix : définit les variables d'environnement associées
+%   au répertoire pour l'installation, 
+% \item info\_env : écrit des infos sur les paramètres, dont des infos
+%   pour renseigner le tableau nuit\_eos.html.
+% \item installe les plugins,
+% \item définit le contenu de config.hxx
+% \item création de l'API de eos
+% \item construit les makefile
+%\end{itemize}
+
+\end{document}

@@ -1,0 +1,94 @@
+       User's Guide of EOS code GUI 
+                  ---
+
+This GUI is connected to the EOS Component.
+
+
+1) Defining thermodynamic functions :
+
+   A function is defined by :
+   - a fluid,
+   - a Thermodynamic Model (e.g. Cathare2, Refprop),
+   - an Equation of Fluid,
+   - a thermodynamic input properties :
+     . a first input property and its range,
+       for saturation and 2D diagram calculations
+     . a second input property and its range
+       for 2D diagram calculation
+   - a thermodynamic output property to calculate,
+     without derivation : No
+     or with derivation : d.../dp, d.../dh).
+     ! saturated properties are only derived in pressure
+
+   ! Cathare Mixtures are not implemented.
+
+   All properties values are given in I.S.U.
+
+   Once a function is defined, it can be added (Add button).
+
+   Defined functions can be deleted (Delete button).
+
+   Defined functions can be redefined (Redefine button).
+ 
+   Informations about the functions are available by 
+   selecting one function in the list and pushing the
+   "Thermodynamic functions informations" button.
+
+2) Select thermodynamic functions :
+
+   To select a function, click on the corresponding line 
+   in the list.
+   The line of a selected function is colored.
+   To unselect a function, click again on the corresponding
+   line in the list. 
+   All the selected functions will be processed
+   using the GO button, but
+   only one function can be selected for a 3D plot.
+    
+
+3) Use the GO button to compute the selected thermodynamic 
+   functions and plot, print or write to a file the result.
+   Writen data files are two columns files (2D plot)
+   or three columns files (3D plot) that can be processed by 
+   a lot of "XY" plotters. The names of the files are
+   eoscrb1.data,  eoscrb2.data, etc...
+
+   For 3D plots, a MED file is written. It contains the
+   MED equivalent of the three columns file : a structured
+   mesh (X and Y) and a field (Z).
+   The name of the MED files is eoscrb1.med, eoscrb2.med, etc...
+
+   With the plot option a postscript file is also created
+   whose name is eosplot1.ps, eosplot2.ps, etc...
+
+4) 3D plot :
+ 
+   - the range of the second parameter must be defined,
+   - the plot can be moved (turning and zooming) with the mouse,
+   - the plot window is closed by an "enter" action
+     inside the shell where the GUI as been started,
+     you must do this action to get the GUI active,
+   - a MED file is written (see 3).
+
+5) Managing the opened windows :
+   
+   Help, print, error and 2D plot windows are 
+   persistent and live independently of the main
+   GUI. They should be closed by the user.  
+
+   Due to interactive facilities, 3D plot windows
+   stop the main GUI interaction as long as they are
+   opened. To get back to the main GUI, close them as
+   indicated in 4).   
+
+6) Managing generated files :
+   *.ps, *.data and *.med files are created during the use
+   of the EOS GUI. In order to keep them, their names are
+   different of the ones that already exist.
+   It is possible to remove some of this files using the
+   GUI opened with the "File Manager" button. 
+
+The user input data are saved in the
+file eosGUI.save when leaving the
+EOS GUI using the QUIT button, and they
+are restored when starting the EOS GUI.

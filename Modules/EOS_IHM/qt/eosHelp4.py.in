@@ -1,0 +1,87 @@
+# -*- coding: utf-8 -*-
+#****************************************************************************
+# Copyright (c) 2015 - 2016, CEA
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#*****************************************************************************
+
+
+# Form implementation generated from reading ui file 'test_textbrowser.ui'
+#
+# Created: Wed Jul 29 17:40:06 2009
+#      by: PyQt4 UI code generator 4.3
+#
+# WARNING! All changes made in this file will be lost!
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+try :
+   from PyQt4 import QtCore, QtGui # python 2
+   from PyQt4.QtGui import QMainWindow, QWidget, QApplication, QTextBrowser
+except :
+   from PyQt5 import QtCore, QtGui # python 3
+   from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QTextBrowser
+   
+class Ui_Form2(QMainWindow):
+    def __init__(self, parent=None):
+        QWidget.__init__(self, parent)
+        # print "on passe un"
+        self.setupUi(self)
+
+    def resizeEvent(self,eee1):
+        sold=eee1.oldSize()
+        snew=eee1.size()
+        xold=sold.width()
+        xnew=snew.width()
+        ynew=snew.height()
+        yold=sold.height()
+        #print "===old===",xold,yold
+        #print "===new===",xnew,ynew
+        d1=self.textBrowser.size()
+        x1=d1.width()
+        y1=d1.height()
+        dx=xnew-xold
+        dy=ynew-yold
+        #print "===dx===",dx,"===dy===",dy
+        if xold>0:
+            self.textBrowser.resize(QtCore.QSize(x1+dx,y1+dy))
+        
+
+    def setupUi(self, Form2):
+        # print "on passe deux"
+        Form2.setObjectName("Form2")
+        Form2.resize(QtCore.QSize(QtCore.QRect(0,0,500,450).size()).expandedTo(Form2.minimumSizeHint()))
+
+        self.textBrowser = QTextBrowser(Form2)
+        self.textBrowser.setGeometry(QtCore.QRect(20,20,460,410))
+        self.textBrowser.setObjectName("textBrowser")
+
+        # print "on passe trois"
+        self.retranslateUi(Form2)
+        QtCore.QMetaObject.connectSlotsByName(Form2)
+
+    def retranslateUi(self, Form2):
+        # print "on passe quatre"
+        Form2.setWindowTitle(QApplication.translate("Form2", "EOS HELP", None, 0)) # UnicodeUTF8
+
+        fond = QtGui.QBrush(QtGui.QColor(255,248,160))
+        fond.setStyle(QtCore.Qt.SolidPattern)
+        letext = QtGui.QBrush(QtGui.QColor(170,80,1))
+        letext.setStyle(QtCore.Qt.SolidPattern)
+        palette = QtGui.QPalette()
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Text,letext)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Base,fond)
+        self.textBrowser.setAutoFillBackground(True)
+        self.textBrowser.setPalette(palette)
+
+        self.textBrowser.setPlainText(QApplication.translate("Form2", open(str("@EOS_DOC_GUI_DIR@/eosHelp.txt")).read(), None, 0)) # UnicodeUTF8

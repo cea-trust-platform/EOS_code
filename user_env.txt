@@ -1,0 +1,117 @@
+#-------------------------------------------------------------------
+# User file allowing to define arguments to supply to the configure
+# script.
+#
+# For example, you can write the line --prefix=<path> in this file
+# instead of using "configure --prefix=<path>"
+#
+# The arguments of this file are read before the configure command
+# arguments. Therefore, if you use "configure --prefix=<path2>", the
+# <path2> is used instead of the path defined in this file.
+#
+# By default, this file is located in the directory containing the
+# configure script. You can use another location and another name by 
+# using "configure --user-env-file=<path>/<file_name>"
+#
+# A comment starts with a hash character (#) and ends at the end of
+# the physical line.
+#-------------------------------------------------------------------
+
+#-------------------------------------------------------------------
+# install directory used when "make install" is invoked
+#--prefix=<path>
+
+#-------------------------------------------------------------------
+# compilers
+#--cxx=<path>/<compiler>               # force the c++ compiler
+#--cc=<path>/<compiler>                # force the c compiler
+#--fc=<path>/<compiler>                # force the fortran compiler
+#--add_comp_flags=<opt1>,<opt2>,...    # add flags for compilation
+
+#-------------------------------------------------------------------
+# python API
+#--with-python-api                     # add the EOS python API (need swig and python-devel)
+#--without-python-api
+
+#-------------------------------------------------------------------
+# GUI
+#--with-gui                            # build the EOS GUI (need swig, python-devel,Qt4 or Qt3, pyQt, gnuplot, hdf5, med)
+#--without-gui                         # do not install EOS GUI (default)
+
+#-------------------------------------------------------------------
+# documentation
+#--with-doc-doxygen                    # add doxygen documentation      
+#--without-doc-doxygen                 
+#--with-doc-latex                      # add latex documentation
+#--without-doc-latex                   
+
+#-------------------------------------------------------------------
+# path to cmake (minimum version is 3.12)
+#--with-cmake-exec=<path>              # cmake executable
+
+#-------------------------------------------------------------------
+# path to doxygen
+#--with-doxygen=<path>                 # path to doxygen home directory
+#--with-doxygen-exec=<path>/doxygen    # force the doxygen executable (optional)
+
+#-------------------------------------------------------------------
+# path to python
+#--with-python=<path>                  # path to python home directory
+#--with-python-lib=<path>/lib          # path to python lib           (optional)
+#--with-python-include=<path>/include  # path to python include       (optional)
+#--with-python-exec=<path>/python      # force the python executable  (optional)
+
+#-------------------------------------------------------------------
+# optional swig
+# --with-swig-exec=<path>/<exec>
+
+#-------------------------------------------------------------------
+# path to med
+#--with-med=<path>                     # path to med home directory
+#--with-med-include=<path>/include     # path to med include directory  (optional)
+#--with-med-lib=<path>/lib             # path to med lib (optional)
+
+#-------------------------------------------------------------------
+# path to hdf5
+#--with-hdf5=<path>                    # path to hdf5 home directory
+#--with-hdf5-include=<path>/include    # path to hdf5 include directory (optional)
+
+#-------------------------------------------------------------------
+# path to mpi
+#--with-mpi=<path>                     # path to mpi home directory     (optional)
+#--with-mpi-lib=<path>/lib             # path to mpi lib directory      (optional)
+#--with-mpi-include=<path>/include     # path to mpi include directory  (optional)
+
+
+#-------------------------------------------------------------------
+# path to tirpc
+#--with-tirpc=<path>                   # path to tirpc home directory     (optional)
+#--with-tirpc-lib=<path>/lib           # path to tirpc lib directory      (optional)
+#--with-tirpc-include=<path>/include   # path to tirpc include directory  (optional)
+
+#--disable-rpc                         # disables rpc include/link, and disables flica4 plugin
+#--force-glibc-rpc                     # does not look for tirpc, and uses rpc provided by glibc
+                                       # (not available on recent systems)
+#--install-tirpc                       # compile embedded tirpc and install it within EOS
+
+
+#-------------------------------------------------------------------
+# optional plugins
+#--with-cathare=<file/path>           # build EOS with plugin Cathare
+#--with-cathare2=<file/path>          # build EOS with plugin Cathare2
+#--with-refprop9=<file/path>          # build EOS with plugin Refprop9
+#--with-refprop10=<file/path>         # build EOS with plugin Refprop10
+#--with-thetis=<file/path>            # build EOS with plugin Thetis
+#--with-hitec=<file/path>             # build EOS with plugin Hitec
+#--with-nak=<file/path>               # build EOS with plugin Nak
+#--with-flica4=<file/path>            # build EOS with plugin Flica4
+
+#-------------------------------------------------------------------
+# optional interpolator
+#--with-interpolator                   # build EOS with interpolator
+
+#-------------------------------------------------------------------
+# print the help message and exit
+#--help
+
+

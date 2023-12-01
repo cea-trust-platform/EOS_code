@@ -1,0 +1,100 @@
+# -*- coding: utf-8 -*-
+#****************************************************************************
+# Copyright (c) 2015 - 2016, CEA
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#*****************************************************************************
+
+
+# created by copy of eosHelp4.py and adapted
+
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+try :
+   from PyQt4 import QtCore, QtGui # python 2
+   from PyQt4.QtGui import QMainWindow, QWidget, QApplication, QTextBrowser
+except :
+   from PyQt5 import QtCore, QtGui # python 3
+   from PyQt5.QtWidgets import QMainWindow, QWidget, QApplication, QTextBrowser
+import os
+
+class Ui_Form3(QMainWindow):
+    """Similar to eosHelp4, it would be possible to have only one module. Open a window and write inside it a text which can belong from an argument character string ({Ui_Form4} class), or to be read on a file whose name is given as an argument ({Ui\_Form3} class)."""
+    def __init__(self, parent=None,thefile="",lancernavigateur=0):
+        if thefile == "":
+            return   
+        QWidget.__init__(self, parent)
+        # print "Ui_Form3 on passe un"
+        self.setupUi(self,thefile,lancernavigateur)
+
+    def setupUi(self, Form3,thefile,lancernavigateur):
+        # print "Ui_Form3 on passe deux"
+        Form3.setObjectName("Form3")
+        Form3.resize(QtCore.QSize(QtCore.QRect(0,0,611,331).size()).expandedTo(Form3.minimumSizeHint()))
+
+        self.textBrowser = QTextBrowser(Form3)
+        self.textBrowser.setGeometry(QtCore.QRect(10,20,591,291))
+        self.textBrowser.setObjectName("textBrowser")
+
+        # print "Ui_Form3 on passe trois"
+        self.retranslateUi(Form3,thefile,lancernavigateur)
+        QtCore.QMetaObject.connectSlotsByName(Form3)
+
+    def retranslateUi(self, Form3,thefile,lancernavigateur):
+        # print "Ui_Form3 on passe quatre"
+        Form3.setWindowTitle(QApplication.translate("Form3", "EOS PRINT", None, 0)) # UnicodeUTF8
+
+        self.textBrowser.setPlainText(QApplication.translate("Form3", open(str(thefile)).read(), None, 0)) # UnicodeUTF8
+
+        if lancernavigateur != 0:
+            #os.system("mozilla-firefox "+os.environ.get("NEPTUNE_ROOT")+"/Doc/Tables/index.html&")
+            os.system("firefox "+"@EOS_DOC_DIR@"+"/index.html&")
+
+class Ui_Form4(QMainWindow):
+    def __init__(self, parent=None,thetext=""):
+        if thetext == "":
+            return   
+        QWidget.__init__(self, parent)
+        # print "Ui_Form4 on passe un"
+        self.setupUi(self,thetext)
+
+    def setupUi(self, Form4,thetext):
+        # print "Ui_Form4 on passe deux"
+        Form4.setObjectName("Form4")
+        Form4.resize(QtCore.QSize(QtCore.QRect(0,0,311,131).size()).expandedTo(Form4.minimumSizeHint()))
+
+        self.textBrowser = QTextBrowser(Form4)
+        self.textBrowser.setGeometry(QtCore.QRect(10,20,291,91))
+        self.textBrowser.setObjectName("textBrowser")
+
+        # print "Ui_Form4 on passe trois"
+        self.retranslateUi(Form4,thetext)
+        QtCore.QMetaObject.connectSlotsByName(Form4)
+
+    def retranslateUi(self, Form4,thetext):
+        # print "Ui_Form4 on passe quatre"
+        Form4.setWindowTitle(QApplication.translate("Form4", "EOS ERROR", None, 0)) # UnicodeUTF8
+
+        blanc1 = QtGui.QBrush(QtGui.QColor(255,255,255))
+        blanc1.setStyle(QtCore.Qt.SolidPattern)
+        rouge1 = QtGui.QBrush(QtGui.QColor(255,0,0))
+        rouge1.setStyle(QtCore.Qt.SolidPattern)
+        jaune1 = QtGui.QBrush(QtGui.QColor(255,255,0))
+        jaune1.setStyle(QtCore.Qt.SolidPattern)
+        palette = QtGui.QPalette()
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Text,rouge1)
+        palette.setBrush(QtGui.QPalette.Active,QtGui.QPalette.Base,jaune1)
+        self.textBrowser.setAutoFillBackground(True)
+        self.textBrowser.setPalette(palette)
+        
+        self.textBrowser.setPlainText(QApplication.translate("Form4",str(thetext), None, 0)) # UnicodeUTF8

@@ -1,0 +1,545 @@
+
+-------------------------------------
+ @EOS_VERSION@    :: version courante
+-------------------------------------
+
+
+Voici une description succincte des modifications réalisées.
+
+Légende :
+- correction d'anomalie
++ ajout ou amélioration
+! avertissement de modifications dans la prochaine version
+
+
+============================
+ EOS-2.0       :: 29-09-2023
+============================
+
+Features :
++ Nouveaux modèles de mélange. On peut désormais mélanger la vapeur de n'importe quel model avec des incondensables issus de PerfectGas
++ Gestion des erreurs : pour les plugins Refprop, on peut récupérer le code d'erreur original avec l'accesseur EOS_Internal_Error::get_library_code()
+
+Structure EOS:
++ Amélioration de la détec tion de Python
++ Nouveau mode de compilation :
+  - Il est désormais interdit de configurer depuis le dossier des sources, il faut créer un dossier de build
+  - La pré-configuration des plugins se fait pendant l'étape CMake et non plus avant
+  + On peut appeler directement cmake
+  + Les fichiers sources ne sont plus modifiés pendant la configuration
+  + On peut lancer les tests avant d'installer ('make test' ou 'ctest' avant 'make install')
++ Première ébauche d'un packaging CMake et pkg-config, peut mal fonctionner pour l'instant
+- Déplacement des sources de l'Interpolateur là où elles sont compilées : Modules/EOS_IGen and Modules/EOS/Src/EOS_Ipp
+- Déplacement des interfaces entre les plugins et EOS là où elles sont compilées, et compilation conditionnelle en fonction des options utilisateur
++ Possibilité de compiler uniquement la librairie statique ou dynamique d'EOS
+
+Modèles Thermodynamiques (M.T.) :
++ Nouveau M.T. Cathare2, version 9.153
+- Bugfix dans les tables IAPWS de Cathare2
+- Integration de l'interface Cathare2-EOS dans les source du code EOS
+- Suppression du M.T. OVAP
+- Déplacement du M.T. Flica4 en dehors des sources d'EOS
+
+============================
+ EOS-1.11.0    :: 27-01-2023
+============================
+
+Structure EOS :
+- Retour en arrière jusqu'à la version 1.7.0
+- Toutes les évolutions entre la version 1.7.0 et la version 1.10.0
+  ont été annulées, mis à part la montée Python2/Qt4 -> Python3/Qt5
+
+Modèles Thermodynamiques (M.T.) :
+- Le M.T. Refprop s'appelle désormais Refprop9
+- Le M.T. Refprop2 s'appelle désormais Refprop10
+- EOS est compatible avec les versions 7.71.3 et 9.113 du M.T Cathare2
++ Ajout du M.T. Hitec
++ Ajout du M.T. Nak
+
+============================
+ EOS-1.10.0    :: 23-12-2021
+============================
+
+
+============================
+ EOS-1.9.1     :: 23-12-2021
+============================
+
+Structure EOS :
+- résolution des anomalies des fuites mémoire de fin de calcul
++ fonction NEPTUNE::Language_finalize révisée 
+  pour annihiler les fuites mémoire
+  à appeler systématiquement en fin de calcul
++ documentation révisée et centralisée sous forme html
+  (commande 'eos doc')
++ retrait de la qualification du type 'register' devenu obsolète
++ prise en compte automatique de la bibliothèque RPC 
+  (format de fichier XDR) dans ou hors libc
++ implémentation de FXDR en Langage C++
++ centralisation des méthodes info_*
++ ajout des noms d'unité des Caractéristiques Thermodynamiques
++ ajout de fonctions dans et hors Classe EOS_Field
++ remplacements d'instructions C assert par test 
+  et exception throwstd::runtime_error
++ Classe Strings, remplacement de la donnée-membre 'AString* data' 
+  par 'vector<string> data'
++ révision de la partie Function
+
+Modèles Thermodynamiques (M.T.) :
+- résolution des anomalies des fuites mémoire de fin de calcul
++ remplacements d'instructions C assert par test 
+  et exception throw::runtime_error
+
+M.T Cathare2 :
+- révision pour correction anomalie sur
+  compute_lambda_pT, compute_h_l_lim_p , compute_h_v_lim_p
+- remise à zéro de la taille des conteneur-vecteurs
+  bidimensionnés avant leur redimmensionnement
+
+M.T Perfectgas :
+- révision de la programmation et fichiers de données data
+
+M.T Thetis :
+- disparition des fuites mémoire de fin de calcul,
+  utilisation de la fonction C TVFREE
+
+
+============================
+ EOS-1.9.0     :: 18-12-2020
+============================
+
+
+============================
+ EOS-1.8.1     :: 30-11.2020
+============================
+
+Processus d'Installation de la bibliothèque EOS :
++ Révision du processus de configuration :
+  . cf. ./configure --help
+  . options de configuration --without non nécessaires (options par défaut)
+  . disparition de l'option --release (option par défaut)
+  . disparition de l'option --with-doc-latex
+  . nouvelle forme du fichier utilisateur de configuration : cf. user_env.txt
+  . plugin de M.T. sous forme de répertoire, copie ou bien lien symbolique
+  . ajout d'options de compilation      : --add_comp_flags
+  . ajout d'options d'édition des liens : --add_link_flags
+
+Documentation :
++ Structuration simple à l'aide de fichiers html : 
+  cf. fichier installé share/doc/Doc/index.html
+
+Structure EOS :
++ Modification de l'I.H.M.
+  afin d'utiliser  python2/pyqt4  ou bien  python3/pyqt5
++ Implémentation d'une nouvelle Méthode de zéro-function
++ six variables globales appelables dans l'Application EOS :
+  - NEOS::eos_version    : [string]          version d'EOS
+  - NEOS::eos_data_dir   : [string]          répertoire data
+  - NEOS::eos_index_file : [string]          fichier index.eos
+  - NEOS::eos_tm_file    : [string]          fichier index.eos.tm
+  - NEOS::eos_tmnb       : [int]             nombre de M.T.
+  - NEOS::eos_tmtable    : [vector<string>]  table des M.T.
++ sept méthodes pouvant être appliquées sur un objet EOS :
+  - info_thermmodel() : modèle thermodynamique (M.T.)
+  - info_fluidequa()  : équation fluide
+  - info_tmdatadir()  : répertoire data
+  - info_tmversion()  : version du M.T.
+  - info_mfluid()     : fluide
+  - info_mphase()     : phase du fluide
++ Nouveau champ phase de fluide dans le fichier index.eos
++ Utilisation de la Bibliothèque EOS dans un programme  Fortran
+
+Modèles Thermodynamiques (M.T.) :
++ Révision des cas tests main.cxx
++ M.T. Thetis :
+  . calcul sur la courbe de saturation en fonction de la variable Tsat
+  . ajout du calcul des C.T. cp_lsat, cp_vsat
+  . ajout des fonctions limites et caractéristique get_p_min, get_p_max, get_p_crit
++ M.T. Cathare :
+ . calcul C.T. sur la courbe de saturation en fonction de la variable Tsat
+ . courbe de saturation, ajout du calcul des C.T. cp_lsat, cp_vsat
+ . séparation calculs sur courbe d saturation et dans diagramme 2D
++ M.T. Flica4 :
+  . courbe de saturation, ajout du calcul des C.T. cp_lsat, cp_vsat
+  . ajout des fonctions limites get_p_min, get_p_max, get_h_min, get_h_max
++ M.T. Stiffenedgas, courbe de saturation, ajout du calcul des C.T. cp_lsat, cp_vsat
++ M.T. Ovap, courbe de saturation, ajout du calcul des C.T. cp_lsat, cp_vsat
++ M.T. Refprop  : correction source pur éviter avertissement à la compilation
++ M.T. Refprop2 : correction source pur éviter avertissement à la compilation
+
+
+============================
+ EOS-1.8.0     :: 13-12-2019
+============================
+
+Modèles Thermodynamiques (M.T.) :
++ nouvelle version du M.T. Cathare2 v25_3_mod8.89
+
+Processus d'Installation de la bibliothèque EOS :
+! disparition des options de configuration --without (options par défaut)
+! disparition de l'option --release (option par défaut)
+! disparition de l'option --with-doc-latex
+
+
+============================
+ EOS-1.7.1     :: 12-12-2019
+============================
+
+Code EOS :
+
++ Modification de l'I.H.M.
++ Révision de l'Interpolateur, décomposé en deux parties 
+  . IGen, génération de grilles de calcul 
+  . IUse, utilisation de grilles de calcul
++ Début de remplacement des structures de données spécifiques EOS 
+  par des structure standard C++ :
+  . passage de ArrOfDouble  à vector<double>
+  . passage de AString      à string
++ Remaniement des Tests :
+  . Tests fonctionnels pour chaque M.T.
+  . TCS
+  . Tests de l'Interpolateur
++ Classe EOS_Field :
+  . nouvelle définition du constructeur  EOS_Field::EOS_Field()
+  . remplacement de la donnée-membre   ArrOfDouble data  par
+    double *pdata ; int sdata  ; bool itmem  ;
+  . ajout de la donnée  property_number  et de la méthode  
+    get_property_number pour identifier le numéro global d'une C.T.
++ Disparition des macros #ifdef WITH_PLUGIN et #define WITH_IPP
+  identifiant les M.T. et l'Interpolateur
++ Classe EOS_Error_Field, ajout des méthodes get_nbpt_ok, 
+  get_nbpt_ko, get_list_ok, get_list_ko, get_nbptr_ok, get_nbptr_ko,
+  get_listr_ok, get_listr_ko pour identifier le nombre et la liste 
+  des points en erreur
++ Classe EOS_Fields, 
+  . ajout de méthodes afin de copier des objets en préservant ou non 
+    la zone mémoire
+  . ajout de la méthode  EOS_Fields::push_back
+- Nouveaux indices d'erreur :
+  . static const int DATA_NUMBER     = 0x60000003 ;
+  . static const int INPUT_PROPERTY  = 0x60000004 ;
+  . static const int OUTPUT_PROPERTY = 0x60000005 ;
++ Nouvelles fonctions communes :
+  . num_to_str : conversion d'un entier ou flottant en chaîne
+  . form_float, formc_float : écritures aux formats scientifiques
+  . whitee : suppression des blancs de fin de chaîne de caractères
++ Classe AString, reprogrammation de la méthode de redirection 'operator>>'
++ Classe EOS, afin d'obtenir les noms fichiers des M.T. et des E.F installés
+  . modification de la méthode get_index_file
+  . création de la méthode get_tm_file
++ Installation du programme de tests fonctionnels exhaustifs pour 
+  tous les Modèles Thermodynamiques (M.T.), toutes les Equations Fluide (E.F.)
+  et toutes les Caractéristiques Thermodynamqiues (C.T.) calculables :
+  Modules/EOS/Tests/C++/main.cxx
+
+Modèles Thermodynamiques (M.T.) :
+
++ Tous les M.T., Cathare, Cathare2, Flica4, Ovap, Perfectgas, Refprop(nist 9.1),
+  Refprop2(nist 10.0), Thetis, Stiffenedgas, sont structurés sous la forme de
+  plugin (module externe à la structure EOS, cf. Installation.txt)
+
++ Concernant les mélanges de gaz des M.T. Cathare et Cathare2,
+  remplacement de la Classe EOS_Mixing par des méthodes spécifiques
+  (cf. ci-dessous "Mise en place du fluide-mélange"). La nouvelle
+  programmation dans un code client est donnée dans Utilisation.txt 
+  (cf. "Mélange de gaz avec le M.T. Cathare ou Cathare2")
+
+M.T. Cathare :
++ Mise en place du fluide-mélange dans la Classe CATHARE_Water,
+  nouvelles méthodes set_mixing, unset_mixing, seti_mixing, get_nincon
+- Fluide Freon-R12, anomalie corrigée : dans la procédure FTLR12,
+  les données d'entrée, paramètres de la procédure, doivent rester 
+  inchangées durant le calcul des C.T.
+
+M.T. Cathare2 :
++ la méthode EOS_Cathare2::compute(const EOS_Fields &, EOS_Fields &t, EOS_Error_Field &)
+  devient le point d'entrée pour le calcul effectif des C.T.
++ Création de deux méthodes principales dans la Classe CATHARE2 :
+  - calc2_single : calcul des fluides pures
+  - calc2_mixing : calcul des mélanges de gaz
++ Initialisation de nouvelles données de la Classe CATHARE2
+  dans le fichier Cathare2_init.hxx
++ Création des méthodes initpare, dimpare, dimpare_1, dimpari, nullpare, nullpare_1
+  d'initialisation ou de création de zones mémoires
++ Namespace CATHARE2 devient NCATHARE2
++ Retrait des constructeurs  CATHARE2(const CATHARE2&)  et CATHARE2()  non utilisés
++ Disparition des méthodes unmap_eos_field , unmap_eos_fields
++ Mise en place du fluide-mélange dans la Classe CATHARE2,
+  nouvelles méthodes set_mixing, unset_mixing, seti_mixing, get_nincon
++ Révision du calcul des Caractéristiques au Point Critique (Pcrit, Tcrit, hcrit),
+  nouvelle méthode CATHARE2::calc2_pcritical
++ Nouveaux noms des méthodes de conversion d'unités avant et après le calcul
+  effectif des C.T. : unitc_usi_c2, unitc_c2_usi
++ Ajout des deux paramètres manquants, "int ill, int ivstat", aux méthodes fpsattfld, 
+  ftsatpfld, ftliqfld, ftvapfld afin d'identifier les erreurs éventuelles de calcul
++ Création de la méthode test CATHARE2::perrcal, appelée après le calcul effectif des C.T.
++ Réécriture de la fonction erpile, d'échange de chaînes de caractères entre les
+  languages Fortran et C++
++ Ajout de la méthode CATHARE2::get_rho_crit, de calcul de la masse volumique 
+  au Point critique
++ Méthodes calc2_single et calc2_mixing, test des données d'entrée,
+  sortie en erreur si les bornes sont dépasséees
+ - Bien distinguer les C.T. calculées dans le Plan Thermodynamique Ph de celles
+   que l'on calcule dans le Plan PT, création de variables en conséquence dans
+   le code
+
+M.T. Refprop2 :
++ Introduction du nouveau M.T. Refprop2, attaché à la version REFPROP-NIST 10.0,
++ Nouvelle Classe EOS_Refprop2
++ TCS et Tests ont été mises en place
+
+Processus d'Installation de la bibliothèque EOS :
+
++ La configuration, la première étape de l'Installation de la bibliothèque EOS,
+  est désormais réalisée par un seul script-shell : configure
++ Tous les Modèles Thermodynamiques (M.T.) sont introduits dans l'Application EOS,
+  à l'Installation, sous forme de plugin grâce à l'option --with-plugin={plugin} 
+  du script-shell configure (cf. configure --help)
++ Prise en compte de la dernière version d'openmpi 4.0.0
+
+
+Codes client et Utilisation de la bibliothèque EOS :
+
++ Nouvelle programmation du mélange de gaz des  M.T. Cathare ou Cathare2
+  (cf. Utilisation.txt "Mélange de gaz avec le M.T. Cathare ou Cathare2")
+
+
+Documentation :
+
++ Révision des guides d'Installation et d'Utilisation
+  cf. fichiers Installation.txt et Utilisation.txt du répertoire Readme/fr
+
+
+============================
+ EOS-1.7.0     :: 20-12-2018
+============================
+
+Processus d'installation de la bibliothèque EOS :
+- utilisation d'un plugin Refprop sans fichier model-version.txt
+
+
+============================
+ EOS-1.6.1     :: 29-10-2018
+============================
+
+Code EOS :
+- Dans le fichier Function.cxx, remplacement de  value=strtod(str,'\0');
+                                          par value=strtod(str,NULL);
+- Déclaration explicite du constructeur et du destructeur de la 
+  classe EOS_Std_Error_Handler
++ Redéfinition des entités C.T. des fichiers _properties.hxx,
+  remplacement du type string par le type typrop :
+  class typrop { public: string name ; string definition ; };
++ Une fonction générique f_eosdatadir détermine le nom
+  du répertoire des données data : chaîne de caractères eos_data_dir
++ Programmation plus rigoureuse avec l'introduction des options
+  de compilation "-Wall -Wextra" ;
+  corrections des anomalies constatées lors de la compilation en C, C++
++ Dorénavant programmation du code EOS suivant la norme C++11
+
+Modèles Thermodynamiques (M.T.) :
+- M.T. Cathare2, Initialisation à zéro des variables destinées à receuillir
+  les résultats de calcul dans les méthodes calc2_p, calc2_t, calc2_ph, calc2_pt
++ M.T. Cathare2, la méthode set_mixing_properties a maintenant le type EOS_Error
+- M.T. Refprop fichier EOS_Refprop.cxx , fonction EOS_Refprop::calrp_optim_ph
+  pour le calcul des dérivées numériques [dbeta/dP]h et [dbeta/dh]P
+  bien distinguer les petites variations en fonction de T et de rho
++ M.T. Cathare, Fluide Water et freon-R12 ajout des fonctions
+  de détermination de Constantes :
+  get_p_max, get_p_min, get_h_max, get_h_min, get_T_max, get_T_min
++ Tous M.T. les fonctions init ont maintenant le type EOS_Error avec
+  deux valeurs possibles EOS_Error::good ou bien EOS_Error::error
++ Tous M.T., les noms des variables de type EOS_Error sont toutes
+  préfixé par le nom de ce type, e.g. EOS_Error::error
+
+Codes client et utilisation de la bibliothèque EOS :
++ Amélioration des sorties de L'utilitaire  eos_mec
+
+Processus d'installation de la bibliothèque EOS :
++ Installation plus générale du plugin Refprop 
+- Modification de CMakeLists.txt pour éviter une erreur d'installation
+  lorsque l'on ne souhaite pas son integration dans la Bibliothèque EOS
+
+Documentation :
++ révision des guides d'installation et d'utilisation écrits
+  en français et en anglais, modification des fichiers 
+  index.html, Readme/fr/* , Readme/en/*
+
+
+============================
+ EOS-1.6.0a    :: 25-05-2018
+============================
+
+Modèles Thermodynamiques (M.T.) :
++ M.T. Cathare2, introduction de nouvelles méthodes de calcul
+                 ponctuel de C.T. :
+       compute_Ph    : calcul dans le Plan p-h
+       compute_PT    : calcul dans le plan P-T
+       compute_Psat  : calcul sur la courbe de saturation en fonction de Psat
+       compute_Tsat  : calcul sur la courbe de saturation en fonction de Tsat
++ M.T. Cathare2, suppression de la génération automatique de code C++ lors de
+                 l'installation du plugin
+- M.T. Cathare2, correction d'anomalies dans la fonction CATHARE2_IAPWS::fhpfld
+- M.T. Cathare2, correction d'anomalies sur tous les E.F. liquide et vapeur
+  des C.T. suivantes  [d(rho)/dP(P,h)]h , [d(rho(P,T))/dP]T
+                      [d(rho)/dh(P,h)]P , [d(rho(P,T))/dT]P
+                      [d(cp)/dP(P,h)]h  , [dcp(P,T)/dP]T
+                      [d(cp)/dh(P,h)]P  , [dcp(P,T)/dT]P
++ M.T. Cathare2 et E.F. IAPWSLiquid, IAPWSVapor, 23 variables EOS
+  sont rendues visibles  pour une utilisation comme C.T. 
+  (cf. ci-dessous 35 nouvelles C.T. disponibles)
++ tous M.T., modification des noms des méthodes C++ de façon à réserver 
+  le mot compute aux utilisateurs du code EOS
+
+Codes client et utilisation de la bibliothèque EOS :
++ pour le M.T. Cathare2 et E.F. IAPWSLiquid, IAPWSVapor
+  35 nouvelles C.T. sont disponibles
+
+
+============================
+ EOS-1.6.0     :: 20-06-2017
+============================
+
+Modèles Thermodynamiques (M.T.) :
++ M.T. Refprop, dorénavant emploie de la version refprop-9.1 de NIST
++ M.T. Refprop, les 5 fluides de type  PPF [pseudo pur fluid] sont maintenant disponibles
++ M.T. Refprop, révision des fonctions d'initialisation des objets EOS
++ M.T. Thetis, dix fluides peuvent être traités simultanément, au lieu de deux
+
+Codes client et utilisation de la bibliothèque EOS :
++ Une seule bibliothèque physique est mise à la disposition des utilisateurs d'EOS,
+  . soit une bibliothèque dynamique avec l'utilisation du fichier libeos.so 
+  . soit une bibliothèque statique  avec l'utilisation du fichier libeos.a 
++ Réduction du temps de calcul CPU des Fonctions Thermodynamiques du M.T. Refprop
+  dans le cas d'une demande de calcul simultané de plusieurs Caractéristiques
+  Thermodynamiques (C.T.) avec l'emploi d'objets de type EOS_Fields
++ Prise en compte de la licence NIST-Refprop : limitation du nombre d'Utilisateurs
+  du M.T. Refprop
++ Relâchement des restrictions sur les noms de C.T. introduites en chaîne de
+  caractères lors de l'appel des fonctions de calcul 'compute' ou de la définition d'objets
+  'EOS_Field' : insensibilité à la casse, les caractères non alphanumériques
+  deviennent transparents
++ Changement de noms des méthodes sur les objets de type EOS_Field :
+  . set_name            devient set_property_title
+  . set_property        devient set_property_name
+  . get_name            devient get_property_title
+  . get_property_name   inchangé
++ Modification des fichiers pythons d'interfaçage
+  . correction d'anomalie dans la liste des fluides (fichier eosAva.py)
+  . nouvelles fonctions list_eostm, list_eosfld, buildIndexFldDict (fichier eosUtil.py)
++ Modification de l'IHM pour rendre son utilisation plus facile et intuitive
++ Manuel d'Utilisation de la Bibliothèque EOS disponible
+- Remplacement des fonctions compute_h_sat_T  par compute_h_l_sat_T ou compute_h_v_sat_T
+  selon l'état du fluide
+! Futur changement des noms de fonctions de calcul comportant des noms de Variable
+  d'Etat, ainsi :
+  - la notation de la pression 'p' passera en majuscule
+  - la fonction de calcul implicite dans le plan P-h 'compute' portera le nom  compute_Ph
+
+
+============================
+ EOS-1.5.0     :: 11-01-2016
+============================
+
+
+Modèles Thermodynamiques (M.T.) :
++ Un seul format de plugin :
+  - model-version.txt
+          fichier texte d'identification du nom et du numéro de version du M.T.
+  - SRC  : répertoire du source du M.T.
+           SRC/list_functions.txt : liste des fonctions
+  - TCS  : répertoire des fichiers test
+  - DATA : éventuellement répertoire des données du M.T.
++ Un fichier plugin est compressé sous le format tgz ou tar.bz2
++ Modèle Thermodynamique Refprop : 
+  ° le plan thermodynamique Pression-Entropie est visible dans EOS
+  ° les versions de Refprop 8.0 et 9.1 sont détectées automatiquement
+  ° les macros USE_REFPROP_8 et USE_REFPROP_9 correspondant aux numéros de
+    version sont utilisables en langage C++
+  - correction d'anomalies dans l'implémentation de Refprop dans EOS
++ Le Modèle Cathare version 1.5.b (eau + fréon R12) est disponible
+  sous forme de plugin
++ Le Modèle Thetis version 2.1.a  est également disponible sous forme de plugin
+
+
+Processus d'installation de la bibliothèque EOS :
++ Génération de code C++ : écriture d'un script-python pour la génération automatique
+  de méthodes de calcul des caractéristiques thermodynamiques 
++ La configuration de l'installation repose entièrement sur CMAKE : les fichiers Makefile
+  sont générés automatiquement
++ De nouvelles options à l'étape de configuration :
+  --with-cmake-exec=<bin_cmake>      : utilisation d'un exécutable CMAKE spécifique
+  --add_comp_flags=<opt1>,<opt2>,... : ajout d'options générales de compilation
+  --with-cathare=<file/path>         : ajout du M.T. Cathare sous forme de plugin
+  --with-thetis=<file/path>          : ajout du M.T. Thetis  sous forme de plugin
++ Des options disparaissent :
+  --with-gui-qt3                                 : QT3 logiciel obsolète
+  --with-cmake                                   : option à utiliser --with-cmake-exec
+  --install-with-cmake                           : un seul type d'installation avec CMAKE
+  --install-without-cmake                        : -   -     -         -        -     -
+  --g++ , --g++-name  et --cxx-name              : option à utiliser l'option --cxx
+  --gcc , --gcc-name  et --cc-name               : option à utiliser l'option --cc
+  --fortran , --fortran-name et --fc-name        : option à utiliser l'option  --fc
+  --with-doxygen, --doxygen-path, --doxygen-exe  : option à utiliser l'option --with-doxygen-exec
+
+
+Codes client et utilisation de la bibliothèque EOS :
++ Une seule bibliothèque est mise à la disposition des utilisateurs d'EOS,
+  soit une version dynamique : fichier libshared_eos.so 
+  soit une version statique  : fichier libstatic_eos.a
++ Les données des Modèles Thermodynamiques sont désormais modifiables par
+  l'utilisateur,
+  la variable shell USER_EOS_DATA ou NEPTUNE_EOS_DATA est positionnée sur le
+  répertoire data de l'utilisateur
++ L'utilitaire  eos_data  permet de créer une base de données de fluides
+  propre à chaque utilisateur
++ L'utilitaire  eos_mec  permet de lister les noms des fluides, des modèles
+  thermodynamiques, des équations de fluides et des caractéristiques utiles
+  à la définition des objets EOS dans un code client
++ Une approche unifiée pour obtenir les constantes thermodynamiques
+  à l'aide des méthodes get_
+  e.g. get_h_min, get_T_crit, get_p_crit, ...
+
+
+
+============================
+ EOS-1.4.0     :: 27-10-2014
+============================
+
+Programmes des caractéristiques de fluides :
++ remplacement de la précédente version de la table THETIS par la version
+  thetis-2.1
+
+Pré-requis et options à l'installation :
++ disparition du format de données MED-2 au profit du format MED-3
++ l'interpolateur fait désormais parti des sources d'EOS et n'est plus un
+  plugin, il est installé lorsque l'on donne l'option sans arguments 
+  --with-interpolator
++ l'interpolateur et l'IHM sont désormais disponibles simultanément, pour cela
+  il faut donner les options --with-gui  --with-interpolator
++ désormais l'utilisation de l'IHM ne nécessite plus l'appel aux logiciels MED
+  et HDF5 pour cela retirer les options d'installation --with-med={rep_med} et
+  --with-hdf5={rep_hdf5}
+  attention : l'utilisation de l'interpolateur nécessite encore les logiciels
+              MED et HDF5
++ sur certains systèmes d'exploitation, le logiciel HDF5 est configuré
+  pour être utilisé avec la bibliothèque MPI, une installation non standard de
+  MPI nécessite alors l'introduction de la nouvelle option --with-mpi={rep_mpi}
++ le logiciel SWIG installé de manière non standard est appellable
+  avec la nouvelle option d'installation --with-swig-exec={fic_swig}
++ attention : 
+  . l'installation sans CMAKE est obsolète
+    (option --install-without-cmake), dans la prochaine version d'EOS
+    l'installation sera réalisée uniquement avec le logiciel CMAKE
+  . l'installation à l'aide de QT3 est obsolète, cette version de QT sera
+    supprimée dans la prochaine version d'EOS
+
+Codes client :
++ si EOS est installé avec l'interpolateur (--with-interpolator),
+  l'édition de liens d'un code client doit être réalisée
+  avec la bibliothèque libCCEOSIGenAPI.so en plus des deux précédentes
+  bibliothèques liblCCEOSAPI.so, libCCLanguageAPI.so
+
+Développement :
++ en langage C++ ou fortran, une fonction est identifiée par un même nom
+  l'ajout du caractère '_' en fin de mot n'est pas nécessaire

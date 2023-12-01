@@ -1,0 +1,9 @@
+#!/bin/bash
+#=======================================================
+# Script for EOS GUI
+#=======================================================
+
+echo "EOS GUI has not been chosen at configure stage."
+echo "Use --with-gui option at configure stage if you want to use it."
+
+exit 0

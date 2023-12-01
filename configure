@@ -1,0 +1,139 @@
+#!/bin/bash
+#=============================================================================
+# EOS - Equation Of State - Neptune Project
+#
+# Shell script for EOS installation
+#=============================================================================
+set -u
+
+# ----------------------------------------
+# functions
+info()
+{
+echo "  " $*
+}
+error()
+{
+info "ERROR configure : " $*
+exit 1
+}
+eos_usage()
+{
+    cat <<EOF
+Usage: $0 [options]
+
+Options: [defaults in brackets after descriptions]
+  --user-env-file=<path>/<file>         use <file> for eos configuration
+                                        [$user_env_file] 
+  --release                             build for release (default)
+  --debug                               build for debug
+  --prefix=<path>                       install file in the directory <path>
+  --execdir=<path>                      set the build directory, cannot be $dirconfigure
+  --with-gui                            build the EOS GUI (need swig, python-devel, Qt4, pyQt, gnuplot, hdf5, med) (default)
+  --without-gui                         do not install EOS GUI
+  --with-python-api                     add the EOS python API (need swig and python-devel)
+  --without-python-api                  do not add the EOS python API (default)
+  --with-doc-doxygen                    add doxygen documentation (default)
+  --without-doc-doxygen                 do not add doxygen documentation
+  --with-doxygen-exec=<bin_doxygen>     doxygen executable
+  --with-doc-latex                      add latex documentation
+  --without-doc-latex                   do not add latex documentation (default)
+  --cxx=<path>/<compiler>               force the c++ compiler
+  --cc=<path>/<compiler>                force the c compiler
+  --fc=<path>/<compiler>                force the fortran compiler
+  --add_comp_flags=<opt1>,<opt2>,...    add flags for compilation
+  --static-only                         do not build shared library
+  --shared-only                         do not build static library
+  --with-cmake-exec=<bin_cmake>         cmake executable
+  --with-python-exec=<path>/<exec>      force the python executable (optional)
+  --with-python-lib=<path>              path to python/lib (optional)
+                                        Warning: if with-python-include is used, must point to python/lib/libpython.so
+  --with-python-include=<path>          path to python/include/pythonX.Y (optional)
+                                        Warning: if set, you must also set --with-python-lib=/path/to/libpython.so
+  --with-swig-exec=<bin_swig>           swig executable
+  --force-glibc-rpc                     uses rpc provided by glibc and do not try to search/install tirpc (optional)
+  --with-tirpc=<path>                   path to tirpc         (optional)
+  --with-tirpc-lib=<path>               path to tirpc/lib     (optional)
+  --with-tirpc-include=<path>           path to tirpc/include (optional)
+  --install-tirpc                       compile embedded tirpc and install it within EOS (optional)
+                                        tirpc archive is downloaded from internet, excepted if
+                                        --with-tirpc-archive-path=<path> is specified
+  --with-tirpc-archive-path=<path>      to give the path to libtirpc.tar.bz2 to compile within EOS (optional)
+  --help, -h                            print this message and exit
+
+Options only used for GUI:
+  --with-med=<path>                     path to med 
+  --with-med-lib=<path>                 path to med/lib     (optional)
+  --with-med-include=<path>             path to med/include (optional)
+  --with-hdf5=<path>                    path to hdf5
+  --with-hdf5-lib=<path>                path to hdf5/lib    (optional) 
+  --with-mpi=<path>                     path to mpi         (optional)
+  --with-mpi-lib=<path>                 path to mpi/lib     (optional)
+  --with-mpi-include=<path>             path to mpi/include (optional)
+
+Options to install plugins:
+  --with-cathare=<file/path>            build EOS with plugin Cathare   (.tgz/.bz2 file or directory path)
+  --with-cathare2=<file/path>           build EOS with plugin Cathare2  (.tgz/.bz2 file or directory path)
+  --with-refprop9=<file/path>           build EOS with plugin Refprop9  (.tgz/.bz2 file or directory path)
+  --with-refprop10=<file/path>          build EOS with plugin Refprop10 (.tgz/.bz2 file or directory path)
+  --with-thetis=<file/path>             build EOS with plugin Thetis    (.tgz/.bz2 file or directory path)
+  --with-hitec=<file/path>              build EOS with plugin Hitec     (.tgz/.bz2 file or directory path)
+  --with-nak=<file/path>                build EOS with plugin Nak       (.tgz/.bz2 file or directory path)
+  --with-flica4=<file/path>             build EOS with plugin Flica4    (.tgz/.bz2 file or directory path)
+                                        May need libtirpc on recent systems
+  --with-interpolator                   build EOS with interpolator
+
+Some influential environment variables:
+  CXX                                   force the c++ compiler
+  CC                                    force the c compiler
+  FC                                    force the fortran compiler
+You may use these environment variables to override the choice made by configure or to help it to find
+ libraries and programs with nonstandard names or locations.
+
+EOF
+    exit 1
+}
+
+# ----------------------------------------
+# init
+dirconfigure=$(dirname $0)
+dirconfigure=$(cd $dirconfigure ; pwd)
+
+# ----------------------------------------
+# Search if user-env-file is provided, or help requested
+user_env_file=${dirconfigure}/user_env.txt    # default
+for i in "$@"; do
+    case $i in
+        --user-env-file=*)
+            user_env_file="${i#*=}"
+            ;;
+        --help | -h)
+            eos_usage
+            ;;
+    esac
+done
+if [ ! -f $user_env_file ] ; then
+    error "the user env file is not found : $user_env_file"
+fi
+
+# ----------------------------------------
+# read options defined in the user env file
+options=""
+for i in `cut -d '#' -f 1 ${user_env_file} |sed -e "s/[ \t\f\v\r]//g;/^$/d"` # remove comments and whitespaces
+do
+    options="${options} ${i}"
+done
+
+# ----------------------------------------
+# read options supplied by argument
+options="${options} $@"
+
+# ----------------------------------------
+# configure
+${dirconfigure}/Tools/configure_with_cmake.sh $options
+status=$?
+
+# ----------------------------------------
+# end
+exit $status
+

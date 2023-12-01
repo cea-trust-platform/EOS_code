@@ -1,0 +1,203 @@
+
+                               Installation de la Bibliothèque EOS
+                               ===================================
+
+
+ 
+ La Bibliothèque EOS permet de calculer, pour un Modèle
+ Thermodynamique (M.T.) et une Equation Fluide (E.F.) donnés,
+ les Caractéristiques Thermodynamiques (C.T.) principalement 
+ dans les Plans Thermodynamiques Pression-enthalpie et Pression-Température
+ (P.T. P-h et P-T) et dans la zone de saturation en fonction de la Pression
+ (Psat) ou de la Température (Tsat).
+
+ Nous décrivons ici les opérations à réaliser par l'Administrateur du code EOS,
+ pour installer la Bibliothèque EOS sur un Système d'Exploitation UNIX.
+ Celles-ci peuvent être regroupées en cinq étapes :
+
+ Etape 1 : Préparation de l'installation,
+           suivant les besoins propres à l'installation de la 
+           Bibliothèque EOS et les besoins des Utilisateurs,
+           l'Administrateur doit mettre en place des Pré-requis
+           et choisir les M.T. (cf. ci-dessous)
+
+ Etape 2 : Configuration de l'environnement logiciel en appelant le 
+           script configure depuis un dossier de build avec ses options
+           (cf. ci-dessous)
+
+ Etape 3 : Compilation, Edition de liens
+           commande en ligne : make
+
+ Etape 4 : Test de la Bibliothèque installée
+           commande en ligne : make test
+             ou bien
+           commande en ligne : ctest
+
+ Etape 5 : Copie des fichiers dans le Répertoire d'Installation $REPI
+           commande : make install
+
+
+ Préparation de l'installation : les Logiciels nécessaires
+ -----------------------------
+
+ Voici la liste de ces logiciels :
+ - Cmake,                            pour la configuration, la compilation et l'édition de liens
+ - Compilateurs fortran, C, C++,     pour la compilation et l'édition de liens
+ - QT4, Python, PyQt, Swig, gnuplot, pour l'IHM
+ - MED3-fichier, HDF5                pour l'IHM et le Modèle Interpolateur (en préparation)
+ - Doxygen et LaTeX,                 pour la Documentation
+
+ ! Sous certains environnement système, le logicel HDF5 est installé en mode
+   parallèle avec le logiciel MPI qui devient alors un logiciel nécessaire
+
+
+ Préparation de l'installation : choix des Modèles Thermodynamiques
+ -----------------------------
+
+ Huit Modèles Thermodynamiques (M.T.) sont disponibles,
+ actuellement quatre M.T. sont intégrés dans le code EOS, il s'agit de :
+ Flica4, PerfectGas, StiffenedGas.
+ Les quatre autres M.T. sont intégrables dans la Bibliothèque EOS
+ sur demande dans l'étape de Configuration sous forme de plugin : 
+ Cathare, Cathare2, Refprop, Thetis.
+ En régle général, un plugin est un fichier archive comprimé.
+ cf. ci-dessous "Structure d'un plugin".
+
+ Le M.T. Refprop provient du progiciel REFPROP version 9.1 de NIST.
+ Afin de gérer le nombre limité de jetons d'utilisation, il est prévu
+ que les Utilisateurs de la Bibliothèque EOS avec le M.T. Refprop
+ soient inscrits dans le groupe Unix refprop préalablement défini 
+ sur le système d'exploitation.
+
+
+ Préparation de l'installation : choix des répertoires
+ -----------------------------
+
+ L'Administrateur du code source EOS doit choisir :
+
+ - Un Répertoire de Travail : $REPT
+   c'est le lieu de fabrication de la Bibliothèque EOS
+
+ - Un Répertoire d'Installation : $REPI
+   c'est le lieu de résidence de la Bibliothèque EOS ;
+   à l'issue de l'Installation on trouve dans $REPI :
+   . le répertoire bin,     lieu des utilitaires (e.g. eos, eos_mec)
+   . le répertoire data,    lieu des données des M.T.
+   . le répertoire doc,     lieu de la documentation EOS
+   . le répertoire include, lieu des fichiers d'entête *.hxx
+   . le répertoire lib,     lieu des fichiers des bibliothèques
+                            statique (libeos.a) et dynamique (libeos.so)
+   . le répertoire share,   lieu des cas tests
+
+ L'installation est réalisée par l'Administrateur dans un Terminal
+ en ligne de commande Shell, dans le Répertoire de Travail $REPT.
+
+
+ Configuration
+ -------------
+
+ Il s'agit de définir l'environnement logiciel pour la Bibliothèque EOS,
+ à l'aide de la commande configure et d'options, celles-ci peuvent être 
+ introduites :
+ . soit sur la ligne de commande 
+ . soit dans un fichier texte  $FICT  donné avec l'option --user-env-file :
+   --user-env-file=$FICT
+
+ Voici quelques options possibles :
+ --help , -h                 : liste des options admissibles
+ --user-env-file=$FICT       : introduction d'un fichier texte de configuration $FICT
+                               ! voir par exemple le  fichier  user_env.txt
+                               ! les options du fichier $FICT sont
+                                 prioritaire devant les options en ligne de commande
+ --prefix=$REPI              : définition du Répertoire d'Installation $REPI
+                               par défaut  c'est le répertoire de Travail $REPT
+
+ --with-gui , --without-gui  : construction Oui/Non de l'IHM EOS, 
+                               représentation graphique des Caractéristiques 
+                               Thermodynamiques (C.T.) calculés
+
+ --with-cmake-exec=$FB_CMAKE : force l'utilisation de l'exécutable Cmake $FB_CMAKE
+
+ --with-cathare=$P_CATHARE   : intégration du Modèle Thermodynamique (M.T.) Cathare
+                               dans la Biliothèque EOS par l'introduction
+                               du plugin $P_CATHARE
+ --with-cathare2=$P_CATHARE2 : intégration du M.T. Cathare2
+                               dans la Biliothèque EOS  par l'introduction
+                               du plugin $P_CATHARE2
+ --with-refprop9=$P_REFPROP  : intégration du M.T. Refprop 9
+                               dans la Biliothèque EOS  par l'introduction
+                               du plugin $P_REFPROP
+ --with-refprop10=$P_REFPROP : intégration du M.T. Refprop 10
+                               dans la Biliothèque EOS  par l'introduction
+                               du plugin $P_REFPROP
+                               cf. ci-dessous "Utilisation du M.T. refprop"
+ --with-thetis=$P_THETIS     : intégration du M.T. Thetis
+                               dans la Biliothèque EOS par l'introduction
+                               du plugin $P_THETIS
+ --with-hitec=$P_HITEC       : intégration du M.T. Hitec
+                               dans la Biliothèque EOS  par l'introduction
+                               du plugin $P_HITEC
+ --with-nak=$P_NAK           : intégration du M.T. Nak
+                               dans la Biliothèque EOS  par l'introduction
+                               du plugin $P_NAK
+ --with-flica4=$P_FLICA4     : intégration du M.T. Flica4
+                               dans la Biliothèque EOS  par l'introduction
+                               du plugin $P_FLICA4
+
+                               ! un plugin est un fichier archive comprimé (.tgz ou .bz2)
+                                 ou un nom de répertoire
+                                 cf. ci-dessous "Structure d'un plugin"
+
+ --with-interpolator         : intégration de l'Interpolateur dans la Biliothèque EOS
+                               (en préparation)
+
+ --debug                     : installation d'EOS en mode debug
+                               par défaut mode release
+
+ et d'éventuelles options pour les logiciels nécessaires :
+  --with-med=<path>                  : chemin au logiciel MED
+  --with-med-lib=<path>              : chemin de MED/lib     (optional)
+  --with-med-include=<path>          : chemin de MED/include (optional)
+  --with-hdf5=<path>                 : chemin de HDF5
+  --with-hdf5-lib=<path>             : chemin de HDF5/lib    (optional) 
+  --with-mpi=<path>                  : chemin de MPI         (optional)
+  --with-mpi-lib=<path>              : chemin de MPI/lib     (optional)
+  --with-mpi-include=<path>          : chemin de MPI/include (optional)
+
+ enfin d'éventuelles options pour la compilation :
+ --cxx=<path>/<compiler>             : force l'utilisation d'un compilateur C++
+                                       par défaut compilateur C++ du système 
+                                       ou donné par la variable CXX
+ --cc=<path>/<compiler>              : force l'utilisation d'un compilateur C
+                                       par défaut compilateur C   du système 
+                                       ou donné par la variable CC
+ --fc=<path>/<compiler>              : force l'utilisation d'un compilateur fortran
+                                       par défaut compilateur fortran du système 
+                                       ou donné par la variable FC
+ --add_comp_flags=<opt1>,<opt2>,...  : ajout des options de compilation pour tous les langages
+
+ --with-swig-exec=<bin_swig>         : force l'utilisation d'un exécutable Swig
+
+ --with-python-exec=<path>/<exec>    : donne l'exécutable Python
+                                        ou bien
+ --with-python-lib=<path>            : donne le chemin de la bibliothèque Python
+ --with-python-include=<path>        : donne le chemin du répertoire include pour Python
+
+
+ Exemple de configuration :
+ mkdir build/ ; cd build ;
+ ../configure --prefix=$REPI --with-gui \
+              --without-python-api --with-doc-doxygen --with-doc-latex \
+              --with-cathare2=/tmp/ins/C2_eautou-25_3_mod5.112_modif.tar.bz2 \
+              --with-cathare=/tmp/ins/cathare-1.5.b.tar.bz2
+
+
+ Structure d'un plugin
+ ---------------------
+
+ Un plugin est un fichier archive comprimé ou bien un répertoire contenant :
+ - un fichier model-version.txt, précisant le nom du M.T. et sa version
+ - un répertoire SRC,            des fichiers source
+ - un répertoire SRC_EOS,        de l'interface entre le plugin et EOS
+ - un répertoire DATA,           des données propres au M.T.
+ - un répertoire TCS,            des tests de validation du M.T.
