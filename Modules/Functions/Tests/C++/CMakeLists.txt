@@ -1,0 +1,5 @@
+message(STATUS "Add test FunctionsTest")
+add_executable (FunctionsTest ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx)
+target_include_directories(FunctionsTest PRIVATE ${EOS_BINARY_DIR}/Modules ${EOS_BINARY_DIR}/Modules/Functions/Tests)
+target_link_libraries(FunctionsTest PRIVATE ${NLIB_LANG} ${NLIB_FUNC})
+add_test(FunctionsTest bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/FunctionsTest <${CMAKE_CURRENT_SOURCE_DIR}/input 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output")

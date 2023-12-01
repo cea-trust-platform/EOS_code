@@ -1,0 +1,20 @@
+#!/bin/bash
+#=======================================================
+# Script for EOS GUI
+#=======================================================
+
+MED_LIB=@MED_LIB_DIR@
+HDF5_LIB=@HDF5_LIB_DIR@
+EOS_LIB=@EOS_LIB@
+PYTHON_LIBS=@Python_LIBRARY_DIRS@
+export LD_LIBRARY_PATH=${MED_LIB}:${HDF5_LIB}:${EOS_LIB}:${PYTHON_LIBS}:${LD_LIBRARY_PATH}
+export PYTHONPATH=${EOS_LIB}:${PYTHONPATH}
+
+eos_gui_main=@EOS_GUI_PY@
+if [ -f ${eos_gui_main} ] ; then
+    @Python_EXECUTABLE@ ${eos_gui_main}
+else
+    echo "   Error : eos_gui_main not found : ${eos_gui_main}"
+    exit 1
+fi
+exit 0

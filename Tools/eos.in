@@ -1,0 +1,149 @@
+#!/bin/bash
+#=============================================================================
+# EOS - Equation Of State - Neptune Project
+#
+# Shell script for EOS
+#=============================================================================
+set -u
+
+# ----------------------------------------
+# functions
+info()
+{
+    echo "  " $*
+}
+error()
+{
+    info "ERROR EOS : " $*
+    exit 1
+}
+eos_version()
+{
+    echo $eosversion
+    exit 0
+}
+eos_doc()
+{
+    index=$dirdoc/index.html
+    if [ ! -f $index ] ; then
+	error "file not found : $index"
+    fi
+    list="firefox opera"
+    web=${web=}
+    ifound=0
+    if [ x"$web" = x ] ; then
+	for webi in $list ; do
+	    web_found=`which $webi 2>/dev/null`
+	    if [ ! x"$web_found" = x ] ; then
+		info "$web_found $index &"
+		$web_found $index &
+		break
+	    fi
+	done
+    fi
+    info "documentation is avalaible at $index"
+    exit 0
+}
+eos_install()
+{
+    readme=$dirdoc/README
+    if [ -f $readme ] ; then
+	cat $readme
+    else
+	error "file not found : $readme"
+    fi
+    exit 0
+}
+eos_gui()
+{
+    info "eos_gui ..."
+    $dir/eos_gui
+    status=$?
+    exit $status
+}
+eos_info()
+{
+    cat <<EOF
+EOS $eosversion (Equation Of State) has been achieved in the framework of the NEPTUNE project (supported by CEA, EDF, AREVA-NP and IRSN).
+EOF
+    eos_help
+}
+eos_help()
+{
+    cat <<EOF
+Usage: eos [option]
+Options:
+   gui     --gui       run gui
+   version --version   print the eos version number and exit
+   doc     --doc       give documentation location
+   info    --info      print info message and exit
+   install --install   print installing infos and exit
+   help    --help      print this message and exit
+EOF
+}
+
+#
+# ----------------------------------------
+# init
+dir=$(dirname $0)
+dir=$(cd $dir ; pwd)
+
+status=0
+eosversion=@EOS_VERSION@
+
+# ----------------------------------------
+# default
+
+# ----------------------------------------
+# dirdoc 
+if [ -d $dir/../doc ] ; then
+    dirdoc=$(cd $dir/../doc ; pwd)
+elif [ -d $dir/.. ] ; then
+    dirdoc=$(cd $dir/.. ; pwd)
+else
+    dirdoc=$dir
+fi
+
+# ----------------------------------------
+# read options supplied by argument
+if [ $# = 0 ] ; then
+    eos_info
+fi
+while [ $# != 0 ] ; do
+    case $1 in
+	--info | -info | info)
+	    eos_info
+	    shift
+	    ;;
+	--doc | -doc | doc)
+	    eos_doc
+	    shift
+	    ;;
+	--gui | -gui | gui | -g)
+	    eos_gui
+	    shift
+	    ;;
+	--version | -version | version | -v)
+	    eos_version
+	    shift
+	    ;;
+	--install | -install | install)
+	    eos_install
+	    shift
+	    ;;
+	--help | -help | help | -h)
+	    eos_help
+	    exit 0
+	    ;;
+	*)
+	    eos_info
+	    info
+	    info "unknown option : $1" 
+	    exit 1
+	    ;;
+    esac
+done
+
+# ----------------------------------------
+# end
+exit $status

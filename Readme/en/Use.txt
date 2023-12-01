@@ -1,0 +1,251 @@
+                               EOS Library Use
+                               ===============
+
+
+ EOS Library can calculate Thermodynamic Properties (T.P.) with
+ a given couple Thermodynamic Model (T.M.) and Fluid Equation (F.E.),
+ in Thermodynamic Plane Pressure-enthalpy (P-h Plan), Pressure-Temperature 
+ (P-T Plan) and in Saturation Area function of Pressure (Psat) 
+ or Temperature (Tsat).
+
+ We describe hereafter the process, in six steps, to execute EOS Application 
+ by Users, in UNIX Operating System, to obtain Thermodynamic Properties (P.T.)
+ with the help of C++ code.
+
+ Step 1 : Setting the thermodynamic environment for T.P. calculation
+          by defining the Thermodynamic Model and Fluid Equation, then
+          Thermodynamic Paln or Saturation Area in Psat or Tsat variable.
+          see  "eos_mec Tool" hereafter
+ 
+ Step 2 : Choice of Thermodynamic Properties (T.P.) to calculate
+          see  "eos_mec Tool" hereafter
+ 
+ Step 3 : Programming of customer code
+          see  "Help to programming" hereafter
+ 
+ Step 4 : Compilation, Link and executable creation
+          see "Compilation and Link" hereafter
+ 
+ Step 5 : optional step to modify T.M. data 
+          see "T.M. Data modification" hereafter
+
+ Step 6 : Execute exécutable
+
+ We give below an example of programming code and its result :
+ "Example of programming code" and "Execution Result"
+
+
+ Input and Output Thermodynamic Properties may print on G.U.I.
+ we launch this Interface with line command 'eos gui'
+
+  
+
+
+ eos_mec Tool
+ ------------
+
+ Print available Fluids for this EOS installation,
+ the two compulsory variables to define EOS object
+ - EOS Thermodynamic Model (E.T.M.)
+ - Equation of Fluid       (E.F.)
+ and Thermodynamic Properties (T.P.)  to calculate
+
+ Data directory used    : /dlocal/michel/EOSe/1.6.1/eos-1.6.1/data
+ Include directory used : /dlocal/michel/EOSe/1.6.1/eos-1.6.1/include
+
+ Usage :
+
+ eos_mec  -h            : help
+
+ eos_mec  -tm           : list of EOS Thermodynamic Models
+ eos_mec  -tm all       : list of Equation of Fluid by E.T.M.
+ eos_mec  -tm [tm_name] : list of Equation of Fluid for a E.T.M.
+
+ eos_mec  -f            : list of Fluids
+ eos_mec  -f  all       : list of E.F. and E.T.M. by fluid
+ eos_mec  -f  [fl_name] : list of E.F. and E.T.M. for a fluid
+
+ eos_mec  -tp           : Thermodynamic Properties : help
+ eos_mec  -tp all       : list of T.P
+ eos_mec  -tp [tp_type] : list of T.P. from particular type
+
+
+ Help to programming
+ -------------------
+
+ The main file in C++ must contain the following lines :
+    #include "EOS/API/EOS.hxx"
+    #include "EOS/API/EOS_Std_Error_Handler.hxx"
+    #include "EOS/API/EOS_Config.hxx"
+    using namespace NEPTUNE ;
+
+ First the program must define EOS object with the names of T.M. and F.E.
+ e.g. : EOS *obj_eos ; obj_eos = new EOS("EOS_Cathare2", "WaterLiquid") ;
+ EOS object caracteristics is printed for example with : cout << *obj_eos ;
+
+ We can obtain constants at the critical point (Pcrit, hcrit, Tcrit) or
+ at the limits of calculated T.M. area (Pmin, Pmax, hmin, hmax) with the
+ help of get_* methods.
+
+ Then we define input variables, output result tables and at last
+ the methods to apply on the EOS object. The file $REPI/include/EOS/API/EOS.hxx
+ give the signature of all compute methods: for example, compute_Ph, compute_PT,
+ compute_Psat, compute_Tsat calculate respectively in P-h plan, P-T plan 
+ or Saturation area depending on Psat or Tsat.
+
+ A User can calculate with Refprop T.M. if this user belong to refprop UNIX
+ group.
+
+ See hereafter "Example of programming code"
+ 
+
+ Compilation and Link
+ --------------------
+
+ a- Name of EOS installed directory : $PREF
+
+ b- Declare and Define environment Shell variable :
+    export EOS_HOME=$PREF
+    export EOS_USER_DATA=$PREF/data
+    export PATH=$PREF/bin:$PATH
+    export CPATH=$PREF/include:$CPATH
+    export LD_LIBRARY_PATH=$PREF/lib:$LD_LIBRARY_PATH
+
+ c- Eventually, add definition of environment Shell variable 
+    to locate MED library :
+    . Directory name of MED libraries files : $LIB_MED
+    . export LD_LIBRARY_PATH=$LIB_MED:$LD_LIBRARY_PATH
+
+ d- compilation and link of programming code example.cxx
+    - link with EOS shared library :
+      g++  -o example -Wall -L${LIB_MED} -lmed -L$EOS_HOME/lib example.cxx -leos
+
+    - link with EOS static library :
+      g++  -o example -Wall -lgfortran -L${LIB_MED} -lmed example.cxx $EOS_HOME/lib/libeos.a
+
+
+ T.M. Data modification
+ ----------------------
+
+ T.M. Data are located, after EOS Installation, in $REPI/data. 
+
+ The user may create a new directory $REPUSER, copy some T.M. data from
+ $REPI/data, modified this copied data.
+
+ After defining export USER_EOS_DATA=$REPUSER, the EOS Application
+ will use this new user T.M. data.
+ 
+
+ Example of programming code : example.cxx
+ ---------------------------
+
+ #include "EOS/API/EOS.hxx"
+ #include "EOS/API/EOS_Std_Error_Handler.hxx"
+ #include "EOS/API/EOS_Config.hxx"
+ using namespace NEPTUNE ;
+ 
+ int main()
+ {  EOS *obj_eos ;
+    obj_eos = new EOS("EOS_Cathare2", "WaterLiquid") ;
+    EOS_Error er ;
+ 
+    cout << endl ;
+    cout << " . obj_eos = "        << *obj_eos ;
+
+    double pc, hc, Tc ;
+    double pmin, pmax, hmin, hmax ;
+    cout << endl ;
+    obj_eos->get_p_crit(pc)  ; cout << " - Pcrit = " << pc   << " Pa"   << endl ;
+    obj_eos->get_h_crit(hc)  ; cout << " - hcrit = " << hc   << " J/kg" << endl ;
+    obj_eos->get_T_crit(Tc)  ; cout << " - Tcrit = " << Tc   << " K"    << endl ;
+    obj_eos->get_p_min(pmin) ; cout << " - Pmin  = " << pmin << " Pa"   << endl ;
+    obj_eos->get_p_max(pmax) ; cout << " - Pmax  = " << pmax << " Pa"   << endl ;
+    obj_eos->get_h_min(hmin) ; cout << " - hmin  = " << hmin << " J/kg" << endl ;
+    obj_eos->get_h_max(hmax) ; cout << " - hmax  = " << hmax << " J/kg" << endl ;
+ 
+    // f(P,h) : compute Fields in one point
+    double pression[1] , enthalpi[1] ;
+    double resulta1[1] ;
+    double resulta2[1] ;
+    double resulta3[1] ;
+    double resulta4[1] ;
+    double resulta5[1] ;
+    double resulta6[1] ;
+    double resulta7[1] ;
+    int terr[1] ;
+    int nbpoint = 1 ;
+    pression[0] = 219.9e5 ;
+    enthalpi[0] = 1.7e6 ;
+ 
+    EOS_Field fpression("P","P",nbpoint,pression) ;
+    EOS_Field fenthalpi("h","h",nbpoint,enthalpi) ;
+    EOS_Fields vfresultat(7) ;
+    EOS_Field fresulta1("T",               "T",            nbpoint,resulta1); vfresultat[0] = fresulta1 ;
+    EOS_Field fresulta2("cp",              "cp",           nbpoint,resulta2); vfresultat[1] = fresulta2 ;
+    EOS_Field fresulta3("lambda",          "lambda",       nbpoint,resulta3); vfresultat[2] = fresulta3 ;
+    EOS_Field fresulta4("mu",              "mu",           nbpoint,resulta4); vfresultat[3] = fresulta4 ;
+    EOS_Field fresulta5("rho",             "rho",          nbpoint,resulta5); vfresultat[4] = fresulta5 ;
+    EOS_Field fresulta6("[d(rho)/dP]h",    "[d(rho)/dP]h", nbpoint,resulta6); vfresultat[5] = fresulta6 ;
+    EOS_Field fresulta7("[d(rho)/dh]P",    "[d(rho)/dh]P", nbpoint,resulta7); vfresultat[6] = fresulta7 ;
+    EOS_Error_Field ferr(nbpoint, terr) ;
+ 
+    er = obj_eos->compute(fpression, fenthalpi, vfresultat, ferr) ;
+ 
+    cout << endl << endl ;
+    cout << " f(P,h) : Fields in one point" << endl ;
+    cout << " .  er              = " << er              << endl ;
+    if (er == 0)
+       { cout << "   (i) Pressure     = " << fpression[0]       << endl ;
+         cout << "   (i) Enthalpy     = " << fenthalpi[0]       << endl ;
+         cout << "   ---" << endl ;
+         cout << "   (o) T            = " << vfresultat[0][0]   << endl ;
+         cout << "   (o) cp           = " << vfresultat[1][0]   << endl ;
+         cout << "   (o) lambda       = " << vfresultat[2][0]   << endl ;
+         cout << "   (o) mu           = " << vfresultat[3][0]   << endl ;
+         cout << "   (o) rho          = " << vfresultat[4][0]   << endl ;
+         cout << "   (o) [d(rho)/dP]h = " << vfresultat[5][0]   << endl ;
+         cout << "   (o) [d(rho)/dh]P = " << vfresultat[6][0]   << endl ;
+       }
+    else
+       cout << "   Erreur f(P,h)" << endl ;
+    
+    delete obj_eos ;
+    return 0 ;
+ }
+
+
+ Execution Result :
+ ----------------
+  . obj_eos = Model table      : Cathare2
+    Version           : v25_3_mod7.71
+    Fluid             : Water
+    Equation of fluid : WaterLiquid
+    p_min : 1000 
+    p_max : 2.6e+07
+    T_min : 269.15 
+    T_max : 673.15
+    h_min : 100 
+    h_max : 2.4e+06
+
+
+ - Pcrit = 2.212e+07 Pa
+ - hcrit = 1.99115e+06 J/kg
+ - Tcrit = 647.844 K
+ - Pmin  = 1000 Pa
+ - Pmax  = 2.6e+07 Pa
+ - hmin  = 100 J/kg
+ - hmax  = 2.4e+06 J/kg
+
+
+ f(P,h) : Fields in one point
+ .  er              = 0
+   (i) Pressure     = 2.199e+07
+   (i) Enthalpy     = 1.7e+06
+   ---
+   (o) T            = 630.082
+   (o) cp           = 9707.52
+   (o) lambda       = 0.418563
+   (o) mu           = 7.73333e-05
+   (o) rho          = 578.664
+   (o) [d(rho)/dP]h = 3.05156e-06
+   (o) [d(rho)/dh]P = -0.00053107

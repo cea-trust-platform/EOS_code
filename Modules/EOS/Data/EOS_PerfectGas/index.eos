@@ -1,0 +1,6 @@
+PerfectGas  Argon     EOS_PerfectGas  Argon     Unknown  1  Argon.data
+PerfectGas  Nitrogen  EOS_PerfectGas  Nitrogen  Unknown  1  Nitrogen.data
+PerfectGas  Hydrogen  EOS_PerfectGas  Hydrogen  Unknown  1  Hydrogen.data
+PerfectGas  Oxygen    EOS_PerfectGas  Oxygen    Unknown  1  Oxygen.data
+PerfectGas  Helium    EOS_PerfectGas  Helium    Unknown  1  Helium.data
+PerfectGas  Air       EOS_PerfectGas  Air       Unknown  1  Air.data

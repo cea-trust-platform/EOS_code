@@ -1,0 +1,13 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix="${prefix}"
+libdir="${prefix}/lib"
+includedir="${prefix}/include"
+
+Name: @PROJECT_NAME@
+Description: Equation Of State - ThermoHydraulics 
+URL: 
+Version: @EOS_VERSION@
+Requires.private: @pc_req_private@
+Cflags: -I"${includedir}"
+Libs: -L"${libdir}" -leos
+Libs.private: -L"${libdir}" -leos @pc_libs_private@

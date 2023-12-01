@@ -1,0 +1,65 @@
+\documentclass[a4paper,10pt,oneside]{report}
+
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+% \usepackage[latin1]{inputenc}
+\usepackage[dvips]{graphicx}
+\usepackage{textcomp}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=black]{hyperref}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{geometry}
+\usepackage{pifont}
+\usepackage{float} 
+\usepackage[svgnames]{xcolor}
+
+
+
+
+\geometry{verbose,a4paper,tmargin=3cm,bmargin=3cm,lmargin=2.75cm,rmargin=2.25cm,headheight=1cm,headsep=0.825cm,footskip=1.375cm}
+
+\title{Interpolateur interne EOS}
+\date{05/09/2013}
+\author{Adrien Force\\
+\small{CS Systèmes d'information}}
+
+\newcommand{\IGEN}{\textbf{\textit{EOS\_IGen}}}
+\newcommand{\MESH}{\textbf{\textit{EOS\_Mesh}}}
+\newcommand{\MED}{\textbf{\textit{EOS\_Med}}}
+\newcommand{\IPP}{\textbf{\textit{EOS\_Ipp}}}
+\newcommand{\EOS}{\textbf{\textit{EOS}}}
+\newcommand{\FIELD}{\textbf{\textit{EOS\_Field}}}
+\newcommand{\EFIELD}{\textbf{\textit{EOS\_Error\_Field}}}
+\newcommand{\IPPl}{\textbf{\textit{\IPP\_liquid}}}
+\newcommand{\IPPv}{\textbf{\textit{\IPP\_vapor}}}
+\newcommand{\QI}{\textbf{\textit{EOS\_IGen\_QI}}}
+\newcommand{\Cpp}[1]{\texttt{\textcolor{DimGray}{#1}}}
+\newcommand{\str}[1]{\textcolor{DarkRed}{"#1"}}
+\newcommand{\bdd}{base de données}
+\newcommand{\ipp}{interpolateur interne d'\EOS\ }
+\newcommand{\cad}{c'est à dire}
+\newcommand{\pph}{plan \textbf{ph}}
+\newcommand{\sgp}{segment \textbf{p}}
+\newcommand{\n}{n\oe{}ud}
+\newcommand{\N}{N\oe{}ud}
+
+\newcommand{\para}[1]{(Cf. Paragraphe \ref{#1})}
+
+\newcommand{\afair}[1]{\textcolor{red}{#1}}
+
+\begin{document}
+
+
+\maketitle \clearpage
+\tableofcontents \clearpage
+\input{Chapter/Introduction}
+\input{Chapter/Generation}
+\input{Chapter/Sequence}
+\input{Chapter/Interpolateur}
+\input{Chapter/annexe}
+\end{document}
+
+

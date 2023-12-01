@@ -1,0 +1,92 @@
+#****************************************************************************
+# Copyright (c) 2015 - 2016, CEA
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+# 1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+# 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#*****************************************************************************
+
+
+import eosUtil, os
+
+class EosAvailable:
+    """Class to give the availability in the EOS component"""
+    
+    def __init__(self):
+
+        # Directory EOS data : dir_eosdata
+        dir_eosdata = os.getenv('NEPTUNE_EOS_DATA')
+        if dir_eosdata == None:
+           dir_eosdata = os.getenv('USER_EOS_DATA')
+           if dir_eosdata == None:
+              dir_eosdata = "@EOS_DATA_DIR@"
+
+        # Object EOS data
+        obj_eosdata = eosUtil.eosUtil(dir_eosdata)
+
+        # Dictionnary of fluids and Thermodynamic Model (old Method)
+        self.dic2_eos = obj_eosdata.buildIndexDict()
+
+        # List of fluids in alphabetical order
+        # exception for Water fluid in first place : list_fld , self.fluids
+        list_fld = []
+        ind_water = 0
+        for a,b in self.dic2_eos.items():
+           if a == 'Water':
+              ind_water = 1
+           else:
+              list_fld.append(a)
+
+        list_fld.sort()
+        if ind_water == 1:
+           list_fld.insert(0,'Water')
+
+        self.fluids = list_fld
+
+        # Default Thermodynamic Model (old Method) for the first fluid
+        self.set_thmodel(list_fld[0])
+
+        (self.dict_q, self.th_q) = obj_eosdata.buildPropDict()
+
+        return
+
+
+    def whichFluids(self):
+        return self.fluids
+
+
+    def which_thmodel(self):
+        return self.thmodel_s
+
+
+    def which_fldeq(self):
+        return self.fldeq_s
+
+
+    def whichThQuantities(self):
+        return self.th_q
+
+
+    def getThQDictionnary(self):
+        return self.dict_q
+
+
+    def set_thmodel(self, fluid):
+        self.thmodel_s = []
+        for a,b in self.dic2_eos.items():
+           if a == fluid:
+              for aa,bb in b.items():
+                 self.thmodel_s.append(aa)
+
+        self.fldeq_s = self.dic2_eos[fluid][self.thmodel_s[0]]
+
+
+    def set_fldeq(self, fluid, thmodel):
+        self.fldeq_s = self.dic2_eos[fluid][thmodel]

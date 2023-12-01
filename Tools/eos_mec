@@ -1,0 +1,315 @@
+#!/bin/bash
+#
+#  Print available Fluids for this EOS installation,"
+#  the two compulsory variables to define EOS object"
+#  - EOS Thermodynamic Model (E.T.M.)"
+#  - Equation of Fluid       (E.F.)"
+#  and Thermodynamic Properties (T.P.) to calculate"
+#
+#
+#
+# Usage :  eos_mec  -h                : help
+#          eos_mec  -tm [tm_name]     : list one or all Models
+#          eos_mec  -f  [fluid_name]  : list one or all Fluids
+#          eos_mec  -tp [tp_type]     : list thermodynamic properties
+#
+#
+# Examples :  
+#
+#          eos_mec -tm
+#          eos_mec -tm Refprop    or   eos_mec -tm EOS_Refprop
+#
+#          eos_mec -f
+#          eos_mec -f  Water
+#
+#          eos_mec -tp
+#
+#
+#
+prog=`basename $0`
+echo
+echo " Print available Fluids for this EOS installation,"
+echo " the two compulsory variables to define EOS object"
+echo " - EOS Thermodynamic Model (E.T.M.)"
+echo " - Equation of Fluid       (E.F.)"
+echo " and Thermodynamic Properties (T.P.)  to calculate"
+#
+#
+# Data directory  rep_data
+if [ ! -z $USER_EOS_DATA ]; then
+   rep_data=$USER_EOS_DATA
+else
+   which eos 1>/dev/null 2>&1 ; ier=$?
+   if [ $ier -ne 0 ]; then
+      echo
+      echo " <Error $prog> : EOS software not found, initiate this software"
+      echo " ================================================================"
+      exit 1
+   else
+      rep_eos=`which eos | xargs dirname | xargs dirname`
+      rep_data=$rep_eos/data
+      if [ ! -d ${rep_data} ]; then
+         echo
+         echo " <Error $prog> : unkkown directory '${rep_data}'"
+         echo " ================================================="
+         exit 1
+      fi
+   fi
+fi
+echo
+echo " Data directory used    : ${rep_data}"
+
+
+#
+# Include directory  rep_inc
+# Properties files
+rep_inc=${EOS_HOME}/include
+if [ -d ${rep_inc} ]; then
+   file_eos_tp_therm=${rep_inc}/EOS/API/therm_properties.hxx
+   echo " Include directory used : ${rep_inc}"
+   if [ ! -f ${file_eos_tp_therm} ]; then
+      echo
+      echo " <Error $prog> : unkkown file '${file_eos_tp_therm}'"
+      echo " ================================================="
+      exit 1
+   fi
+   file_eos_tp_satur=${rep_inc}/EOS/API/satur_properties.hxx
+   if [ ! -f ${file_eos_tp_satur} ]; then
+      echo
+      echo " <Error $prog> : unkkown file '${file_eos_tp_satur}'"
+      echo " ================================================="
+      exit 1
+   fi
+   file_eos_tp_splim=${rep_inc}/EOS/API/splim_properties.hxx
+   if [ ! -f ${file_eos_tp_splim} ]; then
+      echo
+      echo " <Error $prog> : unkkown file '${file_eos_tp_splim}'"
+      echo " ================================================="
+      exit 1
+   fi
+   file_eos_tp_camix=${rep_inc}/EOS/API/camix_properties.hxx
+   if [ ! -f ${file_eos_tp_camix} ]; then
+      echo
+      echo " <Error $prog> : unkkown file '${file_eos_tp_camix}'"
+      echo " ================================================="
+      exit 1
+   fi
+else
+   which eos 1>/dev/null 2>&1 ; ier=$?
+   if [ $ier -ne 0 ]; then
+      echo
+      echo " <Error $prog> : EOS software not found, initiate this software"
+      echo " ================================================================"
+      exit 1
+   else
+      echo
+      echo " <Error $prog> : unkkown directory '${rep_inc}'"
+      echo " ================================================="
+      exit 1
+   fi
+fi
+
+#
+# file index.eos
+file_eos=$rep_data/index.eos
+if [ ! -f ${file_eos} ]; then
+   echo
+   echo " <Error $prog> : unkkown file index.eos '${file_eos}'"
+   echo " ======================================================"
+   exit 1
+fi
+
+#
+#
+# Fonction  help
+f_help() {
+   echo
+   echo " Usage :"
+   echo
+   echo " eos_mec  -h            : help"
+   echo
+   echo " eos_mec  -tm           : list of EOS Thermodynamic Models"
+   echo " eos_mec  -tm all       : list of Equation of Fluid by E.T.M."
+   echo " eos_mec  -tm [tm_name] : list of Equation of Fluid for a E.T.M."
+   echo
+   echo " eos_mec  -f            : list of Fluids"
+   echo " eos_mec  -f  all       : list of E.F. and E.T.M. by fluid"
+   echo " eos_mec  -f  [fl_name] : list of E.F. and E.T.M. for a fluid"
+   echo
+   echo " eos_mec  -tp           : Thermodynamic Properties : help"
+   echo " eos_mec  -tp all       : list of T.P"
+   echo " eos_mec  -tp [tp_type] : list of T.P. from particular type"
+   echo
+   echo
+}
+#
+# Fonction  list of EOS Thermodynamic Model : f_list_tm [tm_name]
+f_list_tm() {
+if [ $# -eq 0 ]; then
+   awk '{print $1}' ${file_eos} | sort | uniq |\
+   awk 'BEGIN{print "\n       EOS Th. Model\n"} {print " ",NR, " : EOS_"$0} END{print ""}'
+else
+   tm_name=$1
+   if [ "${tm_name}" = "all" ]; then
+      awk 'BEGIN{print "\n       EOS Th. Model        Equ. of State"} \
+           {if (ptm != $1) print ""; printf(" %3d : EOS_%-15s  %s\n",NR,$1,$2); ptm=$1} \
+            END{print "\n Total number of couples (Model, Equation) : ", NR, "\n"}' ${file_eos}
+   else
+      c4=`echo $tm_name | cut -c -4`
+      if [ "$c4" = "eos_" ]; then
+         tm_name=`echo ${tm_name} | sed -e "s/^${c4}//"`
+      fi
+      ic=`awk '{print $1}' ${file_eos} | sort | uniq | grep -ic "^${tm_name}$"`
+      if [ $ic -eq 1 ]; then
+         awk -v tm_name=${tm_name} 'BEGIN{IGNORECASE=1; print "\n       EOS Th. Model        Equation of Fluid\n"} \
+             {if (tm_name == $1) printf(" %3d : EOS_%-15s  %s\n",++n,$1,$2)} \
+              END{print "\n Number of couples (Model, Equation) for model ", tm_name, " : ", n, "\n"}' ${file_eos}
+      else
+         echo
+         echo " <Error $prog> : unknown EOS Thermodynamic Model '${tm_name}'"
+         echo " ==============================================================="
+         exit 1
+      fi
+   fi
+fi
+}
+#
+# Fonction  list of Fluids : f_list_fluids [fl_name]
+f_list_fluids() {
+if [ $# -eq 0 ]; then
+   awk '{print $4}' ${file_eos} | sort | uniq |\
+   awk 'BEGIN{print "\n       Fluids\n"} {printf(" %3d : %s\n",NR,$0)} \
+        END{print "\n Total number of fluids : ", NR, "\n"}'
+else
+   fl_name=$1
+   if [ "${fl_name}" = "all" ]; then
+      awk '{print $4,$1,$2}' ${file_eos} | sort -k 1 |\
+      awk 'BEGIN{print "\n       Fluid        EOS Th. Model        Equation of Fluid"} \
+           {if (pfl != $1) print ""; printf(" %3d : %-12s EOS_%-15s %s\n",NR,$1,$2,$3); pfl=$1} \
+           END{print "\n Total number of couples (Model, Equation) : ", NR, "\n"}'
+   else
+      ic=`awk '{print $4}' ${file_eos} | sort | uniq | grep -ic "^${fl_name}$"`
+      if [ $ic -eq 1 ]; then
+         awk '{print $4,$1,$2}' ${file_eos} | sort -k 2 |\
+         awk -v fl_name=${fl_name} 'BEGIN{IGNORECASE=1; print "\n       Fluid        EOS Th. Model        Equation of Fluid"} \
+             {if (fl_name == $1) {if (pfl != $2) print ""; printf(" %3d : %-12s EOS_%-15s  %s\n",++n,$1,$2,$3); pfl=$2}} \
+              END{print "\n Number of couples (Model, Equation) for fluid ", fl_name, ": ", n, "\n"}'
+      else
+         echo
+         echo " <Error $prog> : unknown Fluid '$fl_name'"
+         echo " ==========================================="
+         exit 1
+      fi
+   fi
+fi
+}
+#
+# Fonction  list of Thermodynamic Properties : f_list_properties
+f_list_properties() {
+if [ $# -eq 0 ]; then
+   echo
+   echo " List of Thermodynamic Properties"
+   echo " eos_mec  -tp            : Thermodynamic Properties : help"
+   echo " eos_mec  -tp all        : list of T.P from Therm. Planes or Saturation areas "
+   echo " eos_mec  -tp plane      : list of T.P from P-h, P-T, P-s Plane"
+   echo " eos_mec  -tp saturation : list of T.P from saturation areas"
+   echo " eos_mec  -tp spinodale  : list of T.P from spinodale curves"
+   echo " eos_mec  -tp camix      : list of T.P from mixing Cathare[2] Model"
+   echo
+   echo
+else
+   tp_type=$1
+   if   [ "${tp_type}" = "all" ]; then
+      flist="${file_eos_tp_therm} ${file_eos_tp_satur}"
+      for file in `echo $flist`
+      do
+         awk '$0 ~ /\{.*\".*\".*\}/ {print}' ${file} |\
+         sed -e 's/{//g' -e 's/}//g' -e 's/,//g' \
+             -e 's/^ *\"//g' -e 's/\" *\"/,/g' -e 's/\" *$//g' >> tmpfile$$
+      done
+      awk -F',' 'BEGIN{IGNORECASE=1; print "\n       Therm. property  Definition\n"} \
+                 {printf(" %3d : %-15s  %s\n",++n,$1,$2)} \
+                    END{print "\n Number of Thermodynamic Properties : ", n, "\n"}' tmpfile$$
+      rm tmpfile$$
+
+   elif [ "${tp_type}" = "plane" ]; then
+      file=${file_eos_tp_therm}
+      awk '$0 ~ /\{.*\".*\".*\}/ {print}' ${file} |\
+      sed -e 's/{//g' -e 's/}//g' -e 's/,//g' \
+          -e 's/^ *\"//g' -e 's/\" *\"/,/g' -e 's/\" *$//g' |\
+      awk -F',' 'BEGIN{IGNORECASE=1; print "\n       Therm. property  Definition\n"} \
+                 {printf(" %3d : %-15s  %s\n",++n,$1,$2)} \
+                 END{print "\n Number of Thermodynamic Properties in Planes P-h, P-T, or P-s : ", n, "\n"}'
+
+   elif [ "${tp_type}" = "saturation" ]; then
+      file=${file_eos_tp_satur}
+      awk '$0 ~ /\{.*\".*\".*\}/ {print}' ${file} |\
+      sed -e 's/{//g' -e 's/}//g' -e 's/,//g' \
+          -e 's/^ *\"//g' -e 's/\" *\"/,/g' -e 's/\" *$//g' |\
+      awk -F',' 'BEGIN{IGNORECASE=1; print "\n       Therm. property  Definition\n"} \
+                 {printf(" %3d : %-15s  %s\n",++n,$1,$2)} \
+                 END{print "\n Number of Thermodynamic Properties from saturation areas : ", n, "\n"}'
+
+   elif [ "${tp_type}" = "spinodale" ]; then
+      file=${file_eos_tp_splim}
+      awk '$0 ~ /\{.*\".*\".*\}/ {print}' ${file} |\
+      sed -e 's/{//g' -e 's/}//g' -e 's/,//g' \
+          -e 's/^ *\"//g' -e 's/\" *\"/,/g' -e 's/\" *$//g' |\
+      awk -F',' 'BEGIN{IGNORECASE=1; print "\n       Therm. property  Definition\n"} \
+                 {printf(" %3d : %-15s  %s\n",++n,$1,$2)} \
+                 END{print "\n Number of Thermodynamic Properties from spinodale curves : ", n, "\n"}'
+
+   elif [ "${tp_type}" = "camix" ]; then
+      file=${file_eos_tp_camix}
+      awk '$0 ~ /\{.*\".*\".*\}/ {print}' ${file} |\
+      sed -e 's/{//g' -e 's/}//g' -e 's/,//g' \
+          -e 's/^ *\"//g' -e 's/\" *\"/,/g' -e 's/\" *$//g' |\
+      awk -F',' 'BEGIN{IGNORECASE=1; print "\n       Therm. property           Definition\n"} \
+                 {printf(" %3d : %-24s  %s\n",++n,$1,$2)} \
+                 END{print "\n Number of Thermodynamic Properties from mixing Cathare[2] Model : ", n, "\n"}'
+   else
+      echo
+      echo " <Error $prog> : unknown Thermodynamic Properties Type '$tp_type'"
+      echo " ================================================================="
+      exit 1
+   fi
+fi
+}
+#
+#
+#
+if [ $# -eq 0 ]; then
+   f_help
+   exit 0
+
+elif [ $# -gt 2 ]; then
+   echo
+   echo " <Error $prog> : number of parameters greater than 2"
+   echo " ====================================================="
+   f_help
+   exit 1
+
+else
+   enti=`echo $1 | tr '[A-Z]' '[a-z]'`
+   para=""
+   if [ $# -eq 2 ]; then
+      para=`echo $2 | tr '[A-Z]' '[a-z]'`
+   fi
+   if   [ `echo $enti | sed -e 's/^-*//' | cut -c -1` = "h"  ]; then
+      f_help
+   elif [ "$enti" = "-tm" ]; then
+      f_list_tm $para 
+   elif [ "$enti" = "-f"  ]; then
+      f_list_fluids $para 
+   elif [ "$enti" = "-tp" ]; then
+      f_list_properties $para
+   else
+      echo
+      echo " <Error $prog> : unknown parameter '$enti'"
+      echo " ==========================================="
+      f_help
+   fi
+fi
+
+
+exit 0

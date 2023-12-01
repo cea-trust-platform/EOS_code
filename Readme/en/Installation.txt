@@ -1,0 +1,177 @@
+                               EOS Library Installation
+                               ========================
+
+
+  EOS Library can calculate Thermodynamic Properties (T.P.) with
+  a given couple Thermodynamic Model (T.M.) and Fluid Equation (F.E.),
+  in Thermodynamic Plane Pressure-enthalpy (P-h Plan), Pressure-Temperature 
+  (P-T Plan) and in Saturation Area function of Pressure (Psat) 
+  or Temperature (Tsat).
+
+  We describe hereafter the process, in five steps, to install EOS Library 
+  by the EOS Administrator in UNIX Operating System.
+
+  Step 1 : Prepare installation,
+           to take into account the proper EOS Libray and Users needs,
+           EOS Administrator must install Prerequisite softwares
+           and choose the T.M. to integrate in EOS Library (see heraafter).
+
+  Step 2 : Configure installation by calling  the configure script with options from a build directory
+           (see heraafter).
+
+  Step 3 : Compile and Link with command line  make
+
+  Step 4 : Check the installation
+           with command line  make test  or  ctest
+
+  Step 5 : Copy files in installation Directory $REPI
+           with command line  make install
+
+
+ Prepare installation : Prerequisite softwares
+ --------------------
+
+ Here is the list :
+ - Cmake,                            for configuration, compilation and link
+ - Fortran, C, C++, Compiler,        for compilation and link
+ - QT4, Python, PyQt, Swig, gnuplot, for GUI
+ - MED3-file, HDF5                   for GUI and Interpolator (in progress)
+ - Doxygen and LaTeX,                for Documentation
+
+ ! For some operating systems (O.S.), HDF5 software is installed in parallel
+   mode with MPI who become a prerequisite
+
+
+ Prepare installation : Choice of Thermodynamic Model
+ --------------------
+
+ Eight Thermodynamic Model (T.M.) are available, four T.M. are directly
+ included in EOS code : Flica4, PerfectGas, StiffenedGas.
+ The four other T.M. are integrated by request in EOS Library Configuration
+ step in a plugin form : Cathare, Cathare2, Refprop, Thetis.
+ In general,  a plugin is a compressed archive file,
+ see hereafter "Structure of a plugin".
+
+ Refprop T.M. come from NIST-REFPROP software release 9.1.
+ To manage the limited number of licence token we introduce refprop UNIX group,
+ each User of Refprop T.M. must belong to this group.
+
+
+ Prepare installation : Choice of Directories
+ --------------------
+
+ EOS Administrator must choose :
+
+ - A Working Directory where EOS Library is built : $REPT
+
+ - An Installation Directory : $REPI
+   it's directory root name of installed EOS Library, inside we find :
+   - a bin directory,      for executables and tools e.g. eos, eos_mec)
+   . a data directory,     for T.M. data
+   . a doc directory,      for EOS Documentation
+   - an include directory, for inlude files *.hxx
+   - a lib directory,      for libraries files, libeos.a static library
+                           libeos.so shard library
+   - ashare directory,     for test cases
+
+ EOS Administrator install EOS under UNIX shell by command line in
+ the working directory $REPT
+
+
+ Configuration
+ -------------
+
+ We define the software environment for EOS Library with the command line
+ configure and its options. These options are introduced :
+ . either in commands line
+ . or in text file $FICT given with --user-env-file option :
+   --user-env-file=$FICT
+
+ Here are some options :
+ --help , -h                 : list of all options
+ --user-env-file=$FICT       : introduction of configuration text file $FICT
+                               ! see for example  user_env.txt  file
+                               ! $FICT file options have priority over commands
+                                 line options
+ --prefix=$REPI              : definition of Installation Directory $REPI
+                               default is CMake default (/usr/local on UNIX systems)
+
+ --with-gui , --without-gui  : buiding yes/no EOS GUI
+                               to see Thermodynamic Properties calculated by EOS
+
+ --with-cmake-exec=$FB_CMAKE : the Cmake executable $FB_CMAKE is used
+
+ --with-cathare=$P_CATHARE   : integration of Cathare Thermodynamic Model (T.M.) 
+                               in EOS Library by calling $P_CATHARE  plugin
+ --with-cathare2=$P_CATHARE2 : integration of Cathare2 T.M. in EOS Library
+                               by calling $P_CATHARE2  plugin
+ --with-refprop9=$P_REFPROP  : integration of Refprop 9 T.M. in EOS Library
+                               by calling $P_REFPROP  plugin
+                               see hereafter "Use Refprop 9 T.M."
+ --with-refprop10=$P_REFPROP : integration of Refprop 10 T.M. in EOS Library
+                               by calling $P_REFPROP  plugin
+                               see hereafter "Use Refprop 10 T.M."
+ --with-thetis=$P_THETIS     : integration of Thetis T.M. in EOS Library
+                               by calling $P_THETIS plugin
+ --with-flica4=$P_FLICA4     : integration of Flica4 T.M. in EOS Library
+                               by calling $P_FLICA4 plugin
+ --with-hitec=$P_HITEC       : integration of Hitec T.M. in EOS Library
+                               by calling $P_HITEC plugin
+ --with-nak=$P_NAK           : integration of Nak T.M. in EOS Library
+                               by calling $P_NAK plugin
+
+                               ! a plugin is a compressed archive file (.tgz ou .bz2)
+                                 or a directory name
+                                 see hereafter "Structure of a plugin"
+
+ --with-interpolator         : integration of Interpolator in EOS Library (in progress)
+
+ --debug                     : EOS installation in debug mode
+                               default is release mode
+
+ and eventually prerequisites options :
+ --with-med=<path>                   : path to MED 
+ --with-med-lib=<path>               : path to MED/lib     (optional)
+ --with-med-include=<path>           : path to MED/include (optional)
+ --with-hdf5=<path>                  : path to HDF5
+ --with-hdf5-lib=<path>              : path to HDF5/lib    (optional) 
+ --with-mpi=<path>                   : path to MPI         (optional)
+ --with-mpi-lib=<path>               : path to MPI/lib     (optional)
+ --with-mpi-include=<path>           : path to MPI/include (optional)
+
+ at last compilation options :
+ --cxx=<path>/<compiler>             : use this given C++ compiler
+                                       default C++ O.S. compiler 
+                                               or given by shell variable CXX
+ --cc=<path>/<compiler>              : use this given C compiler
+                                       default C O.S. compiler 
+                                               or given by shell variable CC
+ --fc=<path>/<compiler>              : use this given Fortran compiler
+                                       default Fortran O.S. compiler 
+                                               or given by shell variable FC
+ --add_comp_flags=<opt1>,<opt2>,...  : add compilation options for all languages
+
+ --with-swig-exec=<bin_swig>         : give Swig executable file
+
+ --with-python-exec=<path>/<exec>    : give Python executable file
+                                        or
+ --with-python-lib=<path>            : give the Python library path needed by python executable
+ --with-python-include=<path>        : give the Python include directory path
+
+ Example of configuration :
+ mkdir build/ ; cd build/
+ ../configure --prefix=$REPI --with-gui \
+              --without-python-api --with-doc-doxygen --with-doc-latex \
+              --with-cathare2=/tmp/ins/C2_eautou-25_3_mod5.112_modif.tar.bz2 \
+              --with-cathare=/tmp/ins/cathare-1.5.b.tar.bz2
+
+
+ Structure of a plugin
+ ---------------------
+
+ A plugin is a compressed archive file or a directory containing :
+ - model-version.txt file, for T.M. name and its release number
+ - SRC directory,          for source files
+ - SRC_EOS directory,      for plugin-EOS interface
+ - DATA directory,         for T.M. data
+ - TCS directory ,         for T.M. validation tests
