@@ -1972,6 +1972,8 @@ namespace CATHARE2
          for (; ill<nsca; ill++)
             err_tmp.set(ill, convert_eos_error(::CATHARE2::canceled)) ;
          ferr.set_worst_error(err_tmp) ;
+         unmap_eos_fields(out, saturated);
+         unmap_eos_field(p, saturated);
          return ferr.find_worst_error().generic_error() ;
        }
     calc2_lim() ;
@@ -2025,6 +2027,8 @@ namespace CATHARE2
          for (; ill<nsca; ill++)
          err_tmp.set(ill, convert_eos_error(::CATHARE2::canceled)) ;
          ferr.set_worst_error(err_tmp) ;
+         unmap_eos_fields(out, saturated);
+         unmap_eos_field(t, saturated);
          return ferr.find_worst_error().generic_error() ;
     }
     calc2_lim() ;
@@ -2078,6 +2082,9 @@ namespace CATHARE2
          for (; ill<nsca; ill++)
             err_tmp.set(ill, convert_eos_error(::CATHARE2::canceled)) ;
          ferr.set_worst_error(err_tmp) ;
+         unmap_eos_fields(out, phase);
+         unmap_eos_field(p, phase);
+         unmap_eos_field(h, phase);
          return ferr.find_worst_error().generic_error() ;
        }
     // Calculation [dh/dP]T    ---> lhg1
@@ -2103,6 +2110,9 @@ namespace CATHARE2
          for (; ill<nsca; ill++)
             err_tmp.set(ill, convert_eos_error(::CATHARE2::canceled));
          ferr.set_worst_error(err_tmp) ;
+         unmap_eos_fields(out, phase);
+         unmap_eos_field(p, phase);
+         unmap_eos_field(h, phase);
          return ferr.find_worst_error().generic_error() ;
        }
     ferr.set_worst_error(err_tmp) ;
@@ -2227,6 +2237,9 @@ namespace CATHARE2
          for (; ill<nsca; ill++)
             err_tmp.set(ill, convert_eos_error(::CATHARE2::canceled)) ;
          ferr.set_worst_error(err_tmp) ;
+         unmap_eos_fields(out, phase);
+         unmap_eos_field(p, phase);
+         unmap_eos_field(t, phase);
          return ferr.find_worst_error().generic_error() ;
        }
 //     Calcul de d_h_d_p_T = -d_T_d_p_h / d_T_d_h_p
@@ -2248,6 +2261,9 @@ namespace CATHARE2
          for (; ill<nsca; ill++)
             err_tmp.set(ill, convert_eos_error(::CATHARE2::canceled)) ;
          ferr.set_worst_error(err_tmp) ;
+         unmap_eos_fields(out, phase);
+         unmap_eos_field(p, phase);
+         unmap_eos_field(t, phase);
          return ferr.find_worst_error().generic_error() ;
        }
     ferr.set_worst_error(err_tmp) ;
