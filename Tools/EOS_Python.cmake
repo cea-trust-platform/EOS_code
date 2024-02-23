@@ -25,7 +25,7 @@
 #           Python_LIBRARY_DIRS
 #           Python_LIBRARIES
 #           Python_INCLUDES
-#           EOS_PYTHON_SITE_PACKAGES_DIR  |path to install directory of EOS python module 
+#           EOS_PYTHON_SITE_PACKAGES_DIR  |path to install directory of EOS python module
 
 
 
@@ -79,5 +79,5 @@ endif(NOT USER_PYTHON_INC)
 message(STATUS "Python executable: ${Python_EXECUTABLE}")
 message(STATUS "Python libraries:  ${Python_LIBRARIES}")
 message(STATUS "Python includes:   ${Python_INCLUDE_DIRS}")
-set(EOS_PYTHON_SITE_PACKAGES_DIR ${EOS_LIB_DIR}/python${Python_VERSION}/site-packages/eos CACHE PATH "new site-package path" FORCE)
+set(EOS_PYTHON_SITE_PACKAGES_DIR ${EOS_LIB_DIR}/python${Python_VERSION_MAJOR}.${Python_VERSION_MINOR}/site-packages/eos CACHE PATH "new site-package path" FORCE)
 mark_as_advanced(FORCE EOS_PYTHON_SITE_PACKAGES_DIR)
