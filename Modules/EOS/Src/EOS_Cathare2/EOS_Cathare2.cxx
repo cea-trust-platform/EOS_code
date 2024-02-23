@@ -22,7 +22,7 @@ using namespace NEPTUNE ;
 namespace NEPTUNE_EOS
 {
   const AString EOS_Cathare2::tablename("Cathare2")        ;
-  const AString EOS_Cathare2::versionname("v25_3_mod9.153") ;
+  const AString EOS_Cathare2::versionname("v25_3_mod10.4") ;
   static AString UnknownStr("Unknown");
 
   const AString& EOS_Cathare2::table_name()const
