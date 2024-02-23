@@ -54,7 +54,7 @@ extern "C" {
                             double&, double&, double&, double&,
                             double&, double&, double&, double&,
                             double&, double&, double&, double&, 
-                            double&, double&, double&, double&, double&, int&) ;
+                            double&, double&, double&, double&, double&) ;
   void F77DECLARE(c2_fhvpna)(int&, int&, double&,
                           double&, double&,
                           double&, double&, double&, double&,
@@ -201,7 +201,7 @@ extern "C" {
                             double&, double&, double&,
                             double&, double&, double&, double&,
                             double&, double&, double&, double&,
-                            double&, double&, double&, double&, int&) ;
+                            double&, double&, double&, double&) ;
   void F77DECLARE(c2_ftliqna)(int&, double&, double&,
                            double&, double&, double&,
                            double&, double&, double&,

@@ -106,7 +106,7 @@ namespace CATHARE2 {
                                    lhlsv[0], lhlsvv[0], lhvsv[0], lhvsvv[0],
                                    lcplsv[0], lclsvv[0], lcpvsv[0], lcvsvv[0],
                                    lrlsv[0], lrlsvv[0], lrvsv[0], lrvsvv[0],
-                                   lxvap[0], lrnc[0], lmnc[0], lprgr[0], lvalp[0], ienc) ;
+                                   lxvap[0], lrnc[0], lmnc[0], lprgr[0], lvalp[0]) ;
               itest = 1 ;
               for (int k=1; k<=50; k++) 
                  { F77DECLARE(c2_fhvpna)(nsca, ivstat, lxvap[0],
@@ -430,7 +430,7 @@ namespace CATHARE2 {
                             lp[ill], ltsp1[ill], l2tsdpvv[ill],
                             lhlsp[ill], lhlsp1[ill], lhvsp[ill], lhvsp1[ill],
                             lcplsp[ill], lclsp1[ill], lcpvsp[ill], lcvsp1[ill],
-                            lrlsp[ill], lrlsp1[ill], lrvsp[ill], lrvsp1[ill], lienc) ;
+                            lrlsp[ill], lrlsp1[ill], lrvsp[ill], lrvsp1[ill]) ;
   }
 
   //
