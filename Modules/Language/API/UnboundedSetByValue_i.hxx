@@ -55,6 +55,12 @@ namespace LANGUAGE_KERNEL
   }
 
   template <class T>
+  inline UnboundedSetByValue<T>::UnboundedSetByValue(const UnboundedSetByValue<T> & right)
+    :Objects_ptr(right)
+  {
+  }
+
+  template <class T>
   inline UnboundedSetByValue<T>::~UnboundedSetByValue()
   {
   }
@@ -66,13 +72,13 @@ namespace LANGUAGE_KERNEL
   }
 
   template <class T>
-  inline int UnboundedSetByValue<T>::operator==(const UnboundedSetByValue<T> &right) const
+  inline int UnboundedSetByValue<T>::operator==(const UnboundedSetByValue<T> & /*right*/) const
   { assert(0) ;
     return 0 ;
   }
 
   template <class T>
-  inline int UnboundedSetByValue<T>::operator!=(const UnboundedSetByValue<T> &right) const
+  inline int UnboundedSetByValue<T>::operator!=(const UnboundedSetByValue<T> & /*right*/) const
   { assert(0) ;
     return 1 ;
   }
