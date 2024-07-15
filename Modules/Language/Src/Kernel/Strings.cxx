@@ -52,7 +52,7 @@ namespace NEPTUNE
 
 
   Strings & Strings::operator=(const Strings &right)
-  { if (data)  delete data ;
+  { if (data)  delete [] data ;
     sz = right.sz ;
     data = new AString[sz] ;
     for(int i=0; i<sz; i++)
