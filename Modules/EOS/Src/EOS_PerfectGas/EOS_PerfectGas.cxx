@@ -412,7 +412,7 @@ namespace NEPTUNE_EOS
        }
   }
 
-  int EOS_PerfectGas::init(const Strings& strings, const Strings& values,
+  int EOS_PerfectGas::init(const Strings& strings, const Strings& /*values*/,
                            const double href0, const double sref0, const double tref0, const double pref0)
   {
     FluidStr=AString("unknown") ;   

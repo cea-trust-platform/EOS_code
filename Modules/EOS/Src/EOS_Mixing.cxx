@@ -150,7 +150,7 @@ namespace NEPTUNE_EOS
         set_compute_mode();
     } else if (i > 0 && compute_mode == MixingType::WithPerfectGas) {
         if (fluid.table_name() != AString("PerfectGas")) {
-            compute_mode == MixingType::Unsupported;
+            compute_mode = MixingType::Unsupported;
         }
     }
   }
@@ -199,12 +199,13 @@ namespace NEPTUNE_EOS
               return EOS_Error::error ;
             }
     }
+    return EOS_Error::error;
   }
   EOS_Error EOS_Mixing::compute_cathare2_mix(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
-  { EOS_Error cr ;
-    int nb_infields = input.size() ;
+  { //EOS_Error cr ;
+    //int nb_infields = input.size() ;
     // provisional for EOS_Mixing
 #ifdef WITH_PLUGIN_CATHARE2
      ArrOfDouble tprxr  (nb_fluids - 1) ;
@@ -254,17 +255,23 @@ namespace NEPTUNE_EOS
      EOS_Error e = cathare->calc2_mixing(nb_fluids - 1, input, r, errfield) ;
      cathare->set_mixing_properties() ;
      return e ;
+#else
+     (void) r;
+     (void) input;
+     (void) errfield;
+     return EOS_Error::error ;
 #endif
   }
 
   EOS_Error EOS_Mixing::compute_cathare_mix(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
-  { EOS_Error cr ;
-    int nb_infields = input.size() ;
+  {
     // provisional for EOS_Mixing
 #ifdef WITH_PLUGIN_CATHARE
-     if ((nb_infields >= 4) && (nb_infields <= 7) ) 
+        EOS_Error cr ;
+        int nb_infields = input.size() ;
+        if ((nb_infields >= 4) && (nb_infields <= 7) ) 
         { int nincx = 4 ;
           ArrOfDouble tprxr(nincx)  ;
           ArrOfDouble tprxcp(nincx) ;
@@ -293,13 +300,18 @@ namespace NEPTUNE_EOS
         { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
           return EOS_Error::error ;
         }
+#else
+     (void) r;
+     (void) input;
+     (void) errfield;
+     return EOS_Error::error ;
 #endif
   }
 
   EOS_Error EOS_Mixing::compute_perfect_gas(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
-  { EOS_Error cr ;
+  { //EOS_Error cr ;
     int nb_infields  = input.size()  ;         // number of input  fields
     int nb_outfields = r.size() ;         // number of output fields
     int nsca  = errfield.size() ;                 // number of points
@@ -680,13 +692,13 @@ namespace NEPTUNE_EOS
         ArrOfDouble c(nb_fluids) ;
         totab(c, C0[i] ,C1[i], C2[i], C3[i], C4[i]) ;
         //
-        double mmj, cpj;
+        double mmj;
         double cpsum=0.e0;
         double xrsum=0.e0;
         double dlambdagtg=0.e0;
-        double dlambdagpv=0.e0;
+        //double dlambdagpv=0.e0;
         double dmugtg=0.e0;
-        double dmugpv=0.e0;
+        //double dmugpv=0.e0;
         xnc[i]=0.e0;
         mnc[i]=0.e0;
         dncv[i]=0.e0;
@@ -736,11 +748,11 @@ namespace NEPTUNE_EOS
         //
         lambdag[i] = lambdav[i]*c[0]*fldr;
         dlambdagtg = dlambdavtg[i]*c[0]*fldr;
-        dlambdagpv = dlambdavpv[i]*c[0]*fldr;
+        //dlambdagpv = dlambdavpv[i]*c[0]*fldr;
         //
         mug[i] = muv[i]*c[0]*fldr;
         dmugtg = dmuvtg[i]*c[0]*fldr;
-        dmugpv = dmuvpv[i]*c[0]*fldr;
+        //dmugpv = dmuvpv[i]*c[0]*fldr;
         //
         for(int j=1; j<nb_fluids; j++)
         {
@@ -1469,7 +1481,7 @@ namespace NEPTUNE_EOS
     double dhvr = 2*valh;
     double Tg, dtgpv, dtghv, rv, drvpv, drvhv;
     int k;
-    int ierr;
+    //int ierr;
     int nb_iter_max = 50 ;
     for(k = 0; (k < nb_iter_max) && ((fabs(dpvr) > valp) || (fabs(dhvr) > valh)); k++) // Tests convergence
     {

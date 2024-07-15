@@ -99,7 +99,7 @@ namespace NEPTUNE
                                                       const char *source_code_info,
                                                       const double arg1,
                                                       const double arg2,
-                                                      const double result)
+                                                      const double /*result*/)
   { const EOS_Error err = err_code.generic_error() ;
     if (err > no_dump_on_) 
        { std::ostream & os = *dump_stream_ ;

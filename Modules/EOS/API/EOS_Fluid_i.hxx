@@ -29,7 +29,7 @@ namespace NEPTUNE
     return -1;
   }
 
-  inline void EOS_Fluid::set_reference_state(double h, double s, double T, double p)
+  inline void EOS_Fluid::set_reference_state(double /*h*/, double /*s*/, double /*T*/, double /*p*/)
   { cerr << "Not implemented for non PerfectGas EOS!" << endl;
     assert(0);
     exit(-1);
