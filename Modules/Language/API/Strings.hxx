@@ -90,7 +90,7 @@ namespace NEPTUNE
     static int type_Id;
     AString* data;
     int sz;
-    int ref_count;
+    //int ref_count;
   };
 }
 #include "Language/API/Strings_i.hxx"

@@ -82,7 +82,7 @@ namespace NEPTUNE_EOS
   //SATURATION FONCTIONS
   inline EOS_Internal_Error EOS_Refprop10::compute_rho_l_sat_p(double p, double& rho_l_sat) const
   { EOS_Internal_Error err ;
-    double t, rhov, xliq, xvapint ;
+    double t = 0, rhov, xliq, xvapint ;
     int i=1 ;
     rho_l_sat = 0.e0 ;
 
@@ -103,7 +103,7 @@ namespace NEPTUNE_EOS
 
   inline EOS_Internal_Error EOS_Refprop10::compute_rho_v_sat_p(double p, double& rho_v_sat) const
   { EOS_Internal_Error err ;
-    double t, rhol, xliq, xvapint;
+    double t = 0, rhol, xliq, xvapint;
     int i=1;
     rho_v_sat = 0.e0 ;
 
@@ -142,7 +142,7 @@ namespace NEPTUNE_EOS
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_l_sat_p(double p, double& h_l_sat) const
   { EOS_Internal_Error err ;
-    double t, rhol, rhov, xliq, xvapint;
+    double t = 0, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
     int i=1;
     h_l_sat = 0.e0 ;
@@ -164,7 +164,7 @@ namespace NEPTUNE_EOS
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_v_sat_p(double p, double& h_v_sat) const
   { EOS_Internal_Error err ;
-    double t, rhol, rhov, xliq, xvapint;
+    double t = 0, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
     int i=1;
     h_v_sat = 0.e0 ;
@@ -186,7 +186,7 @@ namespace NEPTUNE_EOS
 
   inline EOS_Internal_Error EOS_Refprop10::compute_cp_l_sat_p(double p, double& cp_l_sat) const
   { EOS_Internal_Error err ;
-    double t, rhol, rhov, xliq, xvapint, cp, cv;
+    double t = 0, rhol, rhov, xliq, xvapint, cp, cv;
     int i=1;
     cp_l_sat = 0.e0 ;
 
@@ -207,7 +207,7 @@ namespace NEPTUNE_EOS
 
   inline EOS_Internal_Error EOS_Refprop10::compute_cp_v_sat_p(double p, double& cp_v_sat) const
   { EOS_Internal_Error err ;
-    double t, rhol, rhov, xliq, xvapint, cp, cv;
+    double t = 0, rhol, rhov, xliq, xvapint, cp, cv;
     int i=2;
     cp_v_sat = 0.e0 ;
 
@@ -417,8 +417,7 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error EOS_Refprop10::compute_sigma_pT(double p, double T, double& sigma) const
   { EOS_Internal_Error err ;
     double rho, rhol, rhov, q, e, h, s, cv, cp, w;
-    double xl[nbcomp];
-    double xv[nbcomp];
+    std::vector<double> xl(nbcomp), xv(nbcomp);
 
     double p_refprop = pa2kpa(p) ;
 
@@ -426,10 +425,11 @@ namespace NEPTUNE_EOS
     err = callSetup() ;
     if (err.generic_error() != EOS_Error::good)  return err ;
 
-    F77NAME(tpflsh)(T,p_refprop,arr_molfrac, rho, rhol, rhov, xl, xv, q, e, h, s, cv, cp, w, ierr_10, herr_10);
+    F77NAME(tpflsh)(T,p_refprop,arr_molfrac, rho, rhol, rhov, 
+		    xl.data(), xv.data(), q, e, h, s, cv, cp, w, ierr_10, herr_10);
     if (ierr_10!=0)  return generate_error(ierr_10, herr_10) ;
 
-    F77NAME(stn)(T,rhol,rhov,xl,xv,sigma,ierr_10,herr_10);
+    F77NAME(stn)(T,rhol,rhov,xl.data(),xv.data(),sigma,ierr_10,herr_10);
     if (ierr_10!=0)  return generate_error(ierr_10, herr_10) ;
 
     return EOS_Internal_Error::OK ;
@@ -555,9 +555,8 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error
   EOS_Refprop10::compute_sigma_ph(double p, double h, double& sigma) const
   { EOS_Internal_Error err ;
-    double t, rho, rhol, rhov, q, e, s, cv, cp, w;
-    double xl[nbcomp] ;
-    double xv[nbcomp] ;
+    double t = 0, rho, rhol, rhov, q, e, s, cv, cp, w;
+    std::vector<double> xl(nbcomp), xv(nbcomp);
 
     double p_refprop = pa2kpa(p) ;
     double h_refprop = eos_nrj_2_refprop(h) ;
@@ -566,10 +565,10 @@ namespace NEPTUNE_EOS
     err = callSetup() ;
     if (err.generic_error() != EOS_Error::good)  return err ;
 
-    F77NAME(phflsh)(p_refprop,h_refprop, arr_molfrac, t, rho, rhol, rhov, xl, xv, q, e, s, cv, cp, w, ierr_10, herr_10) ;
+    F77NAME(phflsh)(p_refprop,h_refprop, arr_molfrac, t, rho, rhol, rhov, xl.data(), xv.data(), q, e, s, cv, cp, w, ierr_10, herr_10) ;
     if (ierr_10!=0) return generate_error(ierr_10, herr_10) ;
 
-    F77NAME(stn)(t,rhol,rhov,xl,xv,sigma,ierr_10,herr_10) ;
+    F77NAME(stn)(t,rhol,rhov,xl.data(),xv.data(),sigma,ierr_10,herr_10) ;
     if (ierr_10!=0) return generate_error(ierr_10, herr_10) ;
 
     return EOS_Internal_Error::OK ;
@@ -577,7 +576,7 @@ namespace NEPTUNE_EOS
 
   //! d(rho)/dp    at constant specific enthalpy
   inline EOS_Internal_Error EOS_Refprop10::compute_d_rho_d_p_h_ph(double p, double h, double& drhodp_h) const
-  { double t, rho, drhodp_t, drhodt_p, dtdp_h;
+  { double t = 0, rho, drhodp_t, drhodt_p, dtdp_h;
     EOS_Internal_Error err ;
 
     err = compute_rho_ph(p,h, rho) ;
@@ -604,7 +603,7 @@ namespace NEPTUNE_EOS
 
   //! d(rho)/dh      at constant pressure
   inline EOS_Internal_Error EOS_Refprop10::compute_d_rho_d_h_p_ph(double p, double h, double& drhodh_p) const
-  { double t, rho, drhodt_p, dtdh_p;
+  { double t = 0, rho, drhodt_p, dtdh_p;
     EOS_Internal_Error err ;
 
     err = compute_rho_ph(p,h, rho) ;
