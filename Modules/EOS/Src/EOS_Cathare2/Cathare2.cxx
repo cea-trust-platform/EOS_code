@@ -1544,6 +1544,7 @@ namespace CATHARE2
                                          default: 
                                             return 0 ;
                                        }
+                                    break;
                                  default: 
                                     return 0 ;
                                }
