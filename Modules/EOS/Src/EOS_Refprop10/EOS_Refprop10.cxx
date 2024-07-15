@@ -38,7 +38,7 @@ namespace NEPTUNE_EOS
   iline(0),errcode(100), wmm(0), arr_hname(1), arr_hn80(1), arr_hcas(1)
   { varr_molfrac.assign(nc_max_10, 0.e0) ;
     arr_molfrac = &varr_molfrac[0] ;
-    memset(herr_10, HC255, '\0');
+    memset(herr_10, '\0', HC255);
   }
 
   static RegisteredClass& EOS_Refprop10_create()
