@@ -2207,7 +2207,7 @@ int main()
     catch (EOS_Internal_Error& error) {
       cout << "Error when creating object: " << error.generic_error() << endl;
     }
-    catch (std::bad_alloc) {
+    catch (std::bad_alloc &) {
       cout << "Error when creating object: Class not found." << endl;
     }
     catch (...) {
