@@ -117,11 +117,12 @@ namespace NEPTUNE_EOS
     int lv_chfld = int(pname2-pname1-1) ;
 
     int lm_chfld = strlen(strings[0].aschar()) ;
-    char chfld[lm_chfld] ;
+    char *chfld = new char[lm_chfld+1] ;
     strncpy(chfld,pname1+1,lv_chfld) ;
     chfld[lv_chfld] = '\0' ;
 
     FluidStr = AString(chfld) ;
+    delete [] chfld;
 
     // equation of state name : EosStr
     EosStr =  FluidStr ;
@@ -187,12 +188,14 @@ namespace NEPTUNE_EOS
     int lv_chfld = int(pname2-pname1-1) ;
 
     int lm_chfld = strlen(strings[0].aschar()) ;
-    char chfld[lm_chfld] ;
+    char *chfld = new char[lm_chfld+1] ;
     strncpy(chfld,pname1+1,lv_chfld) ;
     chfld[lv_chfld] = '\0' ;
 
     FluidStr = AString(chfld) ;
 
+    delete [] chfld;
+    
     // equation of state name : EosStr
     EosStr = FluidStr ;
     EosStr +=phase_name() ;
@@ -296,12 +299,13 @@ namespace NEPTUNE_EOS
     int lv_chfld = int(pname2-pname1-1) ;
 
     int lm_chfld = strlen(strings[0].aschar()) ;
-    char chfld[lm_chfld] ;
+    char *chfld = new char[lm_chfld+1] ;
     strncpy(chfld,pname1+1,lv_chfld) ;
     chfld[lv_chfld] = '\0' ;
 
     FluidStr = AString(chfld) ;
 
+    delete [] chfld;
     // equation of state name : EosStr
     EosStr = FluidStr ;
     EosStr +=phase_name() ;
@@ -924,7 +928,7 @@ namespace NEPTUNE_EOS
           double h_ref;
           double p_new, pp_new, pm_new;
           double functT = 1.;
-          double dfunctT, dT, dTu;
+          double dfunctT, dT, dTu = 0.0;
 
           double inewt;
           double nnewt = 100;

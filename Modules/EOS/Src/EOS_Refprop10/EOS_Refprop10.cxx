@@ -925,7 +925,7 @@ namespace NEPTUNE_EOS
           double h_ref;
           double p_new, pp_new, pm_new;
           double functT = 1.;
-          double dfunctT, dT, dTu;
+          double dfunctT, dT, dTu = 0.0;
 
           double inewt;
           double nnewt = 100;
