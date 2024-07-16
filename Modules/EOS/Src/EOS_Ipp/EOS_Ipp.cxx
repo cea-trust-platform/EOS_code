@@ -128,8 +128,9 @@ namespace NEPTUNE_EOS
     med_file += file_name ;
 
     //get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med
-    method    = strtok (file_name.aschar(),".") ;
-    reference = strtok (NULL, ".") ;
+    char *save_pt;
+    method    = strtok_r (file_name.aschar(),".", &save_pt) ;
+    reference = strtok_r (NULL, ".", &save_pt) ;
           
     if (method == "eos_igen_qi")
        { method   = "" ;

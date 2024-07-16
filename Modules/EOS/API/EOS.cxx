@@ -171,8 +171,9 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
        if (index_file_desc.eof()) break ;
 
        cpt = line_indeos ;
+       char * save_cpt;
        int numw = 0 ;
-       while ( (cpt2 = strtok(cpt," ")) )
+       while ( (cpt2 = strtok_r(cpt," ", &save_cpt)) )
           { numw++ ;
             if (numw == 1)
                { strcpy(method_str_iem,cpt2) ;  // read and uppercase
@@ -276,7 +277,8 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
           int numw = 0 ;
           int nb_args  = 0 ;
           int num_args = 0 ;
-          while ( (cpt2 = strtok(cpt," ")) )
+          char * save_cpt;
+          while ( (cpt2 = strtok_r(cpt," ", &save_cpt)) )
              { numw++ ;
                if (numw == 1)                        // Thermodynamic Model Name
                   { strcpy(tmname_read,cpt2) ;       // read tmname_read

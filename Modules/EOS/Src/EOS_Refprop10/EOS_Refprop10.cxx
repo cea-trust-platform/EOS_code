@@ -904,7 +904,8 @@ namespace NEPTUNE_EOS
 
          // sub code : EOS_REFPROP_CODE
          char *pt = (char*) strmsg.c_str() ;
-         EOS_REFPROP10_CODE = atoi(strtok(pt, " ")) ;
+         char *save_pt ;
+         EOS_REFPROP10_CODE = atoi(strtok_r(pt, " ", &save_pt)) ;
 
          // test  get_partial_code
          if (EOS_REFPROP10_CODE == error.get_partial_code())
