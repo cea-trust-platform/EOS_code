@@ -42,6 +42,7 @@ Options: [defaults in brackets after descriptions]
   --cc=<path>/<compiler>                force the c compiler
   --fc=<path>/<compiler>                force the fortran compiler
   --add_comp_flags=<opt1>,<opt2>,...    add flags for compilation
+  --with-openmp                         compile with support of OpenMP
   --static-only                         do not build shared library
   --shared-only                         do not build static library
   --with-cmake-exec=<bin_cmake>         cmake executable

@@ -103,6 +103,8 @@ add_opt   "--install-tirpc"                "INSTALL_TIRPC=ON"
 add_opt   "--force-glibc-rpc"              "FORCE_GLIBC_RPC=ON"
 add_opt   "--shared-only"                  "BUILD_STATIC_LIB=OFF"
 add_opt   "--static-only"                  "BUILD_SHARED_LIB=OFF"
+add_opt   "--with-openmp"                  "ENABLE_OPENMP=ON"
+add_opt   "--without-openmp"               "ENABLE_OPENMP=OFF"
 
 # option like --prefix=/home/myrep --> -DCMAKE_INSTALL_PREFIX=/home/myrep
 # ex : add_opteq "--prefix" "CMAKE_INSTALL_PREFIX"
@@ -176,6 +178,7 @@ for i in "$@" ; do
             fill_opt_with_value "${i%=*}" "${i#*=}"
             ;;
         --*)
+            echo $i
             fill_opt $i
             ;;
         *)  

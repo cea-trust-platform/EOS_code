@@ -27,6 +27,7 @@
 #--cc=<path>/<compiler>                # force the c compiler
 #--fc=<path>/<compiler>                # force the fortran compiler
 #--add_comp_flags=<opt1>,<opt2>,...    # add flags for compilation
+#--with_openmp                         # compile with support of OpenMP
 
 #-------------------------------------------------------------------
 # python API
