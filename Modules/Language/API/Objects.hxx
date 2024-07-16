@@ -24,7 +24,7 @@
 
 #ifdef _OPENMP
 #include <mutex>
-#enbdif
+#endif
   
 using std::ostream;
 using std::istream;
