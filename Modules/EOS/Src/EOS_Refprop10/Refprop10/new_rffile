@@ -25,7 +25,7 @@ c  02-22-07 EWL, check for null character in input string
 c  02-10-18  TL, allow different reference fluid directory
 c
       include 'COMMONS.INC'
-      character*255 hfilei,hflref,UCASE,REMOVENUL
+      character*255 hfilei,hflref,UCASE !,REMOVENUL
       integer i,j,jpoint,jchar,lenfile  ! M.F.
 
 c  Special case if component data is read from block data.
