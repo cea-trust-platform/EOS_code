@@ -27,6 +27,7 @@
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Config.hxx"
 #include <fstream>
+#include <cmath>
 
 #define DBL_EPSILON 1e-9
 
@@ -801,95 +802,72 @@ namespace NEPTUNE_EOS
   //facon de faire à revoir peu robuste (Cf. condition d'enregistrement de fnodes2phnodes[l])
   void EOS_Ipp::f_mesh2r_mesh()
   {
-    int h_nodes, p_nodes, nb_fnodes ;
-    double p, h ;
-    double p_add = 0 ;
-    double h_add = 0 ;
+    
+    unsigned int nb_cell = index_conn_ph.size() - 1 ;
+    corners.resize(4*nb_cell);
 
-    int nb_cell = index_conn_ph.size() - 1 ;
+    unsigned int nb_h_nodes = round((hmax-hmin) / delta_h_f ) ;
+    unsigned int nb_p_nodes = round((pmax-pmin) / delta_p_f ) ;
+    
+    fnodes2phnodes.resize(nb_h_nodes*nb_p_nodes) ;
 
-    h_nodes = (hmax-hmin) / delta_h_f  ;
-    p_nodes = (pmax-pmin) / delta_p_f  ;
-    nb_fnodes = h_nodes*p_nodes      ;
-    fnodes2phnodes.resize(nb_fnodes) ;
+    for (unsigned int i_med_cell=0; i_med_cell<nb_cell; i_med_cell++)
+    {
+      unsigned int nb_node_in_cell = index_conn_ph[i_med_cell+1] - index_conn_ph[i_med_cell] ;
+      unsigned int num_first_node = index_conn_ph[i_med_cell];
+      unsigned int node_1, node_2, node_3;
+      unsigned int node_0 = connect_ph[num_first_node];
 
-    int l = 0 ;
-    for (int i=0; i<p_nodes; i++)
-       { for (int j=0; j<h_nodes; j++)
-            { p = pmin + p_add ;
-              h = hmin + h_add ;
+      // Si plus de 4 sommets dans la maille, on parcourt les sommets de long des arêtes dans le
+      // sens trigo et on reconnait le premier coin quand P devient constant, puis le deuxième quand
+      // h devient constant, et le troisième quand p redevient constant
+      if (nb_node_in_cell > 4)
+      {
+        unsigned int num_node_in_cell = num_first_node + 1;
+        while (nodes_ph[0][num_node_in_cell] - nodes_ph[0][num_node_in_cell-1] < DBL_EPSILON)
+          num_node_in_cell++;
+        node_1 = connect_ph[num_node_in_cell];
 
-              int k = 0 ;
-              int found = 0 ;
-              while (k<nb_cell && !found)
-                 { int idx_cell = index_conn_ph[k]    ;   // index dans tableau connect_ph
-                   int idx_min = connect_ph[idx_cell] ;   // index du 1er point de cell dans nodes_ph (pmin,hmin)
+        while (nodes_ph[1][num_node_in_cell] - nodes_ph[1][num_node_in_cell-1] < DBL_EPSILON)
+          num_node_in_cell++;
+        node_2 = connect_ph[num_node_in_cell];
 
-                   //polygone with 4 nodes ?
-                   int nb_np = index_conn_ph[k+1] - index_conn_ph[k] ;
-                   if (nb_np == 4)
-                      { int idx_max = connect_ph[idx_cell+2] ;     //index for pmax,hmax
+        while (nodes_ph[0][num_node_in_cell] - nodes_ph[0][num_node_in_cell-1] < DBL_EPSILON)
+          num_node_in_cell++;
+        node_3 = connect_ph[num_node_in_cell];
+      }
+      // Si la maille n'a que 4 sommets, alors ce sont les 4 angles de la maille
+      else
+      {
+        node_1 = connect_ph[num_first_node+1];
+        node_2 = connect_ph[num_first_node+2];
+        node_3 = connect_ph[num_first_node+3];
+      }
+      
+      double p_min_cell = nodes_ph[0][node_0];
+      double p_max_cell = nodes_ph[0][node_2];
+      double h_min_cell = nodes_ph[1][node_0];
+      double h_max_cell = nodes_ph[1][node_2];
 
-                        //is in cell ?
-                        //if ((p >= nodes_ph[0][idx_min]) && (p < nodes_ph[0][idx_max]))
-                        if (((p > nodes_ph[0][idx_min])||(fabs(p - nodes_ph[0][idx_min])<DBL_EPSILON))
-                            && ((p < nodes_ph[0][idx_max])) && (fabs(p - nodes_ph[0][idx_max])>DBL_EPSILON))
-                          {
-                            //if ((h >= nodes_ph[1][idx_min])&&(h<nodes_ph[1][idx_max]))
-                            
-                            if (   ((h > nodes_ph[1][idx_min]) || (fabs(h - nodes_ph[1][idx_min]) < DBL_EPSILON))
-                                && ((h < (nodes_ph[1][idx_max]+DBL_EPSILON))) && (fabs(h - nodes_ph[1][idx_max]) > DBL_EPSILON) )
-                              {
-                                fnodes2phnodes[l] = idx_cell ;    //index in connect_ph of first node of the cell
-                                found = 1;
-                              }
-                          }
-                      }
-                   else   //nn nodes > 4
-                      {
-                        //coordonnees des noeuds des polygones notees dans le sens anti-horaire.
-                        //recherche de pmax et de hmax
-                        double pmax = nodes_ph[0][idx_min] ;
-                        double hmax = nodes_ph[1][idx_min] ;
+      unsigned int i_p_min = round((p_min_cell-pmin)/delta_p_f);
+      unsigned int i_p_max = round((p_max_cell-pmin)/delta_p_f);
+      unsigned int i_h_min = round((h_min_cell-hmin)/delta_h_f);
+      unsigned int i_h_max = round((h_max_cell-hmin)/delta_h_f);
 
-                        int nb = 1;
-                        while (nb<nb_np)
-                           { int idx = connect_ph[idx_cell+nb] ;
-                             if ((pmax < nodes_ph[0][idx]) && (fabs(pmax - nodes_ph[0][idx]) > DBL_EPSILON))
-                               pmax = nodes_ph[0][idx] ;
+      for (unsigned int i_p=i_p_min; i_p<i_p_max; i_p++)
+      {
+        for (unsigned int i_h=i_h_min; i_h<i_h_max; i_h++)
+        {
+          fnodes2phnodes[i_h + nb_h_nodes*i_p] = i_med_cell;
+        }
+      }
 
-                             nb++;
-                           }
+      corners[0 + 4*i_med_cell] = node_0;
+      corners[1 + 4*i_med_cell] = node_1;
+      corners[2 + 4*i_med_cell] = node_2;
+      corners[3 + 4*i_med_cell] = node_3;
 
-                        //if ((p >= nodes_ph[0][idx_min]) && (p < pmax))
-                        if (   ((p > nodes_ph[0][idx_min]) || fabs(p - nodes_ph[0][idx_min]) < DBL_EPSILON)
-                            && ((p < pmax) && (fabs(p - pmax) > DBL_EPSILON)) )
-                           { int nb = 1 ;
-                             while (nb<nb_np)
-                                { int idx = connect_ph[idx_cell+nb] ;
-                                  if ((hmax < nodes_ph[1][idx]) && (fabs(hmax - nodes_ph[1][idx])>DBL_EPSILON))
-                                     hmax = nodes_ph[1][idx] ;
-
-                                  nb++ ;
-                                }
-
-                             //if ((h >= nodes_ph[1][idx_min])&&(h<hmax))
-                             if (   ((h > nodes_ph[1][idx_min]) || (fabs(h > nodes_ph[1][idx_min]) < DBL_EPSILON))
-                                 && ((h<hmax) && (fabs(h-hmax) > DBL_EPSILON)) )
-                                { fnodes2phnodes[l] = idx_cell ;
-                                  found = 1 ;
-                                }
-                           }
-                      }
-                   k++ ;
-                 }
-              l++ ;
-              h_add+=delta_h_f ;
-            }
-         p_add += delta_p_f ;
-         h_add = 0 ;
-       }
-
+    }
   }
 
   void EOS_Ipp::node_err2mesh_err(EOS_Error_Field& err_nodes_prop_ph)
@@ -969,13 +947,12 @@ namespace NEPTUNE_EOS
        }
   }
 
-  //renvoi l'index du 1er noeud de la cellule
-  // si p
+  //renvoi le numéro de la cellule contenant (p, h)
   int EOS_Ipp::get_cellidx(double& p, double& h) const
   {
     int ih, ip ;
-    ih = (int)((h-hmin)/delta_h_f) ;
-    ip = (int)((p-pmin)/delta_p_f) ;
+    ih = floor((h-hmin)/delta_h_f) ;
+    ip = floor((p-pmin)/delta_p_f) ;
 
     //get number of the fictif node : i
     int h_nodes = (hmax-hmin)/delta_h_f ;
@@ -1065,144 +1042,42 @@ namespace NEPTUNE_EOS
   //recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille
   EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, AString& property, EOS_Fields& cell_val) const
   {
-    //cout << "debut get_cell_values" <<endl;
-    //avec l'index : je peux recuperer tous les index des noeuds de la maille
-    // si nb_noeud > 4 : faire une recherche des coins
+    char propcov[PROPNAME_MSIZE];
+    eostp_strcov(property.aschar(), propcov); // propcov : base alphanumérical property
+    EOS_thermprop enum_property = nam2num_thermprop(propcov);
 
-    //polygone with 4 nodes ?
-    //cout << "get_cell_values debut prop=" << property << " idx="<<idx<<endl;
-    //cout << "get_cell_values debut cell_val="<<cell_val<<endl;
+    // get index of 'property' in all fields available in med
+    unsigned int nb_properties = val_prop_ph.size();
+    unsigned int i_property = 0;
+    for (; i_property < nb_properties; i_property++)
+    {
+      if (val_prop_ph[i_property].get_property_number() == enum_property)
+        break;
+    }
+    if (i_property == nb_properties)
+      return PROP_NOT_IN_DB;
 
-    char propcov[PROPNAME_MSIZE] ;
-    eostp_strcov(property.aschar(), propcov) ; // propcov : base alphanumérical property
+    // get index of error field in all error fields
+    unsigned int nb_ecp = err_cell_ph.size();
+    unsigned int i_ecp = 0;
+    for (; i_ecp < nb_ecp; i_ecp++)
+    {
+      if (eostp_strcmp(err_cell_ph[i_ecp].get_name().aschar(), propcov) == 0)
+        break;
+    }
+    if (i_ecp == nb_ecp)
+      return PROP_NOT_IN_DB;
 
-    int nb_icp = index_conn_ph.size() ;
-    int nb_np = 0 ;
-    int ncell = 0 ;
-    int found = 0 ;
-    while ((ncell < (nb_icp-1)) && !found)
-       { if (idx == index_conn_ph[ncell])
-            { nb_np = index_conn_ph[ncell+1] - index_conn_ph[ncell] ;
-              found = 1 ;
-            }
-         ncell++ ;
-       }
+    unsigned int id_med_cell = fnodes2phnodes[idx];
+    for (unsigned short i_node = 0; i_node < 4; i_node++)
+    {
+      cell_val[0][i_node] = nodes_ph[0][corners[i_node+4*id_med_cell]];
+      cell_val[1][i_node] = nodes_ph[1][corners[i_node+4*id_med_cell]];
+      cell_val[2][i_node] = val_prop_ph[i_property][corners[i_node+4*id_med_cell]];
+    }
 
-    int nb_vpp = val_prop_ph.size() ;
-    
-    if (nb_np == 4)
-       { //p
-         cell_val[0][0] = nodes_ph[0][connect_ph[idx]]   ;
-         cell_val[0][1] = nodes_ph[0][connect_ph[idx+1]] ;
-         cell_val[0][2] = nodes_ph[0][connect_ph[idx+3]] ;
-         cell_val[0][3] = nodes_ph[0][connect_ph[idx+2]] ;
+    return err_cell_ph[i_ecp][id_med_cell].get_code();
 
-         //h
-         cell_val[1][0] = nodes_ph[1][connect_ph[idx]]   ;
-         cell_val[1][1] = nodes_ph[1][connect_ph[idx+1]] ;
-         cell_val[1][2] = nodes_ph[1][connect_ph[idx+3]] ;
-         cell_val[1][3] = nodes_ph[1][connect_ph[idx+2]] ;
-       
-         //property values
-         int found = 0 ;
-         int i = 0 ;
-         while( (i<nb_vpp) && !found )
-            { if (eostp_strcmp(val_prop_ph[i].get_property_name().aschar(), propcov) == 0)
-                 { cell_val[2][0] = val_prop_ph[i][connect_ph[idx]]   ;
-                   cell_val[2][1] = val_prop_ph[i][connect_ph[idx+1]] ;
-                   cell_val[2][2] = val_prop_ph[i][connect_ph[idx+3]] ;
-                   cell_val[2][3] = val_prop_ph[i][connect_ph[idx+2]] ;
-                   found = 1 ;
-                 }
-              i++ ;
-            }
-       
-         //cout << "get_cell_values intermedaire cell_val="<<cell_val<<endl;
-         //cout << "found="<<found<<endl;
-         if (!found)  return PROP_NOT_IN_DB ;
-       }
-
-    else   //nn nodes > 4
-       { int idx2 = 0 ;         //coin inf droit, sup droit,sup gauche
-         int idx3 = 0 ;
-         int idx4 = 0 ;
-         int found = 0 ;
-         int i = 1 ;
-         while ( (i < nb_np) && !found )
-           { //if (nodes_ph[0][connect_ph[idx]]==nodes_ph[0][connect_ph[idx+i]])
-             if ( fabs(nodes_ph[0][connect_ph[idx]] - nodes_ph[0][connect_ph[idx+i]]) < DBL_EPSILON )
-                { idx2 = idx + i - 1 ;
-                  found = 1;
-                }
-             else
-                i++ ;
-           }
-         found = 0 ;
-         while ( (i < nb_np) && !found )
-            { //if (nodes_ph[1][connect_ph[idx2]]==nodes_ph[1][connect_ph[idx+i]])
-              if ( fabs(nodes_ph[1][connect_ph[idx2]] - nodes_ph[1][connect_ph[idx+i]]) < DBL_EPSILON )
-                 { idx3 = idx + i - 1 ;
-                   found = 1 ;
-                 }
-              else
-                 i++ ;
-            }
-         found = 0 ;
-         while ( (i < nb_np) && !found )
-            { //if (nodes_ph[0][connect_ph[idx3]]==nodes_ph[0][connect_ph[idx+i]])
-              if ( fabs(nodes_ph[0][connect_ph[idx3]] - nodes_ph[0][connect_ph[idx+i]]) < DBL_EPSILON )
-                 { idx2 = idx + i - 1 ;
-                   found = 1 ;
-                 }
-              else
-                 i++ ;
-            }
-
-         if (!found)  idx4 = idx + nb_np - 1 ;
-
-         //get all values
-         //p
-         cell_val[0][0] = nodes_ph[0][connect_ph[idx]]  ;
-         cell_val[0][1] = nodes_ph[0][connect_ph[idx2]] ;
-         cell_val[0][2] = nodes_ph[0][connect_ph[idx3]] ;
-         cell_val[0][3] = nodes_ph[0][connect_ph[idx4]] ;
-         //h
-         cell_val[1][0] = nodes_ph[1][connect_ph[idx]]  ;
-         cell_val[1][1] = nodes_ph[1][connect_ph[idx2]] ;
-         cell_val[1][2] = nodes_ph[1][connect_ph[idx3]] ;
-         cell_val[1][3] = nodes_ph[1][connect_ph[idx4]] ;
-
-         //property values
-         i = 0 ;
-         found = 0 ;
-         while( (i < nb_vpp) && !found )
-            { if (eostp_strcmp(val_prop_ph[i].get_property_name().aschar(), propcov) == 0)
-                 { cell_val[2][0] = val_prop_ph[i][connect_ph[idx]]  ;
-                   cell_val[2][1] = val_prop_ph[i][connect_ph[idx2]] ;
-                   cell_val[2][2] = val_prop_ph[i][connect_ph[idx3]] ;
-                   cell_val[2][3] = val_prop_ph[i][connect_ph[idx4]] ;
-                   found = 1 ;
-                 }
-              i++ ;
-            }
-         if (!found)  return PROP_NOT_IN_DB ;
-
-       }
-
-    int i = 0 ;
-    int nb_ecp = err_cell_ph.size() ;
-    while(i < nb_ecp)
-       { EOS_Error_Field errf = err_cell_ph[i] ;
-         if (eostp_strcmp(errf.get_name().aschar(), propcov) == 0)
-            { if (errf[ncell-1].get_code() !=  EOS_Internal_Error::OK)
-                 return errf[ncell-1].get_code() ;
-              else
-                 return EOS_Internal_Error::OK ;
-            }
-         i++ ;
-       }
-
-    return EOS_Internal_Error::OK ;
   }
 
 
