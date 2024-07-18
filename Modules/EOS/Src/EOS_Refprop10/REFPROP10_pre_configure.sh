@@ -84,7 +84,7 @@ do
   if test ! -f $fDest -o $fSrc -nt $fDest
   then
     cp $fSrc $fDest
-   (cd $BINARY_DIR/Refprop10 ; ./REFPROP10_patch.sh $fDest)
+   #(cd $BINARY_DIR/Refprop10 ; ./REFPROP10_patch.sh $fDest)
   fi
 done
 
@@ -123,9 +123,20 @@ do
 done
 
 echo "Copy fluids, ppf and mixtures properties to $EOS_DATA"
-for fSrc in $PLUGINEXT_DAT/fluids/* $PLUGINEXT_DAT/mixtures/*
+mkdir -p $EOS_DATA/fluids
+for fSrc in $PLUGINEXT_DAT/fluids/*
 do
-  fDest="$EOS_DATA/"`basename $fSrc`
+  fDest="$EOS_DATA/fluids/"`basename $fSrc`
+  if test ! -f $fDest -o $fSrc -nt $fDest
+  then
+    cp $fSrc $fDest
+  fi
+done
+
+mkdir -p $EOS_DATA/mixtures
+for fSrc in $PLUGINEXT_DAT/mixtures/*
+do
+  fDest="$EOS_DATA/mixtures/"`basename $fSrc`
   if test ! -f $fDest -o $fSrc -nt $fDest
   then
     cp $fSrc $fDest
