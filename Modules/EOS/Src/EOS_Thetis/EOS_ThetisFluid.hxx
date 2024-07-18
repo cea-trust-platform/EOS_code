@@ -40,6 +40,9 @@ namespace NEPTUNE_EOS
 		      const char* tableName,
 		      const Strings& strings,
 		      const int& nbFluidMax);
+
+    virtual int init(const Strings& strings, const int& nbFluidMax, int& fluidCounter);
+
   };
 }
 

@@ -75,4 +75,11 @@ namespace NEPTUNE_EOS
     return EOS_Error::good ;
   }
 
+  int EOS_ThetisFluid::init(const Strings& /*strings*/, 
+                            const int& /*nbFluidMax*/, 
+                            int& /*fluidCounter*/)
+  {
+    throw EOS_Internal_Error::NOT_IMPLEMENTED;
+  }
+
 }

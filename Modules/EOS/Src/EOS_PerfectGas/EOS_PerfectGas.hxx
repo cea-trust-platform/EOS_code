@@ -37,7 +37,7 @@ namespace NEPTUNE_EOS
     
     //! for initialisation :
     virtual int init(const Strings&) ;
-    virtual int init(const Strings&, const Strings&, const double, const double, const double, const double) ;
+    virtual int init(const Strings&, const Strings&, double, double, double, double);
     virtual const AString& fluid_name() const ;
     // molar mass (kg/mol)
     virtual EOS_Internal_Error get_mm(double&) const;
