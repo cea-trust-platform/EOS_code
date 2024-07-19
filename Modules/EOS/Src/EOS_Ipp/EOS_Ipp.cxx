@@ -28,6 +28,7 @@
 #include "EOS/API/EOS_Config.hxx"
 #include <fstream>
 #include <cmath>
+#include <set>
 
 #define DBL_EPSILON 1e-9
 
@@ -172,10 +173,6 @@ namespace NEPTUNE_EOS
        }
     
     errM = load_med_scalar(med) ;
-//     if (errM != EOS_Error::good)
-//     {
-//       cerr<<"Error : EOS_Ipp::load_med_scalar"<<endl;
-//     }
     errM = med.close_File();
     if (errM != EOS_Error::good)
        { cerr << "Error : Close med file"      << endl ;
@@ -947,7 +944,7 @@ namespace NEPTUNE_EOS
        }
   }
 
-  //renvoi le numéro de la cellule contenant (p, h)
+  //renvoi le numéro de la cellule réelle contenant (p, h)
   int EOS_Ipp::get_cellidx(double& p, double& h) const
   {
     int ih, ip ;
@@ -1039,7 +1036,8 @@ namespace NEPTUNE_EOS
 
 
 
-  //recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille
+  //recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille réelle
+  // idx = indice dans le maillage med = fnodes2phnodes[indice_h + Nb_pts_h * indice_p]
   EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, AString& property, EOS_Fields& cell_val) const
   {
     char propcov[PROPNAME_MSIZE];
@@ -1068,15 +1066,14 @@ namespace NEPTUNE_EOS
     if (i_ecp == nb_ecp)
       return PROP_NOT_IN_DB;
 
-    unsigned int id_med_cell = fnodes2phnodes[idx];
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
-      cell_val[0][i_node] = nodes_ph[0][corners[i_node+4*id_med_cell]];
-      cell_val[1][i_node] = nodes_ph[1][corners[i_node+4*id_med_cell]];
-      cell_val[2][i_node] = val_prop_ph[i_property][corners[i_node+4*id_med_cell]];
+      cell_val[0][i_node] = nodes_ph[0][corners[i_node+4*idx]];
+      cell_val[1][i_node] = nodes_ph[1][corners[i_node+4*idx]];
+      cell_val[2][i_node] = val_prop_ph[i_property][corners[i_node+4*idx]];
     }
 
-    return err_cell_ph[i_ecp][id_med_cell].get_code();
+    return err_cell_ph[i_ecp][idx].get_code();
 
   }
 
@@ -1111,7 +1108,7 @@ namespace NEPTUNE_EOS
          i = 0 ;
          while(i < nb_ess)
             { EOS_Error_Field errf = err_segm_sat[i] ;
-//            if (eostp_strcmp(errf.get_name().aschar(), propcov) == 0)  return errf[idx].get_code();
+            //if (eostp_strcmp(errf.get_name().aschar(), propcov) == 0)  return errf[idx].get_code();
               i++ ;
             }
        }
@@ -1197,47 +1194,42 @@ namespace NEPTUNE_EOS
     values[1] = hf ;
     values[2] = rf ;
 
-    //read all cell
-    //for each cells compute h if 0<=h*<=1
+    // Get all real cells containing p
+    std::set<unsigned int> cells_containing_p;
+    for (double h = hmin+delta_h_f/2 ; h<hmax ; h += delta_h_f)
+    {
+      unsigned int med_id_cell = get_cellidx(p, h);
+      cells_containing_p.insert(med_id_cell);
+    }
+
+    //read all cells containing p
+    //for each cell compute h if 0<=h*<=1
     //return first h computed
-    int nb_icp1 = index_conn_ph.size() - 1 ;
-    for (int i=0;(i<nb_icp1) && !found; i++)
-       { //get values for the cell
-         int idx = index_conn_ph[i] ;
-         
-         //cout << "--- appel get_cell_values idx=" << idx << " prop="<<prop<<endl;
-         ierr = get_cell_values(idx, prop, values) ;
-//       if (ierr!=EOS_Internal_Error::OK)
-//             return ierr;
+    for (auto med_cell: cells_containing_p)
+    {
+      ierr =  get_cell_values(med_cell, prop, values) ;
+      
+      pcal = (p - values[0][0]) / (values[0][2] - values[0][0]) ;
 
-         //cell contains "p" line ?
-         //if ((p >= values[0][0] && p < values[0][2]) || p==pmax)
-         if (( p > values[0][0] || fabs(p - values[0][0])<DBL_EPSILON ) 
-          && ( p < values[0][2] || fabs(p - values[0][2])<DBL_EPSILON ) )
-            { pcal = (p - values[0][0]) / (values[0][2] - values[0][0]) ;
+      a = values[2][1] - values[2][0] ;
+      b = values[2][2] - values[2][0] ;
+      c = values[2][3] - values[2][2] - a ;
+      d = values[2][0] ;
 
-              a = values[2][1] - values[2][0] ;
-              b = values[2][2] - values[2][0] ;
-              c = values[2][3] - values[2][2] - a ;
-              d = values[2][0] ;
+      hcal = (T - (b*pcal+d)) / (a+c*pcal) ;
+      
+      if ( ((hcal > 0.0) || (fabs(hcal)<DBL_EPSILON)) 
+        && ((hcal < 1.0) || (fabs(hcal-1.)<DBL_EPSILON)) )
+      {
+        //hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
+        res = hcal*(values[1][1] - values[1][0]) + values[1][0] ;
+        found = 1;
+        break;
+      }
+    }
 
-              hcal = (T - (b*pcal+d)) / (a+c*pcal) ;
-         
-                  
-              if ( ((hcal > 0.0) || (fabs(hcal)<DBL_EPSILON)) 
-                && (hcal < (1.0 + DBL_EPSILON)) )
-                 { found = 1 ;
-                   //hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
-                   h = hcal*(values[1][1] - values[1][0]) + values[1][0] ;
-                  
-                 }
-                
-            }
-       }
     if (!found)
        return EOS_Ipp::INVERT_h_pT ;
-    else
-       res = h ;
 
     //cout << "----compute_h_l_pT res="<<res<<endl;
     return EOS_Internal_Error::OK ;
@@ -1265,42 +1257,41 @@ namespace NEPTUNE_EOS
     values[1] = hf ;
     values[2] = rf ;
 
-    //read all cell
-    //for each cells compute h if 0<=h*<=1
+    // Get all real cells containing p
+    std::set<unsigned int> cells_containing_p;
+    for (double h = hmin+delta_h_f/2 ; h<hmax ; h += delta_h_f)
+    {
+      unsigned int med_id_cell = get_cellidx(p, h);
+      cells_containing_p.insert(med_id_cell);
+    }
+
+    //read all cells containing p
+    //for each cell compute h if 0<=h*<=1
     //return first h computed
-    int pos = index_conn_ph.size() - 2 ;
-    for (int i=pos; i>=0 && !found; i--)
-       { int idx = index_conn_ph[i] ;
-         //get values for the cell
-         ierr = get_cell_values(idx, prop, values) ;
-//? OUI  if (ierr != EOS_Internal_Error::OK)  return ierr ;
-
-         //cell contains "p" line ?
-         //if ((p >= values[0][0] && p < values[0][2]) || p==pmax)
-         if ((p > values[0][0] || fabs(p - values[0][0]) < DBL_EPSILON) 
-          && (p < values[0][2] || fabs(p - values[0][2]) < DBL_EPSILON))
-            { pcal = (p-values[0][0]) / (values[0][2]-values[0][0]) ;
-              a = values[2][1] - values[2][0] ;
-              b = values[2][2] - values[2][0] ;
-              c = values[2][3] - values[2][2] - a ;
-              d = values[2][0] ;
+    for (auto med_cell: cells_containing_p)
+    {
+      ierr =  get_cell_values(med_cell, prop, values) ;
+      pcal = (p-values[0][0]) / (values[0][2]-values[0][0]) ;
+      a = values[2][1] - values[2][0] ;
+      b = values[2][2] - values[2][0] ;
+      c = values[2][3] - values[2][2] - a ;
+      d = values[2][0] ;
 
 
-              hcal = (T-(b*pcal+d))/(a+c*pcal);
-              if (   ((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON))
-                  && (hcal <= (1.0 + DBL_EPSILON)) )
-                 { found = 1 ;
-                   //hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
-                   h = hcal*(values[1][1]-values[1][0]) + values[1][0] ;
-                     
-                 }
-            }
-       }
+      hcal = (T-(b*pcal+d))/(a+c*pcal);
+      if (   ((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON))
+          && ((hcal < 1.0) || (fabs(hcal-1.) < DBL_EPSILON)) )
+      {
+        found = 1 ;
+        //hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
+        res = hcal*(values[1][1]-values[1][0]) + values[1][0] ;
+        break;
+      }
+    }
 
     if (!found)
        return EOS_Ipp::INVERT_h_pT ;
-    else
-       res = h ;
+
     return EOS_Internal_Error::OK ;
   }
 
@@ -1350,8 +1341,6 @@ namespace NEPTUNE_EOS
     
     int index = get_segmidx(p,sat_lim) ;
     ierr = get_segm_values(index, prop, sat_lim, values) ;
-    
-//?OUI? if (ierr != EOS_Internal_Error::OK)  return ierr ;
 
     res = linear_interpolator(p, values) ;
 
