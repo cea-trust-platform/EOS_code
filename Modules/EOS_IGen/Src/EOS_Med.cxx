@@ -113,7 +113,7 @@ namespace NEPTUNE
  
    /* table des coordonnees  profil : (dimension * nombre de noeuds) */
    /* table des noms et unites des coordonnees */
-   med_float ptxy[ptxy_size] ;
+   med_float* ptxy = new med_float[ptxy_size] ;
            
    int k = 0 ;
    for (int i=0; i<dim; i++)
@@ -132,10 +132,12 @@ namespace NEPTUNE
               MED_NO_INTERLACE,
               npt,
               ptxy) < 0)
-      { cerr << "Erreur a l'ecriture des coordonnees des noeuds" << endl ;
+      {
+        delete[] ptxy ;
+        cerr << "Erreur a l'ecriture des coordonnees des noeuds" << endl ;
         return EOS_Error::error ;
       }
- 
+   delete[] ptxy ;
    return EOS_Error::good ;
  }
  
@@ -153,7 +155,7 @@ namespace NEPTUNE
  {
    /* Ecriture des numeros de famille des noeuds */
    int nb_nodes = nodes_f.size() ;
-   med_int nufano[nb_nodes] ;
+   med_int* nufano = new med_int[nb_nodes] ;
  
    for (int i=0; i<nb_nodes; i++)
       nufano[i] = nodes_f[i] ;
@@ -166,10 +168,13 @@ namespace NEPTUNE
               MED_POINT1,
               nb_nodes,
               nufano) < 0)
-      { cerr << "Erreur a l'ecriture des numeros de familles des noeuds" << endl ;
+      {
+        delete[] nufano ;
+        cerr << "Erreur a l'ecriture des numeros de familles des noeuds" << endl ;
         return EOS_Error::error ;
       }
  
+   delete[] nufano ;
    return EOS_Error::good ;
  }
  
@@ -237,7 +242,7 @@ namespace NEPTUNE
         return EOS_Error::error ;
       }
  
-   med_float val_prop[nval] ; 
+   med_float* val_prop = new med_float[nval] ; 
    for (int i=0 ;i<nval; i++)
      val_prop[i] = champ[i] ;
  
@@ -253,10 +258,13 @@ namespace NEPTUNE
                 nval,
                 (unsigned char*)val_prop
                  ) < 0)
-      { cerr << "Erreur à l'ecriture du champ : " << champ_name << endl ;
+      {
+        delete[] val_prop ;
+        cerr << "Erreur à l'ecriture du champ : " << champ_name << endl ;
         return EOS_Error::error ;
       }
  
+   delete[] val_prop ;
    return EOS_Error::good ;
  }
  
@@ -300,7 +308,7 @@ namespace NEPTUNE
         return EOS_Error::error ;
       }
  
-   med_int val_prop[nval] ;
+   med_int* val_prop = new med_int[nval] ;
    for (int i=0;i<nval;i++)
       val_prop[i] = err[i].get_code() ;
  
@@ -317,10 +325,13 @@ namespace NEPTUNE
                    (unsigned char*) val_prop
                     ) < 0)
    
-      { cerr << "Erreur à l'ecriture du champ : " << champ_name << endl ;
+      {
+        delete[] val_prop ;
+        cerr << "Erreur à l'ecriture du champ : " << champ_name << endl ;
         return EOS_Error::error ;
       }
    
+   delete[] val_prop ;
    return EOS_Error::good ;
  }
  
@@ -377,7 +388,7 @@ namespace NEPTUNE
    int nb_ns = nodes.size() ;
    int nb_seg = nb_ns-1 ;
  
-   med_int conn[nb_seg*2] ;
+   med_int* conn = new med_int[nb_seg*2] ;
  
    int j = 0 ;
    for (int i=1; i<nb_ns; i++)
@@ -398,10 +409,13 @@ namespace NEPTUNE
                    nb_seg,
                    conn
                    ) < 0)
-      { cerr << "Erreur a l'ecriture de la connectivite des ségments MED_SEG2 (1D)" << endl ;
+      {
+        delete[] conn ;
+        cerr << "Erreur a l'ecriture de la connectivite des ségments MED_SEG2 (1D)" << endl ;
         return EOS_Error::error ;
       }
  
+   delete[] conn ;
    return good ;
  }
  
@@ -418,10 +432,10 @@ namespace NEPTUNE
    int nb_mtn = med_to_node.size() ;
    int sz = (nb_mtn+1)*4 ;
  
-   med_int conn[sz] ;
+   med_int* conn = new med_int[sz] ;
  //med_to_node.size()+1 : ajout d'une maille fictive à la fin sinon derniere maille pas pris en compte
    med_int index_nb = nb_mtn+1 ;
-   med_int index[index_nb] ;
+   med_int* index = new med_int[index_nb] ;
    int i = 0 ;
    int j = 0 ; //index pour index[]
    while (j < nb_mtn)
@@ -451,10 +465,15 @@ namespace NEPTUNE
               index,
               conn
               ) < 0)
-      { cerr << "Erreur a l'ecriture de la connectivite des mailles MED_POLYGON " << m_name.aschar() << endl ;
+      {
+        delete[] conn ;
+        delete[] index ;
+        cerr << "Erreur a l'ecriture de la connectivite des mailles MED_POLYGON " << m_name.aschar() << endl ;
         return EOS_Error::error ;
       }
  
+   delete[] conn ;
+   delete[] index ;
    return EOS_Error::good ;
  }
  
@@ -472,10 +491,9 @@ namespace NEPTUNE
  {
    int sz = nb_cell*4 ;
  
-   med_int conn[sz] ;
- //med_int index_nb = nb_cell;
+   med_int* conn = new med_int[sz] ;
    med_int index_nb = nb_cell+1 ;
-   med_int index[index_nb] ;
+   med_int* index = new med_int[index_nb] ;
    int nb_nodes_x = mesh_x + 1 ;
    int i = 0 ;
    int j = 0 ; //index pour index[]
@@ -503,10 +521,15 @@ namespace NEPTUNE
               index,
               conn
               ) < 0)
-      { cerr << "Erreur a l'ecriture de la connectivite des mailles MED_POLYGON " << m_name.aschar() << endl ;
+      {
+        delete[] conn ;
+        delete[] index ;
+        cerr << "Erreur a l'ecriture de la connectivite des mailles MED_POLYGON " << m_name.aschar() << endl ;
         return EOS_Error::error ;
       }
  
+   delete[] conn ;
+   delete[] index ;
    return EOS_Error::good ;
  }
  
@@ -538,7 +561,9 @@ namespace NEPTUNE
               MED_NO_INTERLACE,
               coo
               ) < 0)
-      { cerr << "Erreur a la lecture des coordonnees des noeuds du maillage " 
+      {
+        delete[] coo ;
+        cerr << "Erreur a la lecture des coordonnees des noeuds du maillage " 
              << m_name.aschar() << endl ;
         return EOS_Error::error ;
       }
@@ -563,7 +588,10 @@ namespace NEPTUNE
         
       }
    else
-      return EOS_Error::error ;
+     {
+       delete[] coo ;
+       return EOS_Error::error ;
+     }
    
    delete [] coo ;
    
@@ -750,7 +778,9 @@ namespace NEPTUNE
                 MED_ALL_CONSTITUENT,
                 (unsigned char*)val
                 ) < 0)
-      { cerr << "Error ! Can't read \"champ\" : " << c_name.aschar() << endl ;
+      {
+        delete[] val;
+        cerr << "Error ! Can't read \"champ\" : " << c_name.aschar() << endl ;
         return EOS_Error::error ;
       }
  
@@ -788,7 +818,9 @@ namespace NEPTUNE
                 MED_ALL_CONSTITUENT,
                 (unsigned char*)val
                 ) < 0)
-      { cerr << "Error ! Can't read \"champ\" : " << c_name.aschar() << endl ;
+      {
+        delete[] val;
+        cerr << "Error ! Can't read \"champ\" : " << c_name.aschar() << endl ;
         return EOS_Error::error ;
       }
  
