@@ -109,11 +109,11 @@ namespace NEPTUNE
  
    /* Ecriture des noeuds du maillage */
    med_int npt = nodes[0].size() ;   // le nombre de points (noeuds)
-   int ptxy_size = npt*dim ;
+   long int ptxy_size = npt*dim ;    // Attention : int max : 32767 -> Pour avoir une meilleur capacité de stockage, il faudrait changer les int en long unsigned int
  
    /* table des coordonnees  profil : (dimension * nombre de noeuds) */
    /* table des noms et unites des coordonnees */
-   med_float ptxy[ptxy_size] ;
+   med_float *ptxy = new med_float[ptxy_size] ;
            
    int k = 0 ;
    for (int i=0; i<dim; i++)
@@ -133,9 +133,11 @@ namespace NEPTUNE
               npt,
               ptxy) < 0)
       { cerr << "Erreur a l'ecriture des coordonnees des noeuds" << endl ;
+        delete [] ptxy;
         return EOS_Error::error ;
       }
- 
+
+   delete [] ptxy;
    return EOS_Error::good ;
  }
  
@@ -153,7 +155,7 @@ namespace NEPTUNE
  {
    /* Ecriture des numeros de famille des noeuds */
    int nb_nodes = nodes_f.size() ;
-   med_int nufano[nb_nodes] ;
+   med_int *nufano = new med_int[nb_nodes] ;
  
    for (int i=0; i<nb_nodes; i++)
       nufano[i] = nodes_f[i] ;
@@ -167,9 +169,11 @@ namespace NEPTUNE
               nb_nodes,
               nufano) < 0)
       { cerr << "Erreur a l'ecriture des numeros de familles des noeuds" << endl ;
+      delete [] nufano;
         return EOS_Error::error ;
       }
  
+      delete [] nufano;
    return EOS_Error::good ;
  }
  
@@ -237,7 +241,7 @@ namespace NEPTUNE
         return EOS_Error::error ;
       }
  
-   med_float val_prop[nval] ; 
+   med_float *val_prop = new med_float[nval] ; // long + mettre un new 
    for (int i=0 ;i<nval; i++)
      val_prop[i] = champ[i] ;
  
@@ -254,9 +258,10 @@ namespace NEPTUNE
                 (unsigned char*)val_prop
                  ) < 0)
       { cerr << "Erreur à l'ecriture du champ : " << champ_name << endl ;
+        delete [] val_prop;
         return EOS_Error::error ;
       }
- 
+   delete [] val_prop;
    return EOS_Error::good ;
  }
  
@@ -300,7 +305,7 @@ namespace NEPTUNE
         return EOS_Error::error ;
       }
  
-   med_int val_prop[nval] ;
+   med_int *val_prop = new med_int[nval] ;
    for (int i=0;i<nval;i++)
       val_prop[i] = err[i].get_code() ;
  
@@ -318,9 +323,11 @@ namespace NEPTUNE
                     ) < 0)
    
       { cerr << "Erreur à l'ecriture du champ : " << champ_name << endl ;
+      delete [] val_prop;
         return EOS_Error::error ;
       }
    
+   delete [] val_prop;
    return EOS_Error::good ;
  }
  
@@ -377,7 +384,7 @@ namespace NEPTUNE
    int nb_ns = nodes.size() ;
    int nb_seg = nb_ns-1 ;
  
-   med_int conn[nb_seg*2] ;
+   med_int *conn = new med_int[nb_seg*2] ;
  
    int j = 0 ;
    for (int i=1; i<nb_ns; i++)
@@ -399,8 +406,10 @@ namespace NEPTUNE
                    conn
                    ) < 0)
       { cerr << "Erreur a l'ecriture de la connectivite des ségments MED_SEG2 (1D)" << endl ;
+        delete [] conn;
         return EOS_Error::error ;
       }
+        delete [] conn;
  
    return good ;
  }
@@ -418,10 +427,10 @@ namespace NEPTUNE
    int nb_mtn = med_to_node.size() ;
    int sz = (nb_mtn+1)*4 ;
  
-   med_int conn[sz] ;
+   med_int *conn = new med_int[sz] ;
  //med_to_node.size()+1 : ajout d'une maille fictive à la fin sinon derniere maille pas pris en compte
    med_int index_nb = nb_mtn+1 ;
-   med_int index[index_nb] ;
+   med_int *index = new med_int[index_nb] ;
    int i = 0 ;
    int j = 0 ; //index pour index[]
    while (j < nb_mtn)
@@ -452,9 +461,13 @@ namespace NEPTUNE
               conn
               ) < 0)
       { cerr << "Erreur a l'ecriture de la connectivite des mailles MED_POLYGON " << m_name.aschar() << endl ;
+      delete [] conn;
+      delete [] index;
         return EOS_Error::error ;
       }
  
+      delete [] conn;
+      delete [] index;
    return EOS_Error::good ;
  }
  
@@ -472,10 +485,10 @@ namespace NEPTUNE
  {
    int sz = nb_cell*4 ;
  
-   med_int conn[sz] ;
+   med_int *conn = new med_int[sz] ;
  //med_int index_nb = nb_cell;
    med_int index_nb = nb_cell+1 ;
-   med_int index[index_nb] ;
+   med_int *index = new med_int[index_nb] ;
    int nb_nodes_x = mesh_x + 1 ;
    int i = 0 ;
    int j = 0 ; //index pour index[]
@@ -504,9 +517,13 @@ namespace NEPTUNE
               conn
               ) < 0)
       { cerr << "Erreur a l'ecriture de la connectivite des mailles MED_POLYGON " << m_name.aschar() << endl ;
+      delete [] conn;
+      delete [] index;
         return EOS_Error::error ;
       }
  
+      delete [] conn;
+      delete [] index;
    return EOS_Error::good ;
  }
  
@@ -522,7 +539,7 @@ namespace NEPTUNE
   */
  EOS_Error EOS_Med::get_nodes(AString& m_name, int dim, EOS_Fields& nodes)
  {
-   med_float *coo ;
+   med_float *coo ; 
  //   char nomcoo[2*MED_SNAME_SIZE+1];
  //   char unicoo[2*MED_SNAME_SIZE+1];
    

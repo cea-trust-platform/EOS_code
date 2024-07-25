@@ -20,3 +20,6 @@ Modules/EOS/Tests/C++/CMakeLists.txt
 Modules/EOS/Tests/C++/main_Refprop9_Water_Liquid.cxx
 Modules/EOS/Tests/C++/main_Refprop9.cxx
 
+.vscode/settings.json
+Modules/.vscode/settings.json
+user_env.txt
