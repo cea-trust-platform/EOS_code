@@ -1,3 +1,32 @@
+--prefix=install
+--execdir=build
+
+ --debug
+#--add_comp_flags=-g # -pg permet l'utilisation de gdb gprof etc ...
+--without-gui
+--without-doc-latex
+--without-doc-doxygen
+--with-interpolator
+
+--with-med=/volatile/catA/ap263207/workdir/softwares/med/med-4.1.0
+--with-hdf5=/usr/lib/x86_64-linux-gnu/hdf5/serial
+
+--with-refprop9=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_CEA/Refprop9
+--with-refprop10=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_CEA/Refprop10
+--with-hitec=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_CEA/Hitec
+--with-nak=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_CEA/Nak
+
+--with-cathare2=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_Quadri/cathare2/C2_Allfld-25_3_mod10.4
+--with-cathare=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_Quadri/cathare/cathare-1.5.b5
+--with-flica4=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_Quadri/flica4/
+--with-thetis=/volatile/catA/ap263207/workdir/Git_clone/EOS/external_package_EOS/EOS_ThermoModels_Quadri/thetis/thetis-2.1.f
+
+
+
+
+
+
+
 #-------------------------------------------------------------------
 # User file allowing to define arguments to supply to the configure
 # script.
