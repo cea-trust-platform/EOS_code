@@ -146,6 +146,7 @@ namespace NEPTUNE
     EOS_Error get_p_min(double &p_min) const ;
     EOS_Error get_p_max(double &p_max) const ;
     EOS_Error get_h_max(double &h_max) const ;
+    double get_h_max() const ;
     EOS_Error get_h_min(double &h_min) const ;
     EOS_Error get_T_max(double &T_max) const ;
     EOS_Error get_T_min(double &T_min) const ;

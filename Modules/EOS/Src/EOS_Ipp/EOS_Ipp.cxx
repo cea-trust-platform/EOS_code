@@ -26,8 +26,11 @@
 #include "EOS/API/EOS_Field.hxx"
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Config.hxx"
+//#include <cmath>
 #include <fstream>
-
+#include <iostream>  // pour std::cerr
+//#include <set>
+#include <string> 
 #define DBL_EPSILON 1e-9
 
 namespace NEPTUNE_EOS
@@ -82,6 +85,10 @@ namespace NEPTUNE_EOS
   
   EOS_Ipp::~EOS_Ipp()
   {
+    if(obj_refprop!=nullptr)
+    {
+      delete obj_refprop;
+    }
   }
 
   static RegisteredClass& EOS_Ipp_create()
@@ -171,10 +178,6 @@ namespace NEPTUNE_EOS
        }
     
     errM = load_med_scalar(med) ;
-//     if (errM != EOS_Error::good)
-//     {
-//       cerr<<"Error : EOS_Ipp::load_med_scalar"<<endl;
-//     }
     errM = med.close_File();
     if (errM != EOS_Error::good)
        { cerr << "Error : Close med file"      << endl ;
@@ -261,6 +264,56 @@ namespace NEPTUNE_EOS
     return EOS_Error::ok ;
   }
 
+ EOS_Error EOS_Ipp::init_model(const std::string& model_name,const std::string& fluid_name) 
+  {
+    obj_refprop = new EOS(model_name.c_str(), fluid_name.c_str()) ;
+    switch_model=true;
+  return EOS_Error::ok;
+  }
+
+  EOS_Error EOS_Ipp::compute(const EOS_Field& pp, 
+                                 const EOS_Field& hh, 
+                                 EOS_Fields& r, 
+                                 EOS_Error_Field& errfield)  const
+  {
+      NEPTUNE::ArrOfInt err_(pp.size());
+      EOS_Error_Field errfield_copy(err_);
+      EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield_copy);
+      if ((err!=EOS_Error::good)&&(err!=EOS_Error::ok)) // si le calcule par ipp n'est pas passé 
+      {
+        if (err==EOS_Error::bad){
+          std::cout <<"Le couple ph, n'est pas dans le domaine d'interpolation"<< std::endl;
+        }
+        if(obj_refprop==nullptr){
+          std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() "<< std::endl;
+          std::exit(EXIT_FAILURE);  
+        }
+        EOS_Error err2 = obj_refprop->compute(pp, hh, r, errfield);
+         std::cout<< "Calcul avec le fluide dans le plan ph\n";
+         errfield = EOS_Internal_Error::OK ; 
+        return err2;
+      }
+      errfield=EOS_Internal_Error::OK;
+      return err;
+    
+  }
+
+  EOS_Error EOS_Ipp::compute(const EOS_Field& p, 
+                                 EOS_Fields& r, 
+                                 EOS_Error_Field& errfield) const
+  {
+      if (true) 
+      {
+        if(obj_refprop==nullptr){
+          std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() " << std::endl;
+          std::exit(EXIT_FAILURE);  // Arrêter le programme
+        }
+        return obj_refprop->compute(p, r, errfield);
+      }
+    return EOS_Error::bad; //err;
+  }
+
+
   //load de tous les champs
   EOS_Error EOS_Ipp::load_med_nodes(EOS_Med& med)
   {
@@ -288,13 +341,13 @@ namespace NEPTUNE_EOS
                  { nodes_sat[0] = pf ;
                    errM = med.get_nodes(names[i],dim[i],nodes_sat) ;
                    if (errM != EOS_Error::good)
-                      { cerr << "Error : EOS_Med::get_nodes: Error in reanding nodes of sat domain" <<endl ;
+                      { cerr << "Error : EOS_Med::get_nodes: Error in reading nodes of sat domain" <<endl ;
                         return EOS_Error::error ;
                       }
                    errM = med.get_Connectivity_1D(names[i], connect_sat) ;
                    if (errM != EOS_Error::good)
                       {
-                        cerr << "Error : EOS_Med::get_nodes: Error in reanding connectivity nodes of sat domain" <<endl ;
+                        cerr << "Error : EOS_Med::get_nodes: Error in reading connectivity nodes of sat domain" <<endl ;
                         return EOS_Error::error ;
                       }
                  }

@@ -21,6 +21,20 @@
 
 namespace NEPTUNE_EOS
 {
+
+  inline EOS_Internal_Error EOS_Ipp::get_mm(double& mm) const
+  { 
+    EOS* liquid = new EOS("Refprop10","WaterLiquid");
+    liquid->get_mm(mm);
+    return EOS_Internal_Error::OK ;
+  }
+
+  inline EOS_Internal_Error EOS_Ipp::get_nbcell(int& nb_cell) const
+  { 
+    nb_cell = index_conn_ph.size() - 1 ;
+    return EOS_Internal_Error::OK ;
+  }
+
    //! tcrit
    inline EOS_Internal_Error EOS_Ipp::get_T_crit(double& T_crit) const
    { T_crit = tcrit ;
@@ -71,23 +85,32 @@ namespace NEPTUNE_EOS
    }
    
    inline EOS_Internal_Error EOS_Ipp::compute_T_ph(double p, double h, double& res) const
-   { AString prop("T") ;
-     return compute_prop_ph(prop,p,h,res) ;
+   { AString prop("T") ; 
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     //std::map<AString, int>::const_iterator   n_prop=Ipp_Prop_ph["T"]
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_T_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_T_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_T_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_T_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_rho_ph(double p, double h, double& res) const
    { AString prop("rho") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_rho_pT(double p, double T, double& res) const
@@ -100,17 +123,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_rho_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_rho_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_rho_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_rho_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_u_ph(double p, double h, double& res) const
    { AString prop("u");
-     return compute_prop_ph(prop,p,h,res);
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_u_pT(double p, double T, double& res) const
@@ -123,17 +152,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_u_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_u_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_u_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_u_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_s_ph(double p, double h, double& res) const
    { AString prop("s") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_s_pT(double p, double T, double& res) const
@@ -146,17 +181,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_s_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_s_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_s_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_s_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_mu_ph(double p, double h, double& res) const
    { AString prop("mu") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
    inline EOS_Internal_Error EOS_Ipp::compute_mu_pT(double p, double T, double& res) const
    { EOS_Internal_Error err, err2 ;
@@ -168,16 +209,22 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_mu_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_mu_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
    inline EOS_Internal_Error EOS_Ipp::compute_d_mu_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_mu_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_lambda_ph(double p, double h, double& res) const
    { AString prop("lambda") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_lambda_pT(double p, double T, double& res) const
@@ -190,17 +237,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_lambda_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_lambda_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_lambda_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_lambda_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_cp_ph(double p, double h, double& res) const
    { AString prop("cp") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_cp_pT(double p, double T, double& res) const
@@ -213,17 +266,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_cp_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_cp_d_p_h");
-     return compute_prop_ph(prop,p,h,res);
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_cp_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_cp_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_sigma_ph(double p, double h, double& res) const
    { AString prop("sigma") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_sigma_pT(double p, double T, double& res) const
@@ -236,17 +295,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_sigma_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_sigma_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_sigma_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_sigma_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_w_ph(double p, double h, double& res) const
    { AString prop("w") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_w_pT(double p, double T, double& res) const
@@ -259,17 +324,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_w_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_w_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_w_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_w_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_g_ph(double p, double h, double& res) const
    { AString prop("g") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_g_pT(double p, double T, double& res) const
@@ -282,17 +353,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_g_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_g_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_g_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_g_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_f_ph(double p, double h, double& res) const
    { AString prop("f") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_f_pT(double p, double T, double& res) const
@@ -305,17 +382,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_f_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_f_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_f_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_f_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_pr_ph(double p, double h, double& res) const
    { AString prop("pr") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_pr_pT(double p, double T, double& res) const
@@ -328,16 +411,22 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_pr_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_pr_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_pr_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_pr_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
    inline EOS_Internal_Error EOS_Ipp::compute_beta_ph(double p, double h, double& res) const
    { AString prop("beta");
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_beta_pT(double p, double T, double& res) const
@@ -350,17 +439,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_beta_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_beta_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_beta_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_beta_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_gamma_ph(double p, double h, double& res) const
    { AString prop("gamma") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_gamma_pT(double p, double T, double& res) const
@@ -373,17 +468,23 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_gamma_d_p_h_ph(double p, double h, double& res) const
    { AString prop("d_gamma_d_p_h") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_gamma_d_h_p_ph(double p, double h, double& res) const
    { AString prop("d_gamma_d_h_p") ;
-     return compute_prop_ph(prop,p,h,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_ph);
+     return compute_prop_ph(n_prop,p,h,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_T_sat_p(double p, double& res) const
    { AString prop("T_sat") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);
+     return compute_prop_p(n_prop,p,0,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_rho_l_sat_p(double p, double& res) const
@@ -434,48 +535,66 @@ namespace NEPTUNE_EOS
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_rho_l_sat_d_p_p(double p, double& res) const
    { AString prop("d_rho_l_sat_d_p") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);;
+     return compute_prop_p(n_prop,p,0,res) ;
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_rho_v_sat_d_p_p(double p, double& res) const
    { AString prop("d_rho_v_sat_d_p") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);
+     return compute_prop_p(n_prop,p,0,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_h_l_sat_d_p_p(double p, double& res) const
    { AString prop("d_h_l_sat_d_p") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);
+     return compute_prop_p(n_prop,p,0,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_h_v_sat_d_p_p(double p, double& res) const
    { AString prop("d_h_v_sat_d_p") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);
+     return compute_prop_p(n_prop,p,0,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_cp_l_sat_d_p_p(double p, double& res) const
    { AString prop("d_cp_l_sat_d_p") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);
+     return compute_prop_p(n_prop,p,0,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_cp_v_sat_d_p_p(double p, double& res) const
    {
      AString prop("d_cp_v_sat_d_p") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);
+     return compute_prop_p(n_prop,p,0,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_d_T_sat_d_p_p(double p, double& res) const
    { AString prop("d_T_sat_d_p") ;
-     return compute_prop_p(prop,p,0,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_sat);
+     return compute_prop_p(n_prop,p,0,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_h_l_lim_p(double p, double& res) const
    { AString prop("h_l_lim") ;
-     return compute_prop_p(prop,p,1,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_lim);
+     return compute_prop_p(n_prop,p,1,res);
    }
 
    inline EOS_Internal_Error EOS_Ipp::compute_h_v_lim_p(double p, double& res) const
    { AString prop("h_v_lim") ;
-     return compute_prop_p(prop,p,1,res) ;
+     std::map<AString, int>::const_iterator   n_prop;
+     find(n_prop,prop,Ipp_Prop_lim);
+     return compute_prop_p(n_prop,p,1,res);
    }
 
 }

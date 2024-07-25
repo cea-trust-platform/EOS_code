@@ -96,6 +96,12 @@ namespace NEPTUNE
   // Compute output field function of input fields.
   // Default implementation (can be overloaded in derived classes):
   //  call to compute(P) or compute(P, h).
+
+  EOS_Error EOS_Fluid::init_model(const std::string& model_name, const std::string& fluid_name)
+  {
+    std::cout<<"Attention ! Mauvaise initialisation de l'IPP ";
+    return EOS_Error::ok;
+  }
   EOS_Error EOS_Fluid::compute( const EOS_Fields & input,
                                 EOS_Field & output, 
                                 EOS_Error_Field & errfield) const
@@ -174,7 +180,8 @@ namespace NEPTUNE
   EOS_Error EOS_Fluid::compute(const EOS_Fields& input,
                                EOS_Fields& output, 
                                EOS_Error_Field& errfield) const
-  { int nbi = input.size() ;
+  { 
+    int nbi = input.size() ;
     errfield = EOS_Internal_Error::OK ;
 
     if (nbi == 2)
@@ -253,7 +260,8 @@ namespace NEPTUNE
   EOS_Error EOS_Fluid::compute(const EOS_Field& p, 
                                EOS_Fields& r, 
                                EOS_Error_Field& errfield) const
-  { const int nb_fields = r.size() ;
+  { 
+    const int nb_fields = r.size() ;
     const int sz        = errfield.size() ;
     errfield = EOS_Internal_Error::OK ;
     EOS_Error err = EOS_Error::good ;
@@ -405,7 +413,6 @@ namespace NEPTUNE
                                EOS_Field& r, 
                                EOS_Error_Field& errfield) const
   { const int sz = p.size() ;
-
     assert(h.size() == sz) ;
     assert(r.size() == sz) ;
     assert(errfield.size() == sz) ;

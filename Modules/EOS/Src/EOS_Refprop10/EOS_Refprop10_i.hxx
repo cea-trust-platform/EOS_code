@@ -322,7 +322,8 @@ namespace NEPTUNE_EOS
 
   //! h(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_h_pT(double p, double T, double& h) const
-  { return call_tpflsh("h", p, T, h) ;
+  { 
+    return call_tpflsh("h", p, T, h) ;
   }
 
   //! dh/dT  (p constante)

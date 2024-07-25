@@ -258,6 +258,11 @@ namespace NEPTUNE
     RETURN_ERROR(err, 0.e0, 0.e0, h_max) ;
   }
 
+  inline double EOS::get_h_max() const
+  { std::cerr<<"Value of h_max not initialised by fluid_model_obj"; 
+    return 3.6; // Correspond to a patch for RP in code Cathare.
+  }
+
   inline EOS_Error EOS::get_h_min(double& h_min) const
   { EOS_Internal_Error err = fluid_model_obj.get_h_min(h_min) ;
     RETURN_ERROR(err, 0.e0, 0.e0, h_min) ;

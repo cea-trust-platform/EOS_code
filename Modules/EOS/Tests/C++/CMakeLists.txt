@@ -6,7 +6,16 @@ target_link_libraries(EOSTest PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
 add_test(EOSTest bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTest 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output")
 set_tests_properties(EOSTest PROPERTIES ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/"
                                         COST        5.)
-
+                                        
+                                        
+                                        
+                                        
+                                        
+# ( Add executable EOS_REFPROP9) 
+message(STATUS "Add all tests EOSTestVal")
+add_executable (EOSTestRefprop9 "${CMAKE_CURRENT_SOURCE_DIR}/main_Refprop9_Water_Liquid.cxx")
+target_include_directories(EOSTestRefprop9 PRIVATE ${EOS_BINARY_DIR}/Modules)
+target_link_libraries(EOSTestRefprop9 PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
 
 
 # (add executable EOSTestVal)

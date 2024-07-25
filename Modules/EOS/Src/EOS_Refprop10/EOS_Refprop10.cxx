@@ -1246,7 +1246,8 @@ namespace NEPTUNE_EOS
                                                           double* tab_prop, 
                                                           double *tab_propder, 
                                                           int* indic) const
-  { int kph ;
+  {
+    int kph ;
     double T, s, cp, cv, w, mu, lambda, beta, sigma, f, g;
     double e, rhol, rhov, hjt, pi, Z, h0 ;
     double A, G, xkappa,dPdrho,d2PdD2,dPT,drhodT,drhodP,spare1,spare2,spare3, spare4;

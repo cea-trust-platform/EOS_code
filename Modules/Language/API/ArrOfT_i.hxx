@@ -151,7 +151,7 @@ namespace LANGUAGE_KERNEL
   inline T& ArrOf<T>::
   operator[](int i)
   {
-    assert(i<size());
+    assert(i<size()); // commenter pour gagner en perf en mode optim
     assert(i >= 0);
     return data[i];
   }
