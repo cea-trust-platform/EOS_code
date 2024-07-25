@@ -78,8 +78,9 @@ namespace NEPTUNE
 
 
   enum EOS_c2iapprop
-    { NotAC2iapProperty  = d2_T_sat_0_d_p_0_d_p_0 + 1 ,
+    { NotAC2iapProperty  = lastCamixProperty + 1 ,
       epstl              ,      
+      firstC2iapProperty = epstl,
       hlspsc             ,     
       hlsvsc             ,     
       epstg              ,
@@ -114,7 +115,8 @@ namespace NEPTUNE
       d_hvsvsc_d_c_1_ph  ,
       d_hvsvsc_d_c_2_ph  ,
       d_hvsvsc_d_c_3_ph  ,
-      d_hvsvsc_d_c_4_ph
+      d_hvsvsc_d_c_4_ph  ,
+      lastC2iapProperty = d_hvsvsc_d_c_4_ph
     };
   enum EOS_limc2iapprop
     { EOS_TCIAPROP     =  epstl ,

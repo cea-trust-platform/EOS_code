@@ -35,25 +35,6 @@ namespace NEPTUNE
   { property_number = gen_property_number(namep) ;
   }
 
-  inline int EOS_Field::gen_property_number(const char* namep) 
-  { int iret ;
-
-    iret = (int) nam2num_thermprop(namep) ;
-    if (iret != NEPTUNE::NotATProperty) return iret ;
-
-    iret = (int) nam2num_saturprop(namep) ;
-    if (iret != NEPTUNE::NotASatProperty) return iret ;
-
-    iret = (int) nam2num_splimprop(namep) ;
-    if (iret != NEPTUNE::NotASplimProperty) return iret ;
-
-    iret = (int) nam2num_camixprop(namep) ;
-    if (iret != NEPTUNE::NotACamixProperty) return iret ;
-
-    iret = (int) nam2num_c2iapprop(namep) ;
-    return iret ;
-  }
-
   inline const double& EOS_Field::operator [] (int i) const
   { return data[i] ;
   }

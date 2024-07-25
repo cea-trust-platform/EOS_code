@@ -447,9 +447,7 @@ namespace CATHARE
 
     // -- 
     EOS_Error_Field err_tmp(internal_err_tmp) ;
-    EOS_thermprop  prop ;
-    EOS_saturprop  propsat ;
-    EOS_camixprop  propmix, propdermix ;
+    EOS_Property  prop ;
     int comp_h = 0 ;
     //int comp_c=0;
     //int comp_sat=0;
@@ -476,52 +474,45 @@ namespace CATHARE
     int nb_fields_in = input.size() ;
     int nincon = 0 ;
     for (int i=0; i<nb_fields_in; i++)
-       { prop = input[i].get_property();
+       { prop = input[i].get_property_number();
          switch(prop)
             { case NEPTUNE::p :
                  tp.set_ptr(sz, input[i].get_data().get_ptr());
                  // v1 = 1 ;
                  break;
-
               case NEPTUNE::h :
                  thg.set_ptr(sz, input[i].get_data().get_ptr());
                  // v2 = 1 ;
                  break;
-
               case NEPTUNE::T :
                  tintg.set_ptr(sz, input[i].get_data().get_ptr());
                  // v2 = 1 ;
                  comp_h = 1 ;
                  break;
 
+              case NEPTUNE::c_0 :
+                 tx_0.set_ptr(sz, input[i].get_data().get_ptr());
+                 nincon += 1 ;
+                 break;
+              case NEPTUNE::c_1 :
+                 tx_1.set_ptr(sz, input[i].get_data().get_ptr());
+                 nincon += 1 ;
+                 break;
+              case NEPTUNE::c_2 :
+                 tx_2.set_ptr(sz, input[i].get_data().get_ptr());
+                 nincon += 1 ;
+                 break;
+              case NEPTUNE::c_3 :
+                 tx_3.set_ptr(sz, input[i].get_data().get_ptr());
+                 nincon += 1 ;
+                 break;
+              case NEPTUNE::c_4 :
+                 tx_4.set_ptr(sz, input[i].get_data().get_ptr());
+                 nincon += 1 ;
+                 break;                  
               default :
-                 propmix = input[i].get_camix_property() ;
-                 switch(propmix)
-                    { case NEPTUNE::c_0 :
-                         tx_0.set_ptr(sz, input[i].get_data().get_ptr());
-                         nincon += 1 ;
-                         break;
-                      case NEPTUNE::c_1 :
-                         tx_1.set_ptr(sz, input[i].get_data().get_ptr());
-                         nincon += 1 ;
-                         break;
-                      case NEPTUNE::c_2 :
-                         tx_2.set_ptr(sz, input[i].get_data().get_ptr());
-                         nincon += 1 ;
-                         break;
-                      case NEPTUNE::c_3 :
-                         tx_3.set_ptr(sz, input[i].get_data().get_ptr());
-                         nincon += 1 ;
-                         break;
-                      case NEPTUNE::c_4 :
-                         tx_4.set_ptr(sz, input[i].get_data().get_ptr());
-                         nincon += 1 ;
-                         break;                  
-                      default :
-                         err = EOS_Internal_Error::NOT_IMPLEMENTED;
-                         return  EOS_Error::error ;
-                         break;                  
-                    }
+                 err = EOS_Internal_Error::NOT_IMPLEMENTED;
+                 return  EOS_Error::error ;
                  break;
             }
        }
@@ -542,7 +533,7 @@ namespace CATHARE
     int ind_not_def = -1 ;
 
     for (int i=0; i<nb_fields; i++)
-       { prop = r[i].get_property() ;
+       { prop = r[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::h :
                  thg.set_ptr(sz, r[i].get_data().get_ptr());
@@ -614,168 +605,148 @@ namespace CATHARE
                  ttmug3.set_ptr(sz, r[i].get_data().get_ptr());
                  comp_fhdiva = 1 ;
                  break ;
-              case NEPTUNE::NotATProperty :
-                 // Thermodynamic Properties at Saturation
-                 propsat = r[i].get_sat_property() ;
-                 switch(propsat)
-                    { case NEPTUNE::T_sat :
-                         ttsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         chg_T_sat = 1 ;
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::h_v_sat :
-                         thvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::rho_v_sat :
-                         trvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::h_l_sat :
-                         thlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::rho_l_sat :
-                         trlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      // First Derivatives at Saturation
-                      case NEPTUNE::d_T_sat_d_p :
-                         ttsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::d_h_v_sat_d_p :
-                         thvsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::d_rho_v_sat_d_p :
-                         trvsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::d_h_l_sat_d_p :
-                         thlsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::d_rho_l_sat_d_p :
-                         trlsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_mix = 1 ;
-                         break;
-                      case NEPTUNE::NotASatProperty :
-                         // First Derivatives of Thermodynamic Properties in Mixing
-                         propdermix = r[i].get_der_camix_property() ;
-                         switch(propdermix)
-                            { case NEPTUNE::d_T_d_c_1_ph :
-                                 ttgx_1.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_T_d_c_2_ph :
-                                 ttgx_2.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_T_d_c_3_ph :
-                                 ttgx_3.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_T_d_c_4_ph :
-                                 ttgx_4.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_rho_d_c_1_ph :
-                                 trgx_1.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_rho_d_c_2_ph :
-                                 trgx_2.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_rho_d_c_3_ph :
-                                 trgx_3.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_rho_d_c_4_ph :
-                                 trgx_4.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_mix = 1 ;
-                                 break;
-                              case NEPTUNE::d_cp_d_c_1_ph :
-                                 tcpgx_1.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_cp_d_c_2_ph :
-                                 tcpgx_2.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_cp_d_c_3_ph :
-                                 tcpgx_3.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_cp_d_c_4_ph :
-                                 tcpgx_4.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_mu_d_c_1_ph :
-                                 ttmugx_1.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_mu_d_c_2_ph :
-                                 ttmugx_2.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_mu_d_c_3_ph :
-                                 ttmugx_3.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_mu_d_c_4_ph :
-                                 ttmugx_4.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_lambda_d_c_1_ph :
-                                 ttlagx_1.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_lambda_d_c_2_ph :
-                                 ttlagx_2.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_lambda_d_c_3_ph :
-                                 ttlagx_3.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_lambda_d_c_4_ph :
-                                 ttlagx_4.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_sigma_d_c_1_ph :
-                                 tsix_1.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_sigma_d_c_2_ph :
-                                 tsix_2.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_sigma_d_c_3_ph :
-                                 tsix_3.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::d_sigma_d_c_4_ph :
-                                 tsix_4.set_ptr(sz, r[i].get_data().get_ptr());
-                                 comp_fhdixa = 1 ;
-                                 break;
-                              case NEPTUNE::NotACamixProperty :
-                                 err = EOS_Internal_Error::NOT_IMPLEMENTED;
-                                 return EOS_Error::error ;
-                              default : 
-                                 ind_not_def += 1 ;
-                                 not_def(ind_not_def) = i ;
-                                 break;
-                            }
-                         break ;
-                         
-                      default :
-                         ind_not_def += 1 ;
-                         not_def(ind_not_def) = i ;
-                         break;
-                    }
+              case NEPTUNE::T_sat :
+                 ttsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 chg_T_sat = 1 ;
+                 comp_mix = 1 ;
                  break;
+              case NEPTUNE::h_v_sat :
+                 thvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::rho_v_sat :
+                 trvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::h_l_sat :
+                 thlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::rho_l_sat :
+                 trlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              // First Derivatives at Saturation
+              case NEPTUNE::d_T_sat_d_p :
+                 ttsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_h_v_sat_d_p :
+                 thvsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_rho_v_sat_d_p :
+                 trvsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_h_l_sat_d_p :
+                 thlsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_rho_l_sat_d_p :
+                 trlsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_T_d_c_1_ph :
+                 ttgx_1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_T_d_c_2_ph :
+                 ttgx_2.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_T_d_c_3_ph :
+                 ttgx_3.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_T_d_c_4_ph :
+                 ttgx_4.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_rho_d_c_1_ph :
+                 trgx_1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_rho_d_c_2_ph :
+                 trgx_2.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_rho_d_c_3_ph :
+                 trgx_3.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_rho_d_c_4_ph :
+                 trgx_4.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_mix = 1 ;
+                 break;
+              case NEPTUNE::d_cp_d_c_1_ph :
+                 tcpgx_1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_cp_d_c_2_ph :
+                 tcpgx_2.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_cp_d_c_3_ph :
+                 tcpgx_3.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_cp_d_c_4_ph :
+                 tcpgx_4.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_mu_d_c_1_ph :
+                 ttmugx_1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_mu_d_c_2_ph :
+                 ttmugx_2.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_mu_d_c_3_ph :
+                 ttmugx_3.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_mu_d_c_4_ph :
+                 ttmugx_4.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_lambda_d_c_1_ph :
+                 ttlagx_1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_lambda_d_c_2_ph :
+                 ttlagx_2.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_lambda_d_c_3_ph :
+                 ttlagx_3.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_lambda_d_c_4_ph :
+                 ttlagx_4.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_sigma_d_c_1_ph :
+                 tsix_1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_sigma_d_c_2_ph :
+                 tsix_2.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_sigma_d_c_3_ph :
+                 tsix_3.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::d_sigma_d_c_4_ph :
+                 tsix_4.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_fhdixa = 1 ;
+                 break;
+              case NEPTUNE::NotACamixProperty :
+                 err = EOS_Internal_Error::NOT_IMPLEMENTED;
+                 return EOS_Error::error ;
+                 break ;
                  
               default :
                  ind_not_def += 1 ;
@@ -1265,8 +1236,8 @@ namespace CATHARE
 
     // --
     EOS_Error_Field err_tmp(internal_err_tmp) ;
-    EOS_thermprop prop ;
-    EOS_saturprop propsat ;
+    EOS_Property prop ;
+    EOS_Property propsat ;
     int comp_sat  = 0 ;
     int chg_T_sat = 0 ;
 
@@ -1276,23 +1247,18 @@ namespace CATHARE
     err_tmp = EOS_Internal_Error::OK ;
 
     // --  input
-    prop = P.get_property() ;
+    prop = P.get_property_number() ;
     switch(prop)
        { case NEPTUNE::p :
             tp.set_ptr(sz, P.get_data().get_ptr()) ;
             break ;
+         case NEPTUNE::p_sat :
+            tp.set_ptr(sz, P.get_data().get_ptr()) ;
+            break ;
          default :
-           propsat = P.get_sat_property() ;
-           switch(propsat)
-              { case NEPTUNE::p_sat :
-                   tp.set_ptr(sz, P.get_data().get_ptr()) ;
-                   break ;
-                default :
-                   err = EOS_Internal_Error::NOT_IMPLEMENTED ;
-                   return EOS_Error::error ;
-                   break ;
-              }
-           break;
+            err = EOS_Internal_Error::NOT_IMPLEMENTED ;
+            return EOS_Error::error ;
+            break ;
        }
 
     // -- output
@@ -1301,7 +1267,7 @@ namespace CATHARE
     int ind_not_def = -1 ;
 
     for (int i=0; i<nb_fields; i++)
-       { propsat = r[i].get_sat_property() ;
+       { propsat = r[i].get_property_number() ;
          switch(propsat)
             { case NEPTUNE::T_sat :
                  ttsp.set_ptr(sz, r[i].get_data().get_ptr())  ;
@@ -1353,7 +1319,7 @@ namespace CATHARE
                  ind_not_def += 1;
                  not_def(ind_not_def) = i ;
                  break;
-            }
+           }
        }
 
     // -- compute using fortran if needed
@@ -1452,8 +1418,7 @@ namespace CATHARE
 
     // --  
     EOS_Error_Field err_tmp(internal_err_tmp) ;
-    EOS_thermprop prop ;
-    EOS_saturprop propsat ;
+    EOS_Property prop ;
     int comp_h      = 0 ;
     int comp_c      = 0 ;
     int comp_sat    = 0 ;
@@ -1473,7 +1438,7 @@ namespace CATHARE
     int v2 = 0 ;
     int nb_fields_in = input.size() ;
     for (int i=0; i<nb_fields_in; i++)
-       { prop = input[i].get_property() ;
+       { prop = input[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::p :
                  tp.set_ptr(sz, input[i].get_data().get_ptr()) ;
@@ -1507,7 +1472,7 @@ namespace CATHARE
     int ind_not_def = -1 ;
 
     for (int i=0; i<nb_fields; i++)
-       { prop = r[i].get_property() ;
+       { prop = r[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::h :
                  thl.set_ptr(sz, r[i].get_data().get_ptr());
@@ -1579,60 +1544,53 @@ namespace CATHARE
                  ttmul2.set_ptr(sz, r[i].get_data().get_ptr());
                  comp_fhliqa = 1 ;
                  break ;
-              case NEPTUNE::NotATProperty :
+                 
               // Thermodynamic Properties at Saturation
-                 propsat = r[i].get_sat_property();
-                 switch(propsat)
-                    { case NEPTUNE::T_sat :
-                         ttsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_sat  = 1 ;
-                         chg_T_sat = 1 ;
-                         break ;
-                      case NEPTUNE::h_l_sat :
-                         thlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::rho_l_sat :
-                         trlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::h_v_sat :
-                         thvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::rho_v_sat :
-                         trvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_sat = 1 ;
-                         break ;
-                      // Derivatives
-                      case NEPTUNE::d_T_sat_d_p :
-                         ttsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::d_h_l_sat_d_p :
-                         thlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::d_rho_l_sat_d_p :
-                         trlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::d_h_v_sat_d_p :
-                         thvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::d_rho_v_sat_d_p :
-                         trvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                         comp_sat = 1 ;
-                         break ;
-                      case NEPTUNE::NotASatProperty :
-                         err = EOS_Internal_Error::NOT_IMPLEMENTED ;
-                         return EOS_Error::error ;
-                      default :
-                         ind_not_def += 1 ;
-                         not_def(ind_not_def) = i ;
-                         break ;
-                    }
+              case NEPTUNE::T_sat :
+                 ttsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_sat  = 1 ;
+                 chg_T_sat = 1 ;
+                 break ;
+              case NEPTUNE::h_l_sat :
+                 thlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::rho_l_sat :
+                 trlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::h_v_sat :
+                 thvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::rho_v_sat :
+                 trvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_sat = 1 ;
+                 break ;
+              // Derivatives
+              case NEPTUNE::d_T_sat_d_p :
+                 ttsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_h_l_sat_d_p :
+                 thlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_rho_l_sat_d_p :
+                 trlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_h_v_sat_d_p :
+                 thvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_rho_v_sat_d_p :
+                 trvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::NotASatProperty :
+                 err = EOS_Internal_Error::NOT_IMPLEMENTED ;
+                 return EOS_Error::error ;
                  break; 
               default :
                  ind_not_def += 1 ;
@@ -1812,8 +1770,7 @@ namespace CATHARE
 
     // -- 
     EOS_Error_Field err_tmp(internal_err_tmp) ;
-    EOS_thermprop prop ;
-    EOS_saturprop propsat ;
+    EOS_Property prop ;
     int comp_h      = 0 ;
     int comp_c      = 0 ;
     int comp_sat    = 0 ;
@@ -1835,7 +1792,7 @@ namespace CATHARE
     int v2 = 0 ;
     int nb_fields_in=input.size() ;
     for (int i=0; i<nb_fields_in; i++)
-       { prop = input[i].get_property() ;
+       { prop = input[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::p :
                  tp.set_ptr(sz, input[i].get_data().get_ptr()) ;
@@ -1869,7 +1826,7 @@ namespace CATHARE
     int ind_not_def = -1 ;
 
     for (int i=0; i<nb_fields; i++)
-       { prop=r[i].get_property() ;
+       { prop=r[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::h :
                  thg.set_ptr(sz, r[i].get_data().get_ptr());
@@ -1949,60 +1906,52 @@ namespace CATHARE
                  tsipv.set_ptr(sz, r[i].get_data().get_ptr()) ;
                  comp_fhvapa = 1 ;
                  break;
-              case NEPTUNE::NotATProperty :
               // Thermodynamic Properties at Saturation
-                 propsat = r[i].get_sat_property() ;
-                 switch(propsat)
-                   { case NEPTUNE::T_sat :
-                        ttsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        chg_T_sat = 1 ;
-                        break ;
-                     case NEPTUNE::h_v_sat :
-                        thvsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::rho_v_sat :
-                        trvsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::h_l_sat :
-                        thlsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::rho_l_sat :
-                        trlsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     // Derivatives
-                     case NEPTUNE::d_T_sat_d_p :
-                        ttsp1.set_ptr(sz, r[i].get_data().get_ptr())  ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::d_h_v_sat_d_p :
-                        thvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::d_rho_v_sat_d_p :
-                        trvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::d_h_l_sat_d_p :
-                        thlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::d_rho_l_sat_d_p :
-                        trlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
-                        comp_sat = 1 ;
-                        break ;
-                     case NEPTUNE::NotASatProperty :
-                        err = EOS_Internal_Error::NOT_IMPLEMENTED;
-                        return EOS_Error::error ;
-                     default :
-                        ind_not_def += 1;
-                        not_def(ind_not_def) = i ;
-                        break ;
-                   }
+              case NEPTUNE::T_sat :
+                 ttsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 chg_T_sat = 1 ;
+                 break ;
+              case NEPTUNE::h_v_sat :
+                 thvsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::rho_v_sat :
+                 trvsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::h_l_sat :
+                 thlsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::rho_l_sat :
+                 trlsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              // Derivatives
+              case NEPTUNE::d_T_sat_d_p :
+                 ttsp1.set_ptr(sz, r[i].get_data().get_ptr())  ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_h_v_sat_d_p :
+                 thvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_rho_v_sat_d_p :
+                 trvsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_h_l_sat_d_p :
+                 thlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::d_rho_l_sat_d_p :
+                 trlsp1.set_ptr(sz, r[i].get_data().get_ptr()) ;
+                 comp_sat = 1 ;
+                 break ;
+              case NEPTUNE::NotASatProperty :
+                 err = EOS_Internal_Error::NOT_IMPLEMENTED;
+                 return EOS_Error::error ;
                  break ;
                  
               default :
@@ -2186,10 +2135,10 @@ namespace CATHARE
 
     int nb_fields = input.size() ;
     int sz ;
-    EOS_thermprop prop ;
+    EOS_Property prop ;
     for (int i=0; i<nb_fields; i++)
        { const NEPTUNE::EOS_Field& field_i=input[i] ;
-         prop = field_i.get_property() ;
+         prop = field_i.get_property_number() ;
          const ArrOfDouble& values_i = field_i.get_data() ;
          switch(prop)
             { case NEPTUNE::p :

@@ -631,12 +631,12 @@ namespace NEPTUNE_EOS
 
   //! d(T)/dp      at constant specific enthalpy
   inline EOS_Internal_Error EOS_Refprop10::compute_d_T_d_p_h_ph(double p, double h, double& dtdp) const
-  { return call_dhd1("d_T_d_p_h", p, h, dtdp) ;
+  { return call_dhd1(EOS_thermprop::d_T_d_p_h, p, h, dtdp) ;
   }
 
   //! d(T)/dh      at constant pressure
   inline EOS_Internal_Error EOS_Refprop10::compute_d_T_d_h_p_ph(double p, double h, double& dtdh) const
-  { return call_dhd1("d_T_d_h_p", p, h, dtdh) ;
+  { return call_dhd1(EOS_thermprop::d_T_d_h_p, p, h, dtdh) ;
   }
 
   //! g(p,T)

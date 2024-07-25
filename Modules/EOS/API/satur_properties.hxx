@@ -53,9 +53,10 @@ namespace NEPTUNE
 
 
   enum EOS_saturprop
-    { NotASatProperty = d_h_d_s_p + 1 ,
+    { NotASatProperty = lastTProperty + 1 ,
 
       p_sat     ,
+      firstSatProperty = p_sat,
       T_sat     ,
       rho_l_sat ,
       rho_v_sat ,
@@ -72,10 +73,11 @@ namespace NEPTUNE
       d_cp_l_sat_d_p  ,
       d_cp_v_sat_d_p  ,
 
-      d2_T_sat_d_p_d_p = d_cp_v_sat_d_p + 2
+      d2_T_sat_d_p_d_p = d_cp_v_sat_d_p + 2,
+      lastSatProperty = d2_T_sat_d_p_d_p
     };
   enum EOS_limsaturprop
-    { EOS_TSATPROP     =    p_sat ,
+    { EOS_TSATPROP     =    firstSatProperty ,
       EOS_TSATPROPDER  =  d_T_sat_d_p ,
       EOS_TSATPROPDER2 = d2_T_sat_d_p_d_p
     };

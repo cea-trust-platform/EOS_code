@@ -706,7 +706,7 @@ namespace NEPTUNE_EOS
   }
 
 
-  EOS_Internal_Error EOS_Refprop9::call_dhd1(const char* const property_name, 
+  EOS_Internal_Error EOS_Refprop9::call_dhd1(EOS_thermprop prop, 
                                             double p, double h, double& value) const
   { EOS_Internal_Error err ;
     double t, rho, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d ;
@@ -725,7 +725,6 @@ namespace NEPTUNE_EOS
 
     F77NAME(dhd1_rp9)(t, rho, arr_molfrac, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t,dhdp_d) ;
 
-    EOS_thermprop prop = nam2num_dthermprop(property_name) ;
     switch(prop)
        { case NEPTUNE::d_T_d_h_p:
             value = 1/refprop_nrj_2_eos(dhdt_p) ;
@@ -1154,7 +1153,7 @@ namespace NEPTUNE_EOS
     const int nb_fields = r.size();
     for(int k=0; k<nb_fields; k++) 
        { EOS_Field rk = r[k];
-         EOS_thermprop prop = rk.get_property();
+         EOS_Property prop = rk.get_property_number();
          if (prop >= NEPTUNE::T) indic[0] = 1;
          switch(prop) 
             { case NEPTUNE::T : 
@@ -1491,8 +1490,8 @@ namespace NEPTUNE_EOS
     vector<double> vec_propder(NUMAXPROP, 0.e0) ; double *tab_propder = &vec_propder[0] ;
     int indic[11];
     EOS_Field rk;
-    EOS_thermprop prop ;
-    EOS_thermprop tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD] ;
+    EOS_Property prop ;
+    EOS_Property tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD] ;
 
     //reset fluid with setup
     err = callSetup() ;
@@ -1501,9 +1500,9 @@ namespace NEPTUNE_EOS
     // tab_pos sert a etablir une correspondance entre la liste de champs "r" et les proprietes
     for (int k=0; k<nb_fields; k++) 
        { rk = r[k] ;
-         prop = rk.get_property() ;
+         prop = rk.get_property_number() ;
          if (prop != NEPTUNE::NotATProperty) 
-            {  if (prop < (EOS_thermprop)EOS_TPROPDER)
+            {  if (prop < EOS_TPROPDER)
                   { tab_pos[k]    = prop ;
                     tab_posder[k] = NEPTUNE::NotATProperty ;
                   }
@@ -1518,7 +1517,7 @@ namespace NEPTUNE_EOS
             }
        }
 
-    if ( (pp.get_property() == NEPTUNE::p) && (hh.get_property() == NEPTUNE::T) )
+    if ( (pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::T) )
        { // return EOS_Fluid::compute(pp, hh, r, errfield);  //Calcul non optimisé
          calrp_indic_pt(r, indic);
          for(int i=0; i<sz; i++)
@@ -1533,7 +1532,7 @@ namespace NEPTUNE_EOS
                errfield.set(i, err);
             }
        }
-    else if ( (pp.get_property() == NEPTUNE::p) && (hh.get_property() == NEPTUNE::h) )
+    else if ( (pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::h) )
        { calrp_indic_ph(r, indic);
          int index_temp = -1;
          for (int k=0; k<nb_fields; k++) 
@@ -1554,7 +1553,7 @@ namespace NEPTUNE_EOS
               errfield.set(i, err);
             }
        }
-    else if ( (pp.get_property() == NEPTUNE::p) && (hh.get_property() == NEPTUNE::s) )
+    else if ( (pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::s) )
        { //          return EOS_Fluid::compute(pp, hh, r, errfield);
          for (int i=0; i<sz; i++)
             { err = calrp_optim_ps(pp[i], hh[i], tab_prop, tab_propder) ;
@@ -1590,16 +1589,15 @@ namespace NEPTUNE_EOS
     const int nb_fields = r.size();
     for (int k=0; k<nb_fields; k++)
        { EOS_Field rk = r[k];
-         EOS_saturprop prop = rk.get_sat_property();
-         if (prop >= NEPTUNE::T_sat)  indic[0] = 1;
+         EOS_Property prop = rk.get_property_number();
+         if (prop >= NEPTUNE::firstSatProperty && prop <= NEPTUNE::lastSatProperty)
+           indic[0] = 1;
          switch(prop) 
             { case NEPTUNE::T_sat : 
                  break;
               case NEPTUNE::rho_l_sat : 
-                 indic[0] = 1; 
                  break;
               case NEPTUNE::rho_v_sat : 
-                 indic[0] = 1; 
                  break;
               case NEPTUNE::h_l_sat : 
                  indic[1] = 1; 
@@ -1613,34 +1611,30 @@ namespace NEPTUNE_EOS
               case NEPTUNE::cp_v_sat : 
                  indic[4] = 1; 
                  break;
-              default :
-                 // first derivative
-                 if (prop == d_T_sat_d_p) 
-                    { indic[0] = 1;
-                      indic[5] = 1;
-                    }
-                 switch(prop)
-                    { case NEPTUNE::d_h_l_sat_d_p : 
-                         indic[6] = 1; 
-                         break;
-                      case NEPTUNE::d_h_v_sat_d_p : 
-                         indic[7] = 1; 
-                         break;
-                      case NEPTUNE::d_cp_l_sat_d_p : 
-                         indic[8] = 1; 
-                         break;
-                      case NEPTUNE::d_cp_v_sat_d_p : 
-                         indic[9] = 1; 
-                         break;
-                      default:
-                         // seconde derivative
-                         if (prop == NEPTUNE::d2_T_sat_d_p_d_p) 
-                            { indic[0]  = 1;
-                              indic[5]  = 1;
-                              indic[10] = 1;
-                            }
-                    } 
-             
+                 
+              // first derivative
+              case NEPTUNE::d_T_sat_d_p :
+                   indic[5] = 1;
+                   break;
+
+              case NEPTUNE::d_h_l_sat_d_p : 
+                 indic[6] = 1; 
+                 break;
+              case NEPTUNE::d_h_v_sat_d_p : 
+                 indic[7] = 1; 
+                 break;
+              case NEPTUNE::d_cp_l_sat_d_p : 
+                 indic[8] = 1; 
+                 break;
+              case NEPTUNE::d_cp_v_sat_d_p : 
+                 indic[9] = 1; 
+                 break;
+
+              // seconde derivative
+              case NEPTUNE::d2_T_sat_d_p_d_p: 
+                   indic[5]  = 1;
+                   indic[10] = 1;
+                   break;
             }
        }
   }
@@ -1723,7 +1717,7 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Refprop9::compute(const EOS_Field& p, 
                                  EOS_Fields& r, 
                                  EOS_Error_Field& errfield) const
-  { if (p.get_property() != NEPTUNE::p)
+  { if (p.get_property_number() != NEPTUNE::p)
        { //Calcul non optimise
           return EOS_Fluid::compute(p, r, errfield);
        }
@@ -1746,20 +1740,20 @@ namespace NEPTUNE_EOS
 
          calrp_indic_sat_p(r, indic); 
          EOS_Field rk;
-         EOS_saturprop prop ;
-         EOS_saturprop tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD], tab_der2_pos[NBMAXFIELD] ;
+         EOS_Property prop ;
+         EOS_Property tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD], tab_der2_pos[NBMAXFIELD] ;
    
          // tab_pos sert a etablir une correspondance entre la liste de champs "r" et les proprietes
          for (int k=0; k<nb_fields; k++) 
             { rk = r[k];
-              prop = rk.get_sat_property();
-              if (prop != NEPTUNE::NotASatProperty)
-                 { if (prop < (EOS_saturprop)EOS_TSATPROPDER)
+              prop = rk.get_property_number();
+              if (prop >= NEPTUNE::firstSatProperty && prop <= NEPTUNE::lastSatProperty)
+                 { if (prop < EOS_TSATPROPDER)
                       { tab_pos[k]      = prop ;
                         tab_posder[k]   = NEPTUNE::NotASatProperty ;
                         tab_der2_pos[k] = NEPTUNE::NotASatProperty ;
                       }
-                   else if (prop < (EOS_saturprop)EOS_TSATPROPDER2)
+                   else if (prop < EOS_TSATPROPDER2)
                       { tab_pos[k]      = NEPTUNE::NotASatProperty ;
                         tab_posder[k]   = prop ;
                         tab_der2_pos[k] = NEPTUNE::NotASatProperty ;
@@ -1809,7 +1803,7 @@ namespace NEPTUNE_EOS
      const int nb_fields = r.size();
      for (int k=0; k<nb_fields; k++) 
         { EOS_Field rk = r[k];
-          EOS_thermprop prop = rk.get_property();
+          EOS_Property prop = rk.get_property_number();
           indic[0] = 1;
           switch(prop) 
              { case NEPTUNE::u : 
@@ -1830,36 +1824,32 @@ namespace NEPTUNE_EOS
                case NEPTUNE::sigma : 
                   indic[6] = 1; 
                   break;
+               case NEPTUNE::d_rho_d_T_p : 
+               case NEPTUNE::d_rho_d_p_T : 
+               case NEPTUNE::d_s_d_p_T : 
+               case NEPTUNE::d_cp_d_p_T : 
+               case NEPTUNE::d_cv_d_p_T : 
+               case NEPTUNE::d_w_d_p_T : 
+               case NEPTUNE::d_s_d_T_p : 
+               case NEPTUNE::d_cp_d_T_p : 
+               case NEPTUNE::d_cv_d_T_p : 
+               case NEPTUNE::d_w_d_T_p : 
+                  indic[1] = 1;
+                  indic[3] = 1; 
+                  break;
+               case NEPTUNE::d_h_d_T_p : 
+               case NEPTUNE::d_h_d_p_T : 
+                  indic[4] = 1;
+                  break;
+               case NEPTUNE::d_mu_d_T_p : 
+               case NEPTUNE::d_mu_d_p_T : 
+               case NEPTUNE::d_lambda_d_T_p :
+               case NEPTUNE::d_lambda_d_p_T :
+                  indic[5] = 1; 
+                  indic[7] = 1; 
+                  break;
                default :
-                  EOS_thermprop propder = rk.get_der_property();
-                  switch(propder)
-                     { case NEPTUNE::d_rho_d_T_p : 
-                       case NEPTUNE::d_rho_d_p_T : 
-                       case NEPTUNE::d_s_d_p_T : 
-                       case NEPTUNE::d_cp_d_p_T : 
-                       case NEPTUNE::d_cv_d_p_T : 
-                       case NEPTUNE::d_w_d_p_T : 
-                       case NEPTUNE::d_s_d_T_p : 
-                       case NEPTUNE::d_cp_d_T_p : 
-                       case NEPTUNE::d_cv_d_T_p : 
-                       case NEPTUNE::d_w_d_T_p : 
-                          indic[1] = 1;
-                          indic[3] = 1; 
-                          break;
-                       case NEPTUNE::d_h_d_T_p : 
-                       case NEPTUNE::d_h_d_p_T : 
-                          indic[4] = 1;
-                          break;
-                       case NEPTUNE::d_mu_d_T_p : 
-                       case NEPTUNE::d_mu_d_p_T : 
-                       case NEPTUNE::d_lambda_d_T_p :
-                       case NEPTUNE::d_lambda_d_p_T :
-                          indic[5] = 1; 
-                          indic[7] = 1; 
-                          break;
-                       default :
-                          break;
-                     }
+                  break;
              }
         }
   }

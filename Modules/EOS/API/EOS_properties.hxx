@@ -36,4 +36,29 @@ class typrop { public:
 #include "camix_properties.hxx"
 #include "c2iap_properties.hxx"
 
+namespace NEPTUNE
+{
+
+  typedef int EOS_Property;
+
+  inline EOS_Property gen_property_number(const char* namep) 
+  {
+    EOS_thermprop tprop = nam2num_thermprop(namep) ;
+    if (tprop != NotATProperty) return static_cast<EOS_Property>(tprop) ;
+  
+    EOS_saturprop satprop = nam2num_saturprop(namep) ;
+    if (satprop != NotASatProperty) return static_cast<EOS_Property>(satprop) ;
+  
+    EOS_splimprop splimprop = nam2num_splimprop(namep) ;
+    if (splimprop != NotASplimProperty) return static_cast<EOS_Property>(splimprop) ;
+  
+    EOS_camixprop camixprop = nam2num_camixprop(namep) ;
+    if (camixprop != NotACamixProperty) return static_cast<EOS_Property>(camixprop) ;
+  
+    EOS_c2iapprop c2iapprop = nam2num_c2iapprop(namep) ;
+    return static_cast<EOS_Property>(c2iapprop) ;
+  }
+}
+
+
 #endif

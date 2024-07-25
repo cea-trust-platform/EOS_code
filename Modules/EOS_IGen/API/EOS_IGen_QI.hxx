@@ -29,6 +29,7 @@
 #include "EOS/Src/EOS_Ipp/EOS_Ipp.hxx"
 #include "EOS_IGen/Src/EOS_Mesh.hxx"
 #include "Common/func.hxx"
+#include "EOS/API/EOS_properties.hxx"
 #include <vector>
 using std::vector ;
 
@@ -56,6 +57,7 @@ namespace NEPTUNE_EOS_IGEN
        void set_quality_mesh(const EOS_Mesh* mesh, EOS_Fields& nodes) ;
        
        const AString& get_property() const ;
+       EOS_Property get_property_number() const ;
        AString get_propint()         const ;
        const AString& get_type()     const ;
        int get_is_abs() const ;
@@ -73,6 +75,7 @@ namespace NEPTUNE_EOS_IGEN
       
     private:
        AString property ;
+       EOS_Property property_number;
        AString type ;
        double limit_qi ;
        int is_abs ;

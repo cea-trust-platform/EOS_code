@@ -453,9 +453,10 @@ namespace NEPTUNE
 
 
   enum EOS_camixprop
-    { NotACamixProperty = h_v_lim +1 ,
+    { NotACamixProperty = lastLimProperty +1 ,
 
       c_0         ,
+      firstCamixProperty = c_0,
       c_1         ,
       c_2         ,
       c_3         ,
@@ -872,7 +873,8 @@ namespace NEPTUNE
       d_mu_0_d_T_p           ,
       d_lambda_0_d_T_p       ,
 
-      d2_T_sat_0_d_p_0_d_p_0 = d_lambda_0_d_T_p +1
+      d2_T_sat_0_d_p_0_d_p_0 = d_lambda_0_d_T_p +1,
+      lastCamixProperty = d2_T_sat_0_d_p_0_d_p_0
 
     };
   enum EOS_limcamixprop

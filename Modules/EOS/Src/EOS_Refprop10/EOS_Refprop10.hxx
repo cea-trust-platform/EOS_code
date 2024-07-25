@@ -359,7 +359,7 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error call_psflsh(const char* const property_name, double p, double s, double& value) const;
 
     //! call_dhd1   : call DHD1 REFPROP subroutine
-    EOS_Internal_Error call_dhd1(const char* const property_name, double p, double h, double& value) const;
+    EOS_Internal_Error call_dhd1(EOS_Property prop, double p, double h, double& value) const;
 
     //! call_ag     : call AG REFPROP subroutine
     //! call_ag     : units of rho and value parameters : EOS Unit

@@ -61,6 +61,10 @@ namespace NEPTUNE_EOS_IGEN
   inline const AString& EOS_IGen_QI::get_property() const
   { return property ;
   }
+  
+  inline EOS_Property EOS_IGen_QI::get_property_number() const
+  { return property_number ;
+  }
 
   inline AString EOS_IGen_QI::get_propint() const
   { char propconv[PROPNAME_MSIZE] ;

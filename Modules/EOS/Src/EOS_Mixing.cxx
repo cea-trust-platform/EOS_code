@@ -331,8 +331,10 @@ namespace NEPTUNE_EOS
     int idim  = 0 ;
 
     for (int i_in=0; i_in<nb_infields; i_in++)
-       { switch(input[i_in].get_property_number())
-            { case NEPTUNE::p_sat:
+       {
+          switch(input[i_in].get_property_number())
+            {
+              case NEPTUNE::p_sat:
                  idim++    ;
                  id_P++    ;
                  iP = i_in ;

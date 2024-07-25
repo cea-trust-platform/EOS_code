@@ -108,48 +108,9 @@ namespace NEPTUNE
     return propconv ;
   }
 
-  EOS_thermprop EOS_Field::get_property() const
-  { return nam2num_thermprop(property_name.aschar()) ;
-  }
-  
-  EOS_thermprop EOS_Field::get_der_property() const
-  { return nam2num_dthermprop(property_name.aschar()) ;
-  }
-
-  EOS_saturprop EOS_Field::get_sat_property() const
-  { return nam2num_saturprop(property_name.aschar()) ;
-  }
-
-  EOS_saturprop EOS_Field::get_der_sat_property() const
-  { return nam2num_dsaturprop(property_name.aschar()) ;
-  }
-
-  EOS_saturprop EOS_Field::get_der2_sat_property() const
-  { return nam2num_d2saturprop(property_name.aschar()) ;
-  }
-
-  EOS_splimprop EOS_Field::get_lim_property() const
-  { return nam2num_splimprop(property_name.aschar()) ;
-  }
-
-  EOS_camixprop EOS_Field::get_camix_property() const
-  { return nam2num_camixprop(property_name.aschar()) ;
-  }
-
-  EOS_camixprop EOS_Field::get_der_camix_property() const
-  { return nam2num_dcamixprop(property_name.aschar()) ;
-  }
-
-  EOS_camixprop EOS_Field::get_der2_camix_property() const
-  { return nam2num_d2camixprop(property_name.aschar()) ;
-  }
-
-  EOS_c2iapprop EOS_Field::get_c2iap_property() const
-  { return nam2num_c2iapprop(property_name.aschar()) ;
-  }
-
-  EOS_c2iapprop EOS_Field::get_der_c2iap_property() const
-  { return nam2num_dc2iapprop(property_name.aschar()) ;
+  EOS_Property EOS_Field::get_property() const
+  {
+    return static_cast<EOS_Property>(property_number);
   }
 
 }

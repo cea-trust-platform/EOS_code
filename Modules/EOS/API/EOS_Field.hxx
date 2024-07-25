@@ -55,17 +55,7 @@ namespace NEPTUNE
        const AString& get_property_name()       const ;
        const int&     get_property_number()     const ;
        AString        get_propname_int()        const ;
-       EOS_thermprop  get_property()            const ;
-       EOS_thermprop  get_der_property()        const ;
-       EOS_saturprop  get_sat_property()        const ;
-       EOS_saturprop  get_der_sat_property()    const ;
-       EOS_saturprop  get_der2_sat_property()   const ;
-       EOS_splimprop  get_lim_property()        const ;
-       EOS_camixprop  get_camix_property()      const ;
-       EOS_camixprop  get_der_camix_property()  const ;
-       EOS_camixprop  get_der2_camix_property() const ;
-       EOS_c2iapprop  get_c2iap_property()      const ;
-       EOS_c2iapprop  get_der_c2iap_property()  const ;
+       EOS_Property   get_property()            const ;
        const double& operator [] (int) const;
        double& operator [] (int);
        ArrOfDouble& set_data();
@@ -80,7 +70,6 @@ namespace NEPTUNE
        ArrOfDouble data ;
 
     private: 
-       int gen_property_number(const char* namep) ;
        static int type_Id ;
        AString property_title  ;
        AString property_name   ;
