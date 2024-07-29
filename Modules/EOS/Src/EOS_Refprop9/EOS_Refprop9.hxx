@@ -371,7 +371,7 @@ namespace NEPTUNE_EOS
                                       double& scrit_r, double& ucrit_r) const;
 
     //! Evaluate h_l_lim or h_v_lim (newton method) of spinodal
-    EOS_Internal_Error newton_hlim(const char* const property_name, double p, double& h_lim) const;
+    EOS_Internal_Error newton_hlim(EOS_splimprop prop, double p, double& h_lim) const;
 
     //! call_phfl1  : T(p,h) with the phase flag kph (1=liquid ; 2=vapor)
     EOS_Internal_Error call_phfl1(double p, double h, int kph, double& T) const;

@@ -909,7 +909,7 @@ namespace NEPTUNE_EOS
   }
 
 
-  EOS_Internal_Error EOS_Refprop9::newton_hlim(const char* const property_name, double p, double& h_lim) const
+  EOS_Internal_Error EOS_Refprop9::newton_hlim(EOS_splimprop prop, double p, double& h_lim) const
   {
           double p_ref, tsat_ref;
           double rholsat_ref, rhovsat_ref;
@@ -949,8 +949,6 @@ namespace NEPTUNE_EOS
           rhov_ref = rhovsat_ref;
 
           // h_lim : liquid or vapor
-          EOS_splimprop prop = nam2num_splimprop(property_name) ; 
-
           switch(prop)
              { case NEPTUNE::h_l_lim:
                   tinit_ref = 0.5*(tsat_ref+tcrit);
