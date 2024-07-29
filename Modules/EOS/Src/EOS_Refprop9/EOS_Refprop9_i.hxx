@@ -469,27 +469,27 @@ namespace NEPTUNE_EOS
 
   //! u(p,h)
   inline EOS_Internal_Error EOS_Refprop9::compute_u_ph(double p, double h, double& u) const
-  { return call_phflsh("u", p, h, u) ;
+  { return call_phflsh(EOS_thermprop::u, p, h, u) ;
   }
 
   //! cp(p,h)
   inline EOS_Internal_Error EOS_Refprop9::compute_cp_ph(double p, double h, double& cp) const
-  { return call_phflsh("cp", p, h, cp) ;
+  { return call_phflsh(EOS_thermprop::cp, p, h, cp) ;
   }
 
   //! s(p,h)
   inline EOS_Internal_Error EOS_Refprop9::compute_s_ph(double p, double h, double& s) const
-  { return call_phflsh("s", p, h, s) ;
+  { return call_phflsh(EOS_thermprop::s, p, h, s) ;
   }
 
   //! w(p,h)
   inline EOS_Internal_Error EOS_Refprop9::compute_w_ph(double p, double h, double& w) const
-  { return call_phflsh("w", p, h, w) ;
+  { return call_phflsh(EOS_thermprop::w, p, h, w) ;
   }
 
   //! cv(p,h)
   inline EOS_Internal_Error EOS_Refprop9::compute_cv_ph(double p, double h, double& cv) const
-  { return call_phflsh("cv", p, h, cv) ;
+  { return call_phflsh(EOS_thermprop::cv, p, h, cv) ;
   }
 
   //! lambda(p,h)
@@ -499,10 +499,10 @@ namespace NEPTUNE_EOS
 
     lambda = 0.e0 ;
 
-    err = call_phflsh("rho", p, h, rho) ;
+    err = call_phflsh(EOS_thermprop::rho, p, h, rho) ;
     if (err.generic_error() == EOS_Error::bad)  return err ;
 
-    err = call_phflsh("T", p, h, t) ;
+    err = call_phflsh(EOS_thermprop::T, p, h, t) ;
     if (err.generic_error() == EOS_Error::bad)  return err ;
 
     rho = eos_rho_2_refprop(rho);
@@ -518,10 +518,10 @@ namespace NEPTUNE_EOS
         double hjt,A, G, xkappa,dPdrho,d2PdD2,dPT,drhodT,drhodP,spare1,spare2,spare3, spare4;
     EOS_Internal_Error err ;
 
-    err = call_phflsh("rho", p, h, rho) ;
+    err = call_phflsh(EOS_thermprop::rho, p, h, rho) ;
     if (err.generic_error() == EOS_Error::bad)  return err;
 
-    err = call_phflsh("T", p, h, t);
+    err = call_phflsh(EOS_thermprop::T, p, h, t);
     if (err.generic_error() == EOS_Error::bad)  return err;
 
     rho = eos_rho_2_refprop(rho) ;
@@ -538,10 +538,10 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error err ;
     mu = 0.e0 ;
 
-    err = call_phflsh("rho", p, h, rho) ;
+    err = call_phflsh(EOS_thermprop::rho, p, h, rho) ;
     if (err.generic_error() == EOS_Error::bad)  return err ;
 
-    err = call_phflsh("T", p, h, t) ;
+    err = call_phflsh(EOS_thermprop::T, p, h, t) ;
     if (err.generic_error() == EOS_Error::bad)  return err ;
 
     rho = eos_rho_2_refprop(rho) ;
