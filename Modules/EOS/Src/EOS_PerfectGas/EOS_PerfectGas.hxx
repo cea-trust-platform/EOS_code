@@ -112,7 +112,7 @@ namespace NEPTUNE_EOS
     AString FluidStr ;
     double r     ;
     double cp    ;
-    double h0    ;
+    // double h0    ; not used
     double gamma ;
     double cv    ;
     double href  ;
