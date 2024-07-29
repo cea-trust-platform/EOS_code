@@ -27,7 +27,8 @@ Options: [defaults in brackets after descriptions]
                                         [$user_env_file] 
   --release                             build for release (default)
   --debug                               build for debug
-  --sanitize                            build with address or threads sanitizers
+  --with-sanitizer                      build with sanitizers
+  --without-sanitizer                   build without sanitizers (default)
   --prefix=<path>                       install file in the directory <path>
   --execdir=<path>                      set the build directory, cannot be $dirconfigure
   --with-gui                            build the EOS GUI (need swig, python-devel, Qt4, pyQt, gnuplot, hdf5, med) (default)
@@ -44,6 +45,7 @@ Options: [defaults in brackets after descriptions]
   --fc=<path>/<compiler>                force the fortran compiler
   --add_comp_flags=<opt1>,<opt2>,...    add flags for compilation
   --with-openmp                         compile with support of OpenMP
+  --without-openmp                      compile without support of OpenMP
   --static-only                         do not build shared library
   --shared-only                         do not build static library
   --with-cmake-exec=<bin_cmake>         cmake executable
