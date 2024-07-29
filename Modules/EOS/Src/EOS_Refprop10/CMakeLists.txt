@@ -15,7 +15,8 @@ if(NOT ${CONFIGURE_RESULT} EQUAL 0)
     message(FATAL_ERROR "Error while configuring plugin Refprop10. See ${CMAKE_BINARY_DIR}/REFPROP10_pre_configure.log")
 endif()
 
-
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/Refprop10)
+ 
 #
 # object target = directory name : TGT_OBJ
 STRING(REGEX REPLACE "(^.*/)(.*$)" "\\2" TGT_OBJ "${CMAKE_CURRENT_SOURCE_DIR}")

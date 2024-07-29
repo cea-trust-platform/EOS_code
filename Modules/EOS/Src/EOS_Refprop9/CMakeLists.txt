@@ -15,6 +15,7 @@ if(NOT ${CONFIGURE_RESULT} EQUAL 0)
     message(FATAL_ERROR "Error while configuring plugin Refprop9. See ${CMAKE_BINARY_DIR}/REFPROP9_pre_configure.log")
 endif()
 
+include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR}/Refprop9)
 
 #
 # object target = directory name : TGT_OBJ
