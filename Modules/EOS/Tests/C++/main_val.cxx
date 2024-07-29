@@ -356,7 +356,7 @@ int main(int argc, char* argv[])
     // creation de EOS fluid
     // ---------------------
     //
-    EOS *components[nref] ;
+    EOS **components = new EOS*[nref] ;
     EOS *fluid[1] ;
 
     if (nref == 0)
@@ -907,7 +907,7 @@ int main(int argc, char* argv[])
     for (int iref=0; iref<nref; iref++)
       delete components[iref];
     delete fluid[0]  ;
-
+    delete[] components ;
     if ( (icounts > 0) || (icount > 0) || (icounterr > 0) )  return 1 ;
 
   }
