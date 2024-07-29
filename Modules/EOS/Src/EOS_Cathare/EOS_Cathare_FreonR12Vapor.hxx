@@ -57,6 +57,7 @@ namespace NEPTUNE_EOS
       virtual EOS_Error compute(const EOS_Fields& input, 
                                 EOS_Fields& r, 
                                 EOS_Error_Field& errfield) const ;
+      using EOS_Cathare_FreonR12::compute;
     private:
       static int type_Id ;
   };

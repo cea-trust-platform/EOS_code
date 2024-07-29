@@ -55,9 +55,11 @@ namespace NEPTUNE_EOS
                                  const EOS_Field& h, 
                                  EOS_Fields& r, 
                                  EOS_Error_Field& errfield) const;
-      virtual EOS_Error compute( const EOS_Fields& input, 
+      virtual EOS_Error compute(const EOS_Fields& input, 
                                  EOS_Fields& r, 
                                  EOS_Error_Field& errfield) const;
+      using EOS_Cathare_Water::compute;
+      
     private:
       static int type_Id ;
   };

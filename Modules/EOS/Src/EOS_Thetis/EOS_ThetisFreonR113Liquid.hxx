@@ -45,6 +45,7 @@ namespace NEPTUNE_EOS
     virtual ~EOS_ThetisFreonR113Liquid();
 
     //! Thetis initialization + fluid loading
+    using EOS_ThetisFreonR113::init;
     virtual int init(const Strings&);
 
     //  Other methods
