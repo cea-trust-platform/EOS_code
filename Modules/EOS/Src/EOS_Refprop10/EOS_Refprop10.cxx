@@ -569,7 +569,7 @@ namespace NEPTUNE_EOS
   }
 
 
-  EOS_Internal_Error EOS_Refprop10::call_tpflsh(const char* const property_name, 
+  EOS_Internal_Error EOS_Refprop10::call_tpflsh(EOS_thermprop prop, 
                                               double p, double T, double& value) const
   { EOS_Internal_Error err ;
     double rhol, rhov, q, e, h, s, cv, cp, w;
@@ -591,7 +591,6 @@ namespace NEPTUNE_EOS
     delete[] y ;
     if (ierr_10 != 0)  return generate_error(ierr_10, herr_10) ;
 
-    EOS_thermprop prop = nam2num_thermprop(property_name) ;
     switch(prop)
        { case NEPTUNE::h :
             value = refprop_nrj_2_eos(h);
