@@ -96,7 +96,7 @@ namespace NEPTUNE_EOS
   private:
     static int type_Id;
     EOS_Internal_Error call_tprho(double p, double T, double& rho) const;
-    EOS_Internal_Error call_therm(const char* const property_name, double T, double rho, double& value) const;
+    EOS_Internal_Error call_therm(EOS_thermprop prop, double T, double rho, double& value) const;
   };
 }
 #include "EOS_Refprop9_liquid_i.hxx"

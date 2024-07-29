@@ -48,7 +48,7 @@ namespace NEPTUNE_EOS
     return iret ;
   }
 
-  EOS_Internal_Error EOS_Refprop10_vapor::call_therm(const char* const property_name, double T, double rho, double& value) const
+  EOS_Internal_Error EOS_Refprop10_vapor::call_therm(EOS_thermprop prop, double T, double rho, double& value) const
   { EOS_Internal_Error err ;
     double e, h, p, s, cv, cp, w, hjt ;
 
@@ -58,7 +58,6 @@ namespace NEPTUNE_EOS
 
     F77NAME(therm)(T,rho,arr_molfrac,p,e,h,s,cv,cp,w,hjt) ;
 
-    EOS_thermprop prop = nam2num_thermprop(property_name) ;
     switch(prop)
        { case NEPTUNE::h :
             value = refprop_nrj_2_eos(h);
