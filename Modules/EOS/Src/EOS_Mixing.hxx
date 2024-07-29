@@ -131,9 +131,9 @@ namespace NEPTUNE_EOS
       MixingType compute_mode = MixingType::Unsupported;
       //unordered_map<string, string> info_args ;
       const double rPerfectGas = 8.31447 ;
-      const double HVS7 = 2766.43e3 ;
-      const double TSS7 = 164.93e0 ;
-      const double TSS7K = 438.08e0 ;
+      // const double HVS7 = 2766.43e3 ; not used
+      // const double TSS7 = 164.93e0 ; not used
+      // const double TSS7K = 438.08e0 ; not used
   };
 }
 #endif
