@@ -363,7 +363,7 @@ namespace NEPTUNE_EOS
 
     //! call_ag     : call AG REFPROP subroutine
     //! call_ag     : units of rho and value parameters : EOS Unit
-    EOS_Internal_Error call_ag(const char* const property_name, double t, double rho, double& value) const;
+    EOS_Internal_Error call_ag(EOS_thermprop prop, double t, double rho, double& value) const;
 
     EOS_Internal_Error critical_point(double& tcrit, double& pcrit, double& rhocrit,
                                       double& hcrit, double& scrit, double& ucrit,

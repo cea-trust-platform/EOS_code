@@ -740,7 +740,7 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK ;
   }
 
-  EOS_Internal_Error EOS_Refprop10::call_ag(const char* const property_name, 
+  EOS_Internal_Error EOS_Refprop10::call_ag(EOS_thermprop prop, 
                                           double t, double rho, double& value) const
   { EOS_Internal_Error err ;
     double f,g ;
@@ -752,7 +752,6 @@ namespace NEPTUNE_EOS
 
     F77NAME(ag)(t,rho,arr_molfrac,f,g) ;
 
-    EOS_thermprop prop = nam2num_thermprop(property_name) ;
     switch(prop)
        { case NEPTUNE::g:
             value = refprop_nrj_2_eos(g) ;
