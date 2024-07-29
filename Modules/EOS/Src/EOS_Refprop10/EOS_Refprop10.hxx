@@ -52,12 +52,6 @@ static const int nc_max_10  = 20 ;        // number composant max allowed in Ref
 static const int err_max_10 = 10 ;        // number max of error messages
 static const int errcode_max_10 = 10000 ; // maximum code number
 
-static int  ierr_10        ;
-static char herr_10[HC255] ;
-
-
-
-
 namespace NEPTUNE_EOS
 {
 
@@ -286,6 +280,8 @@ namespace NEPTUNE_EOS
     mutable int errcode;               // error code to used   ( < errcodemax)
     
     EOS_Internal_Error callSetup() const;
+    EOS_Internal_Error callSetupInitial() const;
+    EOS_Internal_Error callSetupThread(const std::string &dataFileName) const;
     
     //Generate error AString
     EOS_Internal_Error generate_error(int ierr_10, const char* err) const;

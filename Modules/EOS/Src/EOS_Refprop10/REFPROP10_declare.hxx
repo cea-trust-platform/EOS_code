@@ -42,28 +42,31 @@ extern "C"
 // -- SETUP
 //    input(nc,hfiles,hfmix,hrf)   output(ierr_10,herr_10)
       void F77DECLARE(setup)(int& nbcomp, const char* hfile, const char* hfmix, 
-                             const char* hrf, int& ierr_10, char* herr_10);
+                             const char* hrf, int& ierr_10, char* herr_10,
+                              long, long, long, long);
 
 // -- SETMIX
 //    input(hmxnme,hfmix,hrf)      output(ncc,hfiles,x,ierr_10,herr_10)
       void F77DECLARE(setmix)(const char* hmxnme, const char* hfmix, 
                               const char* hrf, int& ncc, char hfiles[NBCOMPMAX][HC255],
-                              double* x, int& ierr_10, char* herr_10);
+                              double* x, int& ierr_10, char* herr_10,
+                              long, long, long, long);
 
 // -- SETMOD
 //    input(nc,htype,hmix,hcomp)   output(ierr_10,herr_10)
       void F77DECLARE(setmod)(int& nc,const char* htype,const char* hmix,
-                              const char hcomp[NBCOMPMAX][HC3], int& ierr_10,char* herr_10);
+                              const char hcomp[NBCOMPMAX][HC3], int& ierr_10,char* herr_10,
+                              long, long, long, long);
 
 // -- SETREF
 //    input(hrf,ixflag,x0,h0,s0,t0,p0)   output(ierr_10,herr_10)
       void F77DECLARE(setref)(const char* hrf, int& ixflag, const double* x0, const double& h0,
-                              const double& s0, const double& t0, const double& p0, int& ierr_10, char* herr_10);
+                              const double& s0, const double& t0, const double& p0, int& ierr_10, char* herr_10, long, long);
 
 
 // -- SETPATH
 //    input(hpth)
-      void F77DECLARE(setpath)(const char* hpth);
+      void F77DECLARE(setpath)(const char* hpth, long);
 
 
 // -- INFO
@@ -74,7 +77,8 @@ extern "C"
 
 // -- NAME
 //    input(nbcomp)        output(hname,hn80,hcas)
-      void F77DECLARE(name)(int& nbcomp, char* hname, char* hn80, char* hcas);
+      void F77DECLARE(name)(int& nbcomp, char* hname, char* hn80, char* hcas,
+                            long, long, long);
 
 // -- WMOL (molecular weight for a mixture of specified composition)
 //    input(x)                 output(wmol)
@@ -88,7 +92,8 @@ extern "C"
 // -- CRITP
 //    input(x)            output(tcrit,pcrit,Dcrit,ierr_10,herr_10)
       void F77DECLARE(critp)(double* x, double& tcrit, double& pcrit,
-                             double& Dcrit, int& ierr_10, char* herr_10);
+                             double& Dcrit, int& ierr_10, char* herr_10,
+                             long);
 
 // -- ENTHAL
 //    input (t,rho,x)      output(h)
@@ -106,18 +111,21 @@ extern "C"
 //    input (t,x,kph)     output(p,rhol,rhov,xliq,xvap,ierr_10,herr_10)
       void F77DECLARE(satt)(double& t, double* x, int& kph, double& p, 
                             double& rhol, double& rhov, double& xliq,
-                            double& xvapint, int& ierr_10, char* herr_10);
+                            double& xvapint, int& ierr_10, char* herr_10,
+                            long);
 
 // -- SATURATION SATP
 //    input (p,x,kph)     output(t,rhol,rhov,xliq,xvap,ierr_10,herr_10)
       void F77DECLARE(satp)(double& p, double* x, int& kph, double& t,
                             double& rhol, double& rhov, double& xliq, 
-                            double& xvapint, int& ierr_10, char* herr_10);
+                            double& xvapint, int& ierr_10, char* herr_10,
+                            long);
 
 // -- SATURATION CSATK
 //    input (nbcomp,t,kph)     output(p,rho,csat,ierr_10,herr_10)
        void F77DECLARE(csatk)(int& nbcomp, double& t, int& kph, double& p, 
-                              double& rho, double& csat, int& ierr_10, char* herr_10);
+                              double& rho, double& csat, int& ierr_10, char* herr_10,
+                              long);
 // -- CVCP
 //    input (t,rho,x)   output(cv,cp)
       void F77DECLARE(cvcp)(double& t, double& rho, double* x, double& cv, 
@@ -129,7 +137,7 @@ extern "C"
                               double& D, double& Dl, double& Dv, double* x, 
                               double* y, double& q, double& e, double& s, 
                               double& cv, double& cp, double& w, int& ierr_10,
-                              char* herr_10);
+                              char* herr_10, long);
 
 // -- pT : TPFLSH
 //    input (p,s,z)      output(t,D,Dl,Dv,x,y,q,e,h,Cv,Cp,w,ierr_10,herr_10)
@@ -137,7 +145,7 @@ extern "C"
                               double& D, double& Dl, double& Dv, double* x, 
                               double* y, double& q, double& e, double& h, 
                               double& Cv, double& Cp, double& w, int& ierr_10, 
-                              char* herr_10);
+                              char* herr_10, long);
 
 // -- ps : PSFLSH
 //    input (t,p,z)      output(D,Dl,Dv,x,y,q,e,h,s,Cv,Cp,w,ierr_10,herr_10)
@@ -145,27 +153,31 @@ extern "C"
                               double& Dl, double& Dv, double* x, double* y, 
                               double& q, double& e, double& h, double& s, 
                               double& Cv, double& Cp, double& w, int& ierr_10, 
-                              char* herr_10);
+                              char* herr_10, long);
 
 // -- ps : PSFL1
 //    input (p,s,z,kph,t,D)      output(t,D,ierr_10,herr_10)
       void F77DECLARE(psfl1)(double& p, double& s, double* z, int& kph, 
-                             double& t, double& D, int& ierr_10, char* herr_10);
+                             double& t, double& D, int& ierr_10, char* herr_10,
+                             long);
 
 // -- TRNPRP
 //    input (t,rho,x)    output(eta,tcx,ierr_10,herr_10)
       void F77DECLARE(trnprp)(double& t, double& rho, double* x, double& eta, 
-                              double& tcx, int& ierr_10, char* herr_10);
+                              double& tcx, int& ierr_10, char* herr_10,
+                              long);
 
 // -- STN       compute surface tension (sigma)
 //    input (t,rhol,rhov,xl,xv)        output (sigma,ierr_10,herr_10)
       void F77DECLARE(stn)(double& t, double& rhol, double& rhov, double* xl, 
-                              double* xv, double& sigma, int& ierr_10, char* herr_10);
+                           double* xv, double& sigma, int& ierr_10, char* herr_10,
+                           long);
 
 // -- pT: TPRHO
 //    input (t,p,x,kph,kguess)    output(rho,ierr_10,herr_10)
       void F77DECLARE(tprho)(double& t, double& p, double* x, int& kph, int& kguess,
-                             double& rho, int& ierr_10, char* herr_10);
+                             double& rho, int& ierr_10, char* herr_10,
+                             long);
 
 // -- THERM (compute thermal quantities as a function of temperature, density, and compositions)
 //    input (t,rho,x)             output(p,e,h,s,cv,cp,w,hjt)
@@ -192,7 +204,7 @@ extern "C"
 //    input(nbcomp,t,kph)                     output(p,rho,csat,dpt,ierr_10,herr_10)
       void F77DECLARE(dptsatk)(int& nbcomp, double& t, int& kph, double& p, 
                               double& rho, double& csat, double& dpt, int& ierr_10, 
-                              char* herr_10);
+                              char* herr_10, long);
 
 // -- AG (compute Helmholtz and Gibbs energies)
 //    input(t,rho,x)              output(a,g)
@@ -200,8 +212,10 @@ extern "C"
 
 // -- SPNDL (Find the spinodal densities for a given temperature)
 //    input(t,x)                                                         output(rhol,rhov,ierr_10,herr_10)
-      void F77DECLARE(liqspndl)(double& t, double* x, double& rhol, int& ierr_10, char* herr_10);
-      void F77DECLARE(vapspndl)(double& t, double* x, double& rhov, int& ierr_10, char* herr_10);
+      void F77DECLARE(liqspndl)(double& t, double* x, double& rhol, 
+                                int& ierr_10, char* herr_10, long);
+      void F77DECLARE(vapspndl)(double& t, double* x, double& rhov, int& ierr_10, char* herr_10,
+                                long);
 
 //
       void F77DECLARE(therm2)(double& t, double& rho, double* x, double& p, 
@@ -224,7 +238,7 @@ extern "C"
 //
       void F77DECLARE(phfl1)(double& p_refprop, double& h_refprop, double* x, 
                              int& kph, double& T, double& rho_refprop, int& ierr_10,
-                             char* herr_10);
+                             char* herr_10, long);
 
 }
 #endif /* REFPROP_DECLARE_HXX_ */
