@@ -1,4 +1,4 @@
-#include "dump.hxx"
+
 #include "EOS/API/EOS.hxx"
 #include "EOS/API/EOS_Std_Error_Handler.hxx"
 #include "EOS/API/EOS_Config.hxx"
@@ -16,6 +16,9 @@ using namespace NEPTUNE;
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include "dump.hxx"
+#include "arguments.hxx"
+#include "timer.hxx"
 
 const char *list_prop1[] = {
     "p"};
@@ -107,7 +110,7 @@ void printError(const EOS &eos,
   std::cerr << "error " << err.get_partial_code() << " " << s << std::endl;
 }
 
-void test_1parameter(EOS &eos, const char *valIn, int iSample, bool dump)
+void test_field_1parameter(EOS &eos, const char *valIn, int iSample, bool dump)
 {
   std::ofstream fOut;
   if (dump)
@@ -154,15 +157,129 @@ void test_1parameter(EOS &eos, const char *valIn, int iSample, bool dump)
   }
 }
 
-void test_2parameters(EOS &/*eos*/, const char */*valIn1*/, const char */*valIn2*/, int /*iSample*/, bool /*dump*/)
+void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, int iSample, bool dump)
 {
+  std::ofstream fOut;
+  if (dump)
+  {
+    std::string s = valIn1;
+    s += valIn2 + std::to_string(iSample) + ".data";
+    fOut.open(s.c_str());
+  }
+
+  ArrOfDouble array1(1);
+  ArrOfDouble array2(1);
+  ArrOfDouble result(1);
+  ArrOfInt errors(1);
+
+  array1[0] = 1e5 + iSample * 3e1;
+
+  if (strcmp(valIn2, "T") == 0)
+    array2[0] = 350. + iSample * 0.1;
+  if (strcmp(valIn2, "h") == 0)
+    array2[0] = 210000. + iSample * 100;
+
+  EOS_Field fieldIn1(valIn1, valIn1, array1);
+  EOS_Field fieldIn2(valIn2, valIn2, array2);
+
+  EOS_Error_Field err_field(errors);
+
+  if (dump)
+  {
+    fOut << std::endl
+         << valIn1 << " " << fieldIn1[0] << " " << valIn2 << " " << fieldIn2[0] << std::endl;
+  }
+
+  for (auto p : thermprop_r)
+  {
+    EOS_Field fieldOut(p.c_str(), p.c_str(), result);
+    eos.compute(fieldIn1, fieldIn2, fieldOut, err_field);
+    NEPTUNE::EOS_Internal_Error err = err_field[0];
+
+    if (err.generic_error() != EOS_Error::good)
+    {
+#ifdef _OPENMP
+#pragma omp critical
+#endif
+      {
+        printError(eos, err);
+      }
+    }
+
+    if (dump)
+      fOut << "\t" << std::setfill(' ') << std::setw(25) << std::setprecision(17) << std::right << p
+           << " " << std::setfill('_')
+           << std::setw(25) << std::setprecision(15) << std::right << fieldOut[0] << std::endl;
+  }
 }
 
-void test_features(EOS &eos, int nSamples, bool dump)
+void test_point_1parameter(EOS &eos, int iSample, bool dump)
+{
+  std::ofstream fOut;
+  if (dump)
+  {
+    std::string s = "point_p_";
+    s += std::to_string(iSample) + ".data";
+    fOut.open(s.c_str());
+  }
+
+  for (auto q : saturprop_r)
+  {
+    double p = 1.5e5 + iSample * 3e1;
+    double r = 0.e0;
+    EOS_Internal_Error ierr = EOS_Internal_Error::OK;
+
+    try
+    { // EOS will throw an EOS_Std_Exception if an error occurs:
+      eos.compute(q.c_str(), p, r);
+      if (dump)
+        fOut << "\t" << std::setfill(' ') << std::setw(25) << std::setprecision(17) << std::right << q
+             << " " << std::setfill('_')
+             << std::setw(25) << std::setprecision(15) << std::right << r << std::endl;
+    }
+    catch (EOS_Std_Exception ex)
+    { // Get the internal error code:
+      ierr = ex.err_code;
+    }
+  }
+}
+
+void test_point_2parameters(EOS &eos, int iSample, bool dump)
+{
+  std::ofstream fOut;
+  if (dump)
+  {
+    std::string s = "point_p_";
+    s += std::to_string(iSample) + ".data";
+    fOut.open(s.c_str());
+  }
+
+  for (auto q : thermprop_r)
+  {
+    double p = 1.5e5 + iSample * 3e1;
+    double h = 300.0 + iSample * 0.05;
+    double r = 0.e0;
+    EOS_Internal_Error ierr = EOS_Internal_Error::OK;
+
+    try
+    { // EOS will throw an EOS_Std_Exception if an error occurs:
+      eos.compute(q.c_str(), p, h, r);
+      if (dump)
+        fOut << "\t" << std::setfill(' ') << std::setw(25) << std::setprecision(17) << std::right << q
+             << " " << std::setfill('_')
+             << std::setw(25) << std::setprecision(15) << std::right << r << std::endl;
+    }
+    catch (EOS_Std_Exception ex)
+    { // Get the internal error code:
+      ierr = ex.err_code;
+    }
+  }
+}
+
+void test_features(EOS &eos, int test, int nSamples, bool dump)
 {
   // Configure eos to return to client on any error.
   std::cout << eos << std::endl;
-  std::cout << "Testing field methods with 1 parameter" << endl;
 
   EOS_Std_Error_Handler handler;
   // EOS should never exit()
@@ -171,7 +288,7 @@ void test_features(EOS &eos, int nSamples, bool dump)
   handler.set_throw_on_error(EOS_Std_Error_Handler::disable_feature);
   // EOS should dump informations to std::cerr on error,bad and ok
   handler.set_dump_on_error(ok);
-  handler.set_dump_stream(std::cout);
+  handler.set_dump_stream(std::cerr);
 
   // eos provides a stack of saved error handlers which
   // is used if we want to locally change the error handler.
@@ -179,42 +296,114 @@ void test_features(EOS &eos, int nSamples, bool dump)
   eos.save_error_handler();
   eos.set_error_handler(handler);
 
-  int iSample;
-  int n1 = sizeof(list_prop1) / sizeof(char *);
-  int n2 = sizeof(list_prop2) / sizeof(char *);
+  if (test == 1)
+  {
+    Timer T("Testing field methods with 1 parameter  :");
+    int n1 = sizeof(list_prop1) / sizeof(char *);
+
+    T.start();
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (iSample = 0; iSample < nSamples; iSample++)
-  {
-    for (int i = 0; i < n1; i++)
-    {
-      test_1parameter(eos, list_prop1[i], iSample, dump);
-    }
+    for (int iSample = 0; iSample < nSamples; iSample++)
+      for (int i = 0; i < n1; i++)
+        test_field_1parameter(eos, list_prop1[i], iSample, dump);
+
+    T.stop();
+    std::cout << T << std::endl;
   }
+
+  if (test == 2)
+  {
+    Timer T("Testing field methods with 2 parameters :");
+    int n1 = sizeof(list_prop1) / sizeof(char *);
+    int n2 = sizeof(list_prop2) / sizeof(char *);
+
+    T.start();
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-  for (iSample = 0; iSample < nSamples; iSample++)
-  {
-    for (int i = 0; i < n1; i++)
-    {
-      for (int j = 0; j < n2; j++)
-      {
-        test_2parameters(eos, list_prop1[i], list_prop2[j], iSample, dump);
-      }
-    }
-    // Reset to previous handler
-    eos.restore_error_handler();
+    for (int iSample = 0; iSample < nSamples; iSample++)
+      for (int i = 0; i < n1; i++)
+        for (int j = 0; j < n2; j++)
+          test_field_2parameters(eos, list_prop1[i], list_prop2[j], iSample, dump);
+
+    T.stop();
+    std::cout << T << std::endl;
   }
+
+  if (test == 3)
+  {
+    handler.set_throw_on_error(ok);
+    eos.set_error_handler(handler);
+
+    Timer T("Testing point methods with 1 parameter  :");
+
+    T.start();
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int iSample = 0; iSample < nSamples; iSample++)
+    {
+      test_point_1parameter(eos, iSample, dump);
+    }
+
+    T.stop();
+  }
+
+  if (test == 4)
+  {
+    handler.set_throw_on_error(ok);
+    eos.set_error_handler(handler);
+
+    Timer T("Testing point methods with 2 parameters :");
+
+    T.start();
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+    for (int iSample = 0; iSample < nSamples; iSample++)
+    {
+      test_point_2parameters(eos, iSample, dump);
+    }
+
+    T.stop();
+  }
+
+  // Reset to previous handler
+  eos.restore_error_handler();
 }
 
 int main(int argc, char **argv)
 {
-  int nSamples = argc > 1 ? strtol(argv[1], nullptr, 10) : 10;
-  bool dump = argc > 2 ? (strcmp(argv[2], "dump") == 0) : false;
+  int nTh;
+
+#ifdef _OPENMP
+#pragma omp parallel
+#pragma omp single
+  {
+    nTh = omp_get_num_threads();
+  }
+  std::cout << nTh << " thread(s)" << std::endl;
+#else
+  nTh = 1;
+  std::cout << "sequential" << std::endl;
+#endif
+
+  Arguments A(argc, argv);
+
+  int nSamples = A.Get("samples", nTh);
+  bool dump = A.Get("dump", false);
+  int test = A.Get("test", 1);
+
+  std::cout << nSamples << " sample(s)" << std::endl;
+
+  std::cout << "dump : " << dump << std::endl
+            << std::endl;
 
   cDump D;
   if (dump)
@@ -222,7 +411,7 @@ int main(int argc, char **argv)
 
   EOS fluid("EOS_Refprop10", "Water");
 
-  test_features(fluid, nSamples, dump);
+  test_features(fluid, test, nSamples, dump);
 
   return 0;
 }
