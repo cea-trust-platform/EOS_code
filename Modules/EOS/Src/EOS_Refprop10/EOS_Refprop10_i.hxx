@@ -346,7 +346,7 @@ namespace NEPTUNE_EOS
 
   //! h(p,s)
   inline EOS_Internal_Error EOS_Refprop10::compute_h_ps(double p, double s, double& h) const
-  { return call_psflsh("h", p, s, h) ;
+  { return call_psflsh(EOS_thermprop::h, p, s, h) ;
   }
 
   //! rho(p,T)
