@@ -42,7 +42,7 @@ namespace NEPTUNE_EOS
  
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(satp)(p_refprop, arr_molfrac, i, t_sat, rhol, rhov, xliq, xvapint, ierr_10, herr_10, HC255-1);
     if (ierr_10 != 0) return generate_error(ierr_10,herr_10);
@@ -63,7 +63,7 @@ namespace NEPTUNE_EOS
 
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(satt)(T, arr_molfrac, i, p_sat, rhol, rhov, xliq, xvapint, ierr_10, herr_10, HC255-1);
     if (ierr_10 != 0)  return generate_error(ierr_10, herr_10);
@@ -87,7 +87,7 @@ namespace NEPTUNE_EOS
 
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(satt)(T, arr_molfrac, i, p_sat, rhol, rhov, xliq, xvapint, ierr_10, herr_10, HC255-1);
     if (ierr_10 != 0)  return generate_error(ierr_10, herr_10);
@@ -112,7 +112,7 @@ namespace NEPTUNE_EOS
 
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(satt)(T, arr_molfrac, i, p_refprop, rhol, rhov, xliq, xvapint, ierr_10, herr_10, HC255-1);
     if (ierr_10 != 0)  return generate_error(ierr_10, herr_10);
@@ -144,7 +144,7 @@ namespace NEPTUNE_EOS
      */
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(tprho)(T, p_refprop, arr_molfrac, i , j, rho_refprop, ierr_10, herr_10, HC255-1);
     if (ierr_10 != 0) return generate_error(ierr_10, herr_10);
@@ -189,7 +189,7 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error errSetup = callSetup();
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(psfl1)(p_refprop,s_refprop,arr_molfrac,kph,T,rho_refprop,ierr_10,herr_10, HC255-1);
         
@@ -348,7 +348,7 @@ namespace NEPTUNE_EOS
 
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(trnprp)(T,rho_refprop,arr_molfrac,mu,tcx,ierr_10,herr_10, HC255-1) ;
     if (ierr_10 != 0) return generate_error(ierr_10, herr_10) ;
@@ -373,7 +373,7 @@ namespace NEPTUNE_EOS
 
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(trnprp)(T,rho_refprop,arr_molfrac,mu,tcx,ierr_10,herr_10, HC255-1);
     if (ierr_10 != 0) return generate_error(ierr_10, herr_10);
@@ -395,7 +395,7 @@ namespace NEPTUNE_EOS
 
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(trnprp)(T,rho_refprop,arr_molfrac,eta,lambda,ierr_10,herr_10, HC255-1);
     if (ierr_10 != 0) return generate_error(ierr_10, herr_10);
@@ -418,7 +418,7 @@ namespace NEPTUNE_EOS
 
     int ierr_10;
     char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
     F77NAME(trnprp)(T,rho_refprop,arr_molfrac,eta,lambda,ierr_10,herr_10, HC255-1);
     if (ierr_10 != 0) return generate_error(ierr_10, herr_10);
@@ -455,7 +455,7 @@ namespace NEPTUNE_EOS
 
         int ierr_10;
         char herr_10[HC255];
-    memset(herr_10, '\0', HC255);
+    memset(herr_10, '\0', sizeof(herr_10));
     
         F77NAME(dptsatk)(nbcomp, tsat, i, p_return, rho, csat, dp_sat, ierr_10, herr_10, HC255-1);
         if (ierr_10 != 0)  return generate_error(ierr_10, herr_10);
