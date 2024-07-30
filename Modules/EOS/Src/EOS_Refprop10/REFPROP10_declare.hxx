@@ -41,21 +41,22 @@ extern "C"
 
 // -- SETUP
 //    input(nc,hfiles,hfmix,hrf)   output(ierr_10,herr_10)
-      void F77DECLARE(setup)(int& nbcomp, const char* hfile, const char* hfmix, 
+      void F77DECLARE(xsetup)(int& nbcomp, const char* hfile, const char* hfmix, 
                              const char* hrf, int& ierr_10, char* herr_10,
-                              long, long, long, long);
+                             long, long, long, long);
 
-// -- SETMIX
-//    input(hmxnme,hfmix,hrf)      output(ncc,hfiles,x,ierr_10,herr_10)
-      void F77DECLARE(setmix)(const char* hmxnme, const char* hfmix, 
-                              const char* hrf, int& ncc, char hfiles[NBCOMPMAX][HC255],
+// -- XSETMIX
+//    input(hmxnme,hfmix,hrf)      output(ncc,xhfiles,x,ierr_10,herr_10)
+      void F77DECLARE(xsetmix)(const char* hmxnme, const char* hfmix, 
+                              const char* hrf, int& ncc, char *xhfiles,
                               double* x, int& ierr_10, char* herr_10,
-                              long, long, long, long);
+                              long, long, long, long, long);
 
-// -- SETMOD
-//    input(nc,htype,hmix,hcomp)   output(ierr_10,herr_10)
-      void F77DECLARE(setmod)(int& nc,const char* htype,const char* hmix,
-                              const char hcomp[NBCOMPMAX][HC3], int& ierr_10,char* herr_10,
+
+// -- XSETMOD
+//    input(nc,htype,hmix,xhcomp)   output(ierr_10,herr_10)
+      void F77DECLARE(xsetmod)(int& nc,const char* htype,const char* hmix,
+                              const char *xhcomp, int& ierr_10,char* herr_10,
                               long, long, long, long);
 
 // -- SETREF

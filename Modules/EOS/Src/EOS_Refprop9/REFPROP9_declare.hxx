@@ -47,15 +47,15 @@ extern "C"
 
 // -- SETMIX
 //    input(hmxnme,hfmix,hrf)      output(ncc,hfiles,x,ierr,herr)
-      void F77DECLARE(setmix_rp9)(const char* hmxnme, const char* hfmix, 
-                              const char* hrf, int& ncc, char hfiles[NBCOMPMAX][HC255],
-                              double* x, int& ierr, char* herr,
-                              long, long, long, long);
+      void F77DECLARE(xsetmix_rp9)(const char* hmxnme, const char* hfmix, 
+                              const char* hrf, int& ncc, char *hfiles,
+                              double* x, int& ierr, char* herr, 
+                              long, long, long long, long);
 
 // -- SETMOD
 //    input(nc,htype,hmix,hcomp)   output(ierr,herr)
-      void F77DECLARE(setmod_rp9)(int& nc,const char* htype,const char* hmix,
-                              const char hcomp[NBCOMPMAX][HC3], int& ierr,char* herr,
+      void F77DECLARE(xsetmod_rp9)(int& nc,const char* htype,const char* hmix,
+                              const char *hcomp, int& ierr,char* herr,
                               long, long, long, long);
 
 // -- SETREF
