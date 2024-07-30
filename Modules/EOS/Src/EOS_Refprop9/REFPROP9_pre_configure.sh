@@ -26,7 +26,7 @@ if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop9WaterVapor_pt.val ]; then exit 0; fi
 
 # ----------------------------------------
 # Sanity Check
-if [ ! -d $REFPROP9_ROOT_DIR && ! -f $REFPROP9_ROOT_DIR ] ; then
+if [ ! -d $REFPROP9_ROOT_DIR -a ! -f $REFPROP9_ROOT_DIR ] ; then
     error 44 " T.M. Plugin EXT. not found --with-refprop9=$REFPROP9_ROOT_DIR"
 fi
 

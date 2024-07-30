@@ -22,11 +22,11 @@ EOS_BINARY_DIR=$BINARY_DIR/../..
 ROOT_BINARY_DIR=$EOS_BINARY_DIR/../..
 
 #Is there anything to do ?
-if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop10WaterVapor_pt.val ]; then exit 0; fi
+#if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop10WaterVapor_pt.val ]; then exit 0; fi
 
 # ----------------------------------------
 # Sanity Check
-if [[ ! -d $REFPROP10_ROOT_DIR && ! -f $REFPROP10_ROOT_DIR ]] ; then
+if [ ! -d $REFPROP10_ROOT_DIR -a ! -f $REFPROP10_ROOT_DIR ] ; then
     error 44 " T.M. Plugin EXT. not found --with-refprop10=$REFPROP10_ROOT_DIR"
 fi
 
@@ -83,6 +83,7 @@ do
   fDest="$BINARY_DIR/Refprop10/"`basename $fSrc`
   if test ! -f $fDest -o $fSrc -nt $fDest
   then
+    echo 'update ' `basename $fSrc`
     cp $fSrc $fDest
    #(cd $BINARY_DIR/Refprop10 ; ./REFPROP10_patch.sh $fDest)
   fi
