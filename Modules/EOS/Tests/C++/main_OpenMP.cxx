@@ -352,6 +352,7 @@ void test_features(EOS &eos, int test, int nSamples, bool dump)
     }
 
     T.stop();
+    std::cout << T << std::endl;
   }
 
   if (test == 4)
@@ -372,6 +373,7 @@ void test_features(EOS &eos, int test, int nSamples, bool dump)
     }
 
     T.stop();
+    std::cout << T << std::endl;
   }
 
   // Reset to previous handler

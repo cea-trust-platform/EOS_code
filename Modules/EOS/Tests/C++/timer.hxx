@@ -97,7 +97,6 @@ protected:
 
 inline std::ostream & operator<< (std::ostream & f, const Timer & T)
 {
-  std::cout << "XXXXXX" << std::endl;
   f << T.name() << std::setw(12) << std::setprecision(6) << T.elapsed() << " s" << std::endl;
   return f;
 }
