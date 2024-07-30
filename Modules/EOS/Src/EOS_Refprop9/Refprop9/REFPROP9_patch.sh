@@ -61,8 +61,12 @@ awk 'BEGIN{IGNORECASE=1; ind=0} \
 # Rename all functions to avoid conflicts with Refprop10 functions
 cat *.FOR *.INC | awk '$0 ~ /^ *block *data/ || \
                        $0 ~ /^ *function/    || \
-                       $0 ~ /^ *subroutine/ {sub(" *block *data",""); sub(" *function",""); \
-     sub(" *subroutine",""); sub("\\(.*$",""); print}' | sort |uniq  > e_bfs$$
+                       $0 ~ /^ *common/      || \
+                       $0 ~ /^ *subroutine/ {sub(" *block *data",""); \
+                      sub(" *function",""); \
+                      sub(" *common */","");; sub("/.*",""); \
+                      sub(" *subroutine",""); sub("\\(.*$",""); print}' | sort |uniq  > e_bfs$$
+
 sed -i -e "s/ *//g" e_bfs$$
 SUFFIX=_RP9
 for nfunc in `cat e_bfs$$`
