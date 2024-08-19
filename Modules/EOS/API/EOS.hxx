@@ -101,6 +101,7 @@ namespace NEPTUNE
     const AString &phase_name()    const ;
     const AString &table_name()    const ;
     const AString &version_name()  const ;
+    virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name); // Pour ipp Refprop 
     EOS_Error compute(const EOS_Fields &input, 
                       EOS_Field &output, 
                       EOS_Error_Field &errfield) const ;

@@ -29,7 +29,7 @@
 //#include <cmath>
 #include <fstream>
 #include <iostream>  // pour std::cerr
-//#include <set>
+#include <set>
 #include <string> 
 #define DBL_EPSILON 1e-9
 
