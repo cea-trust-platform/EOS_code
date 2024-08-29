@@ -43,7 +43,7 @@ namespace NEPTUNE_EOS
     virtual const AString& table_name()    const ;
     virtual const AString& version_name()  const ;
     virtual const AString& equation_name() const ;
-    
+
     //! Output stream method: see language documentation
     ostream& print_On (ostream& stream) const;
     //! Input stream method: see language documentation
