@@ -480,11 +480,17 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
        return list_propv ;
      }
+     
     EOS_Error EOS::init_model(const std::string& model_name, const std::string& fluid_name)   // ipp 
   {
     return fluid_model_obj.init_model(model_name, fluid_name);
   }
+    EOS_Internal_Error EOS::compute_Ipp_error(double& error_tot, AString prop)
+    {
+       return fluid_model_obj.compute_Ipp_error(error_tot, prop);
+    }
   
+
   vector<string> EOS::is_implemented(const char *pprop1, const vector<string> list_prop, double vprop1)
      { vector<string> list_propv ;
 

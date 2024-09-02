@@ -102,6 +102,13 @@ namespace NEPTUNE
     std::cout<<"Attention ! Mauvaise initialisation de l'IPP ";
     return EOS_Error::ok;
   }
+
+  EOS_Internal_Error EOS_Fluid::compute_Ipp_error(double& error_tot, AString prop)  
+  {
+    std::cout<<"Attention ! Mauvaise utilisation de la routine compute_Ipp_error avec un fluide et pas un interpolateur ";
+    return EOS_Internal_Error::OK;
+  }
+
   EOS_Error EOS_Fluid::compute( const EOS_Fields & input,
                                 EOS_Field & output, 
                                 EOS_Error_Field & errfield) const

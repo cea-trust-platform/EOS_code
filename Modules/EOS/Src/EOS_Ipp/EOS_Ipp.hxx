@@ -39,7 +39,7 @@ namespace NEPTUNE_EOS
      public:
         virtual const AString& table_name() const ;
         mutable bool switch_model;  // If true : on surcharge les fcts compute si calcul pas ok
-        EOS* obj_refprop = nullptr;
+        EOS* obj_fluid = nullptr;
         EOS_Ipp() ;
         virtual ~EOS_Ipp() ;
 
@@ -54,6 +54,7 @@ namespace NEPTUNE_EOS
         static const EOS_Internal_Error OUT_OF_BOUNDS  ;
         static const EOS_Internal_Error INVERT_h_pT    ;
         static const EOS_Internal_Error PROP_NOT_IN_DB ;
+        static const EOS_Internal_Error MODEL_NOT_INIT;
 
         //! critical T
         virtual EOS_Internal_Error get_T_crit(double&) const ;
@@ -69,7 +70,7 @@ namespace NEPTUNE_EOS
         virtual EOS_Internal_Error get_T_max(double&) const ;
         virtual EOS_Internal_Error get_p_min(double&) const ;
         virtual EOS_Internal_Error get_p_max(double&) const ;
-
+        virtual EOS_Internal_Error get_error_Ipp(double&) const ;
 
 
         // Debugage de REFPROP10
@@ -89,6 +90,9 @@ namespace NEPTUNE_EOS
         //! see Language
         virtual const Type_Info& get_Type_Info () const ;
         
+        // Compute interpolation error 
+        virtual EOS_Internal_Error compute_Ipp_error(double& error_tot, AString prop) ;
+
         //! h(p,T)
         virtual EOS_Internal_Error compute_h_pT(double p, double T, double& h) const ;
         //virtual EOS_Internal_Error compute_d_h_d_T_pT(double p, double T, double& h) const;
@@ -228,7 +232,6 @@ namespace NEPTUNE_EOS
         virtual EOS_Internal_Error compute_h_l_lim_p(double p, double&) const;
         //! h_v_lim
         virtual EOS_Internal_Error compute_h_v_lim_p(double p, double&) const;
-
      protected:
         EOS_Fields nodes ;
 
@@ -246,6 +249,7 @@ namespace NEPTUNE_EOS
         double hmax      ;
         double tmin      ;
         double tmax      ;
+        double erreurtot ; // erreur de l'interpolation sur le maillage
         double tcrit     ;
         double pcrit     ;
         double hcrit     ;
@@ -291,10 +295,11 @@ namespace NEPTUNE_EOS
         EOS_Internal_Error compute_prop_p(std::map<AString, int>::const_iterator 
  n_prop, double p, int tag, double& res) const ;
 
-
-
+        // Retrieve the values of a cell for a given field as well as the associated ph values at the vertices.
         EOS_Internal_Error get_cell_values(int idx, std::map<AString, int>::const_iterator 
- n_prop, EOS_Fields& cell_val) const ;
+ n_prop, EOS_Fields& cell_val) const ; 
+
+        
         EOS_Internal_Error get_segm_values(int idx, std::map<AString, int>::const_iterator 
  n_prop, int tag, EOS_Fields& segm_val) const ;
 
@@ -332,6 +337,7 @@ namespace NEPTUNE_EOS
         double bilinear_interpolator(double p, double h, EOS_Fields& cellval) const ;
         
 
+        EOS_Error find_in_Ipp_Prop_ph(std::map<AString, int>::const_iterator &it, const AString & prop) const;// permet de récupérer un iterateur dans la map correspondant à la bonne propriété 
         EOS_Error find(std::map<AString, int>::const_iterator &it, const AString & prop, const std::map< AString, int> &map ) const;// permet de récupérer un iterateur dans la map correspondant à la bonne propriété 
         EOS_Internal_Error check_ph_bounds(double p,double h) const ;
         EOS_Internal_Error check_p_bounds_satlim(double p) const ;

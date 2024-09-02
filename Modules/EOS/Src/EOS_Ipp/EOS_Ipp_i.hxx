@@ -84,6 +84,11 @@ namespace NEPTUNE_EOS
      return EOS_Internal_Error::OK ;
    }
    
+   inline EOS_Internal_Error EOS_Ipp::get_error_Ipp(double& erreur_tot) const
+   { erreur_tot = erreurtot ;
+     return EOS_Internal_Error::OK ;
+   }
+
    inline EOS_Internal_Error EOS_Ipp::compute_T_ph(double p, double h, double& res) const
    { AString prop("T") ; 
      std::map<AString, int>::const_iterator   n_prop;

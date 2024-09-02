@@ -31,6 +31,7 @@
 #include <iostream>  // pour std::cerr
 #include <set>
 #include <string> 
+#include <vector>
 #define DBL_EPSILON 1e-9
 
 namespace NEPTUNE_EOS
@@ -42,7 +43,7 @@ namespace NEPTUNE_EOS
   const EOS_Internal_Error EOS_Ipp::OUT_OF_BOUNDS   = EOS_Internal_Error(EOS_Ipp_Error_base + 0, EOS_Error::bad)   ;
   const EOS_Internal_Error EOS_Ipp::INVERT_h_pT     = EOS_Internal_Error(EOS_Ipp_Error_base + 1, EOS_Error::error) ;
   const EOS_Internal_Error EOS_Ipp::PROP_NOT_IN_DB  = EOS_Internal_Error(EOS_Ipp_Error_base + 2, EOS_Error::error) ;
-
+  const EOS_Internal_Error EOS_Ipp::MODEL_NOT_INIT  = EOS_Internal_Error(EOS_Ipp_Error_base + 3, EOS_Error::error) ;
   void EOS_Ipp::describe_error(const EOS_Internal_Error ierr, AString & description) const
   { if (ierr == EOS_Internal_Error::OK)
        description = "ok" ;
@@ -85,9 +86,9 @@ namespace NEPTUNE_EOS
   
   EOS_Ipp::~EOS_Ipp()
   {
-    if(obj_refprop!=nullptr)
+    if(obj_fluid!=nullptr)
     {
-      delete obj_refprop;
+      delete obj_fluid;
     }
   }
 
@@ -266,7 +267,7 @@ namespace NEPTUNE_EOS
 
  EOS_Error EOS_Ipp::init_model(const std::string& model_name,const std::string& fluid_name) 
   {
-    obj_refprop = new EOS(model_name.c_str(), fluid_name.c_str()) ;
+    obj_fluid = new EOS(model_name.c_str(), fluid_name.c_str()) ;
     switch_model=true;
   return EOS_Error::ok;
   }
@@ -284,11 +285,11 @@ namespace NEPTUNE_EOS
         if (err==EOS_Error::bad){
           std::cout <<"Le couple ph, n'est pas dans le domaine d'interpolation"<< std::endl;
         }
-        if(obj_refprop==nullptr){
+        if(obj_fluid==nullptr){
           std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() "<< std::endl;
           std::exit(EXIT_FAILURE);  
         }
-        EOS_Error err2 = obj_refprop->compute(pp, hh, r, errfield);
+        EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
          std::cout<< "Calcul avec le fluide dans le plan ph\n";
          errfield = EOS_Internal_Error::OK ; 
         return err2;
@@ -304,11 +305,11 @@ namespace NEPTUNE_EOS
   {
       if (true) 
       {
-        if(obj_refprop==nullptr){
+        if(obj_fluid==nullptr){
           std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() " << std::endl;
           std::exit(EXIT_FAILURE);  // Arrêter le programme
         }
-        return obj_refprop->compute(p, r, errfield);
+        return obj_fluid->compute(p, r, errfield);
       }
     return EOS_Error::bad; //err;
   }
@@ -1129,7 +1130,7 @@ namespace NEPTUNE_EOS
     EOS_thermprop enum_property = nam2num_thermprop(propcov);
 
     unsigned int nb_properties = val_prop_ph.size();
-    unsigned int i_property = n_prop->second;
+    unsigned int i_property = n_prop->second; 
 
     // get index of error field in all error fields
     unsigned int nb_ecp = err_cell_ph.size();
@@ -1203,6 +1204,86 @@ namespace NEPTUNE_EOS
             }*/
        }
 
+    return EOS_Internal_Error::OK ;
+  }
+
+
+  EOS_Internal_Error EOS_Ipp::compute_Ipp_error(double& error_tot, AString prop)  
+  {
+    if (switch_model==false)
+    {
+      return MODEL_NOT_INIT;
+    }
+    std::map<AString, int>::const_iterator  n_prop;
+    	if (find_in_Ipp_Prop_ph(n_prop,prop) == EOS_Error::bad)
+    	{
+    	  return PROP_NOT_IN_DB;  // "Erreur: Nom de propriété non-trouvé dans le plan ph"
+    	}
+      char* propchar=prop.aschar(); 
+      unsigned int nb_cell = index_conn_ph.size() - 1 ;
+      EOS_Fields values(3) ;
+    	std::vector<int>    error_eos(1, 0);
+    	NEPTUNE::EOS_Error_Field eos_error_field(1, &error_eos[0]);
+    	erreurtot=0;
+    	double erreur_loc;
+    	double vol_loc;
+      long unsigned int nb_cell_pb=0;
+    	ArrOfDouble ap(4) ;
+    	ArrOfDouble ah(4) ;
+    	ArrOfDouble ar(4) ;
+    	ArrOfDouble ar_Ipp_bary(1) ;
+    	ArrOfDouble ar_fluid_bary(1) ;
+   	  EOS_Field pf("P","p",ap) ;
+    	EOS_Field hf("h","h",ah) ;
+      ArrOfDouble ap_bary(1) ;
+    	ArrOfDouble ah_bary(1) ;
+    	EOS_Field p_bary("P","p",ap_bary) ;
+    	EOS_Field h_bary("h","h",ah_bary) ;
+     	EOS_Field rf_fluid_bary(propchar,propchar,ar_fluid_bary) ;
+   	
+   	  EOS_Field rf(propchar,propchar,ar) ;
+    	values[0] = pf ;
+    	values[1] = hf ;
+    	values[2] = rf ;
+    	// Récupération des valeurs des cellules 
+    	for (int i_cell=0;i_cell<nb_cell;i_cell++)
+    	{
+	    	get_cell_values(i_cell,n_prop,values);
+	    	// Calcule des barycentres et des volumes 
+        ar_Ipp_bary[0]=0; // 
+        ar_fluid_bary[0]=0;
+	    	vol_loc=abs((ap[0]-ap[2])*(ah[0]-ah[2]));
+	    	ap_bary=(ap[0]+ap[1]+ap[2]+ap[3])/4;
+	    	ah_bary=(ah[0]+ah[1]+ah[2]+ah[3])/4;
+	    	// Calcule avec le fluide 
+	    	NEPTUNE::EOS_Error worst_liq=obj_fluid->compute(p_bary, h_bary, rf_fluid_bary, eos_error_field);
+        NEPTUNE::EOS_Internal_Error worst_ipp=compute_prop_ph(n_prop,ap_bary[0], ah_bary[0],ar_Ipp_bary[0]);
+	    	if((worst_liq==0)&&(worst_ipp.get_code()==0))
+	    	{
+        // Calcule des erreurs avec les valeurs des barycentres 
+        /*if (abs(ar_Ipp_bary[0]-ar_fluid_bary[0])>10)
+        { 
+          std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; 
+          std::cout<<"La diff est " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
+          std::cout << "Les erreurs sont : Ipp : " << worst_ipp.get_partial_code() << ", fluide : " << worst_liq<<endl;
+          nb_cell_pb++;
+        }
+        else
+        {*/
+        erreur_loc=(abs(ar_Ipp_bary[0]-ar_fluid_bary[0]))*vol_loc;
+	    	erreurtot+=erreur_loc;
+        //}
+	    	}
+        else
+        {
+          // std::cout<< "erreur ipp" << worst_ipp.get_code() << " et " << "erreur liquide : " << worst_liq << endl ;
+          /*std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
+          nb_cell_pb++;
+        }
+    	}
+      erreurtot=erreurtot/((hmax-hmin)*(pmax-pmin)); // normalisation de l'erreur 
+      error_tot= erreurtot;
+      std::cout<<"Il y a eu " << nb_cell_pb <<" cellules problématiques sur " << nb_cell;
     return EOS_Internal_Error::OK ;
   }
 
@@ -1409,6 +1490,20 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK ;
   }
 
+
+
+
+EOS_Error EOS_Ipp::find_in_Ipp_Prop_ph(std::map<AString, int>::const_iterator &it, const AString & prop) const
+{
+	char propconv[PROPNAME_MSIZE];
+	eostp_strcov(prop.aschar(), propconv) ;
+	it = Ipp_Prop_ph.find(propconv);
+	if(it == Ipp_Prop_ph.end())
+	{
+		return EOS_Error::bad;
+	}
+	return EOS_Error::good;
+}
 
 
 EOS_Error EOS_Ipp::find(std::map<AString, int>::const_iterator &it, const AString & prop, const std::map< AString, int> &map ) const
