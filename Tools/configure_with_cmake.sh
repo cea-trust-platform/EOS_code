@@ -105,8 +105,8 @@ add_opt   "--shared-only"                  "BUILD_STATIC_LIB=OFF"
 add_opt   "--static-only"                  "BUILD_SHARED_LIB=OFF"
 add_opt   "--with-openmp"                  "ENABLE_OPENMP=ON"
 add_opt   "--without-openmp"               "ENABLE_OPENMP=OFF"
-add_opt   "--with-sanitizer"               "ENABLE_SANITIZE=ON"
-add_opt   "--without-sanitizer"            "ENABLE_SANITIZE=OFF"
+add_opt   "--with-sanitize"                "ENABLE_SANITIZE=ON"
+add_opt   "--without-sanitize"             "ENABLE_SANITIZE=OFF"
 
 # option like --prefix=/home/myrep --> -DCMAKE_INSTALL_PREFIX=/home/myrep
 # ex : add_opteq "--prefix" "CMAKE_INSTALL_PREFIX"
@@ -180,7 +180,6 @@ for i in "$@" ; do
             fill_opt_with_value "${i%=*}" "${i#*=}"
             ;;
         --*)
-            echo $i
             fill_opt $i
             ;;
         *)  
