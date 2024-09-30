@@ -1954,11 +1954,6 @@ namespace NEPTUNE_EOS
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
 
-     double epsilon = 1e-6;
-     double p_refpropp = p_refprop*(1+epsilon);
-     double delta = kpa2pa(p_refpropp-p_refprop);
-     double tp, rholp, rhovp, hl_refpropp, hv_refpropp, cplp, cpvp;
-
     double epsilon = 1e-6;
     double p_refpropp = p_refprop * (1 + epsilon);
     double delta = kpa2pa(p_refpropp - p_refprop);

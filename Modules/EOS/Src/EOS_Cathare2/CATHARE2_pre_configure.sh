@@ -74,7 +74,7 @@ done
 
 # Correction
 mkdir -p $BINARY_DIR/Cathare2
-#(cd Cathare2 ; ./CATHARE2_patch.sh)
+(cd Cathare2 ; ./CATHARE2_patch.sh)
 
 #
 # Build index.eos file
