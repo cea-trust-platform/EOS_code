@@ -591,21 +591,32 @@ namespace NEPTUNE_EOS
   {
 
     EOS_Internal_Error err;
+    err = callSetup();
 
 #ifdef _OPENMP
 
-#pragma omp parallel
+    // Retrieve fortran commons location and copy 
+    // values in the pain thread's commons to the other
+    // threads commons
+
+    int numCommons;
+    F77NAME(xnumcommons_rp10)(&numCommons);
+    std::cerr << "number of Commons = " << numCommons << std::endl;
+    int iC, iTh, nTh = omp_get_max_threads();
+    long *Q0 = new long[numCommons*nTh];
+    long *L   = new long[numCommons];
+
+    F77NAME(xdefcommons_rp10)(Q0, L, &numCommons, &nTh);
+
+    for (iC = 0; iC<numCommons; iC++)
     {
-#pragma omp critical
+      void * p0 = reinterpret_cast<void *>(Q0[iC*nTh]);
+      for (iTh = 1; iTh<nTh; iTh++)
       {
-        std::string dataFileName = data_file_name.aschar();
-        EOS_Internal_Error result = callSetupThread(dataFileName);
-        if (err.generic_error() == EOS_Error::good && result.generic_error() != EOS_Error::good)
-          err = result;
+        void * q0 = reinterpret_cast<void *>(Q0[iTh + iC*nTh]);
+        memcpy(q0, p0, L[iC]);
       }
     }
-#else
-    err = callSetup();
 #endif
 
     return err;
@@ -1310,7 +1321,7 @@ namespace NEPTUNE_EOS
   //              switch (worst_internal_error(err1, err2).generic_error()) {
   //              case error: return worst_internal_error(err2, err3);
   //              case bad: return 1;
-  //              default:    ;
+  //              default:   ;
   //              }
   //      }
   //      // If not converged, error.

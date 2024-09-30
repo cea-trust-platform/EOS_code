@@ -591,6 +591,27 @@ namespace NEPTUNE_EOS
   {
     EOS_Internal_Error err = callSetup();
 
+#ifdef _OPENMP
+
+    int numCommons;
+    F77NAME(xnumcommons_rp9)(&numCommons);
+    int iC, iTh, nTh = omp_get_max_threads();
+    long *Q0 = new long[numCommons*nTh];
+    long *L   = new long[numCommons];
+
+    F77NAME(xdefcommons_rp9)(Q0, L, &numCommons, &nTh);
+
+    for (iC = 0; iC<numCommons; iC++)
+    {
+      void * p0 = reinterpret_cast<void *>(Q0[iC*nTh]);
+      for (iTh = 1; iTh<nTh; iTh++)
+      {
+        void * q0 = reinterpret_cast<void *>(Q0[iTh + iC*nTh]);
+        memcpy(q0, p0, L[iC]);
+      }
+    }
+#endif
+
     return err;
   }
 

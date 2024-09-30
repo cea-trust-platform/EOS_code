@@ -1,6 +1,6 @@
 # Pre-configure
 execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "--  > Configuring plugin Refprop9  ... ")
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Refprop9/REFPROP9_patch.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Refprop9)
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Refprop9 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 execute_process(
     COMMAND           ${CMAKE_CURRENT_SOURCE_DIR}/REFPROP9_pre_configure.sh
                       ${WITH_PLUGIN_REFPROP_9}

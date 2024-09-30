@@ -281,7 +281,6 @@ namespace NEPTUNE_EOS
     
     EOS_Internal_Error callSetup() const;
     EOS_Internal_Error callSetupInitial() const;
-    EOS_Internal_Error callSetupThread(const std::string &dataFileName) const;
     
     //Generate error AString
     EOS_Internal_Error generate_error(int ierr, const char* err) const;

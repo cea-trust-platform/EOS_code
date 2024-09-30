@@ -39,6 +39,9 @@ extern "C"
 // M.F.      extern struct str_ncomp F77DECLARE(ncomp) ;
 
 
+      void F77DECLARE(xnumcommons_rp9)(int *);
+      void F77DECLARE(xdefcommons_rp9)(long *, long *, int *, int *);
+
 // -- SETUP
 //    input(nc,hfiles,hfmix,hrf)   output(ierr,herr)
       void F77DECLARE(xsetup_rp9)(int * nbcomp, const char* hfile, const char* hfmix, 

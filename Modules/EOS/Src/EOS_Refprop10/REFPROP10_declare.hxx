@@ -38,6 +38,8 @@ extern "C"
 // -- COMMON NCOMP
 // M.F.      extern struct str_ncomp F77DECLARE(ncomp) ;
 
+      void F77DECLARE(xnumcommons_rp10)(int *);
+      void F77DECLARE(xdefcommons_rp10)(long *, long *, int *, int *);
 
 // -- SETUP
 //    input(nc,hfiles,hfmix,hrf)   output(ierr,herr)
