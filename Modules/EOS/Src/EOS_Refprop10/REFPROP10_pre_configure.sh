@@ -14,6 +14,15 @@ error()
 }
 script=`basename $0`
 
+
+SOURCE=${BASH_SOURCE[0]}
+while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+  SOURCE=$(readlink "$SOURCE")
+  [[ $SOURCE != /* ]] && SOURCE=$SCRIPT_DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+
 # ----------------------------------------
 # read arguments
 REFPROP10_ROOT_DIR=$1
@@ -22,11 +31,11 @@ EOS_BINARY_DIR=$BINARY_DIR/../..
 ROOT_BINARY_DIR=$EOS_BINARY_DIR/../..
 
 #Is there anything to do ?
-#if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop10WaterVapor_pt.val ]; then exit 0; fi
+if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop10WaterVapor_pt.val ]; then exit 0; fi
 
 # ----------------------------------------
 # Sanity Check
-if [ ! -d $REFPROP10_ROOT_DIR -a ! -f $REFPROP10_ROOT_DIR ] ; then
+if [ ! -d $REFPROP10_ROOT_DIR ] && [ ! -f $REFPROP10_ROOT_DIR ] ; then
     error 44 " T.M. Plugin EXT. not found --with-refprop10=$REFPROP10_ROOT_DIR"
 fi
 

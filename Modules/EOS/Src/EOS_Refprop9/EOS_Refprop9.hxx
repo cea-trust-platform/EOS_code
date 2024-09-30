@@ -47,15 +47,10 @@ using std::ostringstream ;
 #define NUMAXPROP  10000
 
 using namespace NEPTUNE ;
-static AString file_mix("fluids/HMX.BNC") ;
-static const int nc_max  = 20 ;        // number composant max allowed in Refprop mixture
-static const int err_max = 10 ;        // number max of error messages
-static const int errcode_max = 10000 ; // maximum code number
-
-static int  ierr        ;
-static char herr[HC255] ;
-
-
+static AString file_mix_9("fluids/HMX.BNC") ;
+static const int nc_max_9  = 20 ;        // number composant max allowed in Refprop mixture
+static const int err_max_9 = 10 ;        // number max of error messages
+static const int errcode_max_9 = 10000 ; // maximum code number
 
 
 namespace NEPTUNE_EOS
@@ -286,6 +281,7 @@ namespace NEPTUNE_EOS
     mutable int errcode;               // error code to used   ( < errcodemax)
     
     EOS_Internal_Error callSetup() const;
+    EOS_Internal_Error callSetupInitial() const;
     
     //Generate error AString
     EOS_Internal_Error generate_error(int ierr, const char* err) const;

@@ -41,6 +41,9 @@ extern "C"
 
 // -- SETUP
 //    input(nc,hfiles,hfmix,hrf)   output(ierr,herr)
+      void F77DECLARE(xsetup_rp9)(int * nbcomp, const char* hfile, const char* hfmix, 
+                             const char* hrf, int * ierr, char* herr,
+                             long, long, long, long);
       void F77DECLARE(setup_rp9)(int& nbcomp, const char* hfile, const char* hfmix, 
                              const char* hrf, int& ierr, char* herr,
                              long, long, long, long);
@@ -50,7 +53,7 @@ extern "C"
       void F77DECLARE(xsetmix_rp9)(const char* hmxnme, const char* hfmix, 
                               const char* hrf, int& ncc, char *hfiles,
                               double* x, int& ierr, char* herr, 
-                              long, long, long long, long);
+                              long, long, long, long, long);
 
 // -- SETMOD
 //    input(nc,htype,hmix,hcomp)   output(ierr,herr)

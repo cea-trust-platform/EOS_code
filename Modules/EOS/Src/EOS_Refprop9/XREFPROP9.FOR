@@ -1,7 +1,28 @@
 c ======================================================================
 c
+      subroutine XSETUP_RP9 (ncomp,xhFiles,hFmix,hrf,ierr,herr)
+      include 'RP9_COMMONS.INC'
+
+      integer ncomp
+c 5100 = 255*20
+      character*5100 xhFiles
+      character*255 hFmix
+      character*3 hrf
+      integer ierr
+      character*255 herr
+      character*255 hFiles(ncmax)
+
+      integer i
+      hFiles(1) = xhFiles(1:255)
+      do i=1,ncomp
+        hFiles(i) = xhFiles(1 + (i-1)*255:i*255)
+      enddo
+      call SETUP_RP9(ncomp,hfiles,hFmix,hrf,ierr,herr)
+
+      end subroutine XSETUP_RP9
+c
       subroutine XSETMOD_RP9 (ncomp,htype,hmix,xhcomp,ierr,herr)
-      include 'COMMONS.INC'
+      include 'RP9_COMMONS.INC'
       character*3 htype,hmix, hcomp(1:ncmax)
       character*(*) xhcomp
       character*255 herr
@@ -17,7 +38,7 @@ c
 c ======================================================================
 c
       subroutine XSETMIX_RP9 (hMixNme,hFmix,hrf,ncc,xhFiles,z,ierr,herr)
-      include 'COMMONS.INC'
+      include 'RP9_COMMONS.INC'
       character hrf*3
       character *(*) xhFiles
       character*255 hMixNme,hFmix,herr,hFiles(ncmax)

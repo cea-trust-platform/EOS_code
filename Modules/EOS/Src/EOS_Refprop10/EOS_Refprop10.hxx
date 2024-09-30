@@ -284,7 +284,7 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error callSetupThread(const std::string &dataFileName) const;
     
     //Generate error AString
-    EOS_Internal_Error generate_error(int ierr_10, const char* err) const;
+    EOS_Internal_Error generate_error(int ierr, const char* err) const;
     
     //! Compute REFPROP phase flag (1=liquid ; 2=vapor)
     virtual EOS_Internal_Error calrp_kph(double p, double h, int& kph) const;
