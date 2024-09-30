@@ -13,6 +13,7 @@ error()
   exit $err
 }
 script=`basename $0`
+SOURCE_DIR=`dirname $0`
 
 HITEC_ROOT_DIR=$1
 BINARY_DIR=$2
@@ -22,10 +23,6 @@ ROOT_BINARY_DIR=$EOS_BINARY_DIR/../..
 # Is there something to do ?
 if [ -f $EOS_BINARY_DIR/Tests/C++/HitecVapor.val ] ; then exit 0; fi
 
-if [ ! -d $HITEC_ROOT_DIR && ! -f $NAK_ROOT_DIR ] ; then
-    error 44 " T.M. Plugin Hitec not found, --with-hitec=$HITEC_ROOT_DIR"
-fi
-
 # Decompression if plugin is an archive
 if [ -f $HITEC_ROOT_DIR ]; then
     mkdir -p $ROOT_BINARY_DIR/plugins_tmp
@@ -33,6 +30,9 @@ if [ -f $HITEC_ROOT_DIR ]; then
     HITEC_ROOT_DIR=$ROOT_BINARY_DIR/plugins_tmp/Hitec
 fi
 
+if [ ! -d $HITEC_ROOT_DIR ] ; then
+    error 44 " T.M. Plugin Hitec not found, --with-hitec=$HITEC_ROOT_DIR"
+fi
 
 # ----------------------------------------
 # T.M. and version
@@ -73,6 +73,8 @@ for file in `find $HITEC_ROOT_DIR -name "*.?xx" -o -name "CMakeLists.txt"` ; do
 	   cp -p $file $BINARY_DIR
     fi
 done
+
+patch -p1 -u < $SOURCE_DIR/EOS_Hitec.patch
 
 if [ -f $INDEX_TMFILE ] ; then
    echo "Hitec  HitecLiquid  EOS_Hitec  Hitec  Unknown  1 Liquid" >> $INDEX_TMFILE

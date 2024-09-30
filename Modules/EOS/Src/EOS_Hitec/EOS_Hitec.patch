@@ -1,0 +1,27 @@
+diff -Nar -u0 old/EOS_Hitec_i.hxx new/EOS_Hitec_i.hxx
+--- old/EOS_Hitec_i.hxx	2024-09-14 02:17:38.270188169 +0200
++++ new/EOS_Hitec_i.hxx	2024-09-14 02:19:14.020327150 +0200
+@@ -150 +150 @@
+-  compute_cp_l_sat_p(double p, double& cplsat) const
++  compute_cp_l_sat_p(double /*p*/, double& cplsat) const
+@@ -157 +157 @@
+-  compute_cp_v_sat_p(double p, double& cpvsat) const
++  compute_cp_v_sat_p(double /*p*/, double& cpvsat) const
+@@ -235 +235 @@
+-  compute_cp_ph(double p, double h, double& cp) const
++  compute_cp_ph(double /*p*/, double /*h*/, double& cp) const
+@@ -253 +253 @@
+-  compute_lambda_ph(double p, double h, double& lambda) const
++  compute_lambda_ph(double /*p*/, double /*h*/, double& lambda) const
+@@ -271 +271 @@
+-  compute_mu_ph(double p, double h, double& mu) const
++  compute_mu_ph(double /*p*/, double h, double& mu) const
+@@ -289 +289 @@
+-  compute_beta_ph(double p, double h, double& beta) const
++  compute_beta_ph(double /*p*/, double /*h*/, double& beta) const
+@@ -296 +296 @@
+-  compute_sigma_ph(double p, double h, double& sigma) const
++  compute_sigma_ph(double /*p*/, double /*h*/, double& sigma) const
+@@ -367 +367 @@
+-  compute_w_ph(double p, double h, double& w) const
++  compute_w_ph(double /*p*/, double /*h*/, double& w) const

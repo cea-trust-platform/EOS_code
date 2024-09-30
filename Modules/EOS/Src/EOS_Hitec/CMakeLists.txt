@@ -1,4 +1,5 @@
 # Pre-configure
+
 execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "--  > Configuring plugin Hitec     ... ")
 execute_process(
     COMMAND           ${CMAKE_CURRENT_SOURCE_DIR}/HITEC_pre_configure.sh
