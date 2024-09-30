@@ -23,11 +23,27 @@ Arguments::Arguments(const int argc, char **argv)
   }
 }
 
+#include <iomanip>
+
+void Arguments::print(std::ostream & f)
+{
+  f << "usage : \n";
+
+  for (const auto &p : _options)
+    std::cout << "  " << std::setw(10) << p.first 
+              << "  (type : " << p.second.first 
+              << ", default : " << p.second.second << ")\n";
+  
+  f << std::endl;
+}
+
 #include <algorithm>
 
 template<>
 bool Arguments::Get(const char * name, const bool defaultValue)
 {
+  _options[name] = std::make_pair("<bool>", std::to_string(defaultValue));
+
   std::map<std::string, std::string>::iterator t = _arguments.find(name);
   if (t == _arguments.end())
      return defaultValue;
@@ -39,6 +55,8 @@ bool Arguments::Get(const char * name, const bool defaultValue)
 template<>
 int Arguments::Get(const char * name, const int defaultValue)
 {
+  _options[name] = std::make_pair("<int>", std::to_string(defaultValue));
+
   std::map<std::string, std::string>::iterator t = _arguments.find(name);
   if (t == _arguments.end())
      return defaultValue;
@@ -48,6 +66,8 @@ int Arguments::Get(const char * name, const int defaultValue)
 template<>
 unsigned long Arguments::Get(const char * name, const unsigned long defaultValue)
 {
+  _options[name] = std::make_pair("<long>", std::to_string(defaultValue));
+
   std::map<std::string, std::string>::iterator t = _arguments.find(name);
   if (t == _arguments.end())
      return defaultValue;
@@ -57,6 +77,8 @@ unsigned long Arguments::Get(const char * name, const unsigned long defaultValue
 template<>
 double Arguments::Get(const char *name, const double defaultValue)
 {
+  _options[name] = std::make_pair("<double>", std::to_string(defaultValue));
+
   std::map<std::string, std::string>::iterator t = _arguments.find(name);
   if (t == _arguments.end())
      return defaultValue;
@@ -66,6 +88,8 @@ double Arguments::Get(const char *name, const double defaultValue)
 template<>
 const char * Arguments::Get(const char *name, const char * defaultValue)
 {
+  _options[name] = std::make_pair("<string>", std::string(defaultValue));
+
   std::map<std::string, std::string>::iterator t = _arguments.find(name);
   if (t == _arguments.end())
      return defaultValue;

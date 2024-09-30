@@ -43,7 +43,7 @@ endif (WITH_IPP)
 
 
 # (add executable EOSTest)
-#if (USE_OPENMP)
+if (USE_OPENMP)
   message(STATUS "Add test EOSTest (OpenMP version)")
   add_executable (EOSTest_OpenMP
 	  main_OpenMP.cxx
@@ -56,4 +56,4 @@ endif (WITH_IPP)
   set_tests_properties(EOSTest PROPERTIES ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/;OMP_NUM_THREADS=3"
                                         COST        5.)
   install(TARGETS EOSTest_OpenMP DESTINATION .)
-#endif()
+endif()

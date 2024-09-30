@@ -34,17 +34,13 @@ void cDump::activate(bool withAddress)
   {
 #pragma omp critical
     {
-      std::string nameDump = "dump_" + std::to_string(iTh) + ".txt";
-      _fDump[iTh].open(nameDump.c_str());
       _withAddress[iTh] = withAddress;
     }
   }
 #else
   _fDump.resize(1);
   _withAddress.resize(1);
-    std::string nameDump = "dump_0.txt";
-      _fDump[0].open(nameDump.c_str());
-      _withAddress[0] = withAddress;
+  _withAddress[0] = withAddress;
 
 #endif
 
@@ -80,6 +76,12 @@ int cDump::_dump(const char *fileName, int line, const char *fct)
     int iTh = 0;
 #endif
 
+    if (! _fDump[iTh].is_open())
+    {
+      std::string nameDump = "dump_" + std::to_string(iTh) + ".txt";
+      _fDump[iTh].open(nameDump.c_str());
+
+    }
     basename(b, fileName);
     _fDump[iTh] << std::setw(20) << b << " " << std::setw(4) << line << " : " << std::setw(35) << fct;
     return iTh;

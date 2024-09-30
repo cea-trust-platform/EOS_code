@@ -152,8 +152,8 @@ void test_field_1parameter(EOS &eos, const char *valIn, int iSample, bool dump)
     }
 
     if (dump)
-      fOut << "\t" << std::setfill(' ') << std::setw(17) << std::right << p
-           << std::setfill('_') << std::setw(22) << std::right << fieldOut[0] << std::endl;
+      fOut << "\t" << std::setfill(' ') << std::setw(25) << std::right << p
+           << " "  << std::setfill('_') << std::setw(25) << std::right << std::setprecision(15) << fieldOut[0] << std::endl;
   }
 }
 
@@ -187,7 +187,8 @@ void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, in
   if (dump)
   {
     fOut << std::endl
-         << valIn1 << " " << fieldIn1[0] << " " << valIn2 << " " << fieldIn2[0] << std::endl;
+         << valIn1 << " " << std::setprecision(15) << fieldIn1[0] << " " 
+         << valIn2 << " " << std::setprecision(15) << fieldIn2[0] << std::endl;
   }
 
   for (auto p : thermprop_r)
@@ -207,9 +208,8 @@ void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, in
     }
 
     if (dump)
-      fOut << "\t" << std::setfill(' ') << std::setw(25) << std::setprecision(17) << std::right << p
-           << " " << std::setfill('_')
-           << std::setw(25) << std::setprecision(15) << std::right << fieldOut[0] << std::endl;
+      fOut << "\t" << std::setfill(' ') << std::setw(25) << std::right << p
+           << " "  << std::setfill('_') << std::setw(25) << std::setprecision(15) << std::right << fieldOut[0] << std::endl;
   }
 }
 
@@ -233,9 +233,8 @@ void test_point_1parameter(EOS &eos, int iSample, bool dump)
     { // EOS will throw an EOS_Std_Exception if an error occurs:
       eos.compute(q.c_str(), p, r);
       if (dump)
-        fOut << "\t" << std::setfill(' ') << std::setw(25) << std::setprecision(17) << std::right << q
-             << " " << std::setfill('_')
-             << std::setw(25) << std::setprecision(15) << std::right << r << std::endl;
+        fOut << "\t" << std::setfill(' ') << std::setw(25) << std::right << q
+             << " "  << std::setfill('_') << std::setw(25) << std::setprecision(15) << std::right << r << std::endl;
     }
     catch (EOS_Std_Exception ex)
     { // Get the internal error code:
@@ -249,7 +248,7 @@ void test_point_2parameters(EOS &eos, int iSample, bool dump)
   std::ofstream fOut;
   if (dump)
   {
-    std::string s = "point_p_";
+    std::string s = "point_p_h_";
     s += std::to_string(iSample) + ".data";
     fOut.open(s.c_str());
   }
@@ -265,9 +264,8 @@ void test_point_2parameters(EOS &eos, int iSample, bool dump)
     { // EOS will throw an EOS_Std_Exception if an error occurs:
       eos.compute(q.c_str(), p, h, r);
       if (dump)
-        fOut << "\t" << std::setfill(' ') << std::setw(25) << std::setprecision(17) << std::right << q
-             << " " << std::setfill('_')
-             << std::setw(25) << std::setprecision(15) << std::right << r << std::endl;
+        fOut << "\t" << std::setfill(' ') << std::setw(25) << std::right << q
+             << " "  << std::setfill('_') << std::setw(25) << std::setprecision(15) << std::right << r << std::endl;
     }
     catch (EOS_Std_Exception ex)
     { // Get the internal error code:
@@ -401,6 +399,13 @@ int main(int argc, char **argv)
   int nSamples = A.Get("samples", nTh);
   bool dump = A.Get("dump", false);
   int test = A.Get("test", 1);
+  std::string plugin = A.Get("plugin", "Refprop10");
+  std::string fluid = A.Get("fluid", "Water");
+  bool h = A.Get("help", false);
+  if (h) {
+    std::cout << A << std::endl;
+    return -1;
+  }
 
   std::cout << nSamples << " sample(s)" << std::endl;
 
@@ -411,9 +416,22 @@ int main(int argc, char **argv)
   if (dump)
     D.activate();
 
-  EOS fluid("EOS_Refprop10", "Water");
+  std::cout<<endl<<endl;
+  std::cout<<"--------------------------------------- "<<std::endl;
+  std::cout<<"---------------- Begin ---------------- "<<std::endl;
+  std::cout<<"--------------------------------------- "<<std::endl;
 
-  test_features(fluid, test, nSamples, dump);
+  Language_init();
 
+
+  std::cout<<endl<<"--------------------------------------- "<<std::endl;
+  std::cout<<      "------ Class available ...  ----------- "<<std::endl<<std::endl;
+
+  hierrarchy();
+
+  EOS eos(plugin.c_str(), fluid.c_str());
+
+  test_features(eos, test, nSamples, dump);
+  
   return 0;
 }
