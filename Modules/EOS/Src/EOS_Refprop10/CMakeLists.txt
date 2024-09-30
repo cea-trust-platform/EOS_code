@@ -1,10 +1,17 @@
 # Pre-configure
 execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "--  > Configuring plugin Refprop10 ... ")
+
+if(ENABLE_OPENMP)
+  set(USE_OPENMP "1")
+else()
+  set(USE_OPENMP "0")
+endif()
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Refprop10 DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 execute_process(
     COMMAND           ${CMAKE_CURRENT_SOURCE_DIR}/REFPROP10_pre_configure.sh
                       ${WITH_PLUGIN_REFPROP_10}
                       ${CMAKE_CURRENT_BINARY_DIR}
+                      "${USE_OPENMP}"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     OUTPUT_FILE       ${CMAKE_BINARY_DIR}/REFPROP10_pre_configure.log
     ERROR_FILE        ${CMAKE_BINARY_DIR}/REFPROP10_pre_configure.log

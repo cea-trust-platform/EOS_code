@@ -14,7 +14,6 @@ error()
 }
 script=`basename $0`
 
-
 SOURCE=${BASH_SOURCE[0]}
 while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
   SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
@@ -27,6 +26,7 @@ SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 # read arguments
 REFPROP10_ROOT_DIR=$1
 BINARY_DIR=$2
+ENABLE_OPENMP=$3
 EOS_BINARY_DIR=$BINARY_DIR/../..
 ROOT_BINARY_DIR=$EOS_BINARY_DIR/../..
 
@@ -94,6 +94,7 @@ mkdir -p $BINARY_DIR/Refprop10
      $PLUGINEXT_SRC \
      $BINARY_DIR/../tmp_Refprop10_patch \
      $BINARY_DIR/Refprop10 \
+     $ENABLE_OPENMP
 )
 
 # ----------------------------------------

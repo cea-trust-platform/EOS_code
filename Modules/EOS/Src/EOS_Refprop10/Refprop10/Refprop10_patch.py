@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('src')
 parser.add_argument('work')
 parser.add_argument('dest')
+parser.add_argument('openmp', type=int)
 parser.add_argument('--verbose', action='store_true')
 parser.add_argument('--partial', action='store_true')
 
@@ -266,7 +267,24 @@ if not C.partial:
     with open('EOS_Refprop10.patch') as fIn:
         subprocess.run(['patch', '-p1'], stdin=fIn, check=True)
 
-    s = """
+    if args.openmp == 0:
+        s = """
+
+      integer function THREAD_NUM_RP10()
+      THREAD_NUM_RP10 = 0
+      end function THREAD_NUM_RP10
+
+"""
+    else:
+        s = """
+
+      integer function THREAD_NUM_RP10()
+      THREAD_NUM_RP10 = omp_get_thread_num()
+      end function THREAD_NUM_RP10
+
+"""
+
+    s = s + """
       subroutine XNUMCOMMONS_RP10(N)
       integer N
       N = {N}
@@ -276,24 +294,20 @@ if not C.partial:
 {INC}
       integer N, NTH
       integer *8 L(N), Q0(N*NTH)
-      integer omp_get_thread_num
+      integer THREAD_NUM_RP10
       
 """.format(INC=incCommons, N=len(listCommons))
 
     s+="\nc$omp parallel shared(Q0, L)\n\n"
     iC = 0
     for sC in listCommons:
-        s += "      Q0(omp_get_thread_num()+1 + NTH*{iC}) = LOC(START_{sC})\n".format(iC=iC, sC=sC)
+        s += "      Q0(THREAD_NUM_RP10()+1 + NTH*{iC}) = LOC(START_{sC})\n".format(iC=iC, sC=sC)
         iC += 1
     s+="\nc$omp end parallel\n\n"
 
     iC = 0
     for sC in listCommons:
         s += "      L({iC1}) = LOC(END_{sC}) - Q0(1 + NTH*{iC})\n".format(iC=iC, iC1=iC+1, sC=sC)
-        s += "      print *, '(fortran) L({iC1}) = ', L({iC1})\n".format(iC1=iC+1)
-        s += "      do i=1,NTH\n"
-        s += "        print *, '(fortran)   ', Q0(i + NTH*{iC})\n".format(iC=iC)
-        s += "      enddo\n"
         iC += 1
 
     s += "\n      end subroutine XDEFCOMMONS_RP10\n"

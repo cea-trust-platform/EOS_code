@@ -26,8 +26,10 @@ SCRIPT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 # read arguments
 REFPROP9_ROOT_DIR=$1
 BINARY_DIR=$2
+ENABLE_OPENMP=$3
 EOS_BINARY_DIR=$BINARY_DIR/../..
 ROOT_BINARY_DIR=$EOS_BINARY_DIR/../..
+
 #Is there anything to do ?
 if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop9WaterVapor_pt.val ]; then exit 0; fi
 
@@ -91,8 +93,8 @@ mkdir -p $BINARY_DIR/Refprop9
      $PLUGINEXT_SRC \
      $BINARY_DIR/../tmp_Refprop9_patch \
      $BINARY_DIR/Refprop9 \
+     $ENABLE_OPENMP
 )
- 
 
 # ----------------------------------------
 # Data
