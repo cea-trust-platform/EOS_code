@@ -1954,12 +1954,84 @@ namespace NEPTUNE_EOS
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
 
+    if (indic[0] == 1)
+    {
+      F77NAME(satp_rp9)
+       (p_refprop, arr_molfrac, kph, t, rhol, rhov, xliq, xvapint,
+        ierr, herr, sizeof(herr)-1);
+      tab_prop[NEPTUNE::rho_l_sat] = refprop_rho_2_eos(rhol);
+      tab_prop[NEPTUNE::rho_v_sat] = refprop_rho_2_eos(rhov);
+      if (ierr != 0)
+        err = worst_internal_error(err, generate_error(ierr, herr));
+      tab_prop[NEPTUNE::T_sat] = t;
+    }
+    if (indic[1] == 1)
+    {
+      F77NAME(enthal_rp9)
+        (t, rhol, arr_molfrac, hl_refprop);
+      tab_prop[NEPTUNE::h_l_sat] = refprop_nrj_2_eos(hl_refprop);
+    }
+    if (indic[2] == 1)
+    {
+      F77NAME(enthal_rp9)
+        (t, rhov, arr_molfrac, hv_refprop);
+      tab_prop[NEPTUNE::h_v_sat] = refprop_nrj_2_eos(hv_refprop);
+    }
+    if (indic[3] == 1)
+    {
+      F77NAME(cvcp_rp9)
+        (t, rhol, arr_molfrac, cv, cpl);
+      tab_prop[NEPTUNE::cp_l_sat] = refprop_nrj_2_eos(cpl);
+    }
+    if (indic[4] == 1)
+    {
+      F77NAME(cvcp_rp9)
+        (t, rhov, arr_molfrac, cv, cpv);
+      tab_prop[NEPTUNE::cp_v_sat] = refprop_nrj_2_eos(cpv);
+    }
+
     double epsilon = 1e-6;
     double p_refpropp = p_refprop * (1 + epsilon);
     double delta = kpa2pa(p_refpropp - p_refprop);
     double tp, rholp, rhovp, hl_refpropp, hv_refpropp, cplp, cpvp;
 
-     return err ;
+    if (indic[5] == 1) {
+      F77NAME(satp_rp9)(p_refpropp, arr_molfrac, kph, tp, rholp, rhovp, xliq, xvapint, ierr, herr, sizeof(herr));
+      tab_propder[NEPTUNE::d_T_sat_d_p] = (tp - t) / delta;
+      tab_propder[NEPTUNE::d_rho_l_sat_d_p] = (refprop_rho_2_eos(rholp) - refprop_rho_2_eos(rhol)) / delta;
+      tab_propder[NEPTUNE::d_rho_v_sat_d_p] = (refprop_rho_2_eos(rhovp) - refprop_rho_2_eos(rhov)) / delta;
+      if (ierr != 0)
+        err = worst_internal_error(err, generate_error(ierr, herr));
+    }
+    if (indic[6] == 1) {
+      F77NAME(enthal_rp9)(tp, rholp, arr_molfrac, hl_refpropp);
+      tab_propder[NEPTUNE::d_h_l_sat_d_p] = (refprop_nrj_2_eos(hl_refpropp) - refprop_nrj_2_eos(hl_refprop)) / delta;
+    }
+    if (indic[7] == 1) {
+      F77NAME(enthal_rp9)(tp, rhovp, arr_molfrac, hv_refpropp);
+      tab_propder[NEPTUNE::d_h_v_sat_d_p] = (refprop_nrj_2_eos(hv_refpropp) - refprop_nrj_2_eos(hv_refprop)) / delta;
+    }
+    if (indic[8] == 1) {
+      F77NAME(cvcp_rp9)(tp, rholp, arr_molfrac, cv, cplp);
+      tab_propder[NEPTUNE::d_cp_l_sat_d_p] = (refprop_nrj_2_eos(cplp) - refprop_nrj_2_eos(cpl)) / delta;
+    }
+    if (indic[9] == 1) {
+      F77NAME(cvcp_rp9)(tp, rhovp, arr_molfrac, cv, cpvp);
+      tab_propder[NEPTUNE::d_cp_v_sat_d_p] = (refprop_nrj_2_eos(cpvp) - refprop_nrj_2_eos(cpv)) / delta;
+    }
+    if (indic[10] == 1)
+    {
+      double p_refpropm = p_refprop * (1 - epsilon);
+      double tm = 0.0, rholm = 0.0, rhovm = 0.0;
+      F77NAME(satp_rp9)
+        (p_refpropm, arr_molfrac, kph, tm, rholm, rhovm, xliq, xvapint,
+         ierr, herr, sizeof(herr)-1);
+      tab_propder2[NEPTUNE::d2_T_sat_d_p_d_p] = (tp - 2.0 * t + tm) / (delta * delta);
+      if (ierr != 0)
+        err = worst_internal_error(err, generate_error(ierr, herr));
+    }
+
+    return err;
   }
 
   EOS_Error EOS_Refprop9::compute (const EOS_Field& p,

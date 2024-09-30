@@ -1998,7 +1998,7 @@ namespace NEPTUNE_EOS
     double epsilon = 1e-6;
     double p_refpropp = p_refprop * (1 + epsilon);
     double delta = kpa2pa(p_refpropp - p_refprop);
-    double tp, rholp, rhovp, hl_refpropp, hv_refpropp, cplp, cpvp;
+    double tp = 0.0, rholp = 0.0, rhovp = 0.0, hl_refpropp = 0.0, hv_refpropp = 0.0, cplp = 0.0, cpvp = 0.0;
 
     if (indic[5] == 1)
     {
@@ -2037,7 +2037,7 @@ namespace NEPTUNE_EOS
     if (indic[10] == 1)
     {
       double p_refpropm = p_refprop * (1 - epsilon);
-      double tm, rholm, rhovm;
+      double tm = 0.0, rholm = 0.0, rhovm = 0.0;
       F77NAME(satp_rp10)
         (p_refpropm, arr_molfrac, kph, tm, rholm, rhovm, xliq, xvapint,
          ierr, herr, sizeof(herr)-1);
