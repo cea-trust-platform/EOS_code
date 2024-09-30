@@ -35,7 +35,7 @@ if [ -f $EOS_BINARY_DIR/Tests/C++/C2DHOLiquid_1.val ]; then exit 0; fi
 
 # ----------------------------------------
 # check
-if [ -z $NEPTUNE_EOS_CATHARE2 ] || [ ! -d $NEPTUNE_EOS_CATHARE2 && ! -f $NEPTUNE_EOS_CATHARE2 ] ; then
+if [[ -z $NEPTUNE_EOS_CATHARE2 ]] || [[ ! -d $NEPTUNE_EOS_CATHARE2 && ! -f $NEPTUNE_EOS_CATHARE2 ]] ; then
     eos_error 43 "unvalid path for --with-cathare2 option : $NEPTUNE_EOS_CATHARE2"
 fi
 
@@ -74,7 +74,7 @@ done
 
 # Correction
 mkdir -p $BINARY_DIR/Cathare2
-(cd Cathare2 ; ./CATHARE2_patch.sh)
+#(cd Cathare2 ; ./CATHARE2_patch.sh)
 
 #
 # Build index.eos file

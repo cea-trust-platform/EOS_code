@@ -51,7 +51,16 @@ namespace NEPTUNE_EOS
 
   EOS_Error EOS_Cathare2Vapor::calc2_mixing(const int n, const EOS_Fields& in, EOS_Fields& out, EOS_Error_Field& ferr)
   { // set_mixing_properties has already been done for (r,cp0,cp1,...)
-    assert (pilot) ;
+    
+    CATHARE2::CATHARE2 *local_pilot;
+
+    #ifdef _OPENMP
+      local_pilot = pilot[omp_get_thread_num()];
+    #else
+       local_pilot = pilot;
+    #endif
+
+    assert (local_pilot) ;
     assert ((n>0) && (n<5)) ;
     EOS_Error err ;
     int np = n+1 ;
@@ -78,15 +87,15 @@ namespace NEPTUNE_EOS
        }
     // compute f(p,xi)
     if ( (p > -1) && (h == -1) && (t == -1) ) 
-       { err = pilot->set_mixing_properties(C) ;
+       { err = local_pilot->set_mixing_properties(C) ;
          if (err == EOS_Error::error)  return EOS_Error::error ;
-         return pilot->calc2_p(in[p], out, ferr) ;
+         return local_pilot->calc2_p(in[p], out, ferr) ;
        }
     // compute f(p,h,xi)
     else if ( (p > -1) && (h > -1) ) 
-      { err = pilot->set_mixing_properties(C) ;
+      { err = local_pilot->set_mixing_properties(C) ;
          if (err == EOS_Error::error)  return EOS_Error::error ;
-         return pilot->calc2_ph(in[p], in[h], out, ferr) ;
+         return local_pilot->calc2_ph(in[p], in[h], out, ferr) ;
       }
     // compute f(p,T,xi)
     else if ((p > -1) && (t > -1)) 
@@ -117,19 +126,19 @@ namespace NEPTUNE_EOS
          for (int j=0; j<nscai; j++)
             { for (int i=0; i<np; i++)
                  xci[i] = C[i][j] ;
-              err = pilot->set_mixing_properties(Ci) ;
+              err = local_pilot->set_mixing_properties(Ci) ;
               if (err == EOS_Error::error)  return EOS_Error::error ;
-              ferr.set(j,pilot->calc2_h_pT_mixing(in[p][j], in[t][j],hi[j])) ;
+              ferr.set(j,local_pilot->calc2_h_pT_mixing(in[p][j], in[t][j],hi[j])) ;
             }
          ArrOfInt xerrph(nscai) ;
          EOS_Error_Field errph(xerrph) ;
 
-         err = pilot->set_mixing_properties(C) ;
+         err = local_pilot->set_mixing_properties(C) ;
          if (err == EOS_Error::error)  return EOS_Error::error ;
          if (ih == 0) 
-              pilot->calc2_ph(in[p], hi, out, errph) ;
+              local_pilot->calc2_ph(in[p], hi, out, errph) ;
          else if ( nout >= 2 ) 
-              pilot->calc2_ph(in[p], hi, outi, errph) ;
+              local_pilot->calc2_ph(in[p], hi, outi, errph) ;
 
          ferr.set_worst_error(errph) ;
          return ferr.find_worst_error().generic_error() ;

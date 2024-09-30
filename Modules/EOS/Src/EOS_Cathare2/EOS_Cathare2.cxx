@@ -17,6 +17,10 @@
 
 #include "EOS_Cathare2.hxx"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 using namespace NEPTUNE ;
 
 namespace NEPTUNE_EOS
@@ -86,35 +90,67 @@ namespace NEPTUNE_EOS
   int EOS_Cathare2::init(const Strings& args) 
   { int i = 0 ;
     if (pilot == NULL) {
+
+      bool err = false;
+
+    #ifdef _OPENMP
+      pilot = new CATHARE2::CATHARE2*[omp_get_max_threads()];
+    #pragma omp parallel reduction(|| : err)
+      {
+    #endif
+        CATHARE2::CATHARE2 *local_pilot = nullptr;
+        err = false;
+
       #include "EOS_Cathare2.cxx.fld"
+        {
+          err = true;
+        }
+    #ifdef _OPENMP
+        pilot[omp_get_thread_num()] = local_pilot;
+      }
+    #else
+      pilot = local_pilot;
+    #endif
+
+      if (err)
       {
         cerr << "Unknown fluid " << args[0] << endl;
         return EOS_Error::error ;
       }
+
       fluidname = args[0];
       equationname = args[0];
       equationname += phase_name();
       i++;
     }
+
+    CATHARE2::CATHARE2 * local_pilot;
+
+    #ifdef _OPENMP
+    local_pilot = pilot[omp_get_thread_num()];
+    #else
+    local_pilot = pilot;
+    #endif    
+    
     //! \todo Add checks on arguments
     //! \todo Add option POLYNCPT
     for (; i<args.size(); i++) 
        { if (i == args.size()) return EOS_Error::error ;
          EOS_Error err ;
          if ( args[i] == AString("ICAR") || args[i] == AString("icar"))
-           err  = pilot->set_icar(atoi(args[++i].aschar()));
+           err  = local_pilot->set_icar(atoi(args[++i].aschar()));
          else if ( args[i] == AString("ICARGAS") || args[i] == AString("icargas"))
-           err  = pilot->set_icargas(atoi(args[++i].aschar()));
+           err  = local_pilot->set_icargas(atoi(args[++i].aschar()));
          else if ( args[i] == AString("IENC") || args[i] == AString("ienc"))
-           err  = pilot->set_ienc(atoi(args[++i].aschar()));
+           err  = local_pilot->set_ienc(atoi(args[++i].aschar()));
          else if ( args[i] == AString("IREV") || args[i] == AString("irev"))
-           err  = pilot->set_irev(atoi(args[++i].aschar()));
+           err  = local_pilot->set_irev(atoi(args[++i].aschar()));
          else if ( args[i] == AString("ITERMIN") || args[i] == AString("itermin"))
-           err  = pilot->set_itermin(atoi(args[++i].aschar()));
+           err  = local_pilot->set_itermin(atoi(args[++i].aschar()));
          else if ( args[i] == AString("LATYPML") || args[i] == AString("latypml"))
-           err  = pilot->set_latypml(atoi(args[++i].aschar()));
+           err  = local_pilot->set_latypml(atoi(args[++i].aschar()));
          else if ( args[i] == AString("MUTYPML") || args[i] == AString("mutypml"))
-           err  = pilot->set_mutypml(atoi(args[++i].aschar()));
+           err  = local_pilot->set_mutypml(atoi(args[++i].aschar()));
          else 
            err = EOS_Error::error ;
          if (err != EOS_Error::good) return EOS_Error::error ;
@@ -131,23 +167,32 @@ namespace NEPTUNE_EOS
 
   EOS_Error EOS_Cathare2::compute (const EOS_Field& in, EOS_Fields& out, 
                                    EOS_Error_Field& err) const 
-  { assert(pilot) ;
+  { 
+    CATHARE2::CATHARE2 * local_pilot;
+
+    #ifdef _OPENMP
+    local_pilot = pilot[omp_get_thread_num()];
+    #else
+    local_pilot = pilot;
+    #endif    
+    
+    assert(local_pilot) ;
 
     if ( (in.get_property() == NEPTUNE::p) 
       || (in.get_sat_property() == NEPTUNE::p_sat) 
       || (in.get_lim_property() == NEPTUNE::p_lim) ) 
        { ArrOfInt err_array(in.size()) ;
          EOS_Error_Field err_tmp(err_array) ;
-         pilot->verify(in, err, phase) ;
-         pilot->calc2_p(in, out, err_tmp) ;
+         local_pilot->verify(in, err, phase) ;
+         local_pilot->calc2_p(in, out, err_tmp) ;
          err.set_worst_error(err_tmp) ;
          return err.find_worst_error().generic_error() ;
        }
     else if (in.get_sat_property() == NEPTUNE::T_sat)
        { ArrOfInt err_array(in.size()) ;
          EOS_Error_Field err_tmp(err_array) ;
-         pilot->verify(in, err, phase) ;
-         pilot->calc2_t(in, out, err_tmp) ;
+         local_pilot->verify(in, err, phase) ;
+         local_pilot->calc2_t(in, out, err_tmp) ;
          err.set_worst_error(err_tmp) ;
          return err.find_worst_error().generic_error() ;
        } 
@@ -157,39 +202,47 @@ namespace NEPTUNE_EOS
 
   EOS_Error EOS_Cathare2::compute (const EOS_Field& in1, const EOS_Field& in2, 
                                    EOS_Fields& out, EOS_Error_Field& err) const 
-  { assert(pilot) ;
+  { CATHARE2::CATHARE2 * local_pilot;
+
+    #ifdef _OPENMP
+    local_pilot = pilot[omp_get_thread_num()];
+    #else
+    local_pilot = pilot;
+    #endif
+
+    assert(local_pilot) ;
     ArrOfInt err_array(in1.size()) ;
     EOS_Error_Field err_tmp(err_array) ;
 
     if ( ( in1.get_property() == NEPTUNE::p) && (in2.get_property() == NEPTUNE::h)) 
-       { pilot->verify(in1, err, phase);
-         pilot->verify(in2, err_tmp, phase);
+       { local_pilot->verify(in1, err, phase);
+         local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
-         pilot->calc2_ph(in1, in2, out, err_tmp);
+         local_pilot->calc2_ph(in1, in2, out, err_tmp);
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }
     else if ( (in1.get_property() == NEPTUNE::h) && (in2.get_property() == NEPTUNE::p))
-       { pilot->verify(in1, err, phase);
-         pilot->verify(in2, err_tmp, phase);
+       { local_pilot->verify(in1, err, phase);
+         local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
-         pilot->calc2_ph(in2, in1, out, err_tmp);
+         local_pilot->calc2_ph(in2, in1, out, err_tmp);
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }
     else if ( (in1.get_property() == NEPTUNE::p) && (in2.get_property() == NEPTUNE::T))
-       { pilot->verify(in1, err, phase);
-         pilot->verify(in2, err_tmp, phase);
+       { local_pilot->verify(in1, err, phase);
+         local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
-         pilot->calc2_pt(in1, in2, out, err_tmp);
+         local_pilot->calc2_pt(in1, in2, out, err_tmp);
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        } 
     else if ( (in1.get_property() == NEPTUNE::T) && (in2.get_property() == NEPTUNE::p))
-       { pilot->verify(in1, err, phase);
-         pilot->verify(in2, err_tmp, phase);
+       { local_pilot->verify(in1, err, phase);
+         local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
-         pilot->calc2_pt(in2, in1, out, err_tmp);
+         local_pilot->calc2_pt(in2, in1, out, err_tmp);
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }

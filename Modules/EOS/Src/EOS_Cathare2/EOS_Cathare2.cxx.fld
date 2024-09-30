@@ -15,10 +15,10 @@
 
 
 
-if (args[0] == "DHO") pilot = new CATHARE2::CATHARE2_DHO(this, phase); else
-if (args[0] == "HXNC") pilot = new CATHARE2::CATHARE2_HXNC(this, phase); else
-if (args[0] == "IAPWS") pilot = new CATHARE2::CATHARE2_IAPWS(this, phase); else
-if (args[0] == "PB") pilot = new CATHARE2::CATHARE2_PB(this, phase); else
-if (args[0] == "PBBI") pilot = new CATHARE2::CATHARE2_PBBI(this, phase); else
-if (args[0] == "Sodium") pilot = new CATHARE2::CATHARE2_Sodium(this, phase); else
-if (args[0] == "Water") pilot = new CATHARE2::CATHARE2_Water(this, phase); else
+if (args[0] == "DHO") local_pilot = new CATHARE2::CATHARE2_DHO(this, phase); else
+if (args[0] == "HXNC") local_pilot = new CATHARE2::CATHARE2_HXNC(this, phase); else
+if (args[0] == "IAPWS") local_pilot = new CATHARE2::CATHARE2_IAPWS(this, phase); else
+if (args[0] == "PB") local_pilot = new CATHARE2::CATHARE2_PB(this, phase); else
+if (args[0] == "PBBI") local_pilot = new CATHARE2::CATHARE2_PBBI(this, phase); else
+if (args[0] == "Sodium") local_pilot = new CATHARE2::CATHARE2_Sodium(this, phase); else
+if (args[0] == "Water") local_pilot = new CATHARE2::CATHARE2_Water(this, phase); else

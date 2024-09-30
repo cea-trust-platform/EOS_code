@@ -57,17 +57,35 @@ namespace NEPTUNE_EOS
                    ArrOfDouble& cp3, ArrOfDouble& cp4, ArrOfDouble& cp5, ArrOfDouble& cp6,
                    ArrOfDouble& m,   ArrOfDouble& l0,  ArrOfDouble& l1,  ArrOfDouble& l2,
                    ArrOfDouble& m0,  ArrOfDouble& m1,  ArrOfDouble& m2,  ArrOfDouble& dv) 
-  { assert(pilot) ;
+  { 
+#ifdef _OPENMP
+    assert(pilot) ;
+    assert(pilot[omp_get_thread_num()]) ;
+    return (pilot[omp_get_thread_num()]->set_mixing_properties(nincon, 
+                                 r,   cp0, cp1, cp2, 
+                                 cp3, cp4, cp5, cp6,
+                                 m,    l0,  l1,  l2,
+                                 m0,   m1,  m2,  dv)) ;
+#else
+    assert(pilot) ;
     return (pilot->set_mixing_properties(nincon, 
                                  r,   cp0, cp1, cp2, 
                                  cp3, cp4, cp5, cp6,
                                  m,    l0,  l1,  l2,
                                  m0,   m1,  m2,  dv)) ;
+#endif
   }
 
   inline EOS_Error EOS_Cathare2Vapor::set_mixing_properties() 
-  { assert(pilot) ;
+  {
+#ifdef _OPENMP
+    assert(pilot) ;
+    assert(pilot[omp_get_thread_num()]) ;
+    return (pilot[omp_get_thread_num()]->set_mixing_properties()) ;
+#else
+    assert(pilot) ;
     return (pilot->set_mixing_properties()) ;
+#endif
   }
 
 }

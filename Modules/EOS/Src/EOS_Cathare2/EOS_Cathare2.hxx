@@ -13,7 +13,9 @@
 *
 *****************************************************************************/
 
-
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #ifndef EOS_CATHARE2_HXX
 #define EOS_CATHARE2_HXX
@@ -205,7 +207,11 @@ namespace NEPTUNE_EOS
     void describe_error(const EOS_Internal_Error error, AString & description) const;
 
   protected:
+#ifdef _OPENMP
+    CATHARE2::CATHARE2 **pilot;   //!< pointer to vector of pilot class (thread local)
+#else
     CATHARE2::CATHARE2 *pilot;   //!< pointer to the pilot class
+#endif
     CATHARE2::domain phase;      //!< liquid or vapor
     AString fluidname;         //!< fluid name
     AString equationname;           //!< fluid name (with phase)
@@ -216,76 +222,168 @@ namespace NEPTUNE_EOS
   };
 
   inline EOS_Internal_Error EOS_Cathare2::get_mm(double& mm) const
-  { assert(pilot);
-    return pilot->get_mm( mm);
+  {     
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_mm( mm);
+    #else
+      assert(pilot);
+      return pilot->get_mm( mm);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_p_crit(double& p_crit) const
-  { assert(pilot);
-    return pilot->get_p_crit( p_crit);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_p_crit( p_crit);
+    #else
+      assert(pilot);
+      return pilot->get_p_crit( p_crit);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_h_crit(double& h_crit) const
-  { assert(pilot);
-    return pilot->get_h_crit( h_crit);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_h_crit( h_crit);
+    #else
+      assert(pilot);
+      return pilot->get_h_crit( h_crit);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_T_crit(double& T_crit) const
-  { assert(pilot);
-    return pilot->get_T_crit( T_crit);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_T_crit( T_crit);
+    #else
+      assert(pilot);
+      return pilot->get_T_crit( T_crit);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_p_min(double& p_min) const
-  { assert(pilot);
-    return pilot->get_p_min( p_min);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_p_min( p_min);
+    #else
+      assert(pilot);
+      return pilot->get_p_min( p_min);
+    #endif
   }
+
   inline EOS_Internal_Error EOS_Cathare2::get_p_max(double& p_max) const
-  { assert(pilot);
-    return pilot->get_p_max( p_max);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_p_max( p_max);
+    #else
+      assert(pilot);
+      return pilot->get_p_max( p_max);
+    #endif
   }
+
   inline EOS_Internal_Error EOS_Cathare2::get_h_min(double& h_min) const
-  { assert(pilot);
-    return pilot->get_h_min( h_min);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_h_min( h_min);
+    #else
+      assert(pilot);
+      return pilot->get_h_min( h_min);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_h_max(double& h_max) const
-  { assert(pilot);
-    return pilot->get_h_max( h_max);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_h_max( h_max);
+    #else
+      assert(pilot);
+      return pilot->get_h_max( h_max);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_T_min(double& T_min) const
-  { assert(pilot);
-    return pilot->get_T_min( T_min);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_T_min( T_min);
+    #else
+      assert(pilot);
+      return pilot->get_T_min( T_min);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_T_max(double& T_max) const
-  { assert(pilot);
-    return pilot->get_T_max( T_max);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_T_max( T_max);
+    #else
+      assert(pilot);
+      return pilot->get_T_max( T_max);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_p_ref(double& p_ref) const
-  { assert(pilot);
-    return pilot->get_p_ref( p_ref);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_p_ref( p_ref);
+    #else
+      assert(pilot);
+      return pilot->get_p_ref( p_ref);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_h_ref(double& h_ref) const
-  { assert(pilot);
-    return pilot->get_h_ref( h_ref);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_h_ref( h_ref);
+    #else
+      assert(pilot);
+      return pilot->get_h_ref( h_ref);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::get_T_ref(double& T_ref) const
-  { assert(pilot);
-    return pilot->get_T_ref( T_ref);
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->get_T_ref( T_ref);
+    #else
+      assert(pilot);
+      return pilot->get_T_ref( T_ref);
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::compute_h_l_lim_p( double p, double& h_l_lim ) const
-  { assert(pilot);
-    return pilot->compute_h_l_lim_p( p, h_l_lim );
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->compute_h_l_lim_p( p, h_l_lim );
+    #else
+      assert(pilot);
+      return pilot->compute_h_l_lim_p( p, h_l_lim );
+    #endif
   }
 
   inline EOS_Internal_Error EOS_Cathare2::compute_h_v_lim_p( double p, double& h_v_lim ) const
-  { assert(pilot);
-    return pilot->compute_h_v_lim_p( p, h_v_lim );
+  {
+    #ifdef _OPENMP
+      assert(pilot[omp_get_thread_num()]);
+      return pilot[omp_get_thread_num()]->compute_h_v_lim_p( p, h_v_lim );
+    #else
+      assert(pilot);
+      return pilot->compute_h_v_lim_p( p, h_v_lim );
+    #endif
   }
 
   inline void EOS_Cathare2::describe_error(const EOS_Internal_Error ierr, AString & description) const
