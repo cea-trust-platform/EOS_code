@@ -14,6 +14,12 @@
  *****************************************************************************/
 
 #include "EOS_Refprop10.hxx"
+#include "EOS/API/EOS_Utils.hxx"
+
+#include <string.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 namespace NEPTUNE_EOS
 {
