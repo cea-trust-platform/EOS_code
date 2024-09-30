@@ -1345,9 +1345,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_ph(double p, double h, double& r) const
@@ -1366,9 +1365,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_u_ph(double p, double h, double& r) const
@@ -1387,9 +1385,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_s_ph(double p, double h, double& r) const
@@ -1408,9 +1405,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_mu_ph(double p, double h, double& r) const
@@ -1429,9 +1425,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_lambda_ph(double p, double h, double& r) const
@@ -1450,9 +1445,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_ph(double p, double h, double& r) const
@@ -1471,9 +1465,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cv_ph(double p, double h, double& r) const
@@ -1492,9 +1485,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_sigma_ph(double p, double h, double& r) const
@@ -1513,9 +1505,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_w_ph(double p, double h, double& r) const
@@ -1534,9 +1525,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_g_ph(double p, double h, double& r) const
@@ -1555,9 +1545,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_f_ph(double p, double h, double& r) const
@@ -1576,9 +1565,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
 
@@ -1598,9 +1586,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_gamma_ph(double p, double h, double& r) const
@@ -1619,9 +1606,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_pT(double p, double T, double& r) const
@@ -3444,9 +3430,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_l_sat_p(double p, double& r) const
@@ -3464,9 +3449,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_v_sat_p(double p, double& r) const
@@ -3484,9 +3468,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_l_sat_p(double p, double& r) const
@@ -3504,9 +3487,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_v_sat_p(double p, double& r) const
@@ -3524,9 +3506,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_l_sat_p(double p, double& r) const
@@ -3544,9 +3525,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_v_sat_p(double p, double& r) const
@@ -3564,9 +3544,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_l_sat_T(double T, double& r) const
@@ -3584,9 +3563,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_v_sat_T(double T, double& r) const
@@ -3604,9 +3582,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_l_sat_T(double T, double& r) const
@@ -3624,9 +3601,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_v_sat_T(double T, double& r) const
@@ -3644,9 +3620,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_l_sat_T(double T, double& r) const
@@ -3664,9 +3639,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_v_sat_T(double T, double& r) const
@@ -3684,9 +3658,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_d_T_sat_d_p_p(double p, double& r) const
