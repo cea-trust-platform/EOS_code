@@ -1936,7 +1936,12 @@ namespace NEPTUNE_EOS
                                                              double* tab_propder,
                                                              double* tab_propder2,
                                                              int* indic) const
-  {  double t, rhol, rhov, xliq, xvapint, hl_refprop, hv_refprop, cv, cpl, cpv ;
+  {
+    double t = 0.0,
+           rhol = 0.0, rhov = 0.0, 
+           xliq = 0.0, xvapint = 0.0,
+           hl_refprop = 0.0, hv_refprop = 0.0,
+           cv = 0.0, cpl = 0.0, cpv = 0.0;
     int kph;
     EOS_Internal_Error err = EOS_Internal_Error::OK;
     double p_refprop = pa2kpa(p);
