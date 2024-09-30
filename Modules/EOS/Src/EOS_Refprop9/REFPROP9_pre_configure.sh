@@ -85,14 +85,14 @@ fi
 # Source files
 echo "Copy source files"
 mkdir -p $BINARY_DIR/Refprop9
-cp $PLUGINEXT_SRC/* $BINARY_DIR/Refprop9/.
-mv $BINARY_DIR/Refprop9/COMMONS.FOR $BINARY_DIR/Refprop9/COMMONS.INC
-mv $BINARY_DIR/Refprop9/COMTRN.FOR $BINARY_DIR/Refprop9/COMTRN.INC
-sed "s/commons.for/COMMONS.INC/g" -i $BINARY_DIR/Refprop9/*
-sed "s/comtrn.for/COMTRN.INC/g" -i $BINARY_DIR/Refprop9/*
-# Patches
-(cd $BINARY_DIR/Refprop9 ; ./REFPROP9_patch.sh)
 
+# Patches
+(cd $BINARY_DIR/Refprop9 ; python ./Refprop9_patch.py \
+     $PLUGINEXT_SRC \
+     $BINARY_DIR/../tmp_Refprop9_patch \
+     $BINARY_DIR/Refprop9 \
+)
+ 
 
 # ----------------------------------------
 # Data

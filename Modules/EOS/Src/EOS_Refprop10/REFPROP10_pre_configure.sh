@@ -87,17 +87,14 @@ fi
 # Source files
 echo "Copy source files"
 mkdir -p $BINARY_DIR/Refprop10
-for fSrc in $PLUGINEXT_SRC/*
-do
-  fDest="$BINARY_DIR/Refprop10/"`basename $fSrc`
-  if test ! -f $fDest -o $fSrc -nt $fDest
-  then
-    echo 'update ' `basename $fSrc`
-    cp $fSrc $fDest
-   #(cd $BINARY_DIR/Refprop10 ; ./REFPROP10_patch.sh $fDest)
-  fi
-done
 
+
+# Patches
+(cd $BINARY_DIR/Refprop10 ; python ./Refprop10_patch.py \
+     $PLUGINEXT_SRC \
+     $BINARY_DIR/../tmp_Refprop10_patch \
+     $BINARY_DIR/Refprop10 \
+)
 
 # ----------------------------------------
 # Data

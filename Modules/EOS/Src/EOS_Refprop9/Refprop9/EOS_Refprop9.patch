@@ -1,0 +1,156 @@
+diff -r -u0 work/final/RP9_CORE_PR.FOR final/RP9_CORE_PR.FOR
+--- work/final/RP9_CORE_PR.FOR	2024-09-24 16:22:40.463052287 +0200
++++ final/RP9_CORE_PR.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -294,0 +295 @@
++      if (.FALSE.) write (*,*) HCASNO
+@@ -492,0 +494 @@
++      IF (.FALSE.) WRITE(*,*) IBIN
+diff -r -u0 work/final/RP9_CORE_QUI.FOR final/RP9_CORE_QUI.FOR
+--- work/final/RP9_CORE_QUI.FOR	2024-09-24 16:22:38.008996932 +0200
++++ final/RP9_CORE_QUI.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -2,0 +3,3 @@
++      BETQ=0.0
++      BETQ10=0.0
++      BETQ20=0.0
+@@ -243 +245,0 @@
+-
+diff -r -u0 work/final/RP9_FLASH2.FOR final/RP9_FLASH2.FOR
+--- work/final/RP9_FLASH2.FOR	2024-09-24 16:22:42.375095415 +0200
++++ final/RP9_FLASH2.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -319 +319 @@
+-          HERR='[TQFLSH error] (sat liquid):  '//HERR2
++          HERR='[TQFLSH error] (sat liquid):  '//HERR2(1:225)
+@@ -329 +329 @@
+-          HERR='[TQFLSH error] (sat vapor):  '//HERR2
++          HERR='[TQFLSH error] (sat vapor):  '//HERR2(1:225)
+@@ -354 +354 @@
+-            HERR='[TQFLSH error] (2-phase):  '//HERR2
++            HERR='[TQFLSH error] (2-phase):  '//HERR2(1:226)
+@@ -374 +374 @@
+-            HERR='[TQFLSH error] (2-phase):  '//HERR2
++            HERR='[TQFLSH error] (2-phase):  '//HERR2(1:228)
+@@ -493 +493 @@
+-          HERR='[PQFLSH error] (sat liquid):  '//HERR2
++          HERR='[PQFLSH error] (sat liquid):  '//HERR2(1:225)
+@@ -502 +502 @@
+-          HERR='[PQFLSH error] (sat vapor):  '//HERR2
++          HERR='[PQFLSH error] (sat vapor):  '//HERR2(1:226)
+@@ -525 +525 @@
+-            HERR='[PQFLSH error] (2-phase):  '//HERR2
++            HERR='[PQFLSH error] (2-phase):  '//HERR2(1:228)
+@@ -549 +549 @@
+-            HERR='[PQFLSH error] (2-phase):  '//HERR2
++            HERR='[PQFLSH error] (2-phase):  '//HERR2(1:228)
+diff -r -u0 work/final/RP9_FLSH_SUB.FOR final/RP9_FLSH_SUB.FOR
+--- work/final/RP9_FLSH_SUB.FOR	2024-09-24 16:22:38.855016015 +0200
++++ final/RP9_FLSH_SUB.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -4,0 +5 @@
++      RHOM1 = 0.0
+@@ -513 +514 @@
+-                  HERR2='[TPFLSH error] (mix, 2-phase):  '//HERR1
++                  HERR2='[TPFLSH error] (mix, 2-phase):  '//HERR1(1:223)
+@@ -1141,0 +1143 @@
++      BLBUB=-1.0
+diff -r -u0 work/final/RP9_MIX_HMX.FOR final/RP9_MIX_HMX.FOR
+--- work/final/RP9_MIX_HMX.FOR	2024-09-24 16:22:36.017952021 +0200
++++ final/RP9_MIX_HMX.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -172 +172 @@
+-           IK=AMIX(I,J,K,4)
++           IK=INT(AMIX(I,J,K,4))
+diff -r -u0 work/final/RP9_PROP_SUB.FOR final/RP9_PROP_SUB.FOR
+--- work/final/RP9_PROP_SUB.FOR	2024-09-24 16:22:35.651943765 +0200
++++ final/RP9_PROP_SUB.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -1968,0 +1969 @@
++      if (.FALSE.) write(*,*) RHO
+@@ -2062,0 +2064,3 @@
++      CPCHC = 0.0
++      XKHC = 0.0
++      NTE = 0
+diff -r -u0 work/final/RP9_SAT_SUB.FOR final/RP9_SAT_SUB.FOR
+--- work/final/RP9_SAT_SUB.FOR	2024-09-24 16:22:40.129044752 +0200
++++ final/RP9_SAT_SUB.FOR	2024-09-24 06:33:18.328881415 +0200
+@@ -6,0 +7 @@
++      PiT=0.0
+@@ -1400,0 +1402 @@
++      FT = 0.0
+@@ -1404,0 +1407 @@
++      F=0.0
+@@ -2063,0 +2067 @@
++      HOLD = 0.0
+@@ -2461,0 +2466 @@
++      S1 = 0.0
+@@ -3775 +3780,3 @@
+-
++      DOUBLE PRECISION S
++      S=0.d0
++      S1=0.0
+@@ -4021,0 +4029 @@
++      PIFACTOR=0.0
+@@ -4163 +4171 @@
+-      CHARACTER*255 HERR,HR
++      CHARACTER*255 HERR
+@@ -4165 +4173 @@
+-      DIMENSION PHX(NCMAX),PHY(NCMAX),PHZ(NCMAX),VRB(NCMAX+3)
++      DIMENSION PHX(NCMAX),PHY(NCMAX),VRB(NCMAX+3)
+@@ -4172 +4179,0 @@
+-
+@@ -4188 +4195 @@
+-
++      S = 0.0
+diff -r -u0 work/final/RP9_SETUP.FOR final/RP9_SETUP.FOR
+--- work/final/RP9_SETUP.FOR	2024-09-24 16:22:37.590987503 +0200
++++ final/RP9_SETUP.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -298 +298 @@
+-        HF(1)=HFLD
++        HF(1)=HFLD(1:255)
+@@ -1167 +1167 @@
+-      HERR='[SETMIX error 101] error in opening mixture file:  '//HMXNME
++      HERR='[SETMIX error 101] error in opening mixture file:  '//HMXNME(1:204)
+diff -r -u0 work/final/RP9_TRNS_ECS.FOR final/RP9_TRNS_ECS.FOR
+--- work/final/RP9_TRNS_ECS.FOR	2024-09-24 16:22:41.041065324 +0200
++++ final/RP9_TRNS_ECS.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -356,0 +357 @@
++      if (.FALSE.) write (*,*) LERRT, LERRD
+@@ -597,0 +599 @@
++      IF (.FALSE.) write (*,*) TMAX
+@@ -639,0 +642 @@
++      S = 0.0
+diff -r -u0 work/final/RP9_TRNS_TCX.FOR final/RP9_TRNS_TCX.FOR
+--- work/final/RP9_TRNS_TCX.FOR	2024-09-24 16:22:38.444006744 +0200
++++ final/RP9_TRNS_TCX.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -32,0 +33 @@
++      RATLAM=0.0
+@@ -809,0 +811 @@
++      if (.FALSE.) write(*,*) DREDEXE(NRF0), PRTCKE(NRF0), TREDEXE(NRF0)
+diff -r -u0 work/final/RP9_TRNS_VIS.FOR final/RP9_TRNS_VIS.FOR
+--- work/final/RP9_TRNS_VIS.FOR	2024-09-24 16:22:37.176978165 +0200
++++ final/RP9_TRNS_VIS.FOR	2024-09-24 06:34:30.776515457 +0200
+@@ -180,0 +181 @@
++      TAU=0.0
+@@ -200,0 +202 @@
++      TAU=0.0
+@@ -587,0 +590 @@
++      TAU=0.0
+@@ -588,0 +592 @@
++      J=0
+@@ -1029,0 +1034 @@
++        if (.FALSE.) write(*,*) ICOMP
+@@ -1318,0 +1324 @@
++      if (.FALSE.) write(*,*) ICOMP
+@@ -1351,0 +1358 @@
++
+@@ -1395 +1402 @@
+-      
++      if (.FALSE.) write(*,*) ICOMP
+@@ -1428,0 +1436 @@
++        if (.FALSE.) write(*,*) ICOMP
+diff -r -u0 work/final/RP9_UTILITY.FOR final/RP9_UTILITY.FOR
+--- work/final/RP9_UTILITY.FOR	2024-09-24 16:22:36.431961359 +0200
++++ final/RP9_UTILITY.FOR	2024-09-24 00:13:42.000000000 +0200
+@@ -663,0 +664 @@
++      if (.FALSE.) write (*,*) z3,z4
+@@ -1462 +1463 @@
+-        IF (L) HEOS=HSTR
++        IF (L) HEOS=HSTR(1:3)
+@@ -1617 +1617,0 @@
+-
