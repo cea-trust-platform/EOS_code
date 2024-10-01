@@ -29,8 +29,8 @@
 #--add_comp_flags=<opt1>,<opt2>,...    # add flags for compilation
 #--with-openmp                         # compile with support of OpenMP
 #--without-openmp                      # compile without support of OpenMP (default)
-#--with-sanitize                       # use sanitizers
-#--without-sanitize                    # do not use sanitizers (default)
+#--with-sanitizer                      # use sanitizers
+#--without-sanitizer                   # do not use sanitizers (default)
 
 #-------------------------------------------------------------------
 # python API

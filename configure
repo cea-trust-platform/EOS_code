@@ -27,8 +27,8 @@ Options: [defaults in brackets after descriptions]
                                         [$user_env_file] 
   --release                             build for release (default)
   --debug                               build for debug
-  --with-sanitize                       build with sanitizers
-  --without-sanitize                    build without sanitizers (default)
+  --with-sanitizer                      build with sanitizers
+  --without-sanitizer                   build without sanitizers (default)
   --prefix=<path>                       install file in the directory <path>
   --execdir=<path>                      set the build directory, cannot be $dirconfigure
   --with-gui                            build the EOS GUI (need swig, python-devel, Qt4, pyQt, gnuplot, hdf5, med) (default)
