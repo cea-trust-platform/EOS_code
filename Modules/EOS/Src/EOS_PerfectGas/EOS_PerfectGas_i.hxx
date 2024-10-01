@@ -124,6 +124,12 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK ;
   }
 
+  inline EOS_Internal_Error EOS_PerfectGas::compute_d_mu_d_T_p_pT(double p, double T, double& d_mu_d_T_p) const
+  { (void)p ;
+    d_mu_d_T_p = prxm1+2.e0*T*prxm2 ;
+    return EOS_Internal_Error::OK ;
+  }
+
   inline EOS_Internal_Error EOS_PerfectGas::compute_lambda_ph(double p, double h, double& lambda) const
   { double T = 1.e0 ;
     EOS_Internal_Error err  = compute_T_ph(p, h, T) ;
@@ -134,6 +140,12 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error EOS_PerfectGas::compute_lambda_pT(double p, double T, double& lambda) const
   { (void)p ;
     lambda = prxl0+T*(prxl1+T*prxl2) ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  inline EOS_Internal_Error EOS_PerfectGas::compute_d_lambda_d_T_p_pT(double p, double T, double& d_lambda_d_T_p) const
+  { (void)p ;
+    d_lambda_d_T_p = prxl1+2.e0*T*prxl2 ;
     return EOS_Internal_Error::OK ;
   }
 }

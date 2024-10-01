@@ -59,8 +59,12 @@ namespace NEPTUNE_EOS
     virtual EOS_Internal_Error compute_cp_pT(double p, double T, double& Cp) const;
     //! mu(p,T)
     virtual EOS_Internal_Error compute_mu_pT(double p, double T, double& mu) const;
+    //! d_mu_d_T_p(p,T)
+    virtual EOS_Internal_Error compute_d_mu_d_T_p_pT(double p, double T, double& d_mu_d_T_p) const;
     //! lambda(p,T)
     virtual EOS_Internal_Error compute_lambda_pT(double p, double T, double& lambda) const;
+    //! d_lambda_d_T_p(p,T)
+    virtual EOS_Internal_Error compute_d_lambda_d_T_p_pT(double p, double T, double& d_lambda_d_T_p) const;
     //
     //  Other methods
     //
