@@ -279,6 +279,7 @@ if not C.partial:
         s = """
 
       integer function THREAD_NUM_RP10()
+      integer omp_get_thread_num
       THREAD_NUM_RP10 = omp_get_thread_num()
       end function THREAD_NUM_RP10
 
