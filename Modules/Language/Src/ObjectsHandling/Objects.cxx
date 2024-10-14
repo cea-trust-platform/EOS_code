@@ -141,9 +141,9 @@ namespace OBJECTSHANDLING
   int  Objects::add_object (NumberedObject *obj)
   {
 #ifdef _OPENMP
-  if (omp_in_parallel()) {
+//  if (omp_in_parallel()) {
     mutex_objects.lock();
-  }
+//  }
 #endif
     int return_value(free) ;
     the_objects[free] = obj ;
@@ -168,9 +168,9 @@ namespace OBJECTSHANDLING
         nb_obj_max = newnb_obj_max ;
       }
 #ifdef _OPENMP
-  if (omp_in_parallel()) {
+//  if (omp_in_parallel()) {
     mutex_objects.unlock();
-  }
+//  }
 #endif
     return return_value ;
   }
@@ -178,9 +178,9 @@ namespace OBJECTSHANDLING
   NEPTUNE::Boolean Objects::delete_object (const NEPTUNE::Object_ID& obj)
   { 
 #ifdef _OPENMP
-  if (omp_in_parallel()) {
+//  if (omp_in_parallel()) {
     mutex_objects.lock();
-  }
+//  }
 #endif
     int num = obj        ;
     int tmp = next[free] ;
@@ -189,9 +189,9 @@ namespace OBJECTSHANDLING
     the_objects[num] = 0 ;
     nb_obj-- ;
 #ifdef _OPENMP
-  if (omp_in_parallel()) {
+//  if (omp_in_parallel()) {
     mutex_objects.unlock();
-  }
+//  }
 #endif
     return True ;
   }
