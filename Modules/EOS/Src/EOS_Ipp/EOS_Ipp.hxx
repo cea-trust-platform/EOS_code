@@ -39,6 +39,10 @@ namespace NEPTUNE_EOS
      public:
         virtual const AString& table_name() const ;
         mutable bool switch_model;  // If true : on surcharge les fcts compute si calcul pas ok
+        mutable bool switch_comp_sat_;  // If true : on surcharge les fcts compute si calcul pas ok
+        mutable bool swch_calc_deriv_fld_; // If true: calcule d_lambda_d_h_p avec la méthode du fluide
+        mutable std::vector<std::vector<double>> r1_val;
+        mutable std::vector<std::vector<double>> r2_val;
         EOS* obj_fluid = nullptr;
         EOS_Ipp() ;
         virtual ~EOS_Ipp() ;
@@ -73,6 +77,8 @@ namespace NEPTUNE_EOS
         virtual EOS_Internal_Error get_error_Ipp(double&) const ;
 
 
+
+
         // Debugage de REFPROP10
          // Molar mass (kg/mol)
          virtual EOS_Internal_Error get_mm(double&) const;
@@ -91,8 +97,8 @@ namespace NEPTUNE_EOS
         virtual const Type_Info& get_Type_Info () const ;
         
         // Compute interpolation error 
-        virtual EOS_Internal_Error compute_Ipp_error(double& error_tot, AString prop) ;
-
+        virtual EOS_Internal_Error compute_Ipp_error(double& error_tot, double* &error_cells, AString prop) ;
+        virtual EOS_Internal_Error compute_Ipp_sat_error(double& error_tot,  double* &error_cells, AString prop) ;
         //! h(p,T)
         virtual EOS_Internal_Error compute_h_pT(double p, double T, double& h) const ;
         //virtual EOS_Internal_Error compute_d_h_d_T_pT(double p, double T, double& h) const;
@@ -141,6 +147,11 @@ namespace NEPTUNE_EOS
         virtual EOS_Internal_Error compute_lambda_pT(double p, double T, double&) const ;
         //! d(lambda)/dp      at constant specific enthalpy
         virtual EOS_Internal_Error compute_d_lambda_d_p_h_ph(double p, double h, double&) const ;
+        //! d(h)/dp      at constant specific temp
+        virtual EOS_Internal_Error compute_d_h_d_p_T_pT(double p, double T, double& r,
+                 double c_0, double c_1, double c_2, double c_3, double c_4) const ;
+        virtual EOS_Internal_Error compute_d_h_d_p_T_pT(double p, double T, double& r) const; 
+        virtual EOS_Internal_Error compute_d_h_d_T_p_pT(double p, double T, double& r) const; 
         //! d(lambda)/dh      at constant pressure
         virtual EOS_Internal_Error compute_d_lambda_d_h_p_ph(double p, double h, double&) const ;
         //! cp(p,h)
@@ -249,6 +260,19 @@ namespace NEPTUNE_EOS
         double hmax      ;
         double tmin      ;
         double tmax      ;
+        mutable double pmin_ipp  ;
+        mutable double pmax_ipp  ;
+        mutable double hmin_ipp  ;
+        mutable double hmax_ipp  ;
+        mutable double tmin_ipp  ;
+        mutable double tmax_ipp  ;
+        mutable double pmin_cpt  ;
+        mutable double pmax_cpt  ;
+        mutable double hmin_cpt  ;
+        mutable double hmax_cpt  ;
+        mutable double tmin_cpt  ;
+        mutable double tmax_cpt  ;
+        mutable int save_bound;
         double erreurtot ; // erreur de l'interpolation sur le maillage
         double tcrit     ;
         double pcrit     ;
@@ -307,10 +331,16 @@ namespace NEPTUNE_EOS
         EOS_Internal_Error compute_h_v_pT(double p, double T, double& res) const ;
         EOS_Internal_Error check_p_bounds_ph(double p) const ;
 
-        virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name) ; // Pour ipp Refprop
+        virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name,bool switch_comp_sat,bool swch_calc_deriv_fld); // for the interpolator
         virtual EOS_Error compute(const EOS_Field& p, const EOS_Field& h, EOS_Fields& r, 
                               EOS_Error_Field& errfield) const;  
         EOS_Error compute( const EOS_Field& p, EOS_Fields& r, EOS_Error_Field& errfield) const; 
+        
+        /* Fonction qui servent a recuperer les bornes d'un jdd (lance les calculs avec le fluid declarer par init model)*/
+        virtual EOS_Error compute_(const EOS_Field& p, const EOS_Field& h, EOS_Fields& r, 
+                              EOS_Error_Field& errfield) const;      
+       /* Fonction qui servent a recuperer les bornes d'un jdd (lance les calculs avec le fluid declarer par init model)*/                     
+        EOS_Error compute_( const EOS_Field& p, EOS_Fields& r, EOS_Error_Field& errfield) const; 
                 
      private: 
         static int type_Id ;
@@ -338,6 +368,7 @@ namespace NEPTUNE_EOS
         
 
         EOS_Error find_in_Ipp_Prop_ph(std::map<AString, int>::const_iterator &it, const AString & prop) const;// permet de récupérer un iterateur dans la map correspondant à la bonne propriété 
+        EOS_Error find_in_Ipp_Prop_sat(std::map<AString, int>::const_iterator &it, const AString & prop) const;// permet de récupérer un iterateur dans la map correspondant à la bonne propriété 
         EOS_Error find(std::map<AString, int>::const_iterator &it, const AString & prop, const std::map< AString, int> &map ) const;// permet de récupérer un iterateur dans la map correspondant à la bonne propriété 
         EOS_Internal_Error check_ph_bounds(double p,double h) const ;
         EOS_Internal_Error check_p_bounds_satlim(double p) const ;

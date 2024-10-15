@@ -97,15 +97,20 @@ namespace NEPTUNE
   // Default implementation (can be overloaded in derived classes):
   //  call to compute(P) or compute(P, h).
 
-  EOS_Error EOS_Fluid::init_model(const std::string& model_name, const std::string& fluid_name)
+  EOS_Error EOS_Fluid::init_model(const std::string& model_name, const std::string& fluid_name,bool switch_comp_sat,bool swch_calc_deriv_fld)
   {
     std::cout<<"Attention ! Mauvaise initialisation de l'IPP ";
     return EOS_Error::ok;
   }
 
-  EOS_Internal_Error EOS_Fluid::compute_Ipp_error(double& error_tot, AString prop)  
+  EOS_Internal_Error EOS_Fluid::compute_Ipp_error(double& error_tot, double* &error_cells, AString prop)  
   {
     std::cout<<"Attention ! Mauvaise utilisation de la routine compute_Ipp_error avec un fluide et pas un interpolateur ";
+    return EOS_Internal_Error::OK;
+  }
+  EOS_Internal_Error EOS_Fluid::compute_Ipp_sat_error(double& error_tot,  double* &error_cells, AString prop)  
+  {
+    std::cout<<"Attention ! Mauvaise utilisation de la routine compute_Ipp_sat_error avec un fluide et pas un interpolateur ";
     return EOS_Internal_Error::OK;
   }
 

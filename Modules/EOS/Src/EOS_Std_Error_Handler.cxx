@@ -186,7 +186,7 @@ namespace NEPTUNE
                                                       const UObject *arg1,
                                                       const UObject *arg2,
                                                       const UObject *result)
-  { const int max_lines_to_dump = 40 ;
+  { const int max_lines_to_dump = 400000;
     const EOS_Internal_Error ierr = err_field.find_worst_error() ;
     const EOS_Error          err  = ierr.generic_error() ;
   

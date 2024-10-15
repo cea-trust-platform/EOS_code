@@ -101,8 +101,9 @@ namespace NEPTUNE
     const AString &phase_name()    const ;
     const AString &table_name()    const ;
     const AString &version_name()  const ;
-    virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name); // Pour ipp Refprop 
-    virtual EOS_Internal_Error compute_Ipp_error(double& error_tot, AString prop);  
+    virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name, bool switch_comp_sat=true, bool swch_calc_deriv_fld=true); // For the interpolator  
+    virtual EOS_Internal_Error compute_Ipp_error(double& error_tot, double* &error_cells, AString prop);  
+    virtual EOS_Internal_Error compute_Ipp_sat_error(double& error_tot, double* &error_cells, AString prop);
     EOS_Error compute(const EOS_Fields &input, 
                       EOS_Field &output, 
                       EOS_Error_Field &errfield) const ;

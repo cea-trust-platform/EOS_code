@@ -566,6 +566,8 @@ namespace NEPTUNE_EOS
     //compute hmax
     F77NAME(enthal)(tmax, dmax, arr_molfrac, h_tmp) ;
     hmax = refprop_nrj_2_eos(h_tmp) ;
+    pmin=1000; // patch to get pmin and hmin -> not given by REFPROP
+    hmin=-76319.7;
   }
 
 

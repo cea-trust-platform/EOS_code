@@ -136,8 +136,9 @@ namespace NEPTUNE
     EOS_Internal_Error compute_Tsat(const char* const property_name,
                               double in, double& out) const;
 
-    virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name);
-    virtual EOS_Internal_Error compute_Ipp_error(double& error_tot, AString prop);  
+    virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name,bool switch_comp_sat,bool swch_calc_deriv_fld);
+    virtual EOS_Internal_Error compute_Ipp_error(double& error_tot, double* &error_cells, AString prop);  
+    virtual EOS_Internal_Error compute_Ipp_sat_error(double& error_tot, double* &error_cells, AString prop);  
     virtual EOS_Internal_Error get_p(double& p) const;
     virtual EOS_Internal_Error get_mm(double& mm) const;
     virtual EOS_Internal_Error get_p_crit(double& p_crit) const;
