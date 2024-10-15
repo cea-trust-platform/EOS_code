@@ -886,6 +886,7 @@ namespace CATHARE_FREONR12
                            break ;
                       }
                  }
+                break;
               default :
                 ind_not_def += 1 ;
                 not_def(ind_not_def) = i ;

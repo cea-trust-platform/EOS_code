@@ -70,6 +70,8 @@ do
    sed -i 's/'$filet'/TH_'$filet'/g' $BINARY_DIR/Thetis/*
 done
 
+(cd $BINARY_DIR/Thetis ; patch -p1 < Thetis.patch)
+
 echo "Copy Thetis data files, build index.eos"
 # files copy
 cp $THETIS_ROOT_DIR/DATA/* $EOS_DATA_DIR

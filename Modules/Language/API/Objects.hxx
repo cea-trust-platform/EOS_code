@@ -21,6 +21,11 @@
 #define Objects_h 1
 
 #include "Language/API/Boolean.hxx"
+
+#ifdef _OPENMP
+#include <mutex>
+#endif
+  
 using std::ostream;
 using std::istream;
 namespace OBJECTSHANDLING
@@ -73,7 +78,6 @@ namespace OBJECTSHANDLING
   private:
     Objects();
     
-    
   private: 
     static Objects* singleton;
     NumberedObject** the_objects;
@@ -82,6 +86,10 @@ namespace OBJECTSHANDLING
     int step;
     int* next;
     int free;
+
+#ifdef _OPENMP
+    std::mutex mutex_objects;
+#endif
   };
 }
 

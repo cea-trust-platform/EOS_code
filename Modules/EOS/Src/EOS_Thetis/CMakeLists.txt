@@ -1,5 +1,6 @@
 # Pre-configure
 execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "--  > Configuring plugin Thetis    ... ")
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Thetis DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 execute_process(
     COMMAND           ${CMAKE_CURRENT_SOURCE_DIR}/THETIS_pre_configure.sh
                       ${WITH_PLUGIN_THETIS}

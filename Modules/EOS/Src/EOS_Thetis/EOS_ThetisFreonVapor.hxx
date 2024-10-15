@@ -42,6 +42,7 @@ namespace NEPTUNE_EOS
     virtual const AString& equation_name() const;
     
     
+    using EOS_ThetisFreon::init;
     virtual int init(const Strings&);
 
 

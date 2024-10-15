@@ -103,6 +103,10 @@ add_opt   "--install-tirpc"                "INSTALL_TIRPC=ON"
 add_opt   "--force-glibc-rpc"              "FORCE_GLIBC_RPC=ON"
 add_opt   "--shared-only"                  "BUILD_STATIC_LIB=OFF"
 add_opt   "--static-only"                  "BUILD_SHARED_LIB=OFF"
+add_opt   "--with-openmp"                  "ENABLE_OPENMP=ON"
+add_opt   "--without-openmp"               "ENABLE_OPENMP=OFF"
+add_opt   "--with-sanitizer"               "ENABLE_SANITIZER=ON"
+add_opt   "--without-sanitizer"            "ENABLE_SANITIZER=OFF"
 
 # option like --prefix=/home/myrep --> -DCMAKE_INSTALL_PREFIX=/home/myrep
 # ex : add_opteq "--prefix" "CMAKE_INSTALL_PREFIX"

@@ -1300,11 +1300,11 @@ int main()
 
     EOS mixing("EOS_Mixing");
     int nbcomp=3;
-    EOS* components[nbcomp];
+    std::vector<EOS*> components(nbcomp);
     components[0]=&steam;
     components[1]=&C1;
     components[2]=&C2;
-    mixing.set_components(components, nbcomp);
+    mixing.set_components(components.data(), nbcomp);
 
     cout << "**   eos " << endl;
     cout << "   * fluid   : " <<mixing.fluid_name()<<endl;
@@ -1636,27 +1636,27 @@ int main()
     double temperature_in[] =  { t_0 } ;
     double mfrac_wvapor[]   = { yv_0 }  ;
     double mfrac_air[] =  { (1.0 - yv_0) } ;
-    double temperature_out[nbpt] ;
-    double enthalpy_out[nbpt] ;
-    double density[nbpt]  ;
-    double cp[nbpt]  ;
-    int    ierr[nbpt] ;
+    std::vector<double> temperature_out(nbpt) ;
+    std::vector<double> enthalpy_out(nbpt) ;
+    std::vector<double> density(nbpt) ;
+    std::vector<double> cp(nbpt)  ;
+    std::vector<int>    ierr(nbpt) ;
 
     pt_in[0]  = pressure ;
     pt_in[1]  = temperature_in ;
     pt_in[2]  = mfrac_wvapor ;
     pt_in[3]  = mfrac_air ;
-    pt_out[0] = enthalpy_out ;
-    pt_out[1] = density ;
-    pt_out[2] = cp ;
+    pt_out[0] = enthalpy_out.data() ;
+    pt_out[1] = density.data() ;
+    pt_out[2] = cp.data() ;
 
     ph_in[0]  = pressure ;
     ph_in[1]  = enthalpy_in ;
     ph_in[2]  = mfrac_wvapor ;
     ph_in[3]  = mfrac_air ;
-    ph_out[0] = temperature_out ;
-    ph_out[1] = density ;
-    ph_out[2] = cp ;
+    ph_out[0] = temperature_out.data() ;
+    ph_out[1] = density.data() ;
+    ph_out[2] = cp.data() ;
 
     EOS_Field v1_in1 ("in1",  "p",              nbpt, pt_in[0]);
     EOS_Field v1_in2 ("in2",  "T",              nbpt, pt_in[1]);
@@ -1665,7 +1665,7 @@ int main()
     EOS_Field v1_out1("out1", "h",              nbpt, pt_out[0]);
     EOS_Field v1_out2("out2", "rho",            nbpt, pt_out[1]);
     EOS_Field v1_out3("out3", "cp",             nbpt, pt_out[2]);
-    EOS_Error_Field v1_err(nbpt, ierr);
+    EOS_Error_Field v1_err(nbpt, ierr.data());
 
     EOS_Field v2_in1 ("in1",  "p",              nbpt, ph_in[0]);
     EOS_Field v2_in2 ("in2",  "h",              nbpt, ph_in[1]);
@@ -1674,7 +1674,7 @@ int main()
     EOS_Field v2_out1("out1", "T",              nbpt, ph_out[0]);
     EOS_Field v2_out2("out2", "rho",            nbpt, ph_out[1]);
     EOS_Field v2_out3("out3", "cp",             nbpt, ph_out[2]);
-    EOS_Error_Field v2_err(nbpt, ierr);
+    EOS_Error_Field v2_err(nbpt, ierr.data());
 
     EOS_Fields wp1_in(2) ;
     wp1_in[0]  = v1_in1  ;
@@ -1986,6 +1986,7 @@ int main()
     delete[] pt_in ;
     delete[] ph_out ;
     delete[] pt_out ;
+    (void) er;
   }
 #endif
 #endif
@@ -2207,7 +2208,7 @@ int main()
     catch (EOS_Internal_Error& error) {
       cout << "Error when creating object: " << error.generic_error() << endl;
     }
-    catch (std::bad_alloc) {
+    catch (std::bad_alloc &) {
       cout << "Error when creating object: Class not found." << endl;
     }
     catch (...) {
@@ -5324,8 +5325,8 @@ int main()
 
       int nb_eosc2 = 7 ;
 
-      EOS* liquid[nb_eosc2] ;
-      EOS* vapor[nb_eosc2]  ;
+      std::vector<EOS*> liquid(nb_eosc2) ;
+      std::vector<EOS*> vapor(nb_eosc2)  ;
       /*liquid[0] = new EOS("EOS_Cathare2","WaterLiquid");
         liquid[1] = new EOS("EOS_Cathare2","HXNCLiquid");
         liquid[2] = new EOS("EOS_Cathare2","IAPWSLiquid");
@@ -6100,6 +6101,8 @@ int main()
  
       delete obj_eos ;
       endpar_iapwsliq: ;
+
+      (void) er;
     }
  
  
@@ -6315,11 +6318,11 @@ int main()
         EOS eos_azote ("EOS_Cathare2", "NitrogenIncondensable");
         EOS eos_melan ("EOS_Mixing");
         int nbcomp = 3 ;
-        EOS*components[nbcomp];
+        std::vector<EOS*> components(nbcomp);
         components[0] = obj_eos;
         components[1] = &eos_argon;
         components[2] = &eos_azote;
-        eos_melan.set_components(components, nbcomp);
+        eos_melan.set_components(components.data(), nbcomp);
  
         EOS_Fields vfentree(5) ;
         EOS_Field fpression("P",     "P",    nbpoint, pression); vfentree[0] = fpression ; 
@@ -6410,6 +6413,7 @@ int main()
  
       delete obj_eos ;
       endpar_iapwsvap: ;
+      (void) er;
     }
 
   }
@@ -6465,8 +6469,8 @@ int main()
     EOS_Error_Field err(ierr);
 
     // (field - field)
-    double ptsat[n];
-    EOS_Field Tsat("tsat","T_sat",n,ptsat);
+    std::vector<double> ptsat(n);;
+    EOS_Field Tsat("tsat","T_sat",n,ptsat.data());
 
     cr=liquid.compute(P,Tsat,err);
     cout << "* field field [cr=" << cr <<"]"<< endl;
@@ -6667,8 +6671,8 @@ int main()
     EOS_Error_Field err(ierr);
 
     // (field - field)
-    double ptsat[n];
-    EOS_Field Tsat("tsat","T_sat",n,ptsat);
+    std::vector<double> ptsat(n);
+    EOS_Field Tsat("tsat","T_sat",n,ptsat.data());
 
     cr=liquid.compute(P,Tsat,err);
     cout << "* field field [cr=" << cr <<"]"<< endl;

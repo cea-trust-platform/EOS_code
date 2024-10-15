@@ -1,0 +1,2157 @@
+diff -Nar -u0 old/TH_ALLOUER_BUFFER.c new/TH_ALLOUER_BUFFER.c
+--- old/TH_ALLOUER_BUFFER.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_ALLOUER_BUFFER.c	2024-09-29 23:33:36.000000000 +0200
+@@ -26,4 +26,5 @@
+-int ALLOUER_BUFFER_I ( IDBUF, NB_ELEMENTS, ADRESSE ) 
+-     int IDBUF;
+-     int NB_ELEMENTS;
+-     int **ADRESSE;
++int ALLOUER_BUFFER_I ( 
++     int IDBUF,
++     int NB_ELEMENTS,
++     int **ADRESSE
++     )
+@@ -147,4 +148,5 @@
+-int ALLOUER_BUFFER_R ( IDBUF, NB_ELEMENTS, ADRESSE ) 
+-     int IDBUF;
+-     int NB_ELEMENTS;
+-     REAL **ADRESSE;
++int ALLOUER_BUFFER_R (
++     int IDBUF,
++     int NB_ELEMENTS,
++     REAL **ADRESSE
++     )
+@@ -277,4 +279,5 @@
+-int ALLOUER_BUFFER_PI ( IDBUF, NB_ELEMENTS, ADRESSE ) 
+-     int IDBUF;
+-     int NB_ELEMENTS;
+-     int *** ADRESSE;
++int ALLOUER_BUFFER_PI (
++     int IDBUF,
++     int NB_ELEMENTS,
++     int *** ADRESSE
++     )
+@@ -406,4 +409,5 @@
+-int ALLOUER_BUFFER_PR ( IDBUF, NB_ELEMENTS, ADRESSE ) 
+-     int IDBUF;
+-     int NB_ELEMENTS;
+-     REAL *** ADRESSE;
++int ALLOUER_BUFFER_PR (
++     int IDBUF,
++     int NB_ELEMENTS,
++     REAL *** ADRESSE
++     )
+diff -Nar -u0 old/TH_ALLOUER_MEMOIRE.c new/TH_ALLOUER_MEMOIRE.c
+--- old/TH_ALLOUER_MEMOIRE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_ALLOUER_MEMOIRE.c	2024-09-29 23:36:28.000000000 +0200
+@@ -23,3 +23,4 @@
+-int ALLOUER_MEMOIRE_I ( NB_ELEMENTS, ADRESSE ) 
+-     int NB_ELEMENTS;
+-     int** ADRESSE;
++int ALLOUER_MEMOIRE_I (
++     int NB_ELEMENTS,
++     int** ADRESSE
++     )
+@@ -131,3 +132,4 @@
+-int ALLOUER_MEMOIRE_R ( NB_ELEMENTS, ADRESSE ) 
+-     int NB_ELEMENTS;
+-     REAL** ADRESSE;
++int ALLOUER_MEMOIRE_R (
++     int NB_ELEMENTS,
++     REAL** ADRESSE
++     )
+@@ -231,3 +233,4 @@
+-int ALLOUER_MEMOIRE_PI ( NB_ELEMENTS, ADRESSE ) 
+-     int NB_ELEMENTS;
+-     int *** ADRESSE;
++int ALLOUER_MEMOIRE_PI (
++     int NB_ELEMENTS,
++     int *** ADRESSE
++     )
+@@ -336,3 +339,4 @@
+-int ALLOUER_MEMOIRE_PR ( NB_ELEMENTS, ADRESSE ) 
+-     int NB_ELEMENTS;
+-     REAL *** ADRESSE;
++int ALLOUER_MEMOIRE_PR (
++     int NB_ELEMENTS,
++     REAL *** ADRESSE
++     )
+@@ -437,3 +441,4 @@
+-int ALLOUER_MEMOIRE_DESC_FLUIDE ( NB_ELEMENTS, ADRESSE )
+-     int NB_ELEMENTS;
+-     desc_fluid_t ** ADRESSE;
++int ALLOUER_MEMOIRE_DESC_FLUIDE ( 
++     int NB_ELEMENTS,
++     desc_fluid_t ** ADRESSE
++     )
+diff -Nar -u0 old/TH_ANALYSER_COURBE.c new/TH_ANALYSER_COURBE.c
+--- old/TH_ANALYSER_COURBE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_ANALYSER_COURBE.c	2024-09-29 23:37:32.000000000 +0200
+@@ -14,3 +14,4 @@
+-int ANALYSER_COURBE ( P_DESC_PLAN, ADRESSE ) 
+-     desc_plan_t * P_DESC_PLAN;
+-     int** ADRESSE;
++int ANALYSER_COURBE (
++     desc_plan_t * P_DESC_PLAN,
++     int** ADRESSE
++     )
+diff -Nar -u0 old/TH_CALCULER_COEFS.c new/TH_CALCULER_COEFS.c
+--- old/TH_CALCULER_COEFS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_COEFS.c	2024-09-29 23:38:51.000000000 +0200
+@@ -14,9 +14,9 @@
+-int CALCULER_COEFS( P_DESC_FLUIDE, NO_FONCTION, NO_PLAN, MODE_CALCUL_COEFS,
+-                    N, AI_NO_MAILLES, AP_COEFS ) 
+-     desc_fluid_t * P_DESC_FLUIDE;
+-     int NO_FONCTION;
+-     int NO_PLAN;
+-     int MODE_CALCUL_COEFS;
+-     int N;
+-     int *AI_NO_MAILLES;
+-     REAL ***AP_COEFS;
++int CALCULER_COEFS(
++     desc_fluid_t * P_DESC_FLUIDE,
++     int NO_FONCTION,
++     int NO_PLAN,
++     int MODE_CALCUL_COEFS,
++     int N,
++     int *AI_NO_MAILLES,
++     REAL ***AP_COEFS
++     )
+diff -Nar -u0 old/TH_CALCULER_COEFS_EMULSION.c new/TH_CALCULER_COEFS_EMULSION.c
+--- old/TH_CALCULER_COEFS_EMULSION.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_COEFS_EMULSION.c	2024-09-29 23:39:26.000000000 +0200
+@@ -14,5 +14,6 @@
+-void CALCULER_COEFS_EMULSION( N, PA_CS, PA_VS, PA_COEFS)
+-     int N;
+-     REAL *PA_VS; /*(3,4,N)*/
+-     REAL *PA_CS; /*(2,4,N)*/
+-     REAL *** PA_COEFS; /*(N)*/
++void CALCULER_COEFS_EMULSION(
++     int N,
++     REAL *PA_VS, /*(3,4,N)*/
++     REAL *PA_CS, /*(2,4,N)*/
++     REAL *** PA_COEFS  /*(N)*/
++     )
+diff -Nar -u0 old/TH_CALCULER_COEFS_FCT.c new/TH_CALCULER_COEFS_FCT.c
+--- old/TH_CALCULER_COEFS_FCT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_COEFS_FCT.c	2024-09-29 23:40:34.000000000 +0200
+@@ -14,12 +14,8 @@
+-int CALCULER_COEFS_FCT( P_DESC_PLAN,
+-                        NO_FONCTION,
+-                        AI_NO_MAILLES,
+-                        NB_MS, 
+-                        AI_MS,
+-                        AP_COEFS) 
+-     desc_plan_t * P_DESC_PLAN;
+-     int NO_FONCTION;
+-     int NB_MS;
+-     int* AI_MS;
+-     int* AI_NO_MAILLES;
+-     REAL *** AP_COEFS;
++int CALCULER_COEFS_FCT(
++     desc_plan_t * P_DESC_PLAN,
++     int NO_FONCTION,
++     int* AI_NO_MAILLES,
++     int NB_MS,
++     int* AI_MS,
++     REAL *** AP_COEFS
++     )
+diff -Nar -u0 old/TH_CALCULER_COEFS_FCT_EMUL.c new/TH_CALCULER_COEFS_FCT_EMUL.c
+--- old/TH_CALCULER_COEFS_FCT_EMUL.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_COEFS_FCT_EMUL.c	2024-09-29 23:41:20.000000000 +0200
+@@ -14,12 +14,8 @@
+-int CALCULER_COEFS_FCT_EMUL ( P_DESC_FLUIDE, 
+-                              NO_FONCTION, 
+-                              AI_NO_MAILLES, 
+-                              NB_MS, 
+-                              AI_MS,
+-                              AP_COEFS) 
+-     desc_fluid_t * P_DESC_FLUIDE;
+-     int NO_FONCTION;
+-     int* AI_NO_MAILLES;
+-     int NB_MS;
+-     int* AI_MS;
+-     REAL *** AP_COEFS;
++int CALCULER_COEFS_FCT_EMUL (
++     desc_fluid_t * P_DESC_FLUIDE,
++     int NO_FONCTION,
++     int* AI_NO_MAILLES,
++     int NB_MS,
++     int* AI_MS,
++     REAL *** AP_COEFS
++     )
+diff -Nar -u0 old/TH_CALCULER_COEFS_MAILLES.c new/TH_CALCULER_COEFS_MAILLES.c
+--- old/TH_CALCULER_COEFS_MAILLES.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_COEFS_MAILLES.c	2024-09-29 23:41:46.000000000 +0200
+@@ -14,5 +14,6 @@
+-void CALCULER_COEFS_MAILLES( N, AR_CS, AR_VS, AP_COEFS) 
+-     int N;
+-     REAL *AR_CS; /*(2,4,N)*/
+-     REAL *AR_VS; /*(3,4,N)*/
+-     REAL **AP_COEFS; /*(N)*/
++void CALCULER_COEFS_MAILLES(
++     int N,
++     REAL *AR_CS, /*(2,4,N)*/
++     REAL *AR_VS, /*(3,4,N)*/
++     REAL **AP_COEFS  /*(N)*/
++     )
+diff -Nar -u0 old/TH_CALCULER_DERIVEES_EMULSION.c new/TH_CALCULER_DERIVEES_EMULSION.c
+--- old/TH_CALCULER_DERIVEES_EMULSION.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_DERIVEES_EMULSION.c	2024-09-29 23:42:25.000000000 +0200
+@@ -14,12 +14,8 @@
+-void CALCULER_DERIVEES_EMULSION(NO_FONCTION,
+-                                N, 
+-                                AI_NO_SEGMENTS,
+-                                AR_COEFS_FCT_SAT_LIQ, 
+-                                AR_COEFS_FCT_SAT_VAP,
+-                                AR_VS)
+-     int NO_FONCTION;
+-     int N;
+-     int *AI_NO_SEGMENTS; /*(N)*/
+-     REAL *AR_COEFS_FCT_SAT_LIQ; /*(4,*)*/
+-     REAL *AR_COEFS_FCT_SAT_VAP; /*(4,*)*/
+-     REAL *AR_VS; /*(3,4,N)*/
++void CALCULER_DERIVEES_EMULSION(
++     int NO_FONCTION,
++     int N,
++     int *AI_NO_SEGMENTS, /*(N)*/
++     REAL *AR_COEFS_FCT_SAT_LIQ, /*(4,*)*/
++     REAL *AR_COEFS_FCT_SAT_VAP, /*(4,*)*/
++     REAL *AR_VS  /*(3,4,N)*/
++     )
+diff -Nar -u0 old/TH_CALCULER_DERIVEES_PH.c new/TH_CALCULER_DERIVEES_PH.c
+--- old/TH_CALCULER_DERIVEES_PH.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_DERIVEES_PH.c	2024-09-29 23:42:47.000000000 +0200
+@@ -14,5 +14,6 @@
+-void CALCULER_DERIVEES_PH( NO_FONCTION, N, AR_VT, AR_V) 
+-     int NO_FONCTION;
+-     int N;
+-     REAL *AR_VT; /*(16,N)*/
+-     REAL *AR_V; /*(3,N)*/
++void CALCULER_DERIVEES_PH(
++     int NO_FONCTION,
++     int N,
++     REAL *AR_VT, /*(16,N)*/
++     REAL *AR_V  /*(3,N)*/
++     )
+diff -Nar -u0 old/TH_CALCULER_DERIVEES_PS.c new/TH_CALCULER_DERIVEES_PS.c
+--- old/TH_CALCULER_DERIVEES_PS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_DERIVEES_PS.c	2024-09-29 23:43:25.000000000 +0200
+@@ -14,5 +14,6 @@
+-void CALCULER_DERIVEES_PS( NO_FONCTION, N, AR_VT, AR_V) 
+-     int NO_FONCTION;
+-     int N;
+-     REAL *AR_VT; /*(16,N)*/
+-     REAL *AR_V; /*(3,N)*/
++void CALCULER_DERIVEES_PS(
++     int NO_FONCTION,
++     int N,
++     REAL *AR_VT, /*(16,N)*/
++     REAL *AR_V  /*(3,N)*/
++     )
+diff -Nar -u0 old/TH_CALCULER_DERIVEES_PT.c new/TH_CALCULER_DERIVEES_PT.c
+--- old/TH_CALCULER_DERIVEES_PT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_DERIVEES_PT.c	2024-09-29 23:44:13.000000000 +0200
+@@ -14,6 +14,7 @@
+-void CALCULER_DERIVEES_PT ( NO_FONCTION, N, AR_T, AR_VT, AR_V) 
+-     int N;
+-     int NO_FONCTION;
+-     REAL *AR_T; /* (N) */
+-     REAL *AR_VT; /*(16,N)*/
+-     REAL **AR_V; /*(3,N)*/
++void CALCULER_DERIVEES_PT (
++     int NO_FONCTION,
++     int N,
++     REAL *AR_T, /* (N) */
++     REAL *AR_VT, /*(16,N)*/
++     REAL **AR_V  /*(3,N)*/
++     )
+diff -Nar -u0 old/TH_CALCULER_FONCTION.c new/TH_CALCULER_FONCTION.c
+--- old/TH_CALCULER_FONCTION.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_FONCTION.c	2024-09-29 23:45:06.000000000 +0200
+@@ -14,16 +14,10 @@
+-int CALCULER_FONCTION( P_DESC_FLUIDE, 
+-                       NO_FONCTION, 
+-                       NO_PLAN,
+-                       N, 
+-                       AR_ENTREE1, 
+-                       AR_ENTREE2,
+-                       AI_NO_MAILLES, 
+-                       AR_RESULTAT ) 
+-     desc_fluid_t * P_DESC_FLUIDE;
+-     int NO_FONCTION;
+-     int NO_PLAN;
+-     int N;
+-     REAL *AR_ENTREE1;
+-     REAL *AR_ENTREE2;
+-     int *AI_NO_MAILLES;
+-     REAL **AR_RESULTAT;
++int CALCULER_FONCTION(
++     desc_fluid_t * P_DESC_FLUIDE,
++     int NO_FONCTION,
++     int NO_PLAN,
++     int N,
++     REAL *AR_ENTREE1,
++     REAL *AR_ENTREE2,
++     int *AI_NO_MAILLES,
++     REAL **AR_RESULTAT
++     )
+diff -Nar -u0 old/TH_CALCULER_FONCTION_SAT.c new/TH_CALCULER_FONCTION_SAT.c
+--- old/TH_CALCULER_FONCTION_SAT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_FONCTION_SAT.c	2024-09-29 23:45:49.000000000 +0200
+@@ -14,15 +14,9 @@
+-void CALCULER_FONCTION_SAT( P_DESC_FLUIDE, 
+-                            NO_FONCTION,
+-                            N, 
+-                            AR_PRESSION, 
+-                            AI_NO_SEGMENTS,
+-                            AR_RESULTAT1, 
+-                            AR_RESULTAT2 ) 
+-
+-     desc_fluid_t * P_DESC_FLUIDE;
+-     int NO_FONCTION;
+-     int N;
+-     REAL *AR_PRESSION;
+-     int *AI_NO_SEGMENTS;
+-     REAL **AR_RESULTAT1;
+-     REAL **AR_RESULTAT2;
++void CALCULER_FONCTION_SAT(
++     desc_fluid_t * P_DESC_FLUIDE,
++     int NO_FONCTION,
++     int N,
++     REAL *AR_PRESSION,
++     int *AI_NO_SEGMENTS,
++     REAL **AR_RESULTAT1,
++     REAL **AR_RESULTAT2
++     )
+diff -Nar -u0 old/TH_CALCULER_INIT_COEFS.c new/TH_CALCULER_INIT_COEFS.c
+--- old/TH_CALCULER_INIT_COEFS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_INIT_COEFS.c	2024-09-29 23:46:05.000000000 +0200
+@@ -14,2 +14,3 @@
+-int CALCULER_INIT_COEFS( DESC_FLUIDE )
+-     desc_fluid_t ** DESC_FLUIDE;
++int CALCULER_INIT_COEFS(
++     desc_fluid_t ** DESC_FLUIDE
++     )
+diff -Nar -u0 old/TH_CALCULER_INIT_COEFS_FCT.c new/TH_CALCULER_INIT_COEFS_FCT.c
+--- old/TH_CALCULER_INIT_COEFS_FCT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_INIT_COEFS_FCT.c	2024-09-29 23:46:26.000000000 +0200
+@@ -14,4 +14,5 @@
+-int CALCULER_INIT_COEFS_FCT( DESC_PLAN, NO_FONCTION, NO_PHASE ) 
+-     desc_plan_t ** DESC_PLAN;
+-     int NO_FONCTION;
+-     int NO_PHASE;
++int CALCULER_INIT_COEFS_FCT(
++     desc_plan_t ** DESC_PLAN,
++     int NO_FONCTION,
++     int NO_PHASE
++     )
+diff -Nar -u0 old/TH_CALCULER_INIT_COEFS_FCT_EMUL.c new/TH_CALCULER_INIT_COEFS_FCT_EMUL.c
+--- old/TH_CALCULER_INIT_COEFS_FCT_EMUL.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_INIT_COEFS_FCT_EMUL.c	2024-09-29 23:46:48.000000000 +0200
+@@ -14,4 +14,5 @@
+-int CALCULER_INIT_COEFS_FCT_EMUL( NO_FONCTION, DESC_FLUIDE, NO_PLAN ) 
+-     int NO_FONCTION;
+-     desc_fluid_t ** DESC_FLUIDE;
+-     int NO_PLAN;
++int CALCULER_INIT_COEFS_FCT_EMUL( 
++     int NO_FONCTION,
++     desc_fluid_t ** DESC_FLUIDE,
++     int NO_PLAN
++     )
+diff -Nar -u0 old/TH_CALCULER_INIT_DERIVEES_EMUL.c new/TH_CALCULER_INIT_DERIVEES_EMUL.c
+--- old/TH_CALCULER_INIT_DERIVEES_EMUL.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_INIT_DERIVEES_EMUL.c	2024-09-29 23:47:17.000000000 +0200
+@@ -14,7 +14,7 @@
+-void CALCULER_INIT_DERIVEES_EMUL ( NO_FONCTION, N, PA_COEFS_FCT_SAT_LIQ, 
+-                                   PA_COEFS_FCT_SAT_VAP, PA_VS )
+-     int NO_FONCTION;
+-     int N;
+-     REAL *PA_COEFS_FCT_SAT_VAP; /*(4,*)*/
+-     REAL *PA_COEFS_FCT_SAT_LIQ; /*(4,*)*/
+-     REAL **PA_VS; /*(3,4,N)*/
++void CALCULER_INIT_DERIVEES_EMUL (
++     int NO_FONCTION,
++     int N,
++     REAL *PA_COEFS_FCT_SAT_VAP, /*(4,*)*/
++     REAL *PA_COEFS_FCT_SAT_LIQ, /*(4,*)*/
++     REAL **PA_VS /*(3,4,N)*/
++     )
+diff -Nar -u0 old/TH_CALCULER_PRESSION_SAT.c new/TH_CALCULER_PRESSION_SAT.c
+--- old/TH_CALCULER_PRESSION_SAT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CALCULER_PRESSION_SAT.c	2024-09-29 23:48:01.000000000 +0200
+@@ -14,18 +14,11 @@
+-void CALCULER_PRESSION_SAT( P_DESC_PLAN,
+-                            N, 
+-                            AR_ENTREE, 
+-                            AI_NO_SEGMENTS1, 
+-                            AI_NO_SEGMENTS2,
+-                            AI_NO_PHASE1, 
+-                            AI_NO_PHASE2,
+-                            AR_RESULTAT1, 
+-                            AR_RESULTAT2 ) 
+-     desc_plan_t * P_DESC_PLAN;
+-     int N;
+-     REAL **AR_ENTREE;
+-     int **AI_NO_SEGMENTS1;
+-     int **AI_NO_SEGMENTS2;
+-     int **AI_NO_PHASE1;
+-     int **AI_NO_PHASE2;
+-     REAL **AR_RESULTAT1;
+-     REAL **AR_RESULTAT2;
++void CALCULER_PRESSION_SAT(
++     desc_plan_t * P_DESC_PLAN,
++     int N,
++     REAL **AR_ENTREE,
++     int **AI_NO_SEGMENTS1,
++     int **AI_NO_SEGMENTS2,
++     int **AI_NO_PHASE1,
++     int **AI_NO_PHASE2,
++     REAL **AR_RESULTAT1,
++     REAL **AR_RESULTAT2
++     )
+diff -Nar -u0 old/TH_CHARGER_COEFS.c new/TH_CHARGER_COEFS.c
+--- old/TH_CHARGER_COEFS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CHARGER_COEFS.c	2024-09-29 23:48:34.000000000 +0200
+@@ -14,8 +14,6 @@
+-void CHARGER_COEFS( PR_COEFFICIENTS, 
+-                    N, 
+-                    AI_NO_MAILLES, 
+-                    AP_COEFS ) 
+-     REAL **PR_COEFFICIENTS; /*(3,*)*/
+-     int N;
+-     int *AI_NO_MAILLES ; /*(3,*)*/
+-     REAL ***AP_COEFS; /*(N)*/
++void CHARGER_COEFS(
++     REAL **PR_COEFFICIENTS, /*(3,*)*/
++     int N,
++     int *AI_NO_MAILLES,  /*(3,*)*/
++     REAL ***AP_COEFS  /*(N)*/
++     )
+diff -Nar -u0 old/TH_CHARGER_DESC_FLUIDE.c new/TH_CHARGER_DESC_FLUIDE.c
+--- old/TH_CHARGER_DESC_FLUIDE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CHARGER_DESC_FLUIDE.c	2024-09-29 23:48:57.000000000 +0200
+@@ -14,4 +14,4 @@
+-int CHARGER_DESC_FLUIDE(NO_FLUIDE, 
+-                        ADRESSE)
+-     int NO_FLUIDE;
+-     desc_fluid_t ** ADRESSE;
++int CHARGER_DESC_FLUIDE(
++     int NO_FLUIDE,
++     desc_fluid_t ** ADRESSE
++     )
+diff -Nar -u0 old/TH_CHARGER_MODELE.c new/TH_CHARGER_MODELE.c
+--- old/TH_CHARGER_MODELE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CHARGER_MODELE.c	2024-09-29 23:49:15.000000000 +0200
+@@ -16,3 +16,4 @@
+-int CHARGER_MODELE(IUNIT,DESC_FLUIDE)
+-     FILE* IUNIT;
+-     desc_fluid_t ** DESC_FLUIDE;
++int CHARGER_MODELE(
++     FILE* IUNIT,
++     desc_fluid_t ** DESC_FLUIDE
++     )
+diff -Nar -u0 old/TH_CHERCHER_ISOBARES.c new/TH_CHERCHER_ISOBARES.c
+--- old/TH_CHERCHER_ISOBARES.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CHERCHER_ISOBARES.c	2024-09-29 23:54:15.000000000 +0200
+@@ -14,12 +14,8 @@
+-int CHERCHER_ISOBARES( NB_ISOBARES, 
+-                       AR_ISOBARES, 
+-                       N, 
+-                       AR_PRESSION,
+-                       AI_NO_ISOBARES, 
+-                       AI_CR) 
+-     int NB_ISOBARES;
+-     REAL *AR_ISOBARES;
+-     int N;
+-     REAL **AR_PRESSION;
+-     int **AI_NO_ISOBARES;
+-     int **AI_CR;
++int CHERCHER_ISOBARES(
++     int NB_ISOBARES,
++     REAL *AR_ISOBARES,
++     int N,
++     REAL **AR_PRESSION,
++     int **AI_NO_ISOBARES,
++     int **AI_CR
++     )
+diff -Nar -u0 old/TH_CHERCHER_ISOCLINES.c new/TH_CHERCHER_ISOCLINES.c
+--- old/TH_CHERCHER_ISOCLINES.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CHERCHER_ISOCLINES.c	2024-09-29 23:51:04.000000000 +0200
+@@ -14,18 +14,11 @@
+-int CHERCHER_ISOCLINES( P_DESC_PLAN, 
+-                        N, 
+-                        AR_PRESSION,
+-                        AR_ENTREE,
+-                        AI_NO_ISOBARES, 
+-                        AI_NO_ISOCLINES,
+-                        AI_NO_PHASE,
+-                        AR_TITRE, 
+-                        AI_CR) 
+-     desc_plan_t * P_DESC_PLAN;
+-     int N;
+-     REAL *AR_PRESSION;
+-     REAL **AR_ENTREE;
+-     int *AI_NO_ISOBARES; 
+-     int **AI_NO_ISOCLINES;
+-     int **AI_NO_PHASE;
+-     REAL **AR_TITRE;
+-     int **AI_CR;
++int CHERCHER_ISOCLINES(
++     desc_plan_t * P_DESC_PLAN,
++     int N,
++     REAL *AR_PRESSION,
++     REAL **AR_ENTREE,
++     int *AI_NO_ISOBARES, 
++     int **AI_NO_ISOCLINES,
++     int **AI_NO_PHASE,
++     REAL **AR_TITRE,
++     int **AI_CR
++     )
+diff -Nar -u0 old/TH_CHERCHER_SEGMENTS_ABS.c new/TH_CHERCHER_SEGMENTS_ABS.c
+--- old/TH_CHERCHER_SEGMENTS_ABS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CHERCHER_SEGMENTS_ABS.c	2024-09-29 23:51:37.000000000 +0200
+@@ -14,16 +14,10 @@
+-int CHERCHER_SEGMENTS_ABS( P_DESC_PLAN,
+-                           N, 
+-                           AR_ENTREE,
+-                           AI_NO_SEGMENTS1, 
+-                           AI_NO_SEGMENTS2,
+-                           AI_NO_PHASE1, 
+-                           AI_NO_PHASE2, 
+-                           AI_CR) 
+-     desc_plan_t * P_DESC_PLAN;
+-     int N;
+-     REAL **AR_ENTREE;
+-     int **AI_NO_SEGMENTS1;
+-     int **AI_NO_SEGMENTS2;
+-     int **AI_NO_PHASE1;
+-     int **AI_NO_PHASE2;
+-     int **AI_CR;
++int CHERCHER_SEGMENTS_ABS(
++     desc_plan_t * P_DESC_PLAN,
++     int N,
++     REAL **AR_ENTREE,
++     int **AI_NO_SEGMENTS1,
++     int **AI_NO_SEGMENTS2,
++     int **AI_NO_PHASE1,
++     int **AI_NO_PHASE2,
++     int **AI_CR
++     )
+diff -Nar -u0 old/TH_CONVERTIR_INIT_DERIVEES.c new/TH_CONVERTIR_INIT_DERIVEES.c
+--- old/TH_CONVERTIR_INIT_DERIVEES.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CONVERTIR_INIT_DERIVEES.c	2024-09-29 23:52:20.000000000 +0200
+@@ -14,5 +14,6 @@
+-void CONVERTIR_INIT_DERIVEES( NO_PHASE, N, R_dENTREEdP, AR_V )
+-     int NO_PHASE;
+-     int N;
+-     REAL R_dENTREEdP;
+-     REAL *AR_V; /*(3,N)*/
++void CONVERTIR_INIT_DERIVEES(
++     int NO_PHASE ,
++     int N ,
++     REAL R_dENTREEdP ,
++     REAL *AR_V  /*(3,N)*/
++     )
+diff -Nar -u0 old/TH_CREER_DESC_FLUIDE.c new/TH_CREER_DESC_FLUIDE.c
+--- old/TH_CREER_DESC_FLUIDE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_CREER_DESC_FLUIDE.c	2024-09-29 23:52:45.000000000 +0200
+@@ -14,5 +14,6 @@
+-int CREER_DESC_FLUIDE( NO_FLUIDE, NB_ISOBARES, NB_ISOBARES_SOUS_PC, ADRESSE ) 
+-     int NO_FLUIDE;
+-     int NB_ISOBARES;
+-     int NB_ISOBARES_SOUS_PC;
+-     desc_fluid_t ** ADRESSE;
++int CREER_DESC_FLUIDE(
++     int NO_FLUIDE,
++     int NB_ISOBARES,
++     int NB_ISOBARES_SOUS_PC,
++     desc_fluid_t ** ADRESSE 
++     )
+diff -Nar -u0 old/TH_ECRIRE_ENREG_THETIS.c new/TH_ECRIRE_ENREG_THETIS.c
+--- old/TH_ECRIRE_ENREG_THETIS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_ECRIRE_ENREG_THETIS.c	2024-09-29 23:55:17.000000000 +0200
+@@ -21,10 +21,7 @@
+-int ECRIRE_ENREG_THETIS( IUNIT, 
+-                         LG_INFOS, 
+-                         INFOS_ENREG, 
+-                         LG, 
+-                         BUFFER) 
+-     FILE *IUNIT;
+-     int LG_INFOS;
+-     int *INFOS_ENREG; /*(6)*/
+-     int LG;
+-     int *BUFFER; /*(1)*/
++int ECRIRE_ENREG_THETIS(
++     FILE *IUNIT,
++     int LG_INFOS,
++     int *INFOS_ENREG, /*(6)*/
++     int LG,
++     int *BUFFER  /*(1)*/
++     )
+diff -Nar -u0 old/TH_interface.c new/TH_interface.c
+--- old/TH_interface.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_interface.c	2024-09-30 01:00:20.000000000 +0200
+@@ -83,4 +83,5 @@
+-int tvload_(NO_FLUIDE,ACF_NOM_FICHIER,TITRE) 
+-int * NO_FLUIDE;
+-char* ACF_NOM_FICHIER;
+-REAL *TITRE;
++int tvload_(
++   int * NO_FLUIDE,
++   char* ACF_NOM_FICHIER,
++   REAL *TITRE
++)
+@@ -179,3 +180,4 @@
+-int tvsave_(NO_FLUIDE,ACF_NOM_FICHIER) 
+-int * NO_FLUIDE;
+-char* ACF_NOM_FICHIER;
++int tvsave_(
++   int * NO_FLUIDE,
++   char* ACF_NOM_FICHIER
++)
+diff -Nar -u0 old/TH_INTERPOLER_BICUBIQUE.c new/TH_INTERPOLER_BICUBIQUE.c
+--- old/TH_INTERPOLER_BICUBIQUE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_INTERPOLER_BICUBIQUE.c	2024-09-29 23:56:15.000000000 +0200
+@@ -14,11 +14,7 @@
+-void INTERPOLER_BICUBIQUE( N, 
+-                           AR_P, 
+-                           AR_E, 
+-                           AP_COEFS,
+-                           AR_RESULTAT ) 
+-     int N;
+-     REAL *AR_P; /*(N)*/
+-     REAL *AR_E; /*(N)*/
+-     REAL ** AP_COEFS; /*(N)*/
+-     REAL **AR_RESULTAT; /*(N)*/
+-
++void INTERPOLER_BICUBIQUE( 
++     int N,
++     REAL *AR_P, /*(N)*/
++     REAL *AR_E, /*(N)*/
++     REAL ** AP_COEFS, /*(N)*/
++     REAL **AR_RESULTAT  /*(N)*/
++     )
+diff -Nar -u0 old/TH_INTERPOLER_CUBIQUE.c new/TH_INTERPOLER_CUBIQUE.c
+--- old/TH_INTERPOLER_CUBIQUE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_INTERPOLER_CUBIQUE.c	2024-09-29 23:56:43.000000000 +0200
+@@ -14,10 +14,7 @@
+-void INTERPOLER_CUBIQUE ( AR_COEFS_FCT_SAT, 
+-                          N, 
+-                          AR_ENTREE,
+-                          AI_NO_SEGMENTS, 
+-                          AR_RESULTAT ) 
+-     REAL *AR_COEFS_FCT_SAT; /*(4,*)*/
+-     int N;
+-     REAL *AR_ENTREE; /*(N)*/
+-     int *AI_NO_SEGMENTS; /*(N)*/
+-     REAL **AR_RESULTAT; /*(N)*/
++void INTERPOLER_CUBIQUE ( 
++     REAL *AR_COEFS_FCT_SAT, /*(4,*)*/
++     int N,
++     REAL *AR_ENTREE, /*(N)*/
++     int *AI_NO_SEGMENTS, /*(N)*/
++     REAL **AR_RESULTAT  /*(N)*/
++     )
+diff -Nar -u0 old/TH_LIBERER_DESC_FCT_SAT.c new/TH_LIBERER_DESC_FCT_SAT.c
+--- old/TH_LIBERER_DESC_FCT_SAT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_LIBERER_DESC_FCT_SAT.c	2024-09-29 23:57:47.000000000 +0200
+@@ -14,2 +14,3 @@
+-void LIBERER_DESC_FCT_SAT(P_DESC_FCT_SAT)
+-     desc_fct_sat_t * P_DESC_FCT_SAT;
++void LIBERER_DESC_FCT_SAT(
++     desc_fct_sat_t * P_DESC_FCT_SAT
++     )
+diff -Nar -u0 old/TH_LIBERER_DESC_FLUIDE.c new/TH_LIBERER_DESC_FLUIDE.c
+--- old/TH_LIBERER_DESC_FLUIDE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_LIBERER_DESC_FLUIDE.c	2024-09-29 23:58:15.000000000 +0200
+@@ -14,2 +14,3 @@
+-void LIBERER_DESC_FLUIDE(P_DESC_FLUIDE)
+-     desc_fluid_t * P_DESC_FLUIDE;
++void LIBERER_DESC_FLUIDE(
++     desc_fluid_t * P_DESC_FLUIDE
++     )
+diff -Nar -u0 old/TH_LIBERER_DESC_PLAN.c new/TH_LIBERER_DESC_PLAN.c
+--- old/TH_LIBERER_DESC_PLAN.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_LIBERER_DESC_PLAN.c	2024-09-29 23:58:36.000000000 +0200
+@@ -14,3 +14,4 @@
+-void LIBERER_DESC_PLAN(P_DESC_PLAN, B_COEFS_CHARGES)
+-     desc_plan_t * P_DESC_PLAN;
+-     int B_COEFS_CHARGES;
++void LIBERER_DESC_PLAN(
++     desc_plan_t * P_DESC_PLAN,
++     int B_COEFS_CHARGES
++     )
+diff -Nar -u0 old/TH_LIBERER_DESC_VALEURS.c new/TH_LIBERER_DESC_VALEURS.c
+--- old/TH_LIBERER_DESC_VALEURS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_LIBERER_DESC_VALEURS.c	2024-09-29 23:59:05.000000000 +0200
+@@ -14,4 +14,4 @@
+-void LIBERER_DESC_VALEURS(PR_DESC_VALEURS_THERMO,
+-                          N)
+-     REAL ** PR_DESC_VALEURS_THERMO;
+-     int N;
++void LIBERER_DESC_VALEURS(
++     REAL ** PR_DESC_VALEURS_THERMO,
++     int N
++     )
+diff -Nar -u0 old/TH_LIBERER_MEMOIRE.c new/TH_LIBERER_MEMOIRE.c
+--- old/TH_LIBERER_MEMOIRE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_LIBERER_MEMOIRE.c	2024-09-30 00:00:29.000000000 +0200
+@@ -25,2 +25,3 @@
+-void LIBERER_MEMOIRE_I(ADRESSE)
+-     int ** ADRESSE;
++void LIBERER_MEMOIRE_I(
++     int ** ADRESSE
++     )
+@@ -95,2 +96,3 @@
+-void LIBERER_MEMOIRE_R(ADRESSE)
+-     REAL ** ADRESSE;
++void LIBERER_MEMOIRE_R(
++     REAL ** ADRESSE
++     )
+@@ -164,2 +166,3 @@
+-void LIBERER_MEMOIRE_PI(ADRESSE)
+-     int *** ADRESSE;
++void LIBERER_MEMOIRE_PI(
++     int *** ADRESSE
++     )
+@@ -234,2 +237,3 @@
+-void LIBERER_MEMOIRE_PR(ADRESSE)
+-     REAL *** ADRESSE;
++void LIBERER_MEMOIRE_PR(
++     REAL *** ADRESSE
++     )
+@@ -302,2 +306,3 @@
+-void LIBERER_MEMOIRE_DESC_FLUIDE(ADRESSE)
+-      desc_fluid_t ** ADRESSE;
++void LIBERER_MEMOIRE_DESC_FLUIDE(
++      desc_fluid_t ** ADRESSE
++      )
+diff -Nar -u0 old/TH_LIRE_ENREG_THETIS.c new/TH_LIRE_ENREG_THETIS.c
+--- old/TH_LIRE_ENREG_THETIS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_LIRE_ENREG_THETIS.c	2024-09-30 00:06:59.000000000 +0200
+@@ -20,5 +20,7 @@
+-int LIRE_ENREG_THETIS( IUNIT, INFOS_ENREG, ADRESSE)/* , adr)  */
+-     FILE* IUNIT;
+-     int *INFOS_ENREG; 
+-     int ** ADRESSE;
+-/**
++int LIRE_ENREG_THETIS(
++     FILE* IUNIT,
++     int *INFOS_ENREG, 
++     int ** ADRESSE 
++     /* adr */
++     )
++ /**
+@@ -206 +208 @@
+-  int err;
++  int err = 0;
+diff -Nar -u0 old/TH_MEMORISER_VECTEURS.c new/TH_MEMORISER_VECTEURS.c
+--- old/TH_MEMORISER_VECTEURS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_MEMORISER_VECTEURS.c	2024-09-30 00:03:14.000000000 +0200
+@@ -14,10 +14,7 @@
+-int MEMORISER_VECTEURS( P_DESC_FLUIDE, 
+-                        TYPE_ENTREE,
+-                        N, 
+-                        AR_PRESSION, 
+-                        AR_ENTREE )
+-     desc_fluid_t * P_DESC_FLUIDE;
+-     int TYPE_ENTREE;
+-     int N;
+-     REAL *AR_PRESSION;
+-     REAL *AR_ENTREE;
++int MEMORISER_VECTEURS( 
++     desc_fluid_t * P_DESC_FLUIDE,
++     int TYPE_ENTREE,
++     int N,
++     REAL *AR_PRESSION,
++     REAL *AR_ENTREE 
++     )
+diff -Nar -u0 old/TH_RANGER_DONNEES.c new/TH_RANGER_DONNEES.c
+--- old/TH_RANGER_DONNEES.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_RANGER_DONNEES.c	2024-09-30 00:03:57.000000000 +0200
+@@ -14,4 +14,5 @@
+-int RANGER_DONNEES( DESC_FLUIDE, INFOS_ENREG, ADRESSE) 
+-     desc_fluid_t ** DESC_FLUIDE;
+-     int *INFOS_ENREG;
+-     int * ADRESSE;
++int RANGER_DONNEES(
++     desc_fluid_t ** DESC_FLUIDE,
++     int *INFOS_ENREG,
++     int * ADRESSE
++     )
+diff -Nar -u0 old/TH_SAUVER_ENR_BASE.c new/TH_SAUVER_ENR_BASE.c
+--- old/TH_SAUVER_ENR_BASE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_SAUVER_ENR_BASE.c	2024-10-01 01:00:58.669896633 +0200
+@@ -14,6 +14,5 @@
+-int SAUVER_ENR_BASE( IUNIT, 
+-                     P_DESC_FLUIDE,
+-                     AC_DESCRIPTION )
+-     FILE* IUNIT;
+-     desc_fluid_t * P_DESC_FLUIDE;
+-     char AC_DESCRIPTION[80];
++int SAUVER_ENR_BASE(
++     FILE* IUNIT,
++     desc_fluid_t * P_DESC_FLUIDE,
++     char * AC_DESCRIPTION
++     )
+diff -Nar -u0 old/TH_SAUVER_FCT_SAT.c new/TH_SAUVER_FCT_SAT.c
+--- old/TH_SAUVER_FCT_SAT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_SAUVER_FCT_SAT.c	2024-09-30 00:05:06.000000000 +0200
+@@ -14,4 +14,4 @@
+-int SAUVER_FCT_SAT( IUNIT, 
+-                    P_DESC_FLUIDE) 
+-     FILE* IUNIT;
+-     desc_fluid_t * P_DESC_FLUIDE;
++int SAUVER_FCT_SAT(
++     FILE* IUNIT,
++     desc_fluid_t * P_DESC_FLUIDE
++     )
+diff -Nar -u0 old/TH_SAUVER_PLAN.c new/TH_SAUVER_PLAN.c
+--- old/TH_SAUVER_PLAN.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_SAUVER_PLAN.c	2024-09-30 00:05:28.000000000 +0200
+@@ -14,4 +14,4 @@
+-int SAUVER_PLAN(IUNIT,
+-                P_DESC_PLAN)
+-     FILE* IUNIT;
+-     desc_plan_t * P_DESC_PLAN;
++int SAUVER_PLAN(
++     FILE* IUNIT,
++     desc_plan_t * P_DESC_PLAN
++     )
+diff -Nar -u0 old/TH_TRAITER_EMULSION.c new/TH_TRAITER_EMULSION.c
+--- old/TH_TRAITER_EMULSION.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TRAITER_EMULSION.c	2024-09-30 00:08:09.000000000 +0200
+@@ -14,14 +14,9 @@
+-int TRAITER_EMULSION( P_DESC_FLUIDE, 
+-                      NO_FONCTION,
+-                      N, 
+-                      AR_ENTREE1, 
+-                      AR_ENTREE2, 
+-                      AI_NO_MAILLES,
+-                      AR_RESULTAT) 
+-     desc_fluid_t * P_DESC_FLUIDE;
+-     int NO_FONCTION;
+-     int N;
+-     REAL *AR_ENTREE1;
+-     REAL *AR_ENTREE2;
+-     int *AI_NO_MAILLES;
+-     REAL **AR_RESULTAT;
++int TRAITER_EMULSION(
++     desc_fluid_t * P_DESC_FLUIDE,
++     int NO_FONCTION,
++     int N,
++     REAL *AR_ENTREE1,
++     REAL *AR_ENTREE2,
++     int *AI_NO_MAILLES,
++     REAL **AR_RESULTAT
++     )
+diff -Nar -u0 old/TH_TVCALC.c new/TH_TVCALC.c
+--- old/TH_TVCALC.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVCALC.c	2024-09-30 00:09:39.000000000 +0200
+@@ -14,18 +14,11 @@
+-int TVCALC( NO_FLUIDE, 
+-            NO_PLAN, 
+-            NO_FONCTION, 
+-            N,
+-            AR_PRESSION, 
+-            AR_ENTREE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE;
+-     int NO_FONCTION;
+-     int NO_PLAN;
+-     int N;
+-     REAL *AR_ENTREE;
+-     REAL *AR_PRESSION;
+-     REAL *AR_TITRE;
+-     REAL **AR_RESULTAT;
+-     int **AI_CR;
++int TVCALC(
++     int NO_FLUIDE,
++     int NO_PLAN,
++     int NO_FONCTION,
++     int N,
++     REAL *AR_PRESSION,
++     REAL *AR_ENTREE,
++     REAL *AR_TITRE,
++     REAL **AR_RESULTAT,
++     int **AI_CR
++     )
+diff -Nar -u0 old/TH_TVCALCMEM.c new/TH_TVCALCMEM.c
+--- old/TH_TVCALCMEM.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVCALCMEM.c	2024-09-30 00:10:04.000000000 +0200
+@@ -14,6 +14,5 @@
+-int TVCALCMEM ( NO_FONCTION, 
+-                N, 
+-                AR_RESULTAT )  
+-     int NO_FONCTION;
+-     int N;
+-     REAL **AR_RESULTAT;
++int TVCALCMEM (
++     int NO_FONCTION,
++     int N,
++     REAL **AR_RESULTAT
++     )
+diff -Nar -u0 old/TH_TVCALCPRS.c new/TH_TVCALCPRS.c
+--- old/TH_TVCALCPRS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVCALCPRS.c	2024-09-30 00:10:43.000000000 +0200
+@@ -14,14 +14,9 @@
+-int TVCALCPRS(NO_FLUIDE, 
+-              NO_PLAN,
+-              N, 
+-              AR_ENTREE, 
+-              AR_RESULTAT1, 
+-              AR_RESULTAT2, 
+-              AI_CR) 
+-     int NO_FLUIDE;
+-     int NO_PLAN;
+-     int N;
+-     REAL *AR_ENTREE;
+-     REAL **AR_RESULTAT1;
+-     REAL **AR_RESULTAT2;
+-     int **AI_CR;
++int TVCALCPRS(
++     int NO_FLUIDE,
++     int NO_PLAN,
++     int N,
++     REAL *AR_ENTREE,
++     REAL **AR_RESULTAT1,
++     REAL **AR_RESULTAT2,
++     int **AI_CR
++     )
+diff -Nar -u0 old/TH_TVCALCSAT.c new/TH_TVCALCSAT.c
+--- old/TH_TVCALCSAT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVCALCSAT.c	2024-09-30 00:26:23.000000000 +0200
+@@ -14,14 +14,9 @@
+-int TVCALCSAT( NO_FLUIDE, 
+-               NO_FONCTION, 
+-               N, 
+-               AR_PRESSION,
+-               AR_RESULTAT1, 
+-               AR_RESULTAT2, 
+-               AI_CR ) 
+-     int NO_FLUIDE;
+-     int NO_FONCTION;
+-     int N;
+-     REAL *AR_PRESSION;
+-     REAL **AR_RESULTAT2;
+-     REAL **AR_RESULTAT1;
+-     int **AI_CR;
++int TVCALCSAT(
++     int NO_FLUIDE,
++     int NO_FONCTION,
++     int N,
++     REAL *AR_PRESSION,
++     REAL **AR_RESULTAT2,
++     REAL **AR_RESULTAT1,
++     int **AI_CR
++     )
+diff -Nar -u0 old/TH_TVCALCSATMEM.c new/TH_TVCALCSATMEM.c
+--- old/TH_TVCALCSATMEM.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVCALCSATMEM.c	2024-09-30 00:11:14.000000000 +0200
+@@ -14,8 +14,6 @@
+-int TVCALCSATMEM( NO_FONCTION, 
+-                  N, 
+-                  AR_RESULTAT1, 
+-                  AR_RESULTAT2)
+-     int NO_FONCTION;
+-     int N;
+-     REAL **AR_RESULTAT1;
+-     REAL **AR_RESULTAT2;
++int TVCALCSATMEM(
++     int NO_FONCTION,
++     int N,
++     REAL **AR_RESULTAT1,
++     REAL **AR_RESULTAT2
++     )
+diff -Nar -u0 old/TH_TVCALCTITRE.c new/TH_TVCALCTITRE.c
+--- old/TH_TVCALCTITRE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVCALCTITRE.c	2024-09-30 00:11:45.000000000 +0200
+@@ -14,14 +14,9 @@
+-int TVCALCTITRE ( NO_FLUIDE, 
+-                  NO_PLAN,
+-                  N, 
+-                  AR_PRESSION, 
+-                  AR_ENTREE,
+-                  AR_TITRE, 
+-                  AI_CR )
+-     int NO_FLUIDE;
+-     int NO_PLAN;
+-     int N;
+-     REAL *AR_PRESSION;
+-     REAL *AR_ENTREE;
+-     REAL **AR_TITRE;
+-     int **AI_CR;
++int TVCALCTITRE (
++     int NO_FLUIDE,
++     int NO_PLAN,
++     int N,
++     REAL *AR_PRESSION,
++     REAL *AR_ENTREE,
++     REAL **AR_TITRE,
++     int **AI_CR
++     )
+diff -Nar -u0 old/TH_TVERROR.c new/TH_TVERROR.c
+--- old/TH_TVERROR.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVERROR.c	2024-09-30 00:12:15.000000000 +0200
+@@ -17,2 +17 @@
+-void TVERROR(NO_ERREUR)
+-     int NO_ERREUR;
++void TVERROR(int NO_ERREUR)
+diff -Nar -u0 old/TH_TVFREE.c new/TH_TVFREE.c
+--- old/TH_TVFREE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVFREE.c	2024-09-30 00:12:30.000000000 +0200
+@@ -14,2 +14 @@
+-int TVFREE(NO_FLUIDE)
+-     int NO_FLUIDE;
++int TVFREE(int NO_FLUIDE)
+diff -Nar -u0 old/TH_TVINIT.c new/TH_TVINIT.c
+--- old/TH_TVINIT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVINIT.c	2024-09-30 00:13:01.000000000 +0200
+@@ -97,4 +97,2 @@
+-int TVINIT( NB_MAX_FLUIDES,
+-            MODE_CALCUL_COEFS)
+-     int NB_MAX_FLUIDES;
+-     int MODE_CALCUL_COEFS;
++int TVINIT( int NB_MAX_FLUIDES,
++            int MODE_CALCUL_COEFS)
+diff -Nar -u0 old/TH_TVPLIM.c new/TH_TVPLIM.c
+--- old/TH_TVPLIM.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVPLIM.c	2024-09-30 00:13:40.000000000 +0200
+@@ -14,6 +14,5 @@
+-int TVPLIM( NO_FLUIDE, 
+-            MODE, 
+-            P )
+-     int NO_FLUIDE;
+-     int MODE;
+-     REAL *P;
++int TVPLIM(
++     int NO_FLUIDE,
++     int MODE,
++     REAL *P
++     )
+diff -Nar -u0 old/TH_TVSAVE.c new/TH_TVSAVE.c
+--- old/TH_TVSAVE.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVSAVE.c	2024-09-30 00:13:59.000000000 +0200
+@@ -14,4 +14,4 @@
+-int TVSAVE(NO_FLUIDE, 
+-           AC_NOM_FICHIER)
+-     int NO_FLUIDE;
+-     char** AC_NOM_FICHIER;
++int TVSAVE(
++     int NO_FLUIDE,
++     char** AC_NOM_FICHIER
++     )
+diff -Nar -u0 old/TH_TVSET.c new/TH_TVSET.c
+--- old/TH_TVSET.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVSET.c	2024-09-30 00:33:58.000000000 +0200
+@@ -14,14 +14,9 @@
+-int TVSET( NO_FLUIDE, 
+-           TYPE_ENTREE,
+-           N, 
+-           AR_PRESSION, 
+-           AR_ENTREE, 
+-           AR_TITRE,
+-           AI_CR )
+-     int NO_FLUIDE;
+-     int TYPE_ENTREE;
+-     int N;
+-     REAL *AR_PRESSION;
+-     REAL *AR_ENTREE;
+-     REAL *AR_TITRE;
+-     int **AI_CR;
++int TVSET(
++     int NO_FLUIDE,
++     int TYPE_ENTREE,
++     int N,
++     REAL *AR_PRESSION,
++     REAL *AR_ENTREE,
++     REAL *AR_TITRE,
++     int **AI_CR
++     )
+@@ -175 +170 @@
+-  desc_plan_t  * P_DESC_PLAN;
++  desc_plan_t  * P_DESC_PLAN = NULL;
+diff -Nar -u0 old/TH_TVSETxx.c new/TH_TVSETxx.c
+--- old/TH_TVSETxx.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVSETxx.c	2024-09-30 00:36:24.000000000 +0200
+@@ -32,4 +32 @@
+-int TVSETP ( NO_FLUIDE, 
+-             N, 
+-             AR_PRESSION, 
+-             AI_CR )
++int TVSETP (
+@@ -37,4 +34,5 @@
+-     int NO_FLUIDE;/* No de fluide (utilisateur) */
+-     int N;/* Taille des vecteurs */
+-     REAL *AR_PRESSION; /*(N) Vecteur pression */
+-     int *AI_CR; /*(N) Vecteur compte-rendu */
++     int NO_FLUIDE,/* No de fluide (utilisateur) */
++     int N,/* Taille des vecteurs */
++     REAL *AR_PRESSION, /*(N) Vecteur pression */
++     int *AI_CR  /*(N) Vecteur compte-rendu */
++     )
+@@ -103,6 +101 @@
+-int TVSETPT ( NO_FLUIDE,
+-              N, 
+-              AR_PRESSION, 
+-              AR_TEMPERATURE, 
+-              AR_TITRE,
+-              AI_CR )
++int TVSETPT (
+@@ -110,6 +103,7 @@
+-     int NO_FLUIDE;/* No de fluide (utilisateur) */
+-     int N;/* Taille des vecteurs */
+-     REAL *AR_PRESSION; /*(N) Vecteur pression*/
+-     REAL *AR_TEMPERATURE; /*(N) Vecteur temperature*/
+-     REAL *AR_TITRE; /* (N) Vecteur titre en vapeur*/
+-     int *AI_CR; /* (N) Vecteur compte_rendu*/
++     int NO_FLUIDE,/* No de fluide (utilisateur) */
++     int N,/* Taille des vecteurs */
++     REAL *AR_PRESSION, /*(N) Vecteur pression*/
++     REAL *AR_TEMPERATURE, /*(N) Vecteur temperature*/
++     REAL *AR_TITRE, /* (N) Vecteur titre en vapeur*/
++     int *AI_CR  /* (N) Vecteur compte_rendu*/
++     )
+@@ -172,10 +166,7 @@
+-int TVSETPS ( NO_FLUIDE, 
+-              N, 
+-              AR_PRESSION, 
+-              AR_ENTROPIE,
+-              AI_CR )
+-     int NO_FLUIDE; /* No de fluide (utilisateur) */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION;/* (N) Vecteur pression */
+-     REAL *AR_ENTROPIE;/* (N) Vecteur entropie */
+-     int *AI_CR;/* (N) Vecteur compte_rendu */
++int TVSETPS (
++     int NO_FLUIDE, /* No de fluide (utilisateur) */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION,/* (N) Vecteur pression */
++     REAL *AR_ENTROPIE,/* (N) Vecteur entropie */
++     int *AI_CR /* (N) Vecteur compte_rendu */
++)
+@@ -244,5 +235 @@
+-int TVSETPH ( NO_FLUIDE, 
+-              N, 
+-              AR_PRESSION, 
+-              AR_ENTHALPIE,
+-              AI_CR )
++int TVSETPH (
+@@ -250,5 +237,6 @@
+-     int NO_FLUIDE; /* No de fluide (utilisateur) */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION;/* (N) Vecteur pression */
+-     REAL *AR_ENTHALPIE;/* (N) Vecteur enthalpie */
+-     int *AI_CR;/* (N) Vecteur compte_rendu */
++     int NO_FLUIDE, /* No de fluide (utilisateur) */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION,/* (N) Vecteur pression */
++     REAL *AR_ENTHALPIE,/* (N) Vecteur enthalpie */
++     int *AI_CR /* (N) Vecteur compte_rendu */
++)
+diff -Nar -u0 old/TH_TVxxPH.c new/TH_TVxxPH.c
+--- old/TH_TVxxPH.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVxxPH.c	2024-09-30 00:23:13.000000000 +0200
+@@ -33,12 +33,8 @@
+-int TVTTPH( NO_FLUIDE,
+-                     N, 
+-                     AR_PRESSION, 
+-                     AR_ENTHALPIE, 
+-                     AR_RESULTAT, 
+-                     AI_CR ) 
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int TVTTPH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -113,12 +109,8 @@
+-int TVSSPH( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTHALPIE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int TVSSPH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -195,12 +187,8 @@
+-int  TVROPH( NO_FLUIDE,
+-             N, 
+-             AR_PRESSION, 
+-             AR_ENTHALPIE,
+-             AR_RESULTAT, 
+-             AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int  TVROPH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -277,12 +265,8 @@
+-int  TVCPPH( NO_FLUIDE,
+-             N, 
+-             AR_PRESSION, 
+-             AR_ENTHALPIE,
+-             AR_RESULTAT, 
+-             AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int  TVCPPH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -359,12 +343,8 @@
+-int TVA2PH( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTHALPIE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int TVA2PH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -441,12 +421,8 @@
+-int  TVBEPH( NO_FLUIDE,
+-             N, 
+-             AR_PRESSION, 
+-             AR_ENTHALPIE,
+-             AR_RESULTAT, 
+-             AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int  TVBEPH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -523,12 +499,8 @@
+-int  TVETPH( NO_FLUIDE,
+-             N, 
+-             AR_PRESSION, 
+-             AR_ENTHALPIE,
+-             AR_RESULTAT, 
+-             AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int  TVETPH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -605,12 +577,8 @@
+-int TVALPH( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTHALPIE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE;/* Vecteur d enthalpie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR;       /* Vecteur compte rendu */
++int TVALPH(
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTHALPIE,/* Vecteur d enthalpie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR        /* Vecteur compte rendu */
++     )
+@@ -688,12 +656,8 @@
+-int TVYYPH( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTHALPIE,
+-            AR_TITRE, 
+-            AI_CR )
+-     int NO_FLUIDE;      /* Numero de fluide utilisateur */
+-     int N;              /* Taille des vecteurs */
+-     REAL *AR_PRESSION;  /* Vecteur de pression */
+-     REAL *AR_ENTHALPIE; /* Vecteur d enthalpie */
+-     REAL *AR_TITRE;    /* Vecteur resultat Titre */
+-     int *AI_CR;        /* Vecteur compte rendu */
++int TVYYPH( 
++     int NO_FLUIDE,      /* Numero de fluide utilisateur */
++     int N,              /* Taille des vecteurs */
++     REAL *AR_PRESSION,  /* Vecteur de pression */
++     REAL *AR_ENTHALPIE, /* Vecteur d enthalpie */
++     REAL *AR_TITRE,    /* Vecteur resultat Titre */
++     int *AI_CR         /* Vecteur compte rendu */
++     )
+diff -Nar -u0 old/TH_TVxxPS.c new/TH_TVxxPS.c
+--- old/TH_TVxxPS.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVxxPS.c	2024-09-30 00:32:48.000000000 +0200
+@@ -32,12 +32,8 @@
+-int TVTTPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVTTPS( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTROPIE, /* Vecteur d entropie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR  /* Vecteur compte rendu */
++)
+@@ -111,12 +107,8 @@
+-int TVHHPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVHHPS(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTROPIE, /* Vecteur d entropie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR  /* Vecteur compte rendu */
++)
+@@ -190,12 +182,8 @@
+-int TVROPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur*/
+-     int N; /* Taille des vecteurs*/
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVROPS( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur*/
++     int N, /* Taille des vecteurs*/
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTROPIE, /* Vecteur d entropie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR  /* Vecteur compte rendu */
++)
+@@ -268,12 +256,8 @@
+-int TVCPPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVCPPS(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTROPIE, /* Vecteur d entropie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR  /* Vecteur compte rendu */
++)
+@@ -346,12 +330,8 @@
+-int TVA2PS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVA2PS(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTROPIE, /* Vecteur d entropie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR  /* Vecteur compte rendu */
++)
+@@ -425,12 +405,8 @@
+-int TVBEPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVBEPS(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTROPIE, /* Vecteur d entropie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR  /* Vecteur compte rendu */
++)
+@@ -503,12 +479,8 @@
+-int TVETPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVETPS( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_ENTROPIE, /* Vecteur d entropie */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR  /* Vecteur compte rendu */
++)
+@@ -582,12 +554,8 @@
+-int TVALPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur*/
+-     int N; /* Taille des vecteurs*/
+-     REAL *AR_PRESSION; /* Vecteur de pression*/
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie*/
+-     REAL *AR_RESULTAT; /* Vecteur resultat*/
+-     int *AI_CR; /* Vecteur compte rendu*/
++int TVALPS( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur*/
++     int N, /* Taille des vecteurs*/
++     REAL *AR_PRESSION, /* Vecteur de pression*/
++     REAL *AR_ENTROPIE, /* Vecteur d entropie*/
++     REAL *AR_RESULTAT, /* Vecteur resultat*/
++     int *AI_CR  /* Vecteur compte rendu*/
++)
+@@ -661,12 +629,8 @@
+-int TVYYPS( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_ENTROPIE, 
+-            AR_TITRE, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur*/
+-     int N; /* Taille des vecteurs*/
+-     REAL *AR_PRESSION; /* Vecteur de pression*/
+-     REAL *AR_ENTROPIE; /* Vecteur d entropie*/
+-     REAL *AR_TITRE;    /* Vecteur resultat Titre */
+-     int *AI_CR; /* Vecteur compte rendu*/
++int TVYYPS(
++     int NO_FLUIDE, /* Numero de fluide utilisateur*/
++     int N, /* Taille des vecteurs*/
++     REAL *AR_PRESSION, /* Vecteur de pression*/
++     REAL *AR_ENTROPIE, /* Vecteur d entropie*/
++     REAL *AR_TITRE,    /* Vecteur resultat Titre */
++     int *AI_CR  /* Vecteur compte rendu*/
++)
+diff -Nar -u0 old/TH_TVxxPT.c new/TH_TVxxPT.c
+--- old/TH_TVxxPT.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVxxPT.c	2024-09-30 00:40:44.000000000 +0200
+@@ -33,14 +33,9 @@
+-int TVSSPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVSSPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++     )
+@@ -102,14 +97,9 @@
+-int TVHHPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVHHPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -172,14 +162,9 @@
+-int TVROPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVROPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -242,14 +227,9 @@
+-int TVCPPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVCPPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -311,14 +291,9 @@
+-int TVA2PT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /*Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVA2PT(
++     int NO_FLUIDE, /*Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -381,14 +356,9 @@
+-int TVBEPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVBEPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -450,14 +420,9 @@
+-int TVETPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVETPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -519,14 +484,9 @@
+-int TVALPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AR_RESULTAT, 
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre en vapeur */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVALPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre en vapeur */
++     REAL *AR_RESULTAT, /* Vecteur resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -588,12 +548,8 @@
+-int TVYYPT( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_TEMPERATURE, 
+-            AR_TITRE,
+-            AI_CR )
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pression */
+-     REAL *AR_TEMPERATURE; /*  Vecteur de temperature */
+-     REAL *AR_TITRE; /* Vecteur de titre resultat */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVYYPT(
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pression */
++     REAL *AR_TEMPERATURE, /*  Vecteur de temperature */
++     REAL *AR_TITRE, /* Vecteur de titre resultat */
++     int *AI_CR /* Vecteur compte rendu */
++)
+diff -Nar -u0 old/TH_TVxxSA.c new/TH_TVxxSA.c
+--- old/TH_TVxxSA.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVxxSA.c	2024-09-30 00:58:39.000000000 +0200
+@@ -34,10 +34,7 @@
+-int TVTTSA( NO_FLUIDE, 
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT; /* Vecteur resultat saturation */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVTTSA( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT, /* Vecteur resultat saturation */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -95,12 +92,8 @@
+-int TVSSSA ( NO_FLUIDE,
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVSSSA (
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -160,12 +153,8 @@
+-int TVHHSA ( NO_FLUIDE, 
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVHHSA (
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -225,12 +214,8 @@
+-int TVROSA ( NO_FLUIDE, 
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVROSA ( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -290,12 +275,8 @@
+-int TVCPSA ( NO_FLUIDE, 
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVCPSA (
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -355,12 +336,8 @@
+-int TVETSA ( NO_FLUIDE, 
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVETSA ( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -420,12 +397,8 @@
+-int TVALSA ( NO_FLUIDE, 
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVALSA ( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -485,10 +458,7 @@
+-int TVSIGP ( NO_FLUIDE, 
+-            N, 
+-            AR_PRESSION, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_PRESSION; /* Vecteur de pressions */
+-     REAL *AR_RESULTAT; /* Vecteur resultat saturation liq */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVSIGP (
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_PRESSION, /* Vecteur de pressions */
++     REAL *AR_RESULTAT, /* Vecteur resultat saturation liq */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -546,10 +516,7 @@
+-int TVPTSA ( NO_FLUIDE, 
+-            N, 
+-            AR_TEMPERATURE, 
+-            AR_RESULTAT, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_TEMPERATURE; /* Vecteur de temperatures */
+-     REAL *AR_RESULTAT; /* Vecteur resultat saturation */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVPTSA (
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_TEMPERATURE, /* Vecteur de temperatures */
++     REAL *AR_RESULTAT, /* Vecteur resultat saturation */
++     int *AI_CR /* Vecteur compte rendu */
++)
+@@ -615,12 +582,8 @@
+-int TVPSSA ( NO_FLUIDE, 
+-            N, 
+-             AR_ENTROPIE,
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_ENTROPIE; /* Vecteur de entropies */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVPSSA ( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_ENTROPIE, /* Vecteur de entropies */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++     )
+@@ -680,12 +643,8 @@
+-int TVPHSA ( NO_FLUIDE, 
+-            N, 
+-            AR_ENTHALPIE, 
+-            AR_RESULTAT1, 
+-            AR_RESULTAT2, 
+-            AI_CR ) 
+-     int NO_FLUIDE; /* Numero de fluide utilisateur */
+-     int N; /* Taille des vecteurs */
+-     REAL *AR_ENTHALPIE; /* Vecteur de enthalpies */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat saturation liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat saturation vap */
+-     int *AI_CR; /* Vecteur compte rendu */
++int TVPHSA ( 
++     int NO_FLUIDE, /* Numero de fluide utilisateur */
++     int N, /* Taille des vecteurs */
++     REAL *AR_ENTHALPIE, /* Vecteur de enthalpies */
++     REAL *AR_RESULTAT1, /* Vecteur resultat saturation liq */
++     REAL *AR_RESULTAT2, /* Vecteur resultat saturation vap */
++     int *AI_CR /* Vecteur compte rendu */
++     )
+diff -Nar -u0 old/TH_TVxxSM.c new/TH_TVxxSM.c
+--- old/TH_TVxxSM.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVxxSM.c	2024-09-30 00:48:02.000000000 +0200
+@@ -33,4 +33,4 @@
+-int TVTTSM( N, 
+-            AR_RESULTAT )
+-     int N; /* Taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
++int TVTTSM(
++     int N, /* Taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* Vecteur resultat */
++)
+@@ -82,6 +82,5 @@
+-int TVSSSM ( N, 
+-             AR_RESULTAT1, 
+-             AR_RESULTAT2 )
+-     int N; /* ! Taille du vecteur resultat */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat vap */
++int TVSSSM (
++     int N, /* ! Taille du vecteur resultat */
++     REAL *AR_RESULTAT1, /* Vecteur resultat liq */
++     REAL *AR_RESULTAT2 /* Vecteur resultat vap */
++)
+@@ -134,6 +133,5 @@
+-int TVHHSM ( N, 
+-             AR_RESULTAT1, 
+-             AR_RESULTAT2 )
+-     int N; /* Taille du vecteur resultat */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat vap */
++int TVHHSM (
++     int N, /* Taille du vecteur resultat */
++     REAL *AR_RESULTAT1, /* Vecteur resultat liq */
++     REAL *AR_RESULTAT2 /* Vecteur resultat vap */
++)
+@@ -186,4 +184,5 @@
+-int TVROSM ( N, AR_RESULTAT1, AR_RESULTAT2 )
+-     int N; /* Taille du vecteur resultat */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat vap */
++int TVROSM (
++     int N, /* Taille du vecteur resultat */
++     REAL *AR_RESULTAT1, /* Vecteur resultat liq */
++     REAL *AR_RESULTAT2 /* Vecteur resultat vap */
++     )
+@@ -236,4 +235,5 @@
+-int TVCPSM ( N, AR_RESULTAT1, AR_RESULTAT2 )
+-     int N; /* Taille du vecteur resultat */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat vap */
++int TVCPSM (
++     int N, /* Taille du vecteur resultat */
++     REAL *AR_RESULTAT1, /* Vecteur resultat liq */
++     REAL *AR_RESULTAT2 /* Vecteur resultat vap */
++)
+@@ -286,4 +286,5 @@
+-int TVETSM ( N, AR_RESULTAT1, AR_RESULTAT2 )
+-     int N; /* Taille du vecteur resultat */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat vap */
++int TVETSM (
++     int N, /* Taille du vecteur resultat */
++     REAL *AR_RESULTAT1, /* Vecteur resultat liq */
++     REAL *AR_RESULTAT2 /* Vecteur resultat vap */
++     )
+@@ -336,4 +337,5 @@
+-int TVALSM ( N, AR_RESULTAT1, AR_RESULTAT2 )
+-     int N; /* Taille du vecteur resultat */
+-     REAL *AR_RESULTAT1; /* Vecteur resultat liq */
+-     REAL *AR_RESULTAT2; /* Vecteur resultat vap */
++int TVALSM (
++     int N, /* Taille du vecteur resultat */
++     REAL *AR_RESULTAT1, /* Vecteur resultat liq */
++     REAL *AR_RESULTAT2 /* Vecteur resultat vap */
++     )
+@@ -386,3 +388,4 @@
+-int TVSIGSM( N, AR_RESULTAT )
+-     int N; /* Taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* Vecteur resultat */
++int TVSIGSM(
++     int N, /* Taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* Vecteur resultat */
++     )
+diff -Nar -u0 old/TH_TVxxVM.c new/TH_TVxxVM.c
+--- old/TH_TVxxVM.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_TVxxVM.c	2024-09-30 00:44:24.000000000 +0200
+@@ -35,3 +35,4 @@
+-int TVTTVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVTTVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT /* vecteur resultat */
++)
+@@ -83,3 +84,4 @@
+-int TVSSVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVSSVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resultat */
++)
+@@ -131,3 +133,4 @@
+-int TVHHVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVHHVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resultat */
++)
+@@ -179,3 +182,4 @@
+-int TVROVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVROVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resultat */
++)
+@@ -227,3 +231,4 @@
+-int TVCPVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resutlat */
++int TVCPVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resutlat */
++)
+@@ -275,3 +280,4 @@
+-int TVA2VM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVA2VM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resultat */
++)
+@@ -323,3 +329,4 @@
+-int TVBEVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVBEVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resultat */
++)
+@@ -371,3 +378,4 @@
+-int TVETVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVETVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resultat */
++)
+@@ -419,3 +427,4 @@
+-int TVALVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vectuer resutlat */
++int TVALVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vectuer resutlat */
++)
+@@ -467,3 +476,4 @@
+-int TVYYVM ( N, AR_RESULTAT )
+-     int N; /* taille du vecteur resultat */
+-     REAL *AR_RESULTAT; /* vecteur resultat */
++int TVYYVM (
++     int N, /* taille du vecteur resultat */
++     REAL *AR_RESULTAT  /* vecteur resultat */
++)
+diff -Nar -u0 old/TH_VERIFIER_ENREG.c new/TH_VERIFIER_ENREG.c
+--- old/TH_VERIFIER_ENREG.c	2024-09-29 23:04:56.000000000 +0200
++++ new/TH_VERIFIER_ENREG.c	2024-09-30 00:59:17.000000000 +0200
+@@ -14,3 +14,4 @@
+-int VERIFIER_ENREG( DESC_FLUIDE, INFOS_ENREG ) 
+-     desc_fluid_t ** DESC_FLUIDE;
+-     int * INFOS_ENREG;
++int VERIFIER_ENREG(
++     desc_fluid_t ** DESC_FLUIDE,
++     int * INFOS_ENREG
++)

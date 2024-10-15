@@ -9,7 +9,12 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/Tools")
 # - include
 include(func_def)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_INSTALL_MESSAGE LAZY)
 
+find_package(Python QUIET REQUIRED COMPONENTS Interpreter)
 
 # Initialisation
 # --------------
@@ -20,6 +25,22 @@ set(EOSFILES ${EOSFILES} ${DOXYFILES})
 foreach(EOSFILE ${EOSFILES} )
   configure_file(${CMAKE_SOURCE_DIR}/${EOSFILE} ${CMAKE_BINARY_DIR}/${EOSFILE} @ONLY)
 endforeach(EOSFILE)
+
+if (ENABLE_OPENMP)
+  find_package(OpenMP)
+  if(OpenMP_CXX_FOUND)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Intel.*")
+      set(OpenMP_Fortran_FLAGS -fiopenmp)
+      set(OpenMP_Fortran_LIB_NAMES iomp5;pthread) 
+
+    endif()
+    set(USE_OPENMP ON)
+    message(STATUS "Use OpenMP ${USE_OPENMP} (version ${OpenMP_CXX_VERSION})")
+  else()
+    set(USE_OPENMP OFF)
+    message(STATUS "OpenMP not found")
+  endif()
+endif()
 
 # - subdirectories
 set(EOS_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
@@ -278,26 +299,37 @@ endif (ADD_COMP_FLAGS)
 #
 add_definitions(${COMP_FLAGS})
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+  set(CMAKE_C_FLAGS "-Wall -Wextra -Werror")
+  set(CMAKE_Fortran_FLAGS "-Wall -ffixed-line-length-132 -Wno-unused-label")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+  set(CMAKE_C_FLAGS "-Wall -Wextra -Werror")
+  set(CMAKE_Fortran_FLAGS "-Wall -ffixed-line-length-132 -Wno-unused-label")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  set(CMAKE_CXX_FLAGS "-Wall")
+  set(CMAKE_C_FLAGS "-Wall")
+  set(CMAKE_Fortran_FLAGS "-extend-source 132 -diag-disable=7713,7841")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+  set(CMAKE_CXX_FLAGS "-Wall")
+  set(CMAKE_C_FLAGS "-Wall")
+  set(CMAKE_Fortran_FLAGS "-extend-source 132 -diag-disable=7713,7841")
+endif()
 
-# Options EOS de compilation C++, C, Fortran
-set(EOS_CXX_FLAGS "-std=c++11 -Wall -Wextra")
-#
-set(EOS_C_FLAGS "-Wall -Wextra -Werror")
-#
-set(EOS_F_FLAGS "-Wall")
-set(EOS_F_FLAGS "${EOS_F_FLAGS} ${EOS_F_FLAGS}")
-if    (NCOMP_F STREQUAL "ifort")  # ifort
-  set(EOS_F_FLAGS "${EOS_F_FLAGS} -extend-source 132")
-else  (NCOMP_F STREQUAL "ifort")  # gfortra, g77 ou autres
-  set(EOS_F_FLAGS "${EOS_F_FLAGS} -ffixed-line-length-132")
-endif (NCOMP_F STREQUAL "ifort")
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC ")
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fPIC ")
+SET(CMAKE_C_FLAGS_RELEASE "-O2 -fPIC ")
+SET(CMAKE_C_FLAGS_DEBUG "-g -O0 -fPIC ")
+SET(CMAKE_Fortran_FLAGS_RELEASE "-O2 -fPIC ")
+SET(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -fPIC ")
 
-SET(CMAKE_Fortran_FLAGS_RELEASE " -O2 -fPIC " CACHE STRING "to  ..." FORCE)
-# Options globales de compilation C++, C, Fortran
-set(CMAKE_CXX_FLAGS     "${CMAKE_CXX_FLAGS}     ${EOS_CXX_FLAGS}")
-set(CMAKE_C_FLAGS       "${CMAKE_C_FLAGS}       ${EOS_C_FLAGS}")
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} ${EOS_F_FLAGS}")
-
+if (USE_OPENMP)
+  set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_Fortran_FLAGS    "${CMAKE_Fortran_FLAGS} ${OpenMP_Fortran_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 #
 # Include files

@@ -59,7 +59,8 @@ namespace NEPTUNE_EOS
       virtual EOS_Error compute(const EOS_Field& p, 
                                 EOS_Field& output, 
                                 EOS_Error_Field& errfield) const ;
-
+      using EOS_Fluid::compute;
+      
       void describe_error(const EOS_Internal_Error ierr, AString & description) const ;
     
   protected:

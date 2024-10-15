@@ -27,6 +27,10 @@
 #--cc=<path>/<compiler>                # force the c compiler
 #--fc=<path>/<compiler>                # force the fortran compiler
 #--add_comp_flags=<opt1>,<opt2>,...    # add flags for compilation
+#--with-openmp                         # compile with support of OpenMP
+#--without-openmp                      # compile without support of OpenMP (default)
+#--with-sanitizer                      # use sanitizers
+#--without-sanitizer                   # do not use sanitizers (default)
 
 #-------------------------------------------------------------------
 # python API

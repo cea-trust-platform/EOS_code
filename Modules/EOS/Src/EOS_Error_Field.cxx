@@ -47,19 +47,21 @@ namespace NEPTUNE
   }
 
   EOS_Error_Field::EOS_Error_Field():
-    data(), name(), library_codes()
+    data(), library_codes(), name()
   {
   }
 
   EOS_Error_Field::EOS_Error_Field(const EOS_Error_Field &f):
-     UObject(), data(f.data.size(), &f.data[0]), name(f.name),
-     library_codes(f.library_codes.size(), &f.library_codes[0])
+     UObject(), data(f.data.size(), &f.data[0]),
+     library_codes(f.library_codes.size(), &f.library_codes[0]),
+     name(f.name)
   {
   }
 
   EOS_Error_Field::EOS_Error_Field(ArrOfInt &a):
     data(a.size(), &a[0]),
-    name(), library_codes(a.size())
+    library_codes(a.size()),
+    name()
   {
   }
 

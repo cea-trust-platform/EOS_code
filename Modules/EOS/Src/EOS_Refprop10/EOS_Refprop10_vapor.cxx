@@ -56,7 +56,7 @@ namespace NEPTUNE_EOS
     err = callSetup() ;
     if (err.generic_error() != EOS_Error::good)  return err ;
 
-    F77NAME(therm)(T,rho,arr_molfrac,p,e,h,s,cv,cp,w,hjt) ;
+    F77NAME(therm_rp10)(T,rho,arr_molfrac,p,e,h,s,cv,cp,w,hjt) ;
 
     EOS_thermprop prop = nam2num_thermprop(property_name) ;
     switch(prop)

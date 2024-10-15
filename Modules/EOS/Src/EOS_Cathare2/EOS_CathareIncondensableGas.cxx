@@ -134,4 +134,8 @@ namespace NEPTUNE_EOS
     return iret ;
   }
 
+  int EOS_CathareIncondensableGas::init(const Strings&, const Strings&, double, double, double, double)
+  {
+    throw EOS_Internal_Error::NOT_IMPLEMENTED;
+  }
 }

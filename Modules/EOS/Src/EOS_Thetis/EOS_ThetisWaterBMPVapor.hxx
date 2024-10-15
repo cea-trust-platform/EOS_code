@@ -46,6 +46,7 @@ namespace NEPTUNE_EOS
     virtual ~EOS_ThetisWaterBMPVapor();
 
     //! Thetis initialization + fluid loading
+    using EOS_ThetisWaterBMP::init;
     virtual int init(const Strings&);
 
     //  Other methods

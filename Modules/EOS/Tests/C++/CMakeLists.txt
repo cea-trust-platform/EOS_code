@@ -41,3 +41,19 @@ if (WITH_IPP)
                                              ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/")
 endif (WITH_IPP)
 
+
+# (add executable EOSTest)
+if (USE_OPENMP)
+  message(STATUS "Add test EOSTest (OpenMP version)")
+  add_executable (EOSTest_OpenMP
+	  main_OpenMP.cxx
+	  dump.cxx
+    arguments.cxx
+	  )
+  target_include_directories(EOSTest_OpenMP PRIVATE ${EOS_BINARY_DIR}/Modules)
+  target_link_libraries(EOSTest_OpenMP PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
+  add_test(EOSTest_OpenMP bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTest_OpenMP 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_openmp")
+  set_tests_properties(EOSTest PROPERTIES ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/;OMP_NUM_THREADS=3"
+                                        COST        5.)
+  install(TARGETS EOSTest_OpenMP DESTINATION .)
+endif()

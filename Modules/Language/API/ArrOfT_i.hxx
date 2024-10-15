@@ -38,17 +38,20 @@ namespace LANGUAGE_KERNEL
     ref_count(1), 
     owner(1)
   {
-    try {
-      data = new T[s];
-      // test
-      for (int i=0;i<s;i++) data[i]=0;
-      // test
-    }
-    catch(...) {
-      cerr << "Not enough memory." << endl;
-      assert(0);
-      exit(-1);
-    }
+    if (s <= 0)
+      data = 0;
+    else
+      try {
+        data = new T[s];
+        // test
+        for (int i=0;i<s;i++) data[i]=0;
+        // test
+      }
+      catch(...) {
+        cerr << "Not enough memory." << endl;
+        assert(0);
+        exit(-1);
+      }
   }
   template <class T> 
   inline Vdata<T>::
@@ -63,7 +66,7 @@ namespace LANGUAGE_KERNEL
   inline Vdata<T>::
   ~Vdata() 
   {
-    if(owner)
+    if(owner && data)
       delete[] data;
   }
   template <class T> 
@@ -135,9 +138,10 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator=(const T& x)
   {
-     int i = size();
-     T* vv=&data[i];
-    while(i--) *--vv=x;
+    if (data) {
+      int i = size();
+      T* vv=&data[i];
+      while(i--) *--vv=x;
     // alternative aux 3 lignes precedentes
     /*    int n = size();
     for (int i=0;i<n;i++)
@@ -145,12 +149,14 @@ namespace LANGUAGE_KERNEL
 	data[i]=x;
 	}*/
     // alternative aux 3 lignes precedentes
+    }
     return *this;
   }
   template <class T> 
   inline T& ArrOf<T>::
   operator[](int i)
   {
+    assert(data != NULL);
     assert(i<size());
     assert(i >= 0);
     return data[i];
@@ -159,6 +165,7 @@ namespace LANGUAGE_KERNEL
   inline const T& ArrOf<T>::
   operator[](int i) const
   {
+    assert(data != NULL);
     assert(i<size());
     assert(i >= 0);
     return data[i];
@@ -167,6 +174,7 @@ namespace LANGUAGE_KERNEL
   inline T& ArrOf<T>::
   operator()(int i)
   {
+    assert(data != NULL);
     assert(i<size());
     assert(i >= 0);
     return data[i];
@@ -175,6 +183,7 @@ namespace LANGUAGE_KERNEL
   inline const T& ArrOf<T>::
   operator()(int i) const
   {
+    assert(data != NULL);
     assert(i<size());
     assert(i >= 0);
     return data[i];

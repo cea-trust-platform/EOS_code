@@ -88,6 +88,7 @@ namespace NEPTUNE_EOS
      * \todo Change return type to EOS_Error
      */
     int init(const Strings& args1, const Strings& args2);
+    int init(const Strings&, const Strings&, double, double, double, double);
 
     //! Return Cp0
     double get_prxcp();

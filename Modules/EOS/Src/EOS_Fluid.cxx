@@ -1166,87 +1166,87 @@ namespace NEPTUNE
   }
 
   //
-  EOS_Internal_Error EOS_Fluid::get_p(double& p) const
+  EOS_Internal_Error EOS_Fluid::get_p(double& /*p*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_p,  P = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_mm(double& mm) const
+  EOS_Internal_Error EOS_Fluid::get_mm(double& /*mm*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_mm,  mm = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_p_crit(double& p_crit) const
+  EOS_Internal_Error EOS_Fluid::get_p_crit(double& /*p_crit*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_p_crit,  p_crit = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_h_crit(double& h_crit) const
+  EOS_Internal_Error EOS_Fluid::get_h_crit(double& /*h_crit*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_h_crit,  h_crit = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_T_crit(double& T_crit) const
+  EOS_Internal_Error EOS_Fluid::get_T_crit(double& /*T_crit*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_T_crit,  T_crit = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_rho_crit(double& rho_crit) const
+  EOS_Internal_Error EOS_Fluid::get_rho_crit(double& /*rho_crit*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_rho_crit,  rho_crit = "<< endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_p_min(double& p_min) const
+  EOS_Internal_Error EOS_Fluid::get_p_min(double& /*p_min*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_p_min,  p_min = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_p_max(double& p_max) const
+  EOS_Internal_Error EOS_Fluid::get_p_max(double& /*p_max*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_p_max,  p_max = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_h_min(double& h_min) const
+  EOS_Internal_Error EOS_Fluid::get_h_min(double& /*h_min*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_h_min,  h_min = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_h_max(double& h_max) const
+  EOS_Internal_Error EOS_Fluid::get_h_max(double& /*h_max*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_h_max,  h_max = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_T_min(double& T_min) const
+  EOS_Internal_Error EOS_Fluid::get_T_min(double& /*T_min*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_T_min,  T_min = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_T_max(double& T_max) const
+  EOS_Internal_Error EOS_Fluid::get_T_max(double& /*T_max*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_T_max,  T_max = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_rho_min(double& rho_min) const
+  EOS_Internal_Error EOS_Fluid::get_rho_min(double& /*rho_min*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_rho_min,  rho_min = "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_rho_max(double& rho_max) const
+  EOS_Internal_Error EOS_Fluid::get_rho_max(double& /*rho_max*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_rho_max,  rho_max = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_p_ref(double& p_ref) const
+  EOS_Internal_Error EOS_Fluid::get_p_ref(double& /*p_ref*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_p_ref,  p_ref = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_h_ref(double& h_ref) const
+  EOS_Internal_Error EOS_Fluid::get_h_ref(double& /*h_ref*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_h_ref,  h_ref = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
-  EOS_Internal_Error EOS_Fluid::get_T_ref(double& T_ref) const
+  EOS_Internal_Error EOS_Fluid::get_T_ref(double& /*T_ref*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_T_ref,  T_ref = " << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -1330,6 +1330,10 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::compute_T_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
+
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1341,13 +1345,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1359,13 +1365,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_u_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1377,13 +1385,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_s_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1395,13 +1405,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_mu_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1413,13 +1425,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_lambda_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1431,13 +1445,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1449,13 +1465,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cv_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1467,13 +1485,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_sigma_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1485,13 +1505,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_w_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1503,13 +1525,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_g_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1521,13 +1545,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_f_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1539,14 +1565,16 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
 
   EOS_Internal_Error EOS_Fluid::compute_beta_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
@@ -1558,14 +1586,16 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_gamma_ph(double p, double h, double& r) const
   { static int loop = 0 ;
-    if (!loop)
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
+   if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p", 1, &p) ;
          const EOS_Field fin2("h", "h", 1, &h) ;
@@ -1576,13 +1606,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_pT(double p, double T, double& r) const
   { static int loop = 0;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     EOS_Internal_Error ierr(EOS_Internal_Error::NOT_IMPLEMENTED) ;
     if (!loop)
        { loop = 1 ;
@@ -1757,6 +1789,9 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::compute_h_ps(double p, double s, double& r) const
   { static int loop = 0;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     EOS_Internal_Error ierr(EOS_Internal_Error::NOT_IMPLEMENTED) ;
     if (!loop)
        { loop = 1 ;
@@ -3382,6 +3417,9 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::compute_T_sat_p(double p, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("p", "p", 1, &p) ;
@@ -3392,13 +3430,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_l_sat_p(double p, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("p", "p", 1, &p) ;
@@ -3409,13 +3449,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_v_sat_p(double p, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("p", "p", 1, &p) ;
@@ -3426,13 +3468,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_l_sat_p(double p, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("p", "p", 1, &p) ;
@@ -3443,13 +3487,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_v_sat_p(double p, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("p", "p", 1, &p) ;
@@ -3460,13 +3506,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_l_sat_p(double p, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("p", "p", 1, &p) ;
@@ -3477,13 +3525,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_v_sat_p(double p, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("p", "p", 1, &p) ;
@@ -3494,13 +3544,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_l_sat_T(double T, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("T", "T", 1, &T) ;
@@ -3511,13 +3563,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_rho_v_sat_T(double T, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("T", "T", 1, &T) ;
@@ -3528,13 +3582,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_l_sat_T(double T, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("T", "T", 1, &T) ;
@@ -3545,13 +3601,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_h_v_sat_T(double T, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("T", "T", 1, &T) ;
@@ -3562,13 +3620,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_l_sat_T(double T, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("T", "T", 1, &T) ;
@@ -3579,13 +3639,15 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_cp_v_sat_T(double T, double& r) const
   { static int loop = 0 ;
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin("T", "T", 1, &T) ;
@@ -3596,9 +3658,8 @@ namespace NEPTUNE
          loop = 0 ;
          return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
     loop = 0 ;
+    return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_d_T_sat_d_p_p(double p, double& r) const

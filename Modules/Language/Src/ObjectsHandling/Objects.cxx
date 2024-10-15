@@ -30,6 +30,10 @@
 // Boolean
 #include "Language/API/Boolean.hxx"
 
+#ifdef _OPENMP
+#include "omp.h"
+#endif
+
 // Class Objects 
 namespace OBJECTSHANDLING
 {
@@ -135,7 +139,13 @@ namespace OBJECTSHANDLING
   }
 
   int  Objects::add_object (NumberedObject *obj)
-  { int return_value(free) ;
+  {
+#ifdef _OPENMP
+//  if (omp_in_parallel()) {
+    mutex_objects.lock();
+//  }
+#endif
+    int return_value(free) ;
     the_objects[free] = obj ;
     free = next[free] ;
     nb_obj++ ;
@@ -157,16 +167,32 @@ namespace OBJECTSHANDLING
         next=newnext ;
         nb_obj_max = newnb_obj_max ;
       }
+#ifdef _OPENMP
+//  if (omp_in_parallel()) {
+    mutex_objects.unlock();
+//  }
+#endif
     return return_value ;
   }
 
   NEPTUNE::Boolean Objects::delete_object (const NEPTUNE::Object_ID& obj)
-  { int num = obj        ;
+  { 
+#ifdef _OPENMP
+//  if (omp_in_parallel()) {
+    mutex_objects.lock();
+//  }
+#endif
+    int num = obj        ;
     int tmp = next[free] ;
     next[free] = num ;
     next[num]  = tmp ;
     the_objects[num] = 0 ;
     nb_obj-- ;
+#ifdef _OPENMP
+//  if (omp_in_parallel()) {
+    mutex_objects.unlock();
+//  }
+#endif
     return True ;
   }
 

@@ -32,6 +32,7 @@ namespace LANGUAGE_KERNEL
   public:
     UnboundedSetByValue();
     UnboundedSetByValue(int sz);
+    UnboundedSetByValue(const UnboundedSetByValue<T> & right);
 
     virtual ~UnboundedSetByValue();
 

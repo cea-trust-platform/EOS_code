@@ -46,6 +46,7 @@ namespace NEPTUNE_EOS
     virtual ~EOS_THETIS();
 
     //! Initialize Thetis 
+    using EOS_Fluid::init;
     virtual int init(const Strings& strings);
 
     //! See EOS_Fluid
@@ -100,8 +101,9 @@ namespace NEPTUNE_EOS
     virtual void getQuality(ArrOfDouble& quality) const = 0;
 
     //! give fluid state
+    using EOS_Fluid::is_liquid;
     virtual bool is_liquid() const = 0;
-
+    
     //! error treatment
     virtual EOS_Internal_Error errorStudy(const int errorNum, const AString& name) const;
 
