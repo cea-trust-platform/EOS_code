@@ -67,15 +67,35 @@ namespace NEPTUNE_EOS
     int p = -1, t = -1, h = -1, c[5] ;
     for (int i=0; i<5; i++)  c[i] = -1 ;
     for (int i=0; i< in.size(); i++) 
-       { if      (in[i].get_property() == NEPTUNE::p) p = i ;
-         else if (in[i].get_property() == NEPTUNE::T) t = i ;
-         else if (in[i].get_property() == NEPTUNE::h) h = i ;
-         else if (in[i].get_camix_property() == NEPTUNE::c_0) c[0] = i ;
-         else if (in[i].get_camix_property() == NEPTUNE::c_1) c[1] = i ;
-         else if (in[i].get_camix_property() == NEPTUNE::c_2) c[2] = i ;
-         else if (in[i].get_camix_property() == NEPTUNE::c_3) c[3] = i ;
-         else if (in[i].get_camix_property() == NEPTUNE::c_4) c[4] = i ;
-       }
+    {
+      switch(in[i].get_property_number())
+      {
+        case NEPTUNE::p :
+          p = i ;
+          break;
+        case NEPTUNE::T :
+          t = i ;
+          break;
+        case NEPTUNE::h :
+          h = i ;
+          break;
+        case NEPTUNE::c_0 :
+          c[0] = i ;
+          break;
+        case NEPTUNE::c_1 :
+          c[1] = i ;
+          break;
+        case NEPTUNE::c_2 :
+          c[2] = i ;
+          break;
+        case NEPTUNE::c_3 :
+          c[3] = i ;
+          break;
+        case NEPTUNE::c_4 :
+          c[4] = i ;
+          break;
+      }
+    }
     EOS_Fields C(np) ;  // proportions of vapor and incondensables gases
     for (int i=0; i<np; i++) 
        { if (c[i] == -1) 
@@ -108,7 +128,7 @@ namespace NEPTUNE_EOS
          int ih =  0 ;
          int ii = -1 ;
          for (int i=0; i<nout; i++) 
-            { if ( out[i].get_property() == NEPTUNE::h) 
+            { if ( out[i].get_property_number() == NEPTUNE::h) 
                  { ih = 1 ;
                    hi = out[i] ;
                  }

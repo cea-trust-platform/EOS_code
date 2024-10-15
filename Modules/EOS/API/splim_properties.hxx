@@ -37,11 +37,13 @@ namespace NEPTUNE
 
 
   enum EOS_splimprop
-    { NotASplimProperty = d2_T_sat_d_p_d_p+1,
+    { NotASplimProperty = lastSatProperty+1,
 
       p_lim   ,
+      firstLimProperty = p_lim,
       h_l_lim ,
-      h_v_lim
+      h_v_lim ,
+      lastLimProperty = h_v_lim
     };
   enum EOS_limsplimprop
     { EOS_TLIMPROP = p_lim 

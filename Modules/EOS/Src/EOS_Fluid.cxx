@@ -108,7 +108,7 @@ namespace NEPTUNE
          const EOS_Field *T = NULL ;
          const EOS_Field *s = NULL ;
          for (int i=0; i<nbi; i++) 
-            { switch(input[i].get_property()) 
+            { switch(input[i].get_property_number()) 
                  { case NEPTUNE::p :  p = &(input[i]) ; break ;
                    case NEPTUNE::h :  h = &(input[i]) ; break ;
                    case NEPTUNE::T :  T = &(input[i]) ; break ;
@@ -143,19 +143,11 @@ namespace NEPTUNE
          const EOS_Field *psat = NULL ;
          const EOS_Field *plim = NULL ;
          for (int i=0; i<nbi; i++) 
-            { switch(input[i].get_property())
-                 { case NEPTUNE::p :  p = &(input[i]) ; break ;
-                   default :
-                      switch(input[i].get_sat_property()) 
-                         { case NEPTUNE::p_sat :  psat = &(input[i]) ; break ;
-                           default: 
-                              switch(input[i].get_lim_property())
-                                 { case NEPTUNE::p_lim :  plim = &(input[i]) ; break ;
-                                   default : break;
-                                 }
-                              break;
-                         }
-                   break;
+            { switch(input[i].get_property_number())
+                 { case NEPTUNE::p :      p    = &(input[i]) ; break ;
+                   case NEPTUNE::p_sat :  psat = &(input[i]) ; break ;
+                   case NEPTUNE::p_lim :  plim = &(input[i]) ; break ;
+                   default : break;
                  }
             }
          if      (p)  
@@ -183,7 +175,7 @@ namespace NEPTUNE
          const EOS_Field *T = NULL ;
          const EOS_Field *s = NULL ;
          for (int i=0; i<nbi; i++) 
-            { switch(input[i].get_property()) 
+            { switch(input[i].get_property_number()) 
                  { case NEPTUNE::p :  p = &(input[i]) ; break ;
                    case NEPTUNE::h :  h = &(input[i]) ; break ;
                    case NEPTUNE::T :  T = &(input[i]) ; break ;
@@ -203,19 +195,11 @@ namespace NEPTUNE
          const EOS_Field *psat = NULL ;
          const EOS_Field *plim = NULL ;
          for (int i=0; i<nbi; i++) 
-            { switch(input[i].get_property())
+            { switch(input[i].get_property_number())
                  { case NEPTUNE::p :  p = &(input[i]) ; break ;
-                   default :
-                      switch(input[i].get_sat_property()) 
-                         { case NEPTUNE::p_sat :  psat = &(input[i]) ; break ;
-                           default: 
-                               switch(input[i].get_lim_property())
-                                  { case NEPTUNE::p_lim :  plim = &(input[i]) ; break ;
-                                    default : break;
-                                  }
-                               break;
-                         }
-                      break;
+                   case NEPTUNE::p_sat :  psat = &(input[i]) ; break ;
+                   case NEPTUNE::p_lim :  plim = &(input[i]) ; break ;
+                   default : break;
                  }
             }
          if      (p)  
@@ -296,8 +280,8 @@ namespace NEPTUNE
     assert(r.size() == sz) ;
     assert(errfield.size() == sz) ;
 
-    EOS_thermprop prop_p  = p.get_property()     ;
-    EOS_saturprop propsat = r.get_sat_property() ;
+    EOS_Property prop_p  = p.get_property_number()     ;
+    EOS_Property propsat = r.get_property_number() ;
 
     if ( (prop_p == NEPTUNE::T) && (propsat == NEPTUNE::p_sat) ) 
        { for (int i=0; i<sz; i++) 
@@ -305,9 +289,9 @@ namespace NEPTUNE
          return errfield.find_worst_error().generic_error() ;
        }
 
-    if (    (p.get_property()     != NEPTUNE::p) 
-         && (p.get_sat_property() != NEPTUNE::p_sat)
-         && (p.get_lim_property() != NEPTUNE::p_lim) )
+    if (    (prop_p != NEPTUNE::p) 
+         && (prop_p != NEPTUNE::p_sat)
+         && (prop_p != NEPTUNE::p_lim) )
        { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
          return EOS_Error::error ;   
        }
@@ -377,23 +361,19 @@ namespace NEPTUNE
                errfield.set(i, compute_d2_T_sat_d_p_d_p_p(p[i], r[i])) ;
             break;
 
-         default :
             // Spinodale limits of Thermodynamic properties
-            EOS_splimprop proplim = r.get_lim_property() ;
-            switch(proplim)
-               { case NEPTUNE::h_l_lim : 
-                    for (int i=0; i<sz; i++)
-                       errfield.set(i, compute_h_l_lim_p(p[i], r[i])) ;
-                    break ;
-                 case NEPTUNE::h_v_lim : 
-                    for (int i=0; i<sz; i++)
-                       errfield.set(i, compute_h_v_lim_p(p[i], r[i])) ;
-                    break ;
-                 default :
-                    errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
-                    return EOS_Error::error ;
-                    break ;
-               }
+         case NEPTUNE::h_l_lim : 
+            for (int i=0; i<sz; i++)
+               errfield.set(i, compute_h_l_lim_p(p[i], r[i])) ;
+            break ;
+         case NEPTUNE::h_v_lim : 
+            for (int i=0; i<sz; i++)
+               errfield.set(i, compute_h_v_lim_p(p[i], r[i])) ;
+            break ;
+         default :
+            errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
+            return EOS_Error::error ;
+            break ;
        }
      
     return errfield.find_worst_error().generic_error() ;
@@ -424,7 +404,7 @@ namespace NEPTUNE
     int lt = 0 ;
     int ls = 0 ;
 
-    switch(p.get_property())
+    switch(p.get_property_number())
        { case NEPTUNE::p:
             pp = p ;
             lp = 1 ;
@@ -444,7 +424,7 @@ namespace NEPTUNE
          default: break;
        }
 
-    switch(h.get_property())
+    switch(h.get_property_number())
        { case NEPTUNE::p:
             pp = h ;
             lp = 1 ;
@@ -471,8 +451,8 @@ namespace NEPTUNE
        }
 
     if ( (lp == 1) && (ls == 1) ) 
-       { EOS_thermprop prop = r.get_property() ;
-         switch(prop) 
+       {
+         switch(r.get_property_number()) 
             { case NEPTUNE::h : 
                  for (int i=0; i<sz; i++) 
                     { EOS_Internal_Error err = compute_h_ps(pp[i], ss[i], r[i]) ;
@@ -504,8 +484,8 @@ namespace NEPTUNE
        }
 
     if ( (lp == 1) && (lh == 1) )
-       { EOS_thermprop prop = r.get_property() ;
-         switch(prop)
+       {
+         switch(r.get_property_number())
             { case NEPTUNE::h :
                  if (lt == 1)
                     { for (int i=0; i<sz; i++)

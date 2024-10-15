@@ -144,7 +144,7 @@ namespace NEPTUNE_EOS
     bool computeDmudh = false ;
 
     // --  
-    EOS_thermprop prop ;
+    EOS_Property prop ;
 
     // -- -- input
     int v1 = 0 ;
@@ -172,7 +172,7 @@ namespace NEPTUNE_EOS
     try {
 
       for(int i=0; i<nb_fields_in; i++)
-        { prop = input[i].get_property() ;
+        { prop = input[i].get_property_number() ;
           switch(prop)
             { case NEPTUNE::p :
                 tp.set_ptr(sz, input[i].get_data().get_ptr()) ;
@@ -222,7 +222,7 @@ namespace NEPTUNE_EOS
       
 
       for (int i=0; i<nb_fields; i++)
-         { prop = r[i].get_property() ;
+         { prop = r[i].get_property_number() ;
            assert(r[i].size() == sz) ;
 
            tr.set_ptr(sz, r[i].get_data().get_ptr()) ;
@@ -467,8 +467,8 @@ namespace NEPTUNE_EOS
     bool computeDhdpV = false ;
 
     // --  
-    EOS_thermprop prop    ;
-    EOS_saturprop propsat ;
+    EOS_Property prop    ;
+    EOS_Property propsat ;
 
     // -- -- input
     int sz = P.size() ;
@@ -486,24 +486,19 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error ierr(EOS_Internal_Error::OK) ;
 
     try
-       { prop = P.get_property() ;
+       { prop = P.get_property_number() ;
          switch(prop)
             { case NEPTUNE::p :
                  tp.set_ptr(sz, P.get_data().get_ptr()) ;
                  ptP = const_cast<double *>(tp.get_ptr()) ;
                  break ;
+              case NEPTUNE::p_sat :
+                 tp.set_ptr(sz, P.get_data().get_ptr()) ;
+                 ptP = const_cast<double *>(tp.get_ptr()) ;
+                 break ;
               default :
-                propsat = P.get_sat_property() ;
-                switch(propsat)
-                   { case NEPTUNE::p_sat :
-                        tp.set_ptr(sz, P.get_data().get_ptr()) ;
-                        ptP = const_cast<double *>(tp.get_ptr()) ;
-                        break ;
-                     default :
-                        throw Thetis_Exception(EOS_Internal_Error::NOT_IMPLEMENTED) ;
-                        break ;
-                   }
-                break ;
+                 throw Thetis_Exception(EOS_Internal_Error::NOT_IMPLEMENTED) ;
+                 break ;
             }
 
          // -- -- output
@@ -511,7 +506,7 @@ namespace NEPTUNE_EOS
          int fluidNum = getFluidNum() ;
 
          for (int i=0; i<nb_fields; i++)
-            { EOS_saturprop propsat = r[i].get_sat_property() ;
+            { propsat = r[i].get_property_number() ;
 
               tr.set_ptr(sz, r[i].get_data().get_ptr()) ;
               ptR = const_cast<double *>(tr.get_ptr()) ;

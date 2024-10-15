@@ -173,7 +173,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;
 
-    return call_therm("h",T,rho_refprop,h);
+    return call_therm(EOS_thermprop::h,T,rho_refprop,h);
   }
   //! h(p,s)
 /*  inline EOS_Internal_Error
@@ -196,7 +196,7 @@ namespace NEPTUNE_EOS
     if (ierr != 0)
       return generate_error(ierr, herr);
 
-    return call_therm("h",T,rho_refprop,h);
+    return call_therm(EOS_thermprop::h,T,rho_refprop,h);
   }*/
   //! u(p,T)
 
@@ -207,7 +207,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;
 
-    return call_therm("u",T,rho_refprop,u);
+    return call_therm(EOS_thermprop::u,T,rho_refprop,u);
   }
 
   //! u(p,h)
@@ -222,7 +222,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;
 
-    return call_therm("u",T,rho_refprop,u);
+    return call_therm(EOS_thermprop::u,T,rho_refprop,u);
   }
 
   //! s(p,T)
@@ -233,7 +233,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;
 
-    return call_therm("s",T,rho_refprop,s);
+    return call_therm(EOS_thermprop::s,T,rho_refprop,s);
   }
 
   //! s(p,h)
@@ -248,7 +248,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;
 
-    return call_therm("s",T,rho_refprop,s);
+    return call_therm(EOS_thermprop::s,T,rho_refprop,s);
   }
 
   //! cp(p,T)
@@ -259,7 +259,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;
 
-    return call_therm("cp",T,rho_refprop,cp);
+    return call_therm(EOS_thermprop::cp,T,rho_refprop,cp);
   } 
 
    //! cp(p,h)
@@ -274,7 +274,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;    
 
-    return call_therm("cp",T,rho_refprop,cp);
+    return call_therm(EOS_thermprop::cp,T,rho_refprop,cp);
   }
 
    //! cv(p,h)
@@ -289,7 +289,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err;    
 
-    return call_therm("cv",T,rho_refprop,cv);
+    return call_therm(EOS_thermprop::cv,T,rho_refprop,cv);
   }
 
    //! beta(p,h)
@@ -318,7 +318,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop);
     if (err.generic_error() == EOS_Error::bad) return err ;
 
-    return call_therm("w",T,rho_refprop,w);
+    return call_therm(EOS_thermprop::w,T,rho_refprop,w);
   }
 
   //! w(p,h)
@@ -333,7 +333,7 @@ namespace NEPTUNE_EOS
     err = call_tprho(p,T,rho_refprop) ;
     if (err.generic_error() == EOS_Error::bad) return err;    
 
-    return call_therm("w",T,rho_refprop,w) ;
+    return call_therm(EOS_thermprop::w,T,rho_refprop,w) ;
   }
 
   //! mu(p,T)

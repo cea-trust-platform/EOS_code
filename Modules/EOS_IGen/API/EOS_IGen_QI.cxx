@@ -42,12 +42,15 @@ namespace NEPTUNE_EOS_IGEN
   is_abs(abs),
   average(0.0),
   quality_nodes(0)
-  { if (!is_abs && (limit_qi < DBL_EPSILON))
-       limit_qi=INIT_DLB ;
+  {
+    property_number = gen_property_number(prop);
+    if (!is_abs && (limit_qi < DBL_EPSILON))
+      limit_qi=INIT_DLB ;
   }
 
   EOS_IGen_QI::EOS_IGen_QI(const EOS_IGen_QI& right):
   property(right.property),
+  property_number(right.property_number),
   type(right.type),
   limit_qi(right.limit_qi),
   is_abs(right.is_abs),
@@ -110,13 +113,14 @@ namespace NEPTUNE_EOS_IGEN
   
   
   const EOS_IGen_QI& EOS_IGen_QI::operator=(const EOS_IGen_QI right)
-  { property      = right.property ;
-    type          = right.type ;
-    is_abs        = right.is_abs ;
-    limit_qi      = right.limit_qi ;
-    average       = right.average ;
-    test_quality  = right.test_quality ;
-    quality_nodes = right.quality_nodes ;
+  { property        = right.property ;
+    property_number = right.property_number ;
+    type            = right.type ;
+    is_abs          = right.is_abs ;
+    limit_qi        = right.limit_qi ;
+    average         = right.average ;
+    test_quality    = right.test_quality ;
+    quality_nodes   = right.quality_nodes ;
 
     return *this ;
   }

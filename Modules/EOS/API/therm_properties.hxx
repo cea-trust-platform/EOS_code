@@ -111,6 +111,7 @@ namespace NEPTUNE
     { NotATProperty = -1 ,
 
       p      ,
+      firstTProperty = p,
       h      ,
       T      ,
       rho    ,
@@ -182,7 +183,8 @@ namespace NEPTUNE
       d_h_d_T_p      ,
       d_h_d_p_T      ,
       d_h_d_p_s      ,
-      d_h_d_s_p
+      d_h_d_s_p      ,
+      lastTProperty = d_h_d_s_p
     };
   enum EOS_limthermprop
     { EOS_TPROP    =    p ,

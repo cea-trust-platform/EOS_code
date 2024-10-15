@@ -333,8 +333,8 @@ namespace CATHARE_FREONR12
 
     // --
     EOS_Error_Field err_tmp(internal_err_tmp) ;
-    EOS_thermprop prop    ;
-    EOS_saturprop propsat ;
+    EOS_Property prop    ;
+    EOS_Property propsat ;
     int comp_psatr12 = 0 ;
     int comp_rovlr12 = 0 ;
     int comp_hsatr12 = 0 ;
@@ -349,23 +349,18 @@ namespace CATHARE_FREONR12
 
     
     // --  input
-    prop = P.get_property() ;
+    prop = P.get_property_number() ;
     switch(prop)
        { case NEPTUNE::p :
             tp.set_ptr(sz, P.get_data().get_ptr()) ;
             break ;
+         case NEPTUNE::p_sat :
+            tp.set_ptr(sz, P.get_data().get_ptr()) ;
+            break ;
          default :
-           propsat = P.get_sat_property() ;
-           switch(propsat)
-              { case NEPTUNE::p_sat :
-                   tp.set_ptr(sz, P.get_data().get_ptr()) ;
-                   break ;
-                default :
-                   err = EOS_Internal_Error::NOT_IMPLEMENTED ;
-                   return EOS_Error::error ;
-                   break ;
-              }
-           break;
+            err = EOS_Internal_Error::NOT_IMPLEMENTED ;
+            return EOS_Error::error ;
+            break ;
        }
 
 
@@ -375,7 +370,7 @@ namespace CATHARE_FREONR12
     int ind_not_def = -1        ;
 
     for (int i=0; i<nb_fields; i++)
-       { propsat = r[i].get_sat_property() ;
+       { propsat = r[i].get_property_number() ;
          switch(propsat)
             { case NEPTUNE::T_sat :
                  ttsp.set_ptr(sz, r[i].get_data().get_ptr()) ;
@@ -692,8 +687,7 @@ namespace CATHARE_FREONR12
 
     // --  
     EOS_Error_Field err_tmp(internal_err_tmp) ;
-    EOS_thermprop prop    ;
-    EOS_saturprop propsat ;
+    EOS_Property prop    ;
     int comp_psatr12 = 0 ;
     int comp_rovlr12 = 0 ;
     int comp_hsatr12 = 0 ;
@@ -721,7 +715,7 @@ namespace CATHARE_FREONR12
     int nb_fields_in=input.size();
 
     for (int i=0; i<nb_fields_in; i++)
-       { prop = input[i].get_property() ;
+       { prop = input[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::p :
                  tp.set_ptr(sz, input[i].get_data().get_ptr());
@@ -758,7 +752,7 @@ namespace CATHARE_FREONR12
 
     //
     for (int i=0; i<nb_fields; i++)
-       { prop = r[i].get_property();
+       { prop = r[i].get_property_number();
          switch(prop)
             { case NEPTUNE::h :
                  thl.set_ptr(sz, r[i].get_data().get_ptr());
@@ -830,67 +824,58 @@ namespace CATHARE_FREONR12
                  ttmul2.set_ptr(sz, r[i].get_data().get_ptr());
                  comp_mulr12=1;
                  break ;
-              case NEPTUNE::NotATProperty :
+
                  // Thermodynamic Properties at Saturation
-                 { propsat = r[i].get_sat_property() ;
-                   switch(propsat)
-                      { case NEPTUNE::T_sat :
-                           ttsp.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_psatr12=1;
-                           chg_T_sat=1;
-                           break;
-                        case NEPTUNE::h_l_sat :
-                           thlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_hsatr12=1;
-                           break;
-                        case NEPTUNE::rho_l_sat :
-                           trlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_rovlr12=1;
-                           break;
-                        case NEPTUNE::h_v_sat :
-                           thvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_hsatr12=1;
-                           break;
-                        case NEPTUNE::rho_v_sat :
-                           trvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_rovlr12=1;
-                           break;
-                        // Derivatives
-                        case NEPTUNE::d_T_sat_d_p :
-                           ttsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_psatr12=1;
-                           break;
-                        case NEPTUNE::d_h_l_sat_d_p :
-                           thlsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_hsatr12=1;
-                           break;
-                        case NEPTUNE::d_rho_l_sat_d_p :
-                           trlsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_rovlr12=1;
-                           break;
-                        case NEPTUNE::d_h_v_sat_d_p :
-                           thvsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_hsatr12=1;
-                           break;
-                        case NEPTUNE::d_rho_v_sat_d_p :
-                           trvsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                           comp_rovlr12=1;
-                           break;
-                        case NEPTUNE::NotASatProperty :
-                           err = EOS_Internal_Error::NOT_IMPLEMENTED ;
-                           return EOS_Error::error ;
-                           break;
-                        default :
-                           ind_not_def += 1 ;
-                           not_def(ind_not_def) = i ;
-                           break ;
-                      }
-                 }
-                break;
+              case NEPTUNE::T_sat :
+                 ttsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_psatr12=1;
+                 chg_T_sat=1;
+                 break;
+              case NEPTUNE::h_l_sat :
+                 thlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::rho_l_sat :
+                 trlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              case NEPTUNE::h_v_sat :
+                 thvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::rho_v_sat :
+                 trvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              // Derivatives
+              case NEPTUNE::d_T_sat_d_p :
+                 ttsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_psatr12=1;
+                 break;
+              case NEPTUNE::d_h_l_sat_d_p :
+                 thlsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::d_rho_l_sat_d_p :
+                 trlsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              case NEPTUNE::d_h_v_sat_d_p :
+                 thvsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::d_rho_v_sat_d_p :
+                 trvsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              case NEPTUNE::NotASatProperty :
+                 err = EOS_Internal_Error::NOT_IMPLEMENTED ;
+                 return EOS_Error::error ;
+                 break;
               default :
-                ind_not_def += 1 ;
-                not_def(ind_not_def) = i ;
-                break ;
+                 ind_not_def += 1 ;
+                 not_def(ind_not_def) = i ;
+                 break ;
             }
        }
 
@@ -1236,8 +1221,7 @@ namespace CATHARE_FREONR12
 
     // -- 
     EOS_Error_Field err_tmp(internal_err_tmp);
-    EOS_thermprop prop ;
-    EOS_saturprop propsat ;
+    EOS_Property prop ;
     int comp_psatr12=0;
     int comp_rovlr12=0;
     int comp_hsatr12=0;
@@ -1265,7 +1249,7 @@ namespace CATHARE_FREONR12
     int nb_fields_in = input.size();
 
     for (int i=0; i<nb_fields_in; i++)
-       { prop = input[i].get_property() ;
+       { prop = input[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::p :
                  tp.set_ptr(sz, input[i].get_data().get_ptr());
@@ -1300,7 +1284,7 @@ namespace CATHARE_FREONR12
     int ind_not_def = -1 ;
 
     for (int i=0; i<nb_fields; i++)
-       { prop = r[i].get_property() ;
+       { prop = r[i].get_property_number() ;
          switch(prop)
             { case NEPTUNE::h :
                  thg.set_ptr(sz, r[i].get_data().get_ptr());
@@ -1380,61 +1364,53 @@ namespace CATHARE_FREONR12
                  tsipv.set_ptr(sz, r[i].get_data().get_ptr());
                  comp_sigmar12=1;
                  break;
-              case NEPTUNE::NotATProperty :
+                 
                  // Thermodynamic Properties at Saturation
-                 propsat = r[i].get_sat_property();
-                 switch(propsat)
-                    { case NEPTUNE::T_sat :
-                         ttsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_psatr12=1;
-                         chg_T_sat=1;
-                         break;
-                      case NEPTUNE::h_v_sat :
-                         thvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_hsatr12=1;
-                         break;
-                      case NEPTUNE::rho_v_sat :
-                         trvsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_rovlr12=1;
-                         break;
-                      case NEPTUNE::h_l_sat :
-                         thlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_hsatr12=1;
-                         break;
-                      case NEPTUNE::rho_l_sat :
-                         trlsp.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_rovlr12=1;
-                         break;
-                      // Derivatives
-                      case NEPTUNE::d_T_sat_d_p :
-                         ttsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_psatr12=1;
-                         break;
-                      case NEPTUNE::d_h_v_sat_d_p :
-                         thvsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_hsatr12=1;
-                         break;
-                      case NEPTUNE::d_rho_v_sat_d_p :
-                         trvsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_rovlr12=1;
-                         break;
-                      case NEPTUNE::d_h_l_sat_d_p :
-                         thlsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_hsatr12=1;
-                         break;
-                      case NEPTUNE::d_rho_l_sat_d_p :
-                         trlsp1.set_ptr(sz, r[i].get_data().get_ptr());
-                         comp_rovlr12=1;
-                         break;
-                      case NEPTUNE::NotASatProperty :
-                         err = EOS_Internal_Error::NOT_IMPLEMENTED ;
-                         return EOS_Error::error ;
-                      default :
-                         ind_not_def += 1 ;
-                         not_def(ind_not_def) = i ;
-                         break ;
-                    }
-                 break ;
+              case NEPTUNE::T_sat :
+                 ttsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_psatr12=1;
+                 chg_T_sat=1;
+                 break;
+              case NEPTUNE::h_v_sat :
+                 thvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::rho_v_sat :
+                 trvsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              case NEPTUNE::h_l_sat :
+                 thlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::rho_l_sat :
+                 trlsp.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              // Derivatives
+              case NEPTUNE::d_T_sat_d_p :
+                 ttsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_psatr12=1;
+                 break;
+              case NEPTUNE::d_h_v_sat_d_p :
+                 thvsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::d_rho_v_sat_d_p :
+                 trvsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              case NEPTUNE::d_h_l_sat_d_p :
+                 thlsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_hsatr12=1;
+                 break;
+              case NEPTUNE::d_rho_l_sat_d_p :
+                 trlsp1.set_ptr(sz, r[i].get_data().get_ptr());
+                 comp_rovlr12=1;
+                 break;
+              case NEPTUNE::NotASatProperty :
+                 err = EOS_Internal_Error::NOT_IMPLEMENTED ;
+                 return EOS_Error::error ;
               default :
                  ind_not_def += 1 ;
                  not_def(ind_not_def) = i ;
@@ -1602,10 +1578,10 @@ namespace CATHARE_FREONR12
 
     int nb_fields = input.size() ;
     int sz ;
-    EOS_thermprop prop ;
+    EOS_Property prop ;
     for (int i=0; i<nb_fields; i++)
        { const NEPTUNE::EOS_Field& field_i=input[i] ;
-         prop = field_i.get_property() ;
+         prop = field_i.get_property_number() ;
          const ArrOfDouble& values_i = field_i.get_data() ;
          switch(prop)
             { case NEPTUNE::p :

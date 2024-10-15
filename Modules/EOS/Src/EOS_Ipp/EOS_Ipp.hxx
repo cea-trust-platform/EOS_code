@@ -260,7 +260,6 @@ namespace NEPTUNE_EOS
 
         //pre-traitement
         //EOS_Fields fm_ph;
-        ArrOfInt fnodes2phnodes ;   //correspondance entre chaque point fictif et chaque point du maillage ph
         vector<EOS_Error_Field> err_cell_ph  ;
         vector<EOS_Error_Field> err_segm_sat ;
         vector<EOS_Error_Field> err_segm_lim ;
@@ -282,6 +281,12 @@ namespace NEPTUNE_EOS
      private: 
         static int type_Id ;
         AString FluidStr ;
+
+        ArrOfInt corners;           // liste des 4 noeuds formant les angles de chaque mailles du
+                                    // maillage non conforme. Taille : 4 * nb_cells_med_mesh
+                                    // sommet i de la maille j -> corners[i + 4*j]
+        ArrOfInt fnodes2phnodes ;   // correspondance entre chaque maille du maillage ph et la maille
+                                    // du maillage non conforme (med) dans laquelle elle est
           
         void load_domain_values(EOS_Med& med) ;
         EOS_Error load_med_nodes(EOS_Med& med);

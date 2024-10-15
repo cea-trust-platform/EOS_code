@@ -344,22 +344,22 @@ namespace NEPTUNE_EOS
 
     //! call_tpflsh : call TPFLSH REFPROP subroutine
     //! call_tpflsh : units of p and value parameters : EOS unit
-    EOS_Internal_Error call_tpflsh(const char* const property_name, double p, double T, double& value) const;
+    EOS_Internal_Error call_tpflsh(EOS_thermprop prop, double p, double T, double& value) const;
 
     //! call_phflsh : call PHFLSH REFPROP subroutine
     //! call_phflsh : units of p, h  and value parameters : EOS unit
-    EOS_Internal_Error call_phflsh(const char* const property_name, double p, double h, double& value) const;
+    EOS_Internal_Error call_phflsh(EOS_thermprop prop, double p, double h, double& value) const;
 
     //! call_psflsh : call PSFLSH REFPROP subroutine
     //! call_psflsh : units of p, s  and value parameters : EOS unit
-    EOS_Internal_Error call_psflsh(const char* const property_name, double p, double s, double& value) const;
+    EOS_Internal_Error call_psflsh(EOS_thermprop prop, double p, double s, double& value) const;
 
     //! call_dhd1   : call DHD1 REFPROP subroutine
-    EOS_Internal_Error call_dhd1(const char* const property_name, double p, double h, double& value) const;
+    EOS_Internal_Error call_dhd1(EOS_thermprop prop, double p, double h, double& value) const;
 
     //! call_ag     : call AG REFPROP subroutine
     //! call_ag     : units of rho and value parameters : EOS Unit
-    EOS_Internal_Error call_ag(const char* const property_name, double t, double rho, double& value) const;
+    EOS_Internal_Error call_ag(EOS_thermprop prop, double t, double rho, double& value) const;
 
     EOS_Internal_Error critical_point(double& tcrit, double& pcrit, double& rhocrit,
                                       double& hcrit, double& scrit, double& ucrit,
@@ -367,7 +367,7 @@ namespace NEPTUNE_EOS
                                       double& scrit_r, double& ucrit_r) const;
 
     //! Evaluate h_l_lim or h_v_lim (newton method) of spinodal
-    EOS_Internal_Error newton_hlim(const char* const property_name, double p, double& h_lim) const;
+    EOS_Internal_Error newton_hlim(EOS_splimprop prop, double p, double& h_lim) const;
 
     //! call_phfl1  : T(p,h) with the phase flag kph (1=liquid ; 2=vapor)
     EOS_Internal_Error call_phfl1(double p, double h, int kph, double& T) const;

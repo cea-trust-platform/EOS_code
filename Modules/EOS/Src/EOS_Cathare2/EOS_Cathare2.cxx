@@ -177,10 +177,10 @@ namespace NEPTUNE_EOS
     #endif    
     
     assert(local_pilot) ;
-
-    if ( (in.get_property() == NEPTUNE::p) 
-      || (in.get_sat_property() == NEPTUNE::p_sat) 
-      || (in.get_lim_property() == NEPTUNE::p_lim) ) 
+    const EOS_Property property_number = in.get_property_number();
+    if ( (property_number == NEPTUNE::p) 
+      || (property_number == NEPTUNE::p_sat) 
+      || (property_number == NEPTUNE::p_lim) ) 
        { ArrOfInt err_array(in.size()) ;
          EOS_Error_Field err_tmp(err_array) ;
          local_pilot->verify(in, err, phase) ;
@@ -188,7 +188,7 @@ namespace NEPTUNE_EOS
          err.set_worst_error(err_tmp) ;
          return err.find_worst_error().generic_error() ;
        }
-    else if (in.get_sat_property() == NEPTUNE::T_sat)
+    else if (property_number == NEPTUNE::T_sat)
        { ArrOfInt err_array(in.size()) ;
          EOS_Error_Field err_tmp(err_array) ;
          local_pilot->verify(in, err, phase) ;
@@ -214,7 +214,7 @@ namespace NEPTUNE_EOS
     ArrOfInt err_array(in1.size()) ;
     EOS_Error_Field err_tmp(err_array) ;
 
-    if ( ( in1.get_property() == NEPTUNE::p) && (in2.get_property() == NEPTUNE::h)) 
+    if ( ( in1.get_property_number() == NEPTUNE::p) && (in2.get_property_number() == NEPTUNE::h)) 
        { local_pilot->verify(in1, err, phase);
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
@@ -222,7 +222,7 @@ namespace NEPTUNE_EOS
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }
-    else if ( (in1.get_property() == NEPTUNE::h) && (in2.get_property() == NEPTUNE::p))
+    else if ( (in1.get_property_number() == NEPTUNE::h) && (in2.get_property_number() == NEPTUNE::p))
        { local_pilot->verify(in1, err, phase);
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
@@ -230,7 +230,7 @@ namespace NEPTUNE_EOS
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }
-    else if ( (in1.get_property() == NEPTUNE::p) && (in2.get_property() == NEPTUNE::T))
+    else if ( (in1.get_property_number() == NEPTUNE::p) && (in2.get_property_number() == NEPTUNE::T))
        { local_pilot->verify(in1, err, phase);
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
@@ -238,7 +238,7 @@ namespace NEPTUNE_EOS
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        } 
-    else if ( (in1.get_property() == NEPTUNE::T) && (in2.get_property() == NEPTUNE::p))
+    else if ( (in1.get_property_number() == NEPTUNE::T) && (in2.get_property_number() == NEPTUNE::p))
        { local_pilot->verify(in1, err, phase);
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);

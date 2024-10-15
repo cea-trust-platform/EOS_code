@@ -380,7 +380,7 @@ namespace NEPTUNE_EOS_IGEN
 //       header+="quality";
 //       header+=i;
 //       header+="_";
-//       header+=qualities[i].get_property();
+//       header+=qualities[i].get_property_number();
 //       header+="_";
 //       header+=qualities[i].get_type();
 //       header+="_";
@@ -942,7 +942,7 @@ namespace NEPTUNE_EOS_IGEN
                   <<endl<< res_eos <<endl ;
             }
 
-         cout << "property : "     << qualities[i].get_property()      << endl ;
+         cout << "property : "     << qualities[i].get_property_number()      << endl ;
          cout << "Have quality : " << qualities[i].get_quality_nodes() << endl<<endl ;
        }
     return EOS_Error::good ;
