@@ -307,7 +307,7 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
-  EOS_Error EOS_Ipp::compute(const EOS_Field &pp,
+  EOS_Error EOS_Ipp::compute_(const EOS_Field &pp,
                               const EOS_Field &hh,
                               EOS_Fields &r,
                               EOS_Error_Field &errfield) const
@@ -443,7 +443,7 @@ namespace NEPTUNE_EOS
     return err2;
   }
 
-  EOS_Error EOS_Ipp::compute_(const EOS_Field &pp,
+  EOS_Error EOS_Ipp::compute(const EOS_Field &pp,
                              const EOS_Field &hh,
                              EOS_Fields &r,
                              EOS_Error_Field &errfield) const
