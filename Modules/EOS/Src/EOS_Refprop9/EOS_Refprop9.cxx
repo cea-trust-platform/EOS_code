@@ -610,6 +610,8 @@ namespace NEPTUNE_EOS
         memcpy(q0, p0, L[iC]);
       }
     }
+    delete [] L;
+    delete [] Q0;
 #endif
 
     return err;
