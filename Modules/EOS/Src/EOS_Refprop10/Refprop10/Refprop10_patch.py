@@ -318,13 +318,4 @@ if not C.partial:
     
 t_end = timeit.default_timer()
 print('total {:8.3f} s'.format(t_end - t_start))   
-
-
-#                                        if (symb == "IUNITS" or symb == "HMXRUL") and "REFPROP" in fName:
-#                                            continue
-#                                        if (symb == 'HJ' or symb == 'HMX') and "UTILITY" in fName:
-#                                            continue
-#                                        if (symb == 'HJ' or symb == 'FJ') and "TRNSP" in fName:
-#                                            continue
-
-    
+  
