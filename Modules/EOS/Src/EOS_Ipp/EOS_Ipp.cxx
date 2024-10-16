@@ -460,7 +460,7 @@ namespace NEPTUNE_EOS
       if (obj_fluid == nullptr)
       {
         std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() " << std::endl;
-        std::exit(EXIT_FAILURE);
+        return err;
       }
       err = obj_fluid->compute(pp, hh, r, errfield);
     }
