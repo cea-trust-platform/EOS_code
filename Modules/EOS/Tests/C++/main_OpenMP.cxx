@@ -110,12 +110,13 @@ void printError(const EOS &eos,
   std::cerr << "error " << err.get_partial_code() << " " << s << std::endl;
 }
 
-void test_field_1parameter(EOS &eos, const char *valIn, int iSample, bool dump)
+void test_field_1parameter(EOS &eos, const char *valIn, int iSample, bool dump, int nThreads)
 {
   std::ofstream fOut;
   if (dump)
   {
-    std::string s = valIn + std::to_string(iSample) + ".data";
+    std::string s = std::to_string(nThreads) + "_threads_" 
+                  + valIn + std::to_string(iSample) + ".data";
     fOut.open(s.c_str());
   }
 
@@ -157,13 +158,13 @@ void test_field_1parameter(EOS &eos, const char *valIn, int iSample, bool dump)
   }
 }
 
-void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, int iSample, bool dump)
+void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, int iSample, bool dump, int nThreads)
 {
   std::ofstream fOut;
   if (dump)
   {
-    std::string s = valIn1;
-    s += valIn2 + std::to_string(iSample) + ".data";
+    std::string s = std::to_string(nThreads) + "_threads_" 
+                  + valIn1 + valIn2 + std::to_string(iSample) + ".data";
     fOut.open(s.c_str());
   }
 
@@ -213,12 +214,12 @@ void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, in
   }
 }
 
-void test_point_1parameter(EOS &eos, int iSample, bool dump)
+void test_point_1parameter(EOS &eos, int iSample, bool dump, int nThreads)
 {
   std::ofstream fOut;
   if (dump)
   {
-    std::string s = "point_p_";
+    std::string s = std::to_string(nThreads) + "_threads_point_p_";
     s += std::to_string(iSample) + ".data";
     fOut.open(s.c_str());
   }
@@ -243,12 +244,12 @@ void test_point_1parameter(EOS &eos, int iSample, bool dump)
   }
 }
 
-void test_point_2parameters(EOS &eos, int iSample, bool dump)
+void test_point_2parameters(EOS &eos, int iSample, bool dump, int nThreads)
 {
   std::ofstream fOut;
   if (dump)
   {
-    std::string s = "point_p_h_";
+    std::string s = std::to_string(nThreads) + "_threads_point_p_h_";
     s += std::to_string(iSample) + ".data";
     fOut.open(s.c_str());
   }
@@ -274,7 +275,7 @@ void test_point_2parameters(EOS &eos, int iSample, bool dump)
   }
 }
 
-void test_features(EOS &eos, int test, int nSamples, bool dump)
+void test_features(EOS &eos, int test, int nSamples, bool dump, int nThreads)
 {
   // Configure eos to return to client on any error.
   std::cout << eos << std::endl;
@@ -306,7 +307,7 @@ void test_features(EOS &eos, int test, int nSamples, bool dump)
 #endif
     for (int iSample = 0; iSample < nSamples; iSample++)
       for (int i = 0; i < n1; i++)
-        test_field_1parameter(eos, list_prop1[i], iSample, dump);
+        test_field_1parameter(eos, list_prop1[i], iSample, dump, nThreads);
 
     T.stop();
     std::cout << T << std::endl;
@@ -326,7 +327,7 @@ void test_features(EOS &eos, int test, int nSamples, bool dump)
     for (int iSample = 0; iSample < nSamples; iSample++)
       for (int i = 0; i < n1; i++)
         for (int j = 0; j < n2; j++)
-          test_field_2parameters(eos, list_prop1[i], list_prop2[j], iSample, dump);
+          test_field_2parameters(eos, list_prop1[i], list_prop2[j], iSample, dump, nThreads);
 
     T.stop();
     std::cout << T << std::endl;
@@ -346,7 +347,7 @@ void test_features(EOS &eos, int test, int nSamples, bool dump)
 #endif
     for (int iSample = 0; iSample < nSamples; iSample++)
     {
-      test_point_1parameter(eos, iSample, dump);
+      test_point_1parameter(eos, iSample, dump, nThreads);
     }
 
     T.stop();
@@ -367,7 +368,7 @@ void test_features(EOS &eos, int test, int nSamples, bool dump)
 #endif
     for (int iSample = 0; iSample < nSamples; iSample++)
     {
-      test_point_2parameters(eos, iSample, dump);
+      test_point_2parameters(eos, iSample, dump, nThreads);
     }
 
     T.stop();
@@ -396,9 +397,8 @@ int main(int argc, char **argv)
 
   Arguments A(argc, argv);
 
-  int nSamples = A.Get("samples", nTh);
+  int nSamples = A.Get("samples", nTh*3);
   bool dump = A.Get("dump", false);
-  int test = A.Get("test", 1);
   std::string plugin = A.Get("plugin", "Refprop10");
   std::string fluid = A.Get("fluid", "Water");
   bool h = A.Get("help", false);
@@ -431,7 +431,8 @@ int main(int argc, char **argv)
 
   EOS eos(plugin.c_str(), fluid.c_str());
 
-  test_features(eos, test, nSamples, dump);
+  for (int test=1; test <= 4; test++)
+    test_features(eos, test, nSamples, dump, nTh);
   
   return 0;
 }
