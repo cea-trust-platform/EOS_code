@@ -828,8 +828,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_l_lim_p(double p, double& h_l) const
-  { double temp_sat, rhol_sat ;
-    double bid0, bid1, bid2 ;
+  { double temp_sat=0.0, rhol_sat=0.0 ;
+    double bid0=0.0, bid1=0.0, bid2=0.0 ;
     int iph = 1 ;
 
     EOS_Internal_Error err ;
@@ -856,8 +856,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_v_lim_p(double p, double& h_v) const
-  { double temp_sat, rhov_sat ;
-    double bid0, bid1, bid2 ;
+  { double temp_sat=0.0, rhov_sat =0.0;
+    double bid0=0.0, bid1=0.0, bid2=0.0 ;
     int iph = 1 ;
     EOS_Internal_Error err ;
 
