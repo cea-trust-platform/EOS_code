@@ -596,12 +596,11 @@ namespace NEPTUNE_EOS
 #ifdef _OPENMP
 
     // Retrieve fortran commons location and copy 
-    // values in the pain thread's commons to the other
+    // values in the main thread's commons to the other
     // threads commons
 
     int numCommons;
     F77NAME(xnumcommons_rp10)(&numCommons);
-    std::cerr << "number of Commons = " << numCommons << std::endl;
     int iC, iTh, nTh = omp_get_max_threads();
     long *Q0 = new long[numCommons*nTh];
     long *L   = new long[numCommons];
