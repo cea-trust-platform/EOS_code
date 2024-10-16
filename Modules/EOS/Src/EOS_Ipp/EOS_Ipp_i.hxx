@@ -289,6 +289,12 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error EOS_Ipp::compute_d_lambda_d_p_h_ph(double p, double h, double &res) const
   {
     AString prop("d_lambda_d_p_h");
+    if ( swch_calc_deriv_fld_==true)
+    {
+        EOS_Error err = obj_fluid->compute_d_lambda_d_p_h_ph(p, h, res); // Warning, not a goodway to return the error but here to debug 
+        if (err==EOS_Error::good)
+          return EOS_Internal_Error::OK;
+    }
     std::map<AString, int>::const_iterator n_prop;
     find(n_prop, prop, Ipp_Prop_ph);
     return compute_prop_ph(n_prop, p, h, res);
@@ -300,8 +306,9 @@ namespace NEPTUNE_EOS
     
     if ( swch_calc_deriv_fld_==true)
     {
-        obj_fluid->compute_d_h_d_p_T_pT(p, T, r); // Warning, not a goodway to return the error but here to debug 
-        return EOS_Internal_Error::OK;
+        EOS_Error err = obj_fluid->compute_d_h_d_p_T_pT(p, T, r); // Warning, not a goodway to return the error but here to debug 
+        if (err==EOS_Error::good)
+          return EOS_Internal_Error::OK;
     }
     return EOS_Fluid::compute_d_h_d_p_T_pT(p, T, r);
   }
@@ -309,8 +316,9 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   {
      if ( swch_calc_deriv_fld_==true)
     {
-        obj_fluid->compute_d_h_d_T_p_pT(p, T, r); // Warning, not a goodway to return the error but here to debug 
-        return EOS_Internal_Error::OK;
+        EOS_Error err = obj_fluid->compute_d_h_d_T_p_pT(p, T, r); // Warning, not a goodway to return the error but here to debug 
+        if (err==EOS_Error::good)
+          return EOS_Internal_Error::OK;
     }
     return EOS_Fluid::compute_d_h_d_T_p_pT(p, T, r);
   }

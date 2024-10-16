@@ -24,7 +24,6 @@
 #include "EOS/API/EOS_Field.hxx"
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Config.hxx"
-// #include <cmath>
 #include <fstream>
 #include <iostream> // pour std::cerr
 #include <set>
@@ -379,10 +378,11 @@ namespace NEPTUNE_EOS
         {
           std::cout << "computation of d_sigma_d_p_h err ipp "  << err << " err model" << err2 << endl;  
           std::cout << "value of ipp " << r1_val[prop][0] << "and fluid : " << r2_val[prop][0];
+
         }
         double err_ipp_rp_prop = 0;
         for (int pts = 0; pts < pp.size(); pts++)
-          err_ipp_rp_prop = max(err_ipp_rp_prop, abs(2*(r1_val[prop][pts] - r2_val[prop][pts]) / ( r2_val[prop][pts]+r1_val[prop][pts]))); // relative error 
+          err_ipp_rp_prop = max(err_ipp_rp_prop, abs(2*(r1_val[prop][pts] - r2_val[prop][pts]) / ( r1_val[prop][pts]))); // relative error 
         if (err_ipp_rp_prop > err_ipp_rp)
         {
           err_ipp_rp = err_ipp_rp_prop;
