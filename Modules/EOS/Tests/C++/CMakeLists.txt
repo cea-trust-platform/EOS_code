@@ -1,10 +1,17 @@
+set(RUN_ENV "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/")
+
+if (USE_OPENMP)
+  set(RUN_ENV "${RUN_ENV};OMP_NUM_THREADS=3;OMP_STACKSIZE=16M")
+endif()
+
+
 # (add executable EOSTest)
 message(STATUS "Add test EOSTest")
 add_executable (EOSTest "${CMAKE_CURRENT_SOURCE_DIR}/main.cxx")
 target_include_directories(EOSTest PRIVATE ${EOS_BINARY_DIR}/Modules)
 target_link_libraries(EOSTest PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
 add_test(EOSTest bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTest 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output")
-set_tests_properties(EOSTest PROPERTIES ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/"
+set_tests_properties(EOSTest PROPERTIES ENVIRONMENT ${RUN_ENV}
                                         COST        5.)
 
 
@@ -24,7 +31,7 @@ foreach(fileval ${listval})
   get_filename_component(filevalname ${fileval} NAME_WE)
   message(STATUS "  |test-val-${filevalname}")
   add_test(test-val-${filevalname} ${CMAKE_CURRENT_BINARY_DIR}/EOSTestVal ${fileval} ${CMAKE_CURRENT_BINARY_DIR}/${filevalname}.valeos)
-  set_tests_properties(test-val-${filevalname} PROPERTIES ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/"
+  set_tests_properties(test-val-${filevalname} PROPERTIES ENVIRONMENT ${RUN_ENV}
                                                           DEPENDS index-eos)
 endforeach(fileval)
 
@@ -38,22 +45,23 @@ if (WITH_IPP)
   add_test(EOSTestIpp bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIpp 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp")
   set_tests_properties(EOSTestIpp PROPERTIES DEPENDS      EOSIGenTest
                                              COST         10.
-                                             ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/")
+                                             ENVIRONMENT ${RUN_ENV})
 endif (WITH_IPP)
 
 
-# (add executable EOSTest)
+# (add executable EOSTest OpenMP version)
 if (USE_OPENMP)
   message(STATUS "Add test EOSTest (OpenMP version)")
   add_executable (EOSTest_OpenMP
 	  main_OpenMP.cxx
 	  dump.cxx
-    arguments.cxx
+          arguments.cxx
 	  )
   target_include_directories(EOSTest_OpenMP PRIVATE ${EOS_BINARY_DIR}/Modules)
   target_link_libraries(EOSTest_OpenMP PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
-  add_test(EOSTest_OpenMP bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTest_OpenMP 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_openmp")
-  set_tests_properties(EOSTest PROPERTIES ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/;OMP_NUM_THREADS=3"
-                                        COST        5.)
-  install(TARGETS EOSTest_OpenMP DESTINATION .)
+  add_test(EOSTest_OpenMP bash -c "set -o pipefail ; \
+  USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTest_OpenMP 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_openmp")
+
+  set_tests_properties(EOSTest_OpenMP PROPERTIES ENVIRONMENT ${RUN_ENV}
+                                                 COST        5.)
 endif()
