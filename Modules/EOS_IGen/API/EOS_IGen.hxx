@@ -54,6 +54,8 @@ namespace NEPTUNE_EOS_IGEN
         EOS_Error set_memory_max(int mmax) ;
         
         void set_obj_Ipp() ;
+        EOS* get_obj_Ipp() const;
+
         void set_fluid()   ;
         void set_mesh_ph(int nb_mesh_p, int nb_mesh_h, int level_max) ;
         void set_mesh_p(int nb_mesh_p, int level_max) ;

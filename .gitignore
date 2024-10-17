@@ -5,3 +5,20 @@
 
 build/
 install/
+# perso
+Test_performance_perso/
+
+
+
+compile_conserve_data_optim.sh
+compile_conserve_data.sh
+main_perf.cxx
+prototype_function
+sortie.out
+user_env_optim.txt
+Modules/EOS/Tests/C++/CMakeLists.txt
+
+
+.vscode/settings.json
+Modules/.vscode/settings.json
+

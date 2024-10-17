@@ -30,7 +30,7 @@ namespace NEPTUNE
   // the error obtained during the last iteration is returned.
   // 
   // Enumeration EOS_Error
-  // ! until 0.9.x , error=-1 bad=0 ok=1 good=2
+  // ! until 0.9.x , error=-1 bad=0 ok=1 good=2 // now : error=3 bad=2 ok=1 good=0
   // ! don't use directly an integer of enumeration,
   //   e.g. use  EOS_Error::error  instead of  error
   // EOS_Error::error = 3 : informatic error,          e.g. not implemented

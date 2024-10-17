@@ -125,10 +125,14 @@ namespace NEPTUNE_EOS_IGEN
   inline void EOS_IGen::set_mesh_p(int nb_node_p, int level_max)
   { delete mesh_p ;
     mesh_p = new EOS_Mesh(nb_node_p, pmin, pmax, level_max) ;
-  }  
+  }
 
   inline const AString& EOS_IGen::get_method() const
   { return method ;
+  }
+  
+  inline EOS* EOS_IGen::get_obj_Ipp() const
+  { return obj_Ipp ;
   }
 
   inline const AString& EOS_IGen::get_reference() const

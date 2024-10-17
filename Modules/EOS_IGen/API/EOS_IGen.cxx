@@ -75,10 +75,27 @@ namespace NEPTUNE_EOS_IGEN
         
   
   EOS_IGen::~EOS_IGen()
-  { delete mesh_p  ;
-    delete mesh_ph ;
-    delete fluid   ;
-    delete obj_Ipp ;
+   { /*
+   if (mesh_p != nullptr) 
+   {
+       delete mesh_p;
+      mesh_p = nullptr;
+   }
+   if (mesh_ph != nullptr) 
+   {
+       delete mesh_ph;
+      mesh_ph = nullptr;
+   }
+    if (fluid != nullptr) 
+   {
+       delete fluid;
+      fluid = nullptr;
+   }
+   if ((obj_Ipp != nullptr) || ((int)(obj_Ipp->id())) != 0) 
+   {
+      delete obj_Ipp;
+      obj_Ipp = nullptr;
+   } */
   }
   
   
@@ -99,12 +116,13 @@ namespace NEPTUNE_EOS_IGEN
     if (ierr.generic_error() != EOS_Error::good)
        { cerr << "Error EOS_IGen::make_mesh : bad value for pmin " << pmin 
               << "and Tmin " << Tmin <<endl ;
-         return ierr.generic_error() ;
+         
+         return ierr.generic_error() ;    
        }
     
     ierr = fluid->fluid().compute_h_pT(pmin,Tmax,hh[1]) ;
     if (ierr.generic_error() != EOS_Error::good)
-       { cerr << "Error EOS_IGen::make_mesh : bad value for pmin "<< pmin 
+    { cerr << "Error EOS_IGen::make_mesh : bad value for pmin "<< pmin 
               << "and Tmax " << Tmax <<endl ;
          return ierr.generic_error() ; 
        }

@@ -672,6 +672,8 @@ namespace NEPTUNE_EOS
     F77NAME(enthal_rp10)
       (tmax, dmax, arr_molfrac, h_tmp);
     hmax = refprop_nrj_2_eos(h_tmp);
+    pmin=1000; // patch to get pmin and hmin -> not given by REFPROP
+    hmin=-76319.7;
   }
 
   EOS_Internal_Error EOS_Refprop10::call_tpflsh(EOS_thermprop prop, 
@@ -1442,7 +1444,7 @@ namespace NEPTUNE_EOS
                                                           double *tab_propder,
                                                           int *indic) const
   {
-    int ierr;
+    int kph ;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
 

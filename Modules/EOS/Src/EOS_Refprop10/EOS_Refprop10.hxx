@@ -228,9 +228,9 @@ namespace NEPTUNE_EOS
 
     //limits values
     virtual EOS_Internal_Error get_T_min(double&) const;
-//     h_min, p_min and rho_min not implemented
-//     virtual EOS_Internal_Error get_h_min(double&) const;
-//     virtual EOS_Internal_Error get_p_min(double&) const;
+//     h_min, p_min and rho_min not implemented  -> patched with the values used in Cathare
+     virtual EOS_Internal_Error get_h_min(double&) const;
+     virtual EOS_Internal_Error get_p_min(double&) const;
     virtual EOS_Internal_Error get_T_max(double&) const;
     virtual EOS_Internal_Error get_p_max(double&) const;
     virtual EOS_Internal_Error get_rho_max(double&) const;
@@ -329,6 +329,9 @@ namespace NEPTUNE_EOS
     double tmax;
     double hmax;
     double pmax;
+    double pmin;
+    double hmin;
+
     double rhomax;
 
     Strings arr_hname; // component name [character*12]
