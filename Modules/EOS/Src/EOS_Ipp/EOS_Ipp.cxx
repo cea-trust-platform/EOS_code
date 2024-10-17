@@ -82,7 +82,7 @@ namespace NEPTUNE_EOS
                        r1_val(20, std::vector<double>(30, 0.0)),
                        r2_val(20, std::vector<double>(30, 0.0)),
                        save_bound(0)
-                      
+
   {
   }
 
@@ -143,9 +143,9 @@ namespace NEPTUNE_EOS
     med_file += file_name;
 
     // get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med
-    method = strtok(file_name.aschar(), ".");
-    reference = strtok(NULL, ".");
-    reference = strtok_r (NULL, ".", &save_pt) ;
+    char *save_pt;
+    method = strtok_r(file_name.aschar(), ".", &save_pt);
+    reference = strtok_r(NULL, ".", &save_pt);
 
     if (method == "eos_igen_qi")
     {
@@ -287,15 +287,14 @@ namespace NEPTUNE_EOS
     return EOS_Error::ok;
   }
 
-  EOS_Error EOS_Ipp::init_model(const std::string &model_name, const std::string &fluid_name, bool switch_comp_sat,bool swch_calc_deriv_fld)
+  EOS_Error EOS_Ipp::init_model(const std::string &model_name, const std::string &fluid_name, bool switch_comp_sat, bool swch_calc_deriv_fld)
   {
     obj_fluid = new EOS(model_name.c_str(), fluid_name.c_str());
     switch_model = true;
-    switch_comp_sat_ = switch_comp_sat; 
+    switch_comp_sat_ = switch_comp_sat;
     swch_calc_deriv_fld_ = swch_calc_deriv_fld;
     // If we use the compute_ function (for debug) : allows to retrieve the bounds of one simulation
-    save_bound=1;
-
+    save_bound = 1;
 
     // Change the bounds of the ipp for the one of the fluid
     obj_fluid->get_h_min(hmin);
@@ -312,15 +311,15 @@ namespace NEPTUNE_EOS
                               EOS_Fields &r,
                               EOS_Error_Field &errfield) const
   {
-    if (save_bound==1) // a ne faire qu'une seule fois
+    if (save_bound == 1) // a ne faire qu'une seule fois
     {
       hmin_cpt = 100000.;
       hmax_cpt = 0.;
-      tmin_cpt =  100000.;
+      tmin_cpt = 100000.;
       tmax_cpt = 0.;
       pmin_cpt = 1000000000.;
       pmax_cpt = 0.;
-      save_bound=0;
+      save_bound = 0;
     }
     // Displaying the bounds for each calculation
     /* std::cout << "The min and max of the calculations are:" << endl;
@@ -329,7 +328,7 @@ namespace NEPTUNE_EOS
     std::cout << "hmin: " << hmin_cpt << endl;
     std::cout << "hmax: " << hmax_cpt << endl;
     std::cout << "tmin: " << tmin_cpt << endl;
-    std::cout << "tmax: " << tmax_cpt << endl;*/ 
+    std::cout << "tmax: " << tmax_cpt << endl;*/
     // Updating the bounds
     for (int pts = 0; pts < pp.size(); pts++)
     {
@@ -349,13 +348,13 @@ namespace NEPTUNE_EOS
     // std::vector<std::vector<double>> r1_val; // defined with size 20*30
     // std::vector<std::vector<double>> r2_val; // defined with size 20*30
 
-    //EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield); // debug : la calcul tourne t'il tjr ? 
+    // EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield); // debug : la calcul tourne t'il tjr ?
     EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
     // Remplissage de r1_val et r2_val
     for (int pts = 0; pts < pp.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
-       r1_val[prop][pts] = r[prop].get_data()[pts];   // debug : la calcul tourne t'il tjr ? 
-    //EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
+        r1_val[prop][pts] = r[prop].get_data()[pts]; // debug : la calcul tourne t'il tjr ?
+    // EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
     EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield);
     for (int pts = 0; pts < pp.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
@@ -363,7 +362,7 @@ namespace NEPTUNE_EOS
     // calcul de l'erreur pour chaque prop et pts et renvoie du max
     double err_ipp_rp = 0;
     int propmax;
-    if(err==EOS_Error::good&&err2==EOS_Error::good)
+    if (err == EOS_Error::good && err2 == EOS_Error::good)
     {
       for (int prop = 0; prop < r.size(); prop++)
       {
@@ -377,25 +376,24 @@ namespace NEPTUNE_EOS
         }
         if (r[prop].get_property_name() == "d_sigma_d_p_h") // Updating the bound of Td_sigma_d_p_h
         {
-          std::cout << "computation of d_sigma_d_p_h err ipp "  << err << " err model" << err2 << endl;  
+          std::cout << "computation of d_sigma_d_p_h err ipp " << err << " err model" << err2 << endl;
           std::cout << "value of ipp " << r1_val[prop][0] << "and fluid : " << r2_val[prop][0];
-
         }
         double err_ipp_rp_prop = 0;
         for (int pts = 0; pts < pp.size(); pts++)
-          err_ipp_rp_prop = max(err_ipp_rp_prop, abs(2*(r1_val[prop][pts] - r2_val[prop][pts]) / ( r1_val[prop][pts]))); // relative error 
+          err_ipp_rp_prop = max(err_ipp_rp_prop, abs(2 * (r1_val[prop][pts] - r2_val[prop][pts]) / (r1_val[prop][pts]))); // relative error
         if (err_ipp_rp_prop > err_ipp_rp)
         {
           err_ipp_rp = err_ipp_rp_prop;
           propmax = prop;
         }
+      }
+      std::cout << " Number of prop :  " << r.size() << " Number of calcul : " << pp.size() << endl;
+      std::cout << "The error is " << err_ipp_rp << " for " << r[propmax].get_property_name() << endl;
     }
-    std::cout << " Number of prop :  " << r.size() << " Number of calcul : " <<  pp.size() << endl;
-    std::cout << "The error is " << err_ipp_rp << " for " << r[propmax].get_property_name() << endl;
-    }
-    else 
+    else
     {
-      std::cout << "Error in computation. err ipp "  << err << " err model" << err2 << endl;  
+      std::cout << "Error in computation. err ipp " << err << " err model" << err2 << endl;
       return obj_fluid->compute(pp, hh, r, errfield);
     }
     return err2;
@@ -432,7 +430,7 @@ namespace NEPTUNE_EOS
     {
       double err_ipp_rp_prop = 0;
       for (int pts = 0; pts < p.size(); pts++)
-        err_ipp_rp_prop = max(err_ipp_rp_prop, abs((r1_val[prop][pts] - r2_val[prop][pts]) / ( 1*(r2_val[prop][pts]==0) + r2_val[prop][pts])));
+        err_ipp_rp_prop = max(err_ipp_rp_prop, abs((r1_val[prop][pts] - r2_val[prop][pts]) / (1 * (r2_val[prop][pts] == 0) + r2_val[prop][pts])));
       if (err_ipp_rp_prop > err_ipp_rp)
       {
         err_ipp_rp = err_ipp_rp_prop;
@@ -440,7 +438,7 @@ namespace NEPTUNE_EOS
       }
     }
     std::cout << "The error is " << err_ipp_rp << " for " << r[propmax].get_property_name() << endl;
-    std::cout << "The errors are :  IPP:" << err << "and FLUID : " << err2 <<endl;
+    std::cout << "The errors are :  IPP:" << err << "and FLUID : " << err2 << endl;
     return err2;
   }
 
@@ -485,7 +483,7 @@ namespace NEPTUNE_EOS
       if (obj_fluid == nullptr)
       {
         std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() " << std::endl;
-        std::exit(EXIT_FAILURE);
+        return err;
       }
       err = obj_fluid->compute(p, r, errfield);
     }
@@ -966,7 +964,7 @@ namespace NEPTUNE_EOS
       return err;
     }
 
-    //save of the bounds
+    // save of the bounds
     hmin_ipp = hmin;
     hmax_ipp = hmax;
     tmin_ipp = tmin;
@@ -1122,7 +1120,7 @@ namespace NEPTUNE_EOS
 
     unsigned int nb_h_nodes = round((hmax_ipp - hmin_ipp) / delta_h_f);
     unsigned int nb_p_nodes = round((pmax_ipp - pmin_ipp) / delta_p_f);
-    
+
     fnodes2phnodes.resize(nb_h_nodes * nb_p_nodes);
 
     for (unsigned int i_med_cell = 0; i_med_cell < nb_cell; i_med_cell++)
@@ -1153,17 +1151,11 @@ namespace NEPTUNE_EOS
       // Si la maille n'a que 4 sommets, alors ce sont les 4 angles de la maille
       else
       {
-        node_1 = connect_ph[num_first_node+1];
-        node_2 = connect_ph[num_first_node+2];
-        node_3 = connect_ph[num_first_node+3];
-      }
-      // Si la maille n'a que 4 sommets, alors ce sont les 4 angles de la maille
-      else
-      {
         node_1 = connect_ph[num_first_node + 1];
         node_2 = connect_ph[num_first_node + 2];
         node_3 = connect_ph[num_first_node + 3];
       }
+
       double p_min_cell = nodes_ph[0][node_0];
       double p_max_cell = nodes_ph[0][node_2];
       double h_min_cell = nodes_ph[1][node_0];
@@ -1186,7 +1178,6 @@ namespace NEPTUNE_EOS
       corners[1 + 4 * i_med_cell] = node_1;
       corners[2 + 4 * i_med_cell] = node_2;
       corners[3 + 4 * i_med_cell] = node_3;
-    }
     }
   }
 
@@ -1378,23 +1369,11 @@ namespace NEPTUNE_EOS
     AString property = n_prop->first;
     char propcov[PROPNAME_MSIZE];
     eostp_strcov(property.aschar(), propcov); // propcov : base alphanumérical property
-    EOS_thermprop enum_property = nam2num_thermprop(propcov); 
+    EOS_thermprop enum_property = nam2num_thermprop(propcov);
 
     unsigned int nb_properties = val_prop_ph.size();
     unsigned int i_property = n_prop->second;
     if (i_property == nb_properties)
-      return PROP_NOT_IN_DB;
-      return PROP_NOT_IN_DB;
-
-    // get index of error field in all error fields
-    unsigned int nb_ecp = err_cell_ph.size();
-    unsigned int i_ecp = 0;
-    for (; i_ecp < nb_ecp; i_ecp++) // TODO : We can optimize this line, verify if i_ecp == i_property
-    {
-      if (eostp_strcmp(err_cell_ph[i_ecp].get_name().aschar(), propcov) == 0)
-        break;
-    }
-    if (i_ecp == nb_ecp)
       return PROP_NOT_IN_DB;
 
     for (unsigned short i_node = 0; i_node < 4; i_node++)
@@ -1404,16 +1383,26 @@ namespace NEPTUNE_EOS
       cell_val[2][i_node] = val_prop_ph[i_property][corners[i_node + 4 * idx]];
     }
 
-    return err_cell_ph[i_ecp][idx].get_code();
+    return err_cell_ph[i_property][idx].get_code();
   }
 
   EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, std::map<AString, int>::const_iterator n_prop, int sat_lim, EOS_Fields &segm_val) const
   {
     int i_prop = n_prop->second;
-    AString test = n_prop->second;
     AString name_prop = n_prop->first;
+    unsigned int nb_properties;
+    if (sat_lim == 0)
+    {
+      nb_properties = val_prop_sat.size();
+    }
+    else
+    {
+      nb_properties = val_prop_lim.size();
+    }
 
-    int found = 0;
+    if (i_prop == nb_properties)
+      return PROP_NOT_IN_DB;
+    
     if (sat_lim == 0)
     {
       int nb_vps = val_prop_sat.size();
@@ -1428,7 +1417,7 @@ namespace NEPTUNE_EOS
 
       /*int i=0
       while(i < nb_ess)
-         { EOS_Error_Field errf = err_segm_sat[i] ;
+         { EOS_Error_Field errf = err_segm_sat[i] ; 
        //  if (eostp_strcmp(errf.get_name().aschar(), propcov) == 0)  return errf[idx].get_code();
            i++ ;
          }*/
@@ -1455,8 +1444,7 @@ namespace NEPTUNE_EOS
            i++ ;
          }*/
     }
-
-    return EOS_Internal_Error::OK;
+    return err_segm_sat[i_prop][idx].get_code();
   }
 
   EOS_Internal_Error EOS_Ipp::compute_Ipp_error(double &error_tot, double *&error_cells, AString prop)
@@ -1779,7 +1767,6 @@ namespace NEPTUNE_EOS
       hcal = (T - (b * pcal + d)) / (a + c * pcal);
       if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
       {
-        found = 1 ;
         // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
         res = hcal * (values[1][1] - values[1][0]) + values[1][0];
         return EOS_Internal_Error::OK;
@@ -1896,18 +1883,18 @@ namespace NEPTUNE_EOS
     if (std::isnan(h))
       return OUT_OF_BOUNDS;
 
-    //if ((fabs(h - hmin_ipp)) > DBL_EPSILON)
+    // if ((fabs(h - hmin_ipp)) > DBL_EPSILON)
     if ((fabs(h - hmin)) > DBL_EPSILON)
     {
-      //if (h < hmin_ipp)
+      // if (h < hmin_ipp)
       if (h < hmin)
         return OUT_OF_BOUNDS;
     }
 
-    //if ((fabs(h - hmax_ipp) > DBL_EPSILON))
+    // if ((fabs(h - hmax_ipp) > DBL_EPSILON))
     if ((fabs(h - hmax) > DBL_EPSILON))
     {
-      //if ((h > hmax_ipp))
+      // if ((h > hmax_ipp))
       if ((h > hmax))
         return OUT_OF_BOUNDS;
     }
@@ -1918,18 +1905,18 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::check_p_bounds_ph(double p) const
   {
-    //if ((fabs(p - pmin_ipp) > DBL_EPSILON))
+    // if ((fabs(p - pmin_ipp) > DBL_EPSILON))
     if ((fabs(p - pmin) > DBL_EPSILON))
     {
-      //if ((p < pmin_ipp))
+      // if ((p < pmin_ipp))
       if ((p < pmin))
         return OUT_OF_BOUNDS;
     }
 
-    //if ((fabs(p - pmax_ipp) > DBL_EPSILON))
+    // if ((fabs(p - pmax_ipp) > DBL_EPSILON))
     if ((fabs(p - pmax) > DBL_EPSILON))
     {
-      //if ((p > pmax_ipp))
+      // if ((p > pmax_ipp))
       if ((p > pmax))
         return OUT_OF_BOUNDS;
     }
@@ -1941,19 +1928,19 @@ namespace NEPTUNE_EOS
   {
     double max;
 
-    //if ((fabs(p - pmin_ipp) > DBL_EPSILON))
+    // if ((fabs(p - pmin_ipp) > DBL_EPSILON))
     if ((fabs(p - pmin) > DBL_EPSILON))
     {
-      //if ((p < pmin_ipp))
+      // if ((p < pmin_ipp))
       if ((p < pmin))
         return OUT_OF_BOUNDS;
     }
 
-    //if (pcrit < pmax_ipp)
+    // if (pcrit < pmax_ipp)
     if (pcrit < pmax)
       max = pcrit;
     else
-      //max = pmax_ipp;
+      // max = pmax_ipp;
       max = pmax;
     if ((fabs(p - max) > DBL_EPSILON))
     {

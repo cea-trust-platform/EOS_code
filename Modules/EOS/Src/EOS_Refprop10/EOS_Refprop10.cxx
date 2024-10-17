@@ -29,8 +29,8 @@ namespace NEPTUNE_EOS
   // Definition of internal errors in EOS_Fluid:
   // The following errors leads to EOS_Error=bad
   static const EOS_Internal_Error Error_p_sat_T_compute = EOS_Internal_Error(EOS_Fluid_Error_base + 0, EOS_Error::bad);
-  static const EOS_Internal_Error Error_p_sat_T_newton  = EOS_Internal_Error(EOS_Fluid_Error_base + 1, EOS_Error::bad);
-  static const EOS_Internal_Error Error_lambda_value    = EOS_Internal_Error(EOS_Fluid_Error_base + 2, EOS_Error::bad);
+  static const EOS_Internal_Error Error_p_sat_T_newton = EOS_Internal_Error(EOS_Fluid_Error_base + 1, EOS_Error::bad);
+  static const EOS_Internal_Error Error_lambda_value = EOS_Internal_Error(EOS_Fluid_Error_base + 2, EOS_Error::bad);
 
   const AString EOS_Refprop10::TMStr("Refprop10");
   const AString EOS_Refprop10::MVStr("10.0");
@@ -296,7 +296,7 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
-  int EOS_Refprop10::init(const Strings &strings, const Strings& values,
+  int EOS_Refprop10::init(const Strings &strings, const Strings &values,
                           const double href0, const double sref0, const double tref0, const double pref0)
   {
     EOS_Internal_Error err;
@@ -363,7 +363,7 @@ namespace NEPTUNE_EOS
       {
         setmod = 1;
         htype = values[1];
-        hmix  = values[2];
+        hmix = values[2];
         int nbc = sz_values - 3;
         hcomp.resize(nbc);
         for (int i = 0; i < nbc; i++)
@@ -437,14 +437,14 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
-  void EOS_Refprop10::set_allpath(const Strings& strings)
+  void EOS_Refprop10::set_allpath(const Strings &strings)
   { // Verify $NEPTUNE_EOS_REFPROP system variable.
     // And get all paths
 
     AString ref_path;
     if (iret_eos_data_dir)
       exit(1);
-    ref_path  = eos_data_dir.c_str();
+    ref_path = eos_data_dir.c_str();
     ref_path += "/EOS_Refprop10/";
 
     std::ifstream ref_path_as(ref_path.aschar());
@@ -455,19 +455,20 @@ namespace NEPTUNE_EOS
     }
 
     // fluid file_name
-    data_file_name      = ref_path;
-    AString &file_name  = strings[0];
-    data_file_name     += file_name;
+    data_file_name = ref_path;
+    AString &file_name = strings[0];
+    data_file_name += file_name;
 
     // mixing coefficients file name
-    hfmix  = ref_path;
+    hfmix = ref_path;
     hfmix += file_mix_10;
 
     // set path
     char rpath_s[HC255];
     memset(rpath_s, '\0', sizeof(rpath_s)); // M.F.A
     strncpy(rpath_s, ref_path.aschar(), strlen(ref_path.aschar()));
-    F77NAME(setpath_rp10)(rpath_s, sizeof(rpath_s));
+    F77NAME(setpath_rp10)
+    (rpath_s, sizeof(rpath_s));
   }
 
   EOS_Internal_Error EOS_Refprop10::callSetup() const
@@ -475,7 +476,7 @@ namespace NEPTUNE_EOS
     int ierr;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
-        
+
     if (fluid == 1) // pure fluid
     {
       if (setmod)
@@ -489,16 +490,16 @@ namespace NEPTUNE_EOS
         strncpy(hmix_s, hmix.aschar(), strlen(hmix.aschar()));
 
         long nT;
-        char * hcomp_s = packStrings(hcomp, HC3-1, nT);
+        char *hcomp_s = packStrings(hcomp, HC3 - 1, nT);
         F77NAME(xsetmod_rp10)
-          (nbcomp, htype_s, hmix_s, hcomp_s, ierr, herr,
-           sizeof(htype_s)-1, sizeof(hmix_s)-1, nT, sizeof(herr)-1);
-        delete [] hcomp_s;
+        (nbcomp, htype_s, hmix_s, hcomp_s, ierr, herr,
+         sizeof(htype_s) - 1, sizeof(hmix_s) - 1, nT, sizeof(herr) - 1);
+        delete[] hcomp_s;
         if (ierr != 0)
           return generate_error(ierr, herr);
       }
 
-      char hfiles_s[NBCOMPMAX*HC255];
+      char hfiles_s[NBCOMPMAX * HC255];
       memset(hfiles_s, '\0', sizeof(hfiles_s)); // M.F.A.
       strncpy(hfiles_s, data_file_name.aschar(), strlen(data_file_name.aschar()));
 
@@ -510,8 +511,9 @@ namespace NEPTUNE_EOS
       memset(hrf_s, '\0', sizeof(hrf_s)); // M.F.A.
       strncpy(hrf_s, hrf.aschar(), strlen(hrf.aschar()));
 
-      F77NAME(xsetup_rp10)(&nbcomp, hfiles_s, hfmix_s, hrf_s, &ierr, herr,
-                          sizeof(hfiles_s)-1, sizeof(hfmix_s)-1, sizeof(hrf_s)-1, sizeof(herr)-1);
+      F77NAME(xsetup_rp10)
+      (&nbcomp, hfiles_s, hfmix_s, hrf_s, &ierr, herr,
+       sizeof(hfiles_s) - 1, sizeof(hfmix_s) - 1, sizeof(hrf_s) - 1, sizeof(herr) - 1);
 
       if (setref)
       {
@@ -525,8 +527,8 @@ namespace NEPTUNE_EOS
         double t0_rp = t0;
         double p0_rp = pa2kpa(p0);
         F77NAME(setref_rp10)
-          (hrf_s, ixflag, arr_molfrac, h0_rp, s0_rp, t0_rp, p0_rp, ierr, herr,
-           sizeof(hrf_s)-1, sizeof(herr)-1);
+        (hrf_s, ixflag, arr_molfrac, h0_rp, s0_rp, t0_rp, p0_rp, ierr, herr,
+         sizeof(hrf_s) - 1, sizeof(herr) - 1);
         if (ierr != 0)
           return generate_error(ierr, herr);
       }
@@ -552,12 +554,12 @@ namespace NEPTUNE_EOS
       memset(hrf_s, '\0', sizeof(hrf_s)); // M.F.A.
       strncpy(hrf_s, hrf.aschar(), strlen(hrf.aschar()));
 
-      char hfiles_s[NBCOMPMAX*HC255];
+      char hfiles_s[NBCOMPMAX * HC255];
       memset(hfiles_s, '\0', sizeof(hfiles_s)); // M.F.A.
 
       F77NAME(xsetmix_rp10)
-        (hmx_s, hfmix_s, hrf_s, nbcomp, hfiles_s, arr_molfrac, ierr, herr,
-         sizeof(hmx_s)-1, sizeof(hfmix_s)-1, sizeof(hrf_s)-1, sizeof(hfiles_s)-1, sizeof(herr)-1);
+      (hmx_s, hfmix_s, hrf_s, nbcomp, hfiles_s, arr_molfrac, ierr, herr,
+       sizeof(hmx_s) - 1, sizeof(hfmix_s) - 1, sizeof(hrf_s) - 1, sizeof(hfiles_s) - 1, sizeof(herr) - 1);
 
       // ierr = -117 : No mixture data are available for one or more binary pairs in
       //               the specified mixture. The mixing parameters have been estimated
@@ -572,13 +574,13 @@ namespace NEPTUNE_EOS
         char hmix_s[HC3];
         memset(hmix_s, '\0', sizeof(hmix_s)); // M.F.A.
         strncpy(hmix_s, hmix.aschar(), strlen(hmix.aschar()));
-          
+
         long nT;
-        char * hcomp_s = packStrings(hcomp, HC3-1, nT);
+        char *hcomp_s = packStrings(hcomp, HC3 - 1, nT);
         F77NAME(xsetmod_rp10)
-          (nbcomp, htype_s, hmix_s, hcomp_s, ierr, herr, 
-           sizeof(htype_s)-1, sizeof(hmix_s)-1, nT, sizeof(herr)-1);
-        delete [] hcomp_s;
+        (nbcomp, htype_s, hmix_s, hcomp_s, ierr, herr,
+         sizeof(htype_s) - 1, sizeof(hmix_s) - 1, nT, sizeof(herr) - 1);
+        delete[] hcomp_s;
         if (ierr != 0)
           return generate_error(ierr, herr);
       }
@@ -595,29 +597,31 @@ namespace NEPTUNE_EOS
 
 #ifdef _OPENMP
 
-    // Retrieve fortran commons location and copy 
+    // Retrieve fortran commons location and copy
     // values in the main thread's commons to the other
     // threads commons
 
     int numCommons;
-    F77NAME(xnumcommons_rp10)(&numCommons);
+    F77NAME(xnumcommons_rp10)
+    (&numCommons);
     int iC, iTh, nTh = omp_get_max_threads();
-    long *Q0 = new long[numCommons*nTh];
-    long *L   = new long[numCommons];
+    long *Q0 = new long[numCommons * nTh];
+    long *L = new long[numCommons];
 
-    F77NAME(xdefcommons_rp10)(Q0, L, &numCommons, &nTh);
+    F77NAME(xdefcommons_rp10)
+    (Q0, L, &numCommons, &nTh);
 
-    for (iC = 0; iC<numCommons; iC++)
+    for (iC = 0; iC < numCommons; iC++)
     {
-      void * p0 = reinterpret_cast<void *>(Q0[iC*nTh]);
-      for (iTh = 1; iTh<nTh; iTh++)
+      void *p0 = reinterpret_cast<void *>(Q0[iC * nTh]);
+      for (iTh = 1; iTh < nTh; iTh++)
       {
-        void * q0 = reinterpret_cast<void *>(Q0[iTh + iC*nTh]);
+        void *q0 = reinterpret_cast<void *>(Q0[iTh + iC * nTh]);
         memcpy(q0, p0, L[iC]);
       }
     }
-    delete [] L;
-    delete [] Q0;
+    delete[] L;
+    delete[] Q0;
 #endif
 
     return err;
@@ -645,7 +649,7 @@ namespace NEPTUNE_EOS
     {
       i1 = i + 1;
       F77NAME(name_rp10)
-      (i1, hname, hn80, hcas, HC12-1, HC80-1, HC12-1);
+      (i1, hname, hn80, hcas, HC12 - 1, HC80 - 1, HC12 - 1);
       arr_hname[i] = AString(hname);
       arr_hn80[i] = AString(hn80);
       arr_hcas[i] = AString(hcas);
@@ -665,19 +669,19 @@ namespace NEPTUNE_EOS
     double dmax, p_tmp, h_tmp;
     char htyp[] = "EOS";
     F77NAME(limits_rp10)
-      (htyp, arr_molfrac, tmin, tmax, dmax, p_tmp);
+    (htyp, arr_molfrac, tmin, tmax, dmax, p_tmp);
     rhomax = refprop_rho_2_eos(dmax);
     pmax = kpa2pa(p_tmp);
     // compute hmax
     F77NAME(enthal_rp10)
-      (tmax, dmax, arr_molfrac, h_tmp);
+    (tmax, dmax, arr_molfrac, h_tmp);
     hmax = refprop_nrj_2_eos(h_tmp);
-    pmin=1000; // patch to get pmin and hmin -> not given by REFPROP
-    hmin=-76319.7;
+    pmin = 1000; // patch to get pmin and hmin -> not given by REFPROP
+    hmin = -76319.7;
   }
 
-  EOS_Internal_Error EOS_Refprop10::call_tpflsh(EOS_thermprop prop, 
-                                                double p, double T, double& value) const
+  EOS_Internal_Error EOS_Refprop10::call_tpflsh(EOS_thermprop prop,
+                                                double p, double T, double &value) const
   {
     int ierr;
     char herr[HC255];
@@ -690,7 +694,7 @@ namespace NEPTUNE_EOS
 
     double p_refprop = pa2kpa(p);
     double rho = 0.e0;
-    ierr  = 0;
+    ierr = 0;
     value = 0.e0;
 
     //... reset fluid with setup
@@ -699,8 +703,8 @@ namespace NEPTUNE_EOS
       return err;
 
     F77NAME(tpflsh_rp10)
-      (T, p_refprop, arr_molfrac, rho, rhol, rhov,
-       x, y, q, e, h, s, cv, cp, w, ierr, herr, sizeof(herr)-1);
+    (T, p_refprop, arr_molfrac, rho, rhol, rhov,
+     x, y, q, e, h, s, cv, cp, w, ierr, herr, sizeof(herr) - 1);
 
     delete[] x;
     delete[] y;
@@ -735,8 +739,8 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
-  EOS_Internal_Error EOS_Refprop10::call_psflsh(EOS_thermprop prop, 
-                                                double p, double s, double& value) const
+  EOS_Internal_Error EOS_Refprop10::call_psflsh(EOS_thermprop prop,
+                                                double p, double s, double &value) const
   {
     EOS_Internal_Error err;
     double rho, rhol, rhov, q, e, h, T, cv, cp, w;
@@ -758,8 +762,8 @@ namespace NEPTUNE_EOS
       return err;
 
     F77NAME(psflsh_rp10)
-     (p_refprop, s_refprop, arr_molfrac, T, rho, rhol, rhov, x, y, q, e, h, cv, cp, w,
-      ierr, herr, sizeof(herr)-1);
+    (p_refprop, s_refprop, arr_molfrac, T, rho, rhol, rhov, x, y, q, e, h, cv, cp, w,
+     ierr, herr, sizeof(herr) - 1);
 
     delete[] x;
     delete[] y;
@@ -780,7 +784,7 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Internal_Error EOS_Refprop10::call_phflsh(EOS_thermprop prop,
-                                                double p, double h, double& value) const
+                                                double p, double h, double &value) const
   {
     EOS_Internal_Error err;
     double t, rho, rhol, rhov, q, e, s, cv, cp, w;
@@ -802,8 +806,8 @@ namespace NEPTUNE_EOS
       return err;
 
     F77NAME(phflsh_rp10)
-       (p_refprop, h_refprop, arr_molfrac, t, rho, rhol, rhov, xl, xv, q, e, s, cv, cp, w,
-        ierr, herr, sizeof(herr)-1);
+    (p_refprop, h_refprop, arr_molfrac, t, rho, rhol, rhov, xl, xv, q, e, s, cv, cp, w,
+     ierr, herr, sizeof(herr) - 1);
 
     delete[] xl;
     delete[] xv;
@@ -841,8 +845,8 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
-  EOS_Internal_Error EOS_Refprop10::call_dhd1(EOS_Property prop, 
-                                              double p, double h, double& value) const
+  EOS_Internal_Error EOS_Refprop10::call_dhd1(EOS_Property prop,
+                                              double p, double h, double &value) const
   {
     EOS_Internal_Error err;
     double t, rho, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d;
@@ -863,7 +867,7 @@ namespace NEPTUNE_EOS
     rho = eos_rho_2_refprop(rho);
 
     F77NAME(dhd1_rp10)
-      (t, rho, arr_molfrac, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d);
+    (t, rho, arr_molfrac, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d);
 
     switch (prop)
     {
@@ -882,8 +886,8 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
-  EOS_Internal_Error EOS_Refprop10::call_ag(EOS_thermprop prop, 
-                                            double t, double rho, double& value) const
+  EOS_Internal_Error EOS_Refprop10::call_ag(EOS_thermprop prop,
+                                            double t, double rho, double &value) const
   {
     EOS_Internal_Error err;
     double f, g;
@@ -895,7 +899,7 @@ namespace NEPTUNE_EOS
       return err;
 
     F77NAME(ag_rp10)
-      (t, rho, arr_molfrac, f, g);
+    (t, rho, arr_molfrac, f, g);
 
     switch (prop)
     {
@@ -913,38 +917,38 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
-  EOS_Internal_Error EOS_Refprop10::critical_point(double& tcrit, double& pcrit, double& rhocrit,
-                                                   double& hcrit, double& scrit, double& ucrit,
-                                                   double& pcrit_r, double& rhocrit_r, double& hcrit_r,
-                                                   double& scrit_r, double& ucrit_r) const
+  EOS_Internal_Error EOS_Refprop10::critical_point(double &tcrit, double &pcrit, double &rhocrit,
+                                                   double &hcrit, double &scrit, double &ucrit,
+                                                   double &pcrit_r, double &rhocrit_r, double &hcrit_r,
+                                                   double &scrit_r, double &ucrit_r) const
   {
     int ierr;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
 
     F77NAME(critp_rp10)
-      (arr_molfrac, tcrit, pcrit_r, rhocrit_r, ierr, herr, sizeof(herr)-1);
+    (arr_molfrac, tcrit, pcrit_r, rhocrit_r, ierr, herr, sizeof(herr) - 1);
 
     if (ierr != 0 && ierr != -319)
       return generate_error(ierr, herr);
 
     F77NAME(enthal_rp10)
-      (tcrit, rhocrit_r, arr_molfrac, hcrit_r);
+    (tcrit, rhocrit_r, arr_molfrac, hcrit_r);
     F77NAME(entro_rp10)
-      (tcrit, rhocrit_r, arr_molfrac, scrit_r);
+    (tcrit, rhocrit_r, arr_molfrac, scrit_r);
     F77NAME(energy_rp10)
-      (tcrit, rhocrit_r, arr_molfrac, ucrit_r);
+    (tcrit, rhocrit_r, arr_molfrac, ucrit_r);
 
-    pcrit   = kpa2pa(pcrit_r);
+    pcrit = kpa2pa(pcrit_r);
     rhocrit = refprop_rho_2_eos(rhocrit_r);
-    hcrit   = refprop_nrj_2_eos(hcrit_r);
-    scrit   = refprop_nrj_2_eos(scrit_r);
-    ucrit   = refprop_nrj_2_eos(ucrit_r);
+    hcrit = refprop_nrj_2_eos(hcrit_r);
+    scrit = refprop_nrj_2_eos(scrit_r);
+    ucrit = refprop_nrj_2_eos(ucrit_r);
 
     return EOS_Internal_Error::OK;
   }
 
-  EOS_Internal_Error EOS_Refprop10::generate_error(int ierr, const char* err) const
+  EOS_Internal_Error EOS_Refprop10::generate_error(int ierr, const char *err) const
   {
     int EOS_REFPROP_CODE = 0;
 
@@ -965,7 +969,7 @@ namespace NEPTUNE_EOS
       string strmsg;
       int subcod = 0;
       string submsg;
-      string word  = "";
+      string word = "";
       string word1 = "";
       string word2 = "";
       int numm;
@@ -1052,7 +1056,7 @@ namespace NEPTUNE_EOS
       return EOS_Internal_Error(EOS_REFPROP_CODE, EOS_Error::bad, ierr);
   }
 
-  void EOS_Refprop10::describe_error(const EOS_Internal_Error error, AString& description) const
+  void EOS_Refprop10::describe_error(const EOS_Internal_Error error, AString &description) const
   {
     //
     // Search error message implemented in errorMsgs
@@ -1083,7 +1087,7 @@ namespace NEPTUNE_EOS
       EOS_Fluid::describe_error(error, description);
   }
 
-  EOS_Internal_Error EOS_Refprop10::newton_hlim(EOS_splimprop prop, double p, double& h_lim) const
+  EOS_Internal_Error EOS_Refprop10::newton_hlim(EOS_splimprop prop, double p, double &h_lim) const
   {
     double p_ref, tsat_ref;
     double rholsat_ref, rhovsat_ref;
@@ -1098,7 +1102,7 @@ namespace NEPTUNE_EOS
     double inewt;
     double nnewt = 100;
     double dTumax = 10.e0;
-    double epsn    = 1.e-3;
+    double epsn = 1.e-3;
     double epsilon = 1.e-4;
 
     int ierr;
@@ -1148,11 +1152,11 @@ namespace NEPTUNE_EOS
     for (inewt = 0; (inewt < nnewt) && (fabs(functT) >= epsn); inewt++)
     {
       F77NAME(liqspndl_rp10)
-        (t_ref, arr_molfrac, rhol_ref, ierr, herr, sizeof(herr)-1);
+      (t_ref, arr_molfrac, rhol_ref, ierr, herr, sizeof(herr) - 1);
       if (ierr != 0)
         return generate_error(ierr, herr);
       F77NAME(vapspndl_rp10)
-        (t_ref, arr_molfrac, rhov_ref, ierr, herr, sizeof(herr)-1);
+      (t_ref, arr_molfrac, rhov_ref, ierr, herr, sizeof(herr) - 1);
       if (ierr != 0)
         return generate_error(ierr, herr);
       switch (prop)
@@ -1168,7 +1172,7 @@ namespace NEPTUNE_EOS
       }
 
       F77NAME(press_rp10)
-        (t_ref, rho_ref, arr_molfrac, p_new);
+      (t_ref, rho_ref, arr_molfrac, p_new);
       functT = p_new - p_ref;
       tp_ref = t_ref * (1 + epsilon);
       tm_ref = t_ref * (1 - epsilon);
@@ -1179,21 +1183,21 @@ namespace NEPTUNE_EOS
       {
       case NEPTUNE::h_l_lim:
         F77NAME(liqspndl_rp10)
-          (tp_ref, arr_molfrac, rhop_ref, ierr, herr, sizeof(herr)-1);
+        (tp_ref, arr_molfrac, rhop_ref, ierr, herr, sizeof(herr) - 1);
         if (ierr != 0)
           return generate_error(ierr, herr);
         F77NAME(liqspndl_rp10)
-          (tm_ref, arr_molfrac, rhom_ref, ierr, herr, sizeof(herr)-1);
+        (tm_ref, arr_molfrac, rhom_ref, ierr, herr, sizeof(herr) - 1);
         if (ierr != 0)
           return generate_error(ierr, herr);
         break;
       case NEPTUNE::h_v_lim:
         F77NAME(vapspndl_rp10)
-          (tp_ref, arr_molfrac, rhop_ref, ierr, herr, sizeof(herr)-1);
+        (tp_ref, arr_molfrac, rhop_ref, ierr, herr, sizeof(herr) - 1);
         if (ierr != 0)
           return generate_error(ierr, herr);
         F77NAME(vapspndl_rp10)
-          (tm_ref, arr_molfrac, rhom_ref, ierr, herr, sizeof(herr)-1);
+        (tm_ref, arr_molfrac, rhom_ref, ierr, herr, sizeof(herr) - 1);
         if (ierr != 0)
           return generate_error(ierr, herr);
         break;
@@ -1202,9 +1206,9 @@ namespace NEPTUNE_EOS
       }
 
       F77NAME(press_rp10)
-        (tp_ref, rhop_ref, arr_molfrac, pp_new);
+      (tp_ref, rhop_ref, arr_molfrac, pp_new);
       F77NAME(press_rp10)
-        (tm_ref, rhom_ref, arr_molfrac, pm_new);
+      (tm_ref, rhom_ref, arr_molfrac, pm_new);
       dfunctT = (pp_new - pm_new) / (tp_ref - tm_ref);
 
       // time limitation (dTumax)
@@ -1217,7 +1221,7 @@ namespace NEPTUNE_EOS
     {
       double tmp = t_ref - dTu;
       F77NAME(enthal_rp10)
-        (tmp, rho_ref, arr_molfrac, h_ref);
+      (tmp, rho_ref, arr_molfrac, h_ref);
       h_lim = refprop_nrj_2_eos(h_ref);
       return EOS_Internal_Error::OK;
     }
@@ -1329,7 +1333,7 @@ namespace NEPTUNE_EOS
   //      return EOS_Internal_Error::OK;
   //  }
 
-  void EOS_Refprop10::calrp_indic_ph(EOS_Fields& r, int* indic) const
+  void EOS_Refprop10::calrp_indic_ph(EOS_Fields &r, int *indic) const
   // indic[0]   phfl1
   // indic[1]   therm2
   // indic[2]   trnprp
@@ -1444,11 +1448,10 @@ namespace NEPTUNE_EOS
                                                           double *tab_propder,
                                                           int *indic) const
   {
-    int kph ;
+    int kph, ierr;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
 
-    int kph;
     double T, s, cp, cv, w, mu, lambda, beta, sigma, f, g;
     double e, rhol, rhov, hjt, pi, Z, h0;
     double A, G, xkappa, dPdrho, d2PdD2, dPT, drhodT, drhodP, spare1, spare2, spare3, spare4;
@@ -1467,16 +1470,16 @@ namespace NEPTUNE_EOS
     if (indic[0] == 1)
     {
       F77NAME(phfl1_rp10)
-        (p_refprop, h_refprop, arr_molfrac, kph, T, rho_refprop,
-         ierr, herr, sizeof(herr)-1);
+      (p_refprop, h_refprop, arr_molfrac, kph, T, rho_refprop,
+       ierr, herr, sizeof(herr) - 1);
       if (ierr != 0)
       {
         // Une température initiale éloignée de la solution peut faire échouer phfl1
         // alors que la solution est obtenue avec une température nulle (ensuite convertie en température critique)
         T = 0.;
         F77NAME(phfl1_rp10)
-          (p_refprop, h_refprop, arr_molfrac, kph, T, rho_refprop,
-           ierr, herr, sizeof(herr)-1);
+        (p_refprop, h_refprop, arr_molfrac, kph, T, rho_refprop,
+         ierr, herr, sizeof(herr) - 1);
         if (ierr)
           err = worst_internal_error(err, generate_error(ierr, herr));
       }
@@ -1487,17 +1490,17 @@ namespace NEPTUNE_EOS
         int j = 0;
         int mph = -kph;
         F77NAME(tprho_rp10)
-         (T, p_refprop, arr_molfrac, mph, j, rho_refprop,
-          ierr, herr, sizeof(herr)-1);
+        (T, p_refprop, arr_molfrac, mph, j, rho_refprop,
+         ierr, herr, sizeof(herr) - 1);
       }
       tab_prop[NEPTUNE::T] = T;
       tab_prop[NEPTUNE::rho] = refprop_rho_2_eos(rho_refprop);
     }
 
     F77NAME(therm2_rp10)
-     (T, rho_refprop, arr_molfrac, pi, e, h0, s, cv, cp, w, Z, hjt, A, G,
-      xkappa, beta, dPdrho, d2PdD2, dPT, drhodT, drhodP, spare1, spare2,
-      spare3, spare4);
+    (T, rho_refprop, arr_molfrac, pi, e, h0, s, cv, cp, w, Z, hjt, A, G,
+     xkappa, beta, dPdrho, d2PdD2, dPT, drhodT, drhodP, spare1, spare2,
+     spare3, spare4);
     if (indic[1] == 1)
     {
       tab_prop[NEPTUNE::u] = refprop_nrj_2_eos(e);
@@ -1511,8 +1514,8 @@ namespace NEPTUNE_EOS
     if (indic[2] == 1)
     {
       F77NAME(trnprp_rp10)
-        (T, rho_refprop, arr_molfrac, mu, lambda,
-         ierr, herr, sizeof(herr)-1);
+      (T, rho_refprop, arr_molfrac, mu, lambda,
+       ierr, herr, sizeof(herr) - 1);
       tab_prop[NEPTUNE::mu] = micropa2pa(mu);
       tab_prop[NEPTUNE::lambda] = lambda;
       if (ierr != 0)
@@ -1522,14 +1525,13 @@ namespace NEPTUNE_EOS
     if (indic[1] == 1 && indic[2] == 1)
     {
       tab_prop[NEPTUNE::pr] = tab_prop[NEPTUNE::mu] * tab_prop[NEPTUNE::cp] / tab_prop[NEPTUNE::lambda];
-
     }
 
     if (indic[3] == 1)
     {
       F77NAME(stn_rp10)
-        (T, rhol = 0.0, rhov = 0.0, arr_molfrac, arr_molfrac, sigma, 
-         ierr, herr, sizeof(herr)-1);
+      (T, rhol = 0.0, rhov = 0.0, arr_molfrac, arr_molfrac, sigma,
+       ierr, herr, sizeof(herr) - 1);
       tab_prop[NEPTUNE::sigma] = sigma;
       if (ierr != 0)
       {
@@ -1544,20 +1546,20 @@ namespace NEPTUNE_EOS
     if (indic[4] == 1)
     {
       F77NAME(ag_rp10)
-        (T, rho_refprop, arr_molfrac, f, g);
+      (T, rho_refprop, arr_molfrac, f, g);
       tab_prop[NEPTUNE::g] = refprop_nrj_2_eos(g);
       tab_prop[NEPTUNE::f] = refprop_nrj_2_eos(f);
     }
 
-    double d_T_d_p   = 0.e0;
+    double d_T_d_p = 0.e0;
     double d_rho_d_p = 0.e0;
-    double d_T_d_h   = 0.e0;
+    double d_T_d_h = 0.e0;
     double d_rho_d_h = 0.e0;
     if (indic[5] == 1)
     {
       double dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d;
       F77NAME(dhd1_rp10)
-        (T, rho_refprop, arr_molfrac, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d);
+      (T, rho_refprop, arr_molfrac, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d);
       d_T_d_p = -1 / refprop_nrj_2_eos(dhdt_p) * refprop_nrj_2_eos(dhdp_t) / kpa2pa(1);
       d_rho_d_p = refprop_rho_2_eos(drhodP) / kpa2pa(1) + refprop_rho_2_eos(drhodT) * d_T_d_p;
       d_T_d_h = 1 / refprop_nrj_2_eos(dhdt_p);
@@ -1571,26 +1573,26 @@ namespace NEPTUNE_EOS
     // M.F. double Tp, rhop, ep, sp, cvp, cpp, wp, betap, lambdap, mup, sigmap, fp, gp;
     double Tp, rhop;
     double e_tp, s_tp, cv_tp, cp_tp, w_tp, beta_tp, lambda_tp, mu_tp, sigma_tp, f_tp, g_tp;
-    double e_rp, s_rp, cv_rp, cp_rp, w_rp, beta_rp, lambda_rp, mu_rp,           f_rp, g_rp;
-    double delta_T   = 0.e0;
+    double e_rp, s_rp, cv_rp, cp_rp, w_rp, beta_rp, lambda_rp, mu_rp, f_rp, g_rp;
+    double delta_T = 0.e0;
     double delta_rho = 0.e0;
-    double epsilon   = 0.e0;
+    double epsilon = 0.e0;
     if (indic[6] + indic[7] + indic[8] + indic[9] >= 1)
     {
-       epsilon = 1e-6;
-       Tp = T * (1+epsilon);
-       delta_T = Tp-T;
-       rhop = rho_refprop * (1+epsilon);
-       delta_rho = refprop_rho_2_eos(rhop-rho_refprop);
+      epsilon = 1e-6;
+      Tp = T * (1 + epsilon);
+      delta_T = Tp - T;
+      rhop = rho_refprop * (1 + epsilon);
+      delta_rho = refprop_rho_2_eos(rhop - rho_refprop);
     }
 
     if (indic[6] == 1)
     {
       F77NAME(therm2_rp10)
-        (Tp, rho_refprop, arr_molfrac, pi, e_tp, h0,
-         s_tp, cv_tp, cp_tp, w_tp, Z, hjt, A, G,
-         xkappa, beta_tp, dPdrho, d2PdD2, dPT, drhodT, drhodP,
-         spare1, spare2, spare3, spare4);
+      (Tp, rho_refprop, arr_molfrac, pi, e_tp, h0,
+       s_tp, cv_tp, cp_tp, w_tp, Z, hjt, A, G,
+       xkappa, beta_tp, dPdrho, d2PdD2, dPT, drhodT, drhodP,
+       spare1, spare2, spare3, spare4);
       double d_cv_d_T = (refprop_nrj_2_eos(cv_tp) - refprop_nrj_2_eos(cv)) / delta_T;
       double d_cp_d_T = (refprop_nrj_2_eos(cp_tp) - refprop_nrj_2_eos(cp)) / delta_T;
       double d_s_d_T = (refprop_nrj_2_eos(s_tp) - refprop_nrj_2_eos(s)) / delta_T;
@@ -1598,10 +1600,10 @@ namespace NEPTUNE_EOS
       double d_beta_d_T = (beta_tp - beta) / delta_T;
 
       F77NAME(therm2_rp10)
-        (T, rhop, arr_molfrac, pi, e_rp, h0,
-         s_rp, cv_rp, cp_rp, w_rp, Z, hjt, A, G,
-         xkappa, beta_rp, dPdrho, d2PdD2, dPT, drhodT, drhodP,
-         spare1, spare2, spare3, spare4);
+      (T, rhop, arr_molfrac, pi, e_rp, h0,
+       s_rp, cv_rp, cp_rp, w_rp, Z, hjt, A, G,
+       xkappa, beta_rp, dPdrho, d2PdD2, dPT, drhodT, drhodP,
+       spare1, spare2, spare3, spare4);
       double d_cv_d_rho = (refprop_nrj_2_eos(cv_rp) - refprop_nrj_2_eos(cv)) / delta_rho;
       double d_cp_d_rho = (refprop_nrj_2_eos(cp_rp) - refprop_nrj_2_eos(cp)) / delta_rho;
       double d_s_d_rho = (refprop_nrj_2_eos(s_rp) - refprop_nrj_2_eos(s)) / delta_rho;
@@ -1623,14 +1625,14 @@ namespace NEPTUNE_EOS
     if (indic[7] == 1)
     {
       F77NAME(trnprp_rp10)
-        (Tp, rho_refprop, arr_molfrac, mu_tp, lambda_tp,
-         ierr, herr, sizeof(herr)-1);
+      (Tp, rho_refprop, arr_molfrac, mu_tp, lambda_tp,
+       ierr, herr, sizeof(herr) - 1);
       if (ierr != 0)
         err = worst_internal_error(err, generate_error(ierr, herr));
       double d_lambda_d_T = (lambda_tp - lambda) / delta_T;
       double d_mu_d_T = (micropa2pa(mu_tp) - micropa2pa(mu)) / delta_T;
       F77NAME(trnprp_rp10)
-        (T, rhop, arr_molfrac, mu_rp, lambda_rp, ierr, herr, sizeof(herr)-1);
+      (T, rhop, arr_molfrac, mu_rp, lambda_rp, ierr, herr, sizeof(herr) - 1);
       if (ierr != 0)
         err = worst_internal_error(err, generate_error(ierr, herr));
       double d_lambda_d_rho = (lambda_rp - lambda) / delta_rho;
@@ -1661,9 +1663,9 @@ namespace NEPTUNE_EOS
     if (indic[8] == 1)
     {
       F77NAME(stn_rp10)
-        (Tp, rhol = 0.0, rhov = 0.0, arr_molfrac, arr_molfrac, sigma_tp,
-         ierr, herr, sizeof(herr)-1);
-//       if (ierr != 0) err = worst_internal_error(err, generate_error(ierr, herr));
+      (Tp, rhol = 0.0, rhov = 0.0, arr_molfrac, arr_molfrac, sigma_tp,
+       ierr, herr, sizeof(herr) - 1);
+      //       if (ierr != 0) err = worst_internal_error(err, generate_error(ierr, herr));
       double d_sigma_d_T = (sigma_tp - sigma) / delta_T;
       tab_propder[NEPTUNE::d_sigma_d_p_h] = d_sigma_d_T * d_T_d_p;
       tab_propder[NEPTUNE::d_sigma_d_h_p] = d_sigma_d_T * d_T_d_h;
@@ -1672,11 +1674,11 @@ namespace NEPTUNE_EOS
     if (indic[9] == 1)
     {
       F77NAME(ag_rp10)
-        (Tp, rho_refprop, arr_molfrac, f_tp, g_tp);
+      (Tp, rho_refprop, arr_molfrac, f_tp, g_tp);
       double d_f_d_T = (refprop_nrj_2_eos(f_tp) - refprop_nrj_2_eos(f)) / delta_T;
       double d_g_d_T = (refprop_nrj_2_eos(g_tp) - refprop_nrj_2_eos(g)) / delta_T;
       F77NAME(ag_rp10)
-        (T, rhop, arr_molfrac, f_rp, g_rp);
+      (T, rhop, arr_molfrac, f_rp, g_rp);
       double d_f_d_rho = (refprop_nrj_2_eos(f_rp) - refprop_nrj_2_eos(f)) / delta_rho;
       double d_g_d_rho = (refprop_nrj_2_eos(g_rp) - refprop_nrj_2_eos(g)) / delta_rho;
       tab_propder[NEPTUNE::d_f_d_p_h] = d_f_d_T * d_T_d_p + d_f_d_rho * d_rho_d_p;
@@ -1718,7 +1720,7 @@ namespace NEPTUNE_EOS
 
     ierr = 0;
     F77NAME(psflsh_rp10)
-      (p_refprop, s_refprop, arr_molfrac, T, rho, rhol, rhov, x, y, q, e, h, cv, cp, w, ierr, herr, sizeof(herr)-1);
+    (p_refprop, s_refprop, arr_molfrac, T, rho, rhol, rhov, x, y, q, e, h, cv, cp, w, ierr, herr, sizeof(herr) - 1);
     if (ierr != 0)
       err = worst_internal_error(err, generate_error(ierr, herr));
     tab_prop[NEPTUNE::h] = refprop_nrj_2_eos(h);
@@ -1729,7 +1731,7 @@ namespace NEPTUNE_EOS
     double delta = kpa2pa(p_refpropp - p_refprop);
     double hp;
     F77NAME(psflsh_rp10)
-      (p_refpropp, s_refprop, arr_molfrac, T, rho, rhol, rhov, x, y, q, e, hp, cv, cp, w, ierr, herr, sizeof(herr)-1);
+    (p_refpropp, s_refprop, arr_molfrac, T, rho, rhol, rhov, x, y, q, e, hp, cv, cp, w, ierr, herr, sizeof(herr) - 1);
     if (ierr != 0)
       err = worst_internal_error(err, generate_error(ierr, herr));
     tab_propder[NEPTUNE::d_h_d_p_s] = refprop_nrj_2_eos(hp - h) / delta;
@@ -1757,16 +1759,17 @@ namespace NEPTUNE_EOS
     double *tab_propder = &vec_propder[0];
     int indic[11];
     EOS_Field rk;
-    EOS_Property prop ;
-    EOS_Property tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD] ;
+    EOS_Property prop;
+    EOS_Property tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD];
 
     // reset fluid with setup
     err = callSetup();
     if (err.generic_error() != EOS_Error::good)
       return errfield.find_worst_error().generic_error();
-    //reset fluid with setup
-    err = callSetup() ;
-    if (err.generic_error() != EOS_Error::good) return errfield.find_worst_error().generic_error();
+    // reset fluid with setup
+    err = callSetup();
+    if (err.generic_error() != EOS_Error::good)
+      return errfield.find_worst_error().generic_error();
 
     // tab_pos sert a etablir une correspondance entre la liste de champs "r" et les proprietes
     for (int k = 0; k < nb_fields; k++)
@@ -1774,12 +1777,12 @@ namespace NEPTUNE_EOS
       rk = r[k];
       prop = rk.get_property_number();
       if (prop != NEPTUNE::NotATProperty)
-        {
+      {
         if (prop < EOS_TPROPDER)
-         {
+        {
           tab_pos[k] = prop;
           tab_posder[k] = NEPTUNE::NotATProperty;
-          }
+        }
         else
         {
           tab_pos[k] = NEPTUNE::NotATProperty;
@@ -1793,7 +1796,7 @@ namespace NEPTUNE_EOS
       }
     }
 
-    if ( (pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::T) )
+    if ((pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::T))
     { // return EOS_Fluid::compute(pp, hh, r, errfield);  //Calcul non optimise
       calrp_indic_pt(r, indic);
       for (int i = 0; i < sz; i++)
@@ -1810,7 +1813,7 @@ namespace NEPTUNE_EOS
         errfield.set(i, err);
       }
     }
-    else if ( (pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::h) )
+    else if ((pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::h))
     {
       calrp_indic_ph(r, indic);
       int index_temp = -1;
@@ -1837,7 +1840,7 @@ namespace NEPTUNE_EOS
         errfield.set(i, err);
       }
     }
-    else if ( (pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::s) )
+    else if ((pp.get_property_number() == NEPTUNE::p) && (hh.get_property_number() == NEPTUNE::s))
     { //          return EOS_Fluid::compute(pp, hh, r, errfield);
       for (int i = 0; i < sz; i++)
       {
@@ -1879,52 +1882,53 @@ namespace NEPTUNE_EOS
       EOS_Field rk = r[k];
       EOS_Property prop = rk.get_property_number();
       if (prop >= NEPTUNE::firstSatProperty && prop <= NEPTUNE::lastSatProperty)
- 
+
         indic[0] = 1;
       switch (prop)
-            { case NEPTUNE::T_sat :
-                 break;
-              case NEPTUNE::rho_l_sat :
-                 break;
-              case NEPTUNE::rho_v_sat :
-                 break;
-              case NEPTUNE::h_l_sat : 
-                 indic[1] = 1; 
-                 break;
-              case NEPTUNE::h_v_sat : 
-                 indic[2] = 1; 
-                 break;
-              case NEPTUNE::cp_l_sat :
-                 indic[3] = 1; 
-                 break;
-              case NEPTUNE::cp_v_sat : 
-                 indic[4] = 1; 
-                 break;
-                 
-                 // first derivative
-              case d_T_sat_d_p :
-                 indic[5] = 1;
-                 break;
-                
-              case NEPTUNE::d_h_l_sat_d_p : 
-                 indic[6] = 1; 
-                 break;
-              case NEPTUNE::d_h_v_sat_d_p : 
-                 indic[7] = 1; 
-                 break;
-              case NEPTUNE::d_cp_l_sat_d_p : 
-                 indic[8] = 1; 
-                 break;
-              case NEPTUNE::d_cp_v_sat_d_p : 
-                 indic[9] = 1; 
-                 break;
-               // seconde derivative
-              case NEPTUNE::d2_T_sat_d_p_d_p :
-                 indic[5]  = 1;
-                 indic[10] = 1;
-                 break;
-            }
-       }
+      {
+      case NEPTUNE::T_sat:
+        break;
+      case NEPTUNE::rho_l_sat:
+        break;
+      case NEPTUNE::rho_v_sat:
+        break;
+      case NEPTUNE::h_l_sat:
+        indic[1] = 1;
+        break;
+      case NEPTUNE::h_v_sat:
+        indic[2] = 1;
+        break;
+      case NEPTUNE::cp_l_sat:
+        indic[3] = 1;
+        break;
+      case NEPTUNE::cp_v_sat:
+        indic[4] = 1;
+        break;
+
+        // first derivative
+      case d_T_sat_d_p:
+        indic[5] = 1;
+        break;
+
+      case NEPTUNE::d_h_l_sat_d_p:
+        indic[6] = 1;
+        break;
+      case NEPTUNE::d_h_v_sat_d_p:
+        indic[7] = 1;
+        break;
+      case NEPTUNE::d_cp_l_sat_d_p:
+        indic[8] = 1;
+        break;
+      case NEPTUNE::d_cp_v_sat_d_p:
+        indic[9] = 1;
+        break;
+        // seconde derivative
+      case NEPTUNE::d2_T_sat_d_p_d_p:
+        indic[5] = 1;
+        indic[10] = 1;
+        break;
+      }
+    }
   }
 
   inline EOS_Internal_Error EOS_Refprop10::calrp_optim_sat_p(double p, double *tab_prop,
@@ -1933,7 +1937,7 @@ namespace NEPTUNE_EOS
                                                              int *indic) const
   {
     double t = 0.0,
-           rhol = 0.0, rhov = 0.0, 
+           rhol = 0.0, rhov = 0.0,
            xliq = 0.0, xvapint = 0.0,
            hl_refprop = 0.0, hv_refprop = 0.0,
            cv = 0.0, cpl = 0.0, cpv = 0.0;
@@ -1952,8 +1956,8 @@ namespace NEPTUNE_EOS
     if (indic[0] == 1)
     {
       F77NAME(satp_rp10)
-       (p_refprop, arr_molfrac, kph, t, rhol, rhov, xliq, xvapint,
-        ierr, herr, sizeof(herr)-1);
+      (p_refprop, arr_molfrac, kph, t, rhol, rhov, xliq, xvapint,
+       ierr, herr, sizeof(herr) - 1);
       tab_prop[NEPTUNE::rho_l_sat] = refprop_rho_2_eos(rhol);
       tab_prop[NEPTUNE::rho_v_sat] = refprop_rho_2_eos(rhov);
       if (ierr != 0)
@@ -1993,7 +1997,7 @@ namespace NEPTUNE_EOS
     if (indic[5] == 1)
     {
       F77NAME(satp_rp10)
-        (p_refpropp, arr_molfrac, kph, tp, rholp, rhovp, xliq, xvapint, ierr, herr, sizeof(herr)-1);
+      (p_refpropp, arr_molfrac, kph, tp, rholp, rhovp, xliq, xvapint, ierr, herr, sizeof(herr) - 1);
       tab_propder[NEPTUNE::d_T_sat_d_p] = (tp - t) / delta;
       tab_propder[NEPTUNE::d_rho_l_sat_d_p] = (refprop_rho_2_eos(rholp) - refprop_rho_2_eos(rhol)) / delta;
       tab_propder[NEPTUNE::d_rho_v_sat_d_p] = (refprop_rho_2_eos(rhovp) - refprop_rho_2_eos(rhov)) / delta;
@@ -2029,8 +2033,8 @@ namespace NEPTUNE_EOS
       double p_refpropm = p_refprop * (1 - epsilon);
       double tm = 0.0, rholm = 0.0, rhovm = 0.0;
       F77NAME(satp_rp10)
-        (p_refpropm, arr_molfrac, kph, tm, rholm, rhovm, xliq, xvapint,
-         ierr, herr, sizeof(herr)-1);
+      (p_refpropm, arr_molfrac, kph, tm, rholm, rhovm, xliq, xvapint,
+       ierr, herr, sizeof(herr) - 1);
       tab_propder2[NEPTUNE::d2_T_sat_d_p_d_p] = (tp - 2.0 * t + tm) / (delta * delta);
       if (ierr != 0)
         err = worst_internal_error(err, generate_error(ierr, herr));
@@ -2042,7 +2046,8 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Refprop10::compute(const EOS_Field &p,
                                    EOS_Fields &r,
                                    EOS_Error_Field &errfield) const
-  { if (p.get_property_number() != NEPTUNE::p)
+  {
+    if (p.get_property_number() != NEPTUNE::p)
     { // Calcul non optimise
       return EOS_Fluid::compute(p, r, errfield);
     }
@@ -2069,8 +2074,8 @@ namespace NEPTUNE_EOS
 
       calrp_indic_sat_p(r, indic);
       EOS_Field rk;
-         EOS_Property prop ;
-         EOS_Property tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD], tab_der2_pos[NBMAXFIELD] ;
+      EOS_Property prop;
+      EOS_Property tab_pos[NBMAXFIELD], tab_posder[NBMAXFIELD], tab_der2_pos[NBMAXFIELD];
 
       // tab_pos sert a etablir une correspondance entre la liste de champs "r" et les proprietes
       for (int k = 0; k < nb_fields; k++)
@@ -2078,13 +2083,13 @@ namespace NEPTUNE_EOS
         rk = r[k];
         prop = rk.get_property_number();
         if (prop >= NEPTUNE::firstSatProperty && prop <= NEPTUNE::lastSatProperty)
-          {
+        {
           if (prop < EOS_TSATPROPDER)
- 
+
           {
-            tab_pos[k]      = prop ;
-            tab_posder[k]   = NEPTUNE::NotASatProperty ;
-            tab_der2_pos[k] = NEPTUNE::NotASatProperty ;
+            tab_pos[k] = prop;
+            tab_posder[k] = NEPTUNE::NotASatProperty;
+            tab_der2_pos[k] = NEPTUNE::NotASatProperty;
           }
           else if (prop < EOS_TSATPROPDER2)
           {
@@ -2101,25 +2106,27 @@ namespace NEPTUNE_EOS
         }
         else
         {
-          tab_pos[k]      = NEPTUNE::NotASatProperty;
-          tab_posder[k]   = NEPTUNE::NotASatProperty;
+          tab_pos[k] = NEPTUNE::NotASatProperty;
+          tab_posder[k] = NEPTUNE::NotASatProperty;
           tab_der2_pos[k] = NEPTUNE::NotASatProperty;
         }
       }
 
-         for (int i=0; i<sz; i++) 
-            { err = calrp_optim_sat_p(p[i], tab_prop, tab_propder, tab_propder2, indic);
-              errfield.set(i, err);
-              for (int k=0; k<nb_fields; k++) 
-                 { rk = r[k];
-                   if (tab_pos[k]!=NEPTUNE::NotASatProperty) 
-                      rk[i] = tab_prop[tab_pos[k]];
-                   else if (tab_posder[k]!=NEPTUNE::NotASatProperty)
-                      rk[i] = tab_propder[tab_posder[k]];
-                   else if (tab_der2_pos[k]!=NEPTUNE::NotASatProperty) 
-                      rk[i] = tab_propder2[tab_der2_pos[k]];
-                 }
-            }
+      for (int i = 0; i < sz; i++)
+      {
+        err = calrp_optim_sat_p(p[i], tab_prop, tab_propder, tab_propder2, indic);
+        errfield.set(i, err);
+        for (int k = 0; k < nb_fields; k++)
+        {
+          rk = r[k];
+          if (tab_pos[k] != NEPTUNE::NotASatProperty)
+            rk[i] = tab_prop[tab_pos[k]];
+          else if (tab_posder[k] != NEPTUNE::NotASatProperty)
+            rk[i] = tab_propder[tab_posder[k]];
+          else if (tab_der2_pos[k] != NEPTUNE::NotASatProperty)
+            rk[i] = tab_propder2[tab_der2_pos[k]];
+        }
+      }
       return errfield.find_worst_error().generic_error();
     }
   }
@@ -2162,7 +2169,7 @@ namespace NEPTUNE_EOS
       case NEPTUNE::sigma:
         indic[6] = 1;
         break;
-      case NEPTUNE::d_rho_d_T_p : 
+      case NEPTUNE::d_rho_d_T_p:
       case NEPTUNE::d_rho_d_p_T:
       case NEPTUNE::d_s_d_p_T:
       case NEPTUNE::d_cp_d_p_T:
@@ -2223,8 +2230,8 @@ namespace NEPTUNE_EOS
       int j = 0;
       int mph = -kph;
       F77NAME(tprho_rp10)
-        (T, p_refprop, arr_molfrac, mph, j, rho_refprop,
-         ierr, herr, sizeof(herr)-1);
+      (T, p_refprop, arr_molfrac, mph, j, rho_refprop,
+       ierr, herr, sizeof(herr) - 1);
       tab_prop[NEPTUNE::rho] = refprop_rho_2_eos(rho_refprop);
       if (ierr != 0)
         err = worst_internal_error(err, generate_error(ierr, herr));
@@ -2233,9 +2240,9 @@ namespace NEPTUNE_EOS
     if (indic[1] == 1)
     {
       F77NAME(therm2_rp10)
-        (T, rho_refprop, arr_molfrac, pi, e, h0, s, cv, cp,
-         w, Z, hjt, A, G, xkappa, beta, dPdrho, d2PdD2, dPT, drhodT, drhodP,
-         spare1, spare2, spare3, spare4);
+      (T, rho_refprop, arr_molfrac, pi, e, h0, s, cv, cp,
+       w, Z, hjt, A, G, xkappa, beta, dPdrho, d2PdD2, dPT, drhodT, drhodP,
+       spare1, spare2, spare3, spare4);
       tab_prop[NEPTUNE::u] = refprop_nrj_2_eos(e);
       tab_prop[NEPTUNE::s] = refprop_nrj_2_eos(s);
       tab_prop[NEPTUNE::cp] = refprop_nrj_2_eos(cp);
@@ -2251,7 +2258,7 @@ namespace NEPTUNE_EOS
     if (indic[2] == 1)
     {
       F77NAME(enthal_rp10)
-        (T, rho_refprop, arr_molfrac, h_refprop);
+      (T, rho_refprop, arr_molfrac, h_refprop);
       tab_prop[NEPTUNE::h] = refprop_nrj_2_eos(h_refprop);
     }
 
@@ -2263,9 +2270,9 @@ namespace NEPTUNE_EOS
     {
       double ep, sp, cvp, cpp, wp, betap;
       F77NAME(therm2_rp10)
-        (Tp, rho_refprop, arr_molfrac, pi, ep, h0, sp, cvp, cpp, wp, Z, hjt, A, G,
-         xkappa, betap, dPdrho, d2PdD2, dPT, drhodT, drhodP,
-         spare1, spare2, spare3, spare4);
+      (Tp, rho_refprop, arr_molfrac, pi, ep, h0, sp, cvp, cpp, wp, Z, hjt, A, G,
+       xkappa, betap, dPdrho, d2PdD2, dPT, drhodT, drhodP,
+       spare1, spare2, spare3, spare4);
       double d_cp_d_T = (refprop_nrj_2_eos(cpp) - refprop_nrj_2_eos(cp)) / delta_T;
       double d_cv_d_T = (refprop_nrj_2_eos(cvp) - refprop_nrj_2_eos(cv)) / delta_T;
       double d_s_d_T = (refprop_nrj_2_eos(sp) - refprop_nrj_2_eos(s)) / delta_T;
@@ -2273,9 +2280,9 @@ namespace NEPTUNE_EOS
       // double d_beta_d_T = (betap-beta)/delta_T;
 
       F77NAME(therm2_rp10)
-        (T, rhop, arr_molfrac, pi, ep, h0, sp, cvp, cpp, wp, Z, hjt, A, G,
-         xkappa, beta, dPdrho, d2PdD2, dPT, drhodT, drhodP,
-         spare1, spare2, spare3, spare4);
+      (T, rhop, arr_molfrac, pi, ep, h0, sp, cvp, cpp, wp, Z, hjt, A, G,
+       xkappa, beta, dPdrho, d2PdD2, dPT, drhodT, drhodP,
+       spare1, spare2, spare3, spare4);
       double d_cp_d_rho = (refprop_nrj_2_eos(cpp) - refprop_nrj_2_eos(cp)) / delta_rho;
       double d_cv_d_rho = (refprop_nrj_2_eos(cvp) - refprop_nrj_2_eos(cv)) / delta_rho;
       double d_s_d_rho = (refprop_nrj_2_eos(sp) - refprop_nrj_2_eos(s)) / delta_rho;
@@ -2295,7 +2302,7 @@ namespace NEPTUNE_EOS
     {
       double dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d;
       F77NAME(dhd1_rp10)
-        (T, rho_refprop, arr_molfrac, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d);
+      (T, rho_refprop, arr_molfrac, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d);
       tab_propder[NEPTUNE::d_h_d_p_T] = refprop_nrj_2_eos(dhdp_t) / kpa2pa(1);
       tab_propder[NEPTUNE::d_h_d_T_p] = refprop_nrj_2_eos(dhdt_p);
     }
@@ -2303,7 +2310,7 @@ namespace NEPTUNE_EOS
     if (indic[5] == 1)
     {
       F77NAME(trnprp_rp10)
-        (T, rho_refprop, arr_molfrac, mu, lambda, ierr, herr, sizeof(herr)-1);
+      (T, rho_refprop, arr_molfrac, mu, lambda, ierr, herr, sizeof(herr) - 1);
       tab_prop[NEPTUNE::mu] = micropa2pa(mu);
       tab_prop[NEPTUNE::lambda] = lambda;
       if (ierr != 0)
@@ -2313,8 +2320,8 @@ namespace NEPTUNE_EOS
     if (indic[6] == 1)
     {
       F77NAME(stn_rp10)
-        (T, rhol = 0.0, rhov = 0.0, arr_molfrac, arr_molfrac, sigma,
-         ierr, herr, sizeof(herr)-1);
+      (T, rhol = 0.0, rhov = 0.0, arr_molfrac, arr_molfrac, sigma,
+       ierr, herr, sizeof(herr) - 1);
       //        if (ierr != 0) err = worst_internal_error(err, generate_error(ierr, herr));
       tab_prop[NEPTUNE::sigma] = sigma;
     }
@@ -2323,16 +2330,16 @@ namespace NEPTUNE_EOS
     {
       double lambdap, mup;
       F77NAME(trnprp_rp10)
-        (Tp, rho_refprop, arr_molfrac, mup, lambdap,
-         ierr, herr, sizeof(herr)-1);
+      (Tp, rho_refprop, arr_molfrac, mup, lambdap,
+       ierr, herr, sizeof(herr) - 1);
       if (ierr != 0)
         err = worst_internal_error(err, generate_error(ierr, herr));
       double d_mu_d_T = (micropa2pa(mup) - micropa2pa(mu)) / delta_T;
       double d_lambda_d_T = (lambdap - lambda) / delta_T;
 
       F77NAME(trnprp_rp10)
-        (T, rhop, arr_molfrac, mup, lambdap,
-         ierr, herr, sizeof(herr)-1);
+      (T, rhop, arr_molfrac, mup, lambdap,
+       ierr, herr, sizeof(herr) - 1);
       if (ierr != 0)
         err = worst_internal_error(err, generate_error(ierr, herr));
       double d_mu_d_rho = (micropa2pa(mup) - micropa2pa(mu)) / delta_rho;
