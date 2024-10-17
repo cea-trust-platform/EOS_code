@@ -533,8 +533,8 @@ namespace NEPTUNE_EOS
       // calcul des proprietes vapeur
       ArrOfDouble xtg(nsca),xdtgpv(nsca),xdtghv(nsca),xrv(nsca),xdrvpv(nsca),xdrvhv(nsca);
       ArrOfDouble xcpv(nsca), xdcpvpv(nsca), xdcpvhv(nsca);
-      ArrOfDouble xlambdav(nsca), xdlambdavpv(nsca), xdlambdavtg(nsca);
-      ArrOfDouble xmuv(nsca), xdmuvpv(nsca), xdmuvtg(nsca), xsigma(nsca), xdsigmapv(nsca);
+      ArrOfDouble xlambdav(nsca), xdlambdavpv(nsca), xdlambdavhv(nsca);
+      ArrOfDouble xmuv(nsca), xdmuvpv(nsca), xdmuvhv(nsca), xsigma(nsca), xdsigmapv(nsca);
       EOS_Fields fsout_vap (17);
       EOS_Field tg ("out_vap1", "T", xtg);
       EOS_Field dtgpv ("out_vap2", "d_T_d_p_h", xdtgpv);
@@ -547,10 +547,10 @@ namespace NEPTUNE_EOS
       EOS_Field dcpvhv ("out_vap9", "d_cp_d_h_p", xdcpvhv);
       EOS_Field lambdav ("out_vap10", "lambda", xlambdav);
       EOS_Field dlambdavpv ("out_vap11", "d_lambda_d_p_h", xdlambdavpv);
-      EOS_Field dlambdavtg ("out_vap12", "d_lambda_d_T_p", xdlambdavtg);
+      EOS_Field dlambdavhv ("out_vap12", "d_lambda_d_h_p", xdlambdavhv);
       EOS_Field muv ("out_vap13", "mu", xmuv);
       EOS_Field dmuvpv ("out_vap14", "d_mu_d_p_h", xdmuvpv);
-      EOS_Field dmuvtg ("out_vap15", "d_mu_d_T_p", xdmuvtg);
+      EOS_Field dmuvhv ("out_vap15", "d_mu_d_h_p", xdmuvhv);
       EOS_Field sigma ("out_vap16", "sigma", xsigma);
       EOS_Field dsigmapv ("out_vap17", "d_sigma_d_p_h", xdsigmapv);
       fsout_vap[0] = tg;
@@ -564,10 +564,10 @@ namespace NEPTUNE_EOS
       fsout_vap[8] = dcpvhv;
       fsout_vap[9] = lambdav;
       fsout_vap[10] = dlambdavpv;
-      fsout_vap[11] = dlambdavtg;
+      fsout_vap[11] = dlambdavhv;
       fsout_vap[12] = muv;
       fsout_vap[13] = dmuvpv;
-      fsout_vap[14] = dmuvtg;
+      fsout_vap[14] = dmuvhv;
       fsout_vap[15] = sigma;
       fsout_vap[16] = dsigmapv;
       // calcul proprietes vapeur
@@ -682,7 +682,7 @@ namespace NEPTUNE_EOS
       EOS_Field dmncdx3("dmncdx3", "d_mnc_d_c_3_ph", dmncdx[2]);
       EOS_Field dmncdx4("dmncdx4", "d_mnc_d_c_4_ph", dmncdx[3]);
       // variables intermediaires
-      double dfdpv, dfdhv, dgdpv, dgdhv, dcpgtg, cpj, lambdaj, muj;
+      double dfdpv, dfdhv, dgdpv, dgdhv, dcpgtg, cpj, lambdaj, dlambdaj, muj, dmuj;
       double mm0;
       EOS_Internal_Error err ;
       err = (*this)[0].fluid().get_mm(mm0);
@@ -749,12 +749,8 @@ namespace NEPTUNE_EOS
         dcpgtg = 0.e0;
         //
         lambdag[i] = lambdav[i]*c[0]*fldr;
-        dlambdagtg = dlambdavtg[i]*c[0]*fldr;
-        //dlambdagpv = dlambdavpv[i]*c[0]*fldr;
         //
         mug[i] = muv[i]*c[0]*fldr;
-        dmugtg = dmuvtg[i]*c[0]*fldr;
-        //dmugpv = dmuvpv[i]*c[0]*fldr;
         //
         for(int j=1; j<nb_fluids; j++)
         {
@@ -776,13 +772,15 @@ namespace NEPTUNE_EOS
           err = (*this)[j].fluid().compute_cp_pT(input[iP][i],tg[i],cpj);
           cpg[i] = cpg[i] + c[j]*cpj;
           //
-          err = (*this)[j].fluid().compute_lambda_pT(input[iP][i],tg[i],lambdaj); //TODO rajouter calcul derivee lambda&mu dans perfectgas
+          err = (*this)[j].fluid().compute_lambda_pT(input[iP][i],tg[i],lambdaj);
+          err = (*this)[j].fluid().compute_d_lambda_d_T_p_pT(input[iP][i],tg[i],dlambdaj);
           lambdag[i] = lambdag[i] + lambdaj*c[j]*(*this)[j].fluid().get_prxr();
-          dlambdagtg = dlambdagtg + (2.e0*(*this)[j].fluid().get_prxl2()*tg[i] + (*this)[j].fluid().get_prxl1())*c[j]*(*this)[j].fluid().get_prxr();
+          dlambdagtg = dlambdagtg + dlambdaj*c[j]*(*this)[j].fluid().get_prxr();
           //
           err = (*this)[j].fluid().compute_mu_pT(input[iP][i],tg[i],muj);
+          err = (*this)[j].fluid().compute_d_mu_d_T_p_pT(input[iP][i],tg[i],dmuj);
           mug[i] = mug[i] + muj*c[j]*(*this)[j].fluid().get_prxr();
-          dmugtg = dmugtg + (2.e0*(*this)[j].fluid().get_prxm2()*tg[i] + (*this)[j].fluid().get_prxm1())*c[j]*(*this)[j].fluid().get_prxr();
+          dmugtg = dmugtg + dmuj*c[j]*(*this)[j].fluid().get_prxr();
           //
           err = (*this)[j].fluid().get_mm(mmj);
           err = (*this)[0].fluid().get_mm(mm0);
@@ -796,12 +794,12 @@ namespace NEPTUNE_EOS
         dcpg3[i] = (dcpvpv[i]*dpv3[i] + dcpvhv[i]*dhv3[i])*c[0];
         //
         lambdag[i] = lambdag[i]/prgr[i]; // Attention, notion de valeur minimale non introduite (voir Cathare)
-        dlambdag1[i] = (dlambdavpv[i]*dpv1[i]*c[0]*fldr + dlambdagtg*dtg1[i])/prgr[i];
-        dlambdag3[i] = (dlambdavpv[i]*dpv3[i]*c[0]*fldr + dlambdagtg*dtg3[i])/prgr[i];
+        dlambdag1[i] = ((dlambdavpv[i]*dpv1[i] + dlambdavhv[i]*dhv1[i])*c[0]*fldr + dlambdagtg*dtg1[i])/prgr[i];
+        dlambdag3[i] = ((dlambdavpv[i]*dpv3[i] + dlambdavhv[i]*dhv3[i])*c[0]*fldr + dlambdagtg*dtg3[i])/prgr[i];
         //
         mug[i] = mug[i]/prgr[i]; // Attention, notion de valeur minimale non introduite (voir Cathare)
-        dmug1[i] = (dmuvpv[i]*dpv1[i]*c[0]*fldr + dmugtg*dtg1[i])/prgr[i];
-        dmug3[i] = (dmuvpv[i]*dpv3[i]*c[0]*fldr + dmugtg*dtg3[i])/prgr[i];
+        dmug1[i] = ((dmuvpv[i]*dpv1[i] + dmuvhv[i]*dhv1[i])*c[0]*fldr + dmugtg*dtg1[i])/prgr[i];
+        dmug3[i] = ((dmuvpv[i]*dpv3[i] + dmuvhv[i]*dhv3[i])*c[0]*fldr + dmugtg*dtg3[i])/prgr[i];
         //
         dsigma1[i] = dsigmapv[i]*dpv1[i];
         dsigma3[i] = dsigmapv[i]*dpv3[i];
@@ -816,9 +814,9 @@ namespace NEPTUNE_EOS
           err = (*this)[j].fluid().compute_mu_pT(input[iP][i],tg[i],muj);
           dcpdx[j-1][i] = (dcpvpv[i]*dpvdx[j-1][i] + dcpvhv[i]*dhvdx[j-1][i])*c[0] + cpj - cpv[i] + dcpgtg*dtgdx[j-1][i];
           //
-          dlambdadx[j-1][i] = (dlambdavpv[i]*dpvdx[j-1][i]*c[0]*fldr + dlambdagtg*dtgdx[j-1][i] + lambdaj*(*this)[j].fluid().get_prxr() - lambdav[i]*fldr + (fldr - (*this)[j].fluid().get_prxr())*lambdag[i])/prgr[i];
+          dlambdadx[j-1][i] = ((dlambdavpv[i]*dpvdx[j-1][i] + dlambdavhv[i]*dhvdx[j-1][i])*c[0]*fldr + dlambdagtg*dtgdx[j-1][i] + lambdaj*(*this)[j].fluid().get_prxr() - lambdav[i]*fldr + (fldr - (*this)[j].fluid().get_prxr())*lambdag[i])/prgr[i];
           //
-          dmudx[j-1][i] = (dmuvpv[i]*dpvdx[j-1][i]*c[0]*fldr + dmugtg*dtgdx[j-1][i] + muj*(*this)[j].fluid().get_prxr() - muv[i]*fldr + (fldr - (*this)[j].fluid().get_prxr())*mug[i])/prgr[i];
+          dmudx[j-1][i] = ((dmuvpv[i]*dpvdx[j-1][i] + dmuvpv[i]*dpvdx[j-1][i])*c[0]*fldr + dmugtg*dtgdx[j-1][i] + muj*(*this)[j].fluid().get_prxr() - muv[i]*fldr + (fldr - (*this)[j].fluid().get_prxr())*mug[i])/prgr[i];
           //
           dsigmadx[j-1][i] = dsigmapv[i]*dpvdx[j-1][i];
           //
@@ -955,14 +953,14 @@ namespace NEPTUNE_EOS
              case NEPTUNE::d_lambda_0_d_p_0_h :
                r[k][i]=dlambdavpv[i];
                break;
-             case NEPTUNE::d_lambda_0_d_T_p :
-               r[k][i]=dlambdavtg[i];
+             case NEPTUNE::d_lambda_0_d_h_0_p :
+               r[k][i]=dlambdavhv[i];
                break;
              case NEPTUNE::d_mu_0_d_p_0_h :
                r[k][i]=dmuvpv[i];
                break;
-             case NEPTUNE::d_mu_0_d_T_p :
-               r[k][i]=dmuvtg[i];
+             case NEPTUNE::d_mu_0_d_h_0_p :
+               r[k][i]=dmuvhv[i];
                break;
              case NEPTUNE::d_sigma_d_p_0_h :
                r[k][i]=dsigmapv[i];
