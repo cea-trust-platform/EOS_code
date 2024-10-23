@@ -46,17 +46,17 @@ namespace NEPTUNE
     EOS_thermprop tprop = nam2num_thermprop(namep) ;
     if (tprop != NotATProperty) return static_cast<EOS_Property>(tprop) ;
   
-    EOS_saturprop satprop = nam2num_saturprop(namep) ;
-    if (satprop != NotASatProperty) return static_cast<EOS_Property>(satprop) ;
+    EOS_saturprop _satprop = nam2num_saturprop(namep) ;
+    if (_satprop != NotASatProperty) return static_cast<EOS_Property>(_satprop) ;
   
-    EOS_splimprop splimprop = nam2num_splimprop(namep) ;
-    if (splimprop != NotASplimProperty) return static_cast<EOS_Property>(splimprop) ;
+    EOS_splimprop _splimprop = nam2num_splimprop(namep) ;
+    if (_splimprop != NotASplimProperty) return static_cast<EOS_Property>(_splimprop) ;
   
-    EOS_camixprop camixprop = nam2num_camixprop(namep) ;
-    if (camixprop != NotACamixProperty) return static_cast<EOS_Property>(camixprop) ;
+    EOS_camixprop _camixprop = nam2num_camixprop(namep) ;
+    if (_camixprop != NotACamixProperty) return static_cast<EOS_Property>(_camixprop) ;
   
-    EOS_c2iapprop c2iapprop = nam2num_c2iapprop(namep) ;
-    return static_cast<EOS_Property>(c2iapprop) ;
+    EOS_c2iapprop _c2iapprop = nam2num_c2iapprop(namep) ;
+    return static_cast<EOS_Property>(_c2iapprop) ;
   }
 }
 
