@@ -310,10 +310,10 @@ int main()
       double p=1.e5;
       double t=350;
       double h=200.e3;
-      double pcrit,tcrit,hcrit,rhocrit;
-      double pmax,tmax,hmax,rhomax;
-      double tmin;
-      double res, res2, res3;
+      double pcrit,tcrit,hcrit/*,rhocrit*/;
+      //double pmax,tmax,hmax,rhomax;
+      //double tmin;
+      double res/*, res2, res3*/;
             
       int n=3;
       int ncout=1; // (ncout<=n)
@@ -605,14 +605,14 @@ int main()
 
     // Test 9-3: Refprop9-WaterLiquid
     {
-      double p=1.e5;
-      double t=350;
-      double h=200.e3;
-      double pcrit,tcrit,hcrit;
-      double res;
+      //double p=1.e5;
+      //double t=350;
+      //double h=200.e3;
+      //double pcrit,tcrit,hcrit;
+      //double res;
 
       int n=3;
-      int ncout=1; // (ncout<=n)
+      //int ncout=1; // (ncout<=n)
 
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
