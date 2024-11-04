@@ -33,6 +33,7 @@ namespace CATHARE2 {
       ienc = 0 ;
     else
       ienc = lienc ;
+    (void) ienc;
     
     F77DECLARE(c2_ftsatpna)(nsca, lp[0],
                          ltsp[0], ltsp1[0], l2tsp1[0], 
