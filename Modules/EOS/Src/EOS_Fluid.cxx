@@ -1197,6 +1197,7 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::get_p_min(double& /*p_min*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_p_min,  p_min = "  << endl ;
+    cerr << " *** eos_fluid *** The model does not have a minimum pressure implemented; the user code must define it "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
@@ -1207,6 +1208,7 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::get_h_min(double& /*h_min*/) const
   { cerr << " *** eos_fluid *** Not_implemented get_h_min,  h_min = "  << endl ;
+    cerr << " *** eos_fluid *** The model does not have a minimum enthalpy implemented; the user code must define it. "  << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
