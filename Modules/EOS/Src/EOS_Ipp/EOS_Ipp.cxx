@@ -64,8 +64,11 @@ namespace NEPTUNE_EOS
     return tablename;
   }
 
-  EOS_Ipp::EOS_Ipp() : nodes(3),
+  EOS_Ipp::EOS_Ipp() : r1_val(20, std::vector<double>(30, 0.0)),
+                       r2_val(20, std::vector<double>(30, 0.0)),
+                       nodes(3),
                        med_file("none"),
+                       save_bound(0),
                        nodes_ph(2),
                        nodes_sat(1),
                        nodes_lim(1),
@@ -78,10 +81,7 @@ namespace NEPTUNE_EOS
                        connect_lim(0),
                        n_p_ph(0),
                        n_h_ph(0),
-                       n_p_satlim(0),
-                       r1_val(20, std::vector<double>(30, 0.0)),
-                       r2_val(20, std::vector<double>(30, 0.0)),
-                       save_bound(0)
+                       n_p_satlim(0)
 
   {
   }
@@ -1264,9 +1264,9 @@ namespace NEPTUNE_EOS
   // renvoie le numéro de la cellule réelle contenant (p, h)
   int EOS_Ipp::get_cellidx(double &p, double &h) const
   {
-    int ih, ip;
-    ih = (int)((h - hmin_ipp) / delta_h_f);
-    ip = (int)((p - pmin_ipp) / delta_p_f);
+    unsigned int ih, ip;
+    ih = (unsigned int)((h - hmin_ipp) / delta_h_f);
+    ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
 
     // if h or p respectively equal to hmax_ipp or pmax_ipp
     if (ip == nb_p_virtual)
@@ -1364,12 +1364,11 @@ namespace NEPTUNE_EOS
   // recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille réelle
   //  idx = indice dans le maillage med = fnodes2phnodes[indice_h + Nb_pts_h * indice_p]
   EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, std::map<AString, int>::const_iterator n_prop, EOS_Fields &cell_val) const
-  // idx = indice dans le maillage med = fnodes2phnodes[indice_h + Nb_pts_h * indice_p]
   {
-    AString property = n_prop->first;
-    char propcov[PROPNAME_MSIZE];
-    eostp_strcov(property.aschar(), propcov); // propcov : base alphanumérical property
-    EOS_thermprop enum_property = nam2num_thermprop(propcov);
+    //AString property = n_prop->first; // name of the property
+    //char propcov[PROPNAME_MSIZE];
+    //eostp_strcov(property.aschar(), propcov); // propcov : base alphanumérical property
+    //EOS_thermprop enum_property = nam2num_thermprop(propcov);
 
     unsigned int nb_properties = val_prop_ph.size();
     unsigned int i_property = n_prop->second;
@@ -1388,7 +1387,7 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, std::map<AString, int>::const_iterator n_prop, int sat_lim, EOS_Fields &segm_val) const
   {
-    int i_prop = n_prop->second;
+    unsigned int i_prop = n_prop->second;
     AString name_prop = n_prop->first;
     unsigned int nb_properties;
     if (sat_lim == 0)
@@ -1405,8 +1404,8 @@ namespace NEPTUNE_EOS
     
     if (sat_lim == 0)
     {
-      int nb_vps = val_prop_sat.size();
-      int nb_ess = err_segm_sat.size();
+      //int nb_vps = val_prop_sat.size();
+      //int nb_ess = err_segm_sat.size();
 
       segm_val[0][0] = nodes_sat[0][idx];
       segm_val[0][1] = nodes_sat[0][idx + 1];
@@ -1425,15 +1424,14 @@ namespace NEPTUNE_EOS
     }
     else
     {
-      int nb_vpl = val_prop_lim.size();
-      int nb_esl = err_segm_lim.size();
+      //int nb_vpl = val_prop_lim.size();
+      //int nb_esl = err_segm_lim.size();
 
       // p
       segm_val[0][0] = nodes_lim[0][idx];
       segm_val[0][1] = nodes_lim[0][idx + 1];
 
       // property values
-      int i = 0;
       segm_val[1][0] = val_prop_lim[i_prop][idx];
       segm_val[1][1] = val_prop_lim[i_prop][idx + 1];
 
@@ -1469,7 +1467,7 @@ namespace NEPTUNE_EOS
     NEPTUNE::EOS_Error_Field eos_error_field(1, &error_eos[0]);
     erreurtot = 0;
     double erreur_loc;
-    double vol_loc;
+    //double vol_loc;
     long unsigned int nb_cell_pb = 0;
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
@@ -1490,14 +1488,14 @@ namespace NEPTUNE_EOS
     values[2] = rf;
     // Récupération des valeurs des cellules
 
-    for (int i_cell = 0; i_cell < nb_cell; i_cell++)
+    for (unsigned int i_cell = 0; i_cell < nb_cell; i_cell++)
     {
       error_cells[i_cell] = 0;
       get_cell_values(i_cell, n_prop, values);
       // Calcule des barycentres et des volumes
       ar_Ipp_bary[0] = 0; //
       ar_fluid_bary[0] = 0;
-      vol_loc = abs((ap[0] - ap[2]) * (ah[0] - ah[2]));
+      //vol_loc = abs((ap[0] - ap[2]) * (ah[0] - ah[2]));
       ap_bary = (ap[0] + ap[1] + ap[2] + ap[3]) / 4;
       ah_bary = (ah[0] + ah[1] + ah[2] + ah[3]) / 4;
       // Calcule avec le fluide
@@ -1784,7 +1782,7 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error ierr;
     EOS_Fields values(3);
 
-    int i_prop = n_prop->second;
+    //int i_prop = n_prop->second;
     AString name_prop = n_prop->first;
 
     ArrOfDouble ap(4);

@@ -92,8 +92,8 @@ namespace NEPTUNE_EOS_IGEN
         const AString& get_method() const    ;
         const AString& get_reference() const ;
         
-        EOS_Mesh get_mesh_p() const  ;
-        EOS_Mesh get_mesh_ph() const ;
+        const EOS_Mesh& get_mesh_p() const  ;
+        const EOS_Mesh& get_mesh_ph() const ;
         
         EOS get_fluid() const;
         
