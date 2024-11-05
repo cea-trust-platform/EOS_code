@@ -139,13 +139,13 @@ namespace NEPTUNE_EOS_IGEN
   { return reference ;
   }
 
-  inline EOS_Mesh EOS_IGen::get_mesh_p() const
-  { return *mesh_p ;
-  }
+inline const EOS_Mesh& EOS_IGen::get_mesh_p() const {
+    return *mesh_p;
+}
 
-  inline EOS_Mesh EOS_IGen::get_mesh_ph() const
-  { return *mesh_ph ;
-  }
+inline const EOS_Mesh& EOS_IGen::get_mesh_ph() const {
+    return *mesh_ph;
+}
   
   inline EOS EOS_IGen::get_fluid() const
   { return *fluid ;
