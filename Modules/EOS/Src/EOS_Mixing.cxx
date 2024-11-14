@@ -94,7 +94,7 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Mixing::set_compute_mode() {
-    if (    ((*the_fluids[0]).table_name()    == AString("Cathare")) 
+    if (    ((*the_fluids[0]).table_name()    == AString("Cathare"))
          && ((*the_fluids[0]).equation_name() == AString("WaterVapor")) ) {
         compute_mode = MixingType::Cathare;
     } else {
@@ -107,7 +107,7 @@ namespace NEPTUNE_EOS
         }
         if (are_perfectgas) {
             compute_mode = MixingType::WithPerfectGas;
-        } else if (    (*the_fluids[0]).table_name() == AString("Cathare2") 
+        } else if (    (*the_fluids[0]).table_name() == AString("Cathare2")
                 && (*the_fluids[0]).phase_name() == AString("Vapor") ) {
             compute_mode = MixingType::Cathare2;
         } else {
@@ -116,7 +116,7 @@ namespace NEPTUNE_EOS
     }
   }
 
-  void EOS_Mixing::set_mixing_reference_state() 
+  void EOS_Mixing::set_mixing_reference_state()
   { if ((compute_mode == MixingType::WithPerfectGas) && ((*the_fluids[0]).table_name() == AString("Cathare2")))
     {
         EOS_Internal_Error err;
@@ -124,7 +124,7 @@ namespace NEPTUNE_EOS
         err = (*the_fluids[0]).fluid().get_h_ref(href);
         err = (*the_fluids[0]).fluid().get_T_ref(Tref);
         err = (*the_fluids[0]).fluid().get_p_ref(pref);
-        
+
         for (int i=1; i<nb_fluids; i++)
         {
             (*the_fluids[i]).fluid().set_reference_state(href,0.e0,Tref,pref);
@@ -174,7 +174,7 @@ namespace NEPTUNE_EOS
   { return alpha[i] ;
   }
 
-  EOS_Error EOS_Mixing::compute(const EOS_Fields& input, 
+  EOS_Error EOS_Mixing::compute(const EOS_Fields& input,
                                 EOS_Field& r,
                                 EOS_Error_Field& errfield) const
   { // warning : must be changed to avoid copy
@@ -183,7 +183,7 @@ namespace NEPTUNE_EOS
     return compute(input, output, errfield) ;
   }
 
-  EOS_Error EOS_Mixing::compute(const EOS_Fields& input, 
+  EOS_Error EOS_Mixing::compute(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
   {
@@ -223,8 +223,8 @@ namespace NEPTUNE_EOS
      ArrOfDouble tprxm1 (nb_fluids - 1) ;
      ArrOfDouble tprxm2 (nb_fluids - 1) ;
      ArrOfDouble tprxdv (nb_fluids - 1) ;
-     for (int i=1; i<nb_fluids; i++) 
-        {  if ((*the_fluids[i]).table_name() != AString("CathareIncondensableGas")) 
+     for (int i=1; i<nb_fluids; i++)
+        {  if ((*the_fluids[i]).table_name() != AString("CathareIncondensableGas"))
               { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
                 return EOS_Error::error ;
               }
@@ -264,7 +264,7 @@ namespace NEPTUNE_EOS
     int nb_infields = input.size() ;
     // provisional for EOS_Mixing
 #ifdef WITH_PLUGIN_CATHARE
-     if ((nb_infields >= 4) && (nb_infields <= 7) ) 
+     if ((nb_infields >= 4) && (nb_infields <= 7) )
         { int nincx = 4 ;
           ArrOfDouble tprxr(nincx)  ;
           ArrOfDouble tprxcp(nincx) ;
@@ -274,7 +274,7 @@ namespace NEPTUNE_EOS
           ArrOfDouble tprxm0(nincx) ;
           ArrOfDouble tprxm1(nincx) ;
           ArrOfDouble tprxm2(nincx) ;
-          for (int i=1; i<nb_fluids; i++) 
+          for (int i=1; i<nb_fluids; i++)
              { tprxr(i-1)  = (*the_fluids[i]).get_prxr()  ;
                tprxcp(i-1) = (*the_fluids[i]).get_prxcp() ;
                tprxl0(i-1) = (*the_fluids[i]).get_prxl0() ;
@@ -289,7 +289,7 @@ namespace NEPTUNE_EOS
                              tprxl2, tprxm0, tprxm1, tprxm2) ;
           return cr ;
         }
-     else 
+     else
         { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
           return EOS_Error::error ;
         }
@@ -304,7 +304,7 @@ namespace NEPTUNE_EOS
     int nb_outfields = r.size() ;         // number of output fields
     int nsca  = errfield.size() ;                 // number of points
     errfield = EOS_Internal_Error::OK ; // initialization of error index
-    
+
     // Test unicity of number of points by field : nsca
     for (int i_in=0; i_in<nb_infields; i_in++)
        { if (nsca != input[i_in].size())
@@ -318,7 +318,7 @@ namespace NEPTUNE_EOS
             return EOS_Error::error ;
           }
        }
-    
+
     // Test existence of input main thermodynamic variables (P, T, h)
     int id_P  = 0 ;
     int id_T  = 0 ;
@@ -382,7 +382,7 @@ namespace NEPTUNE_EOS
                  break ;
             }
        }
-       
+
     if (   (idim < 1) || (2 < idim)
         || (1 < id_P) || (1 < id_T) || (1 < id_h)
         || (id_c == 0) || (4 < id_c) || (id_c != nb_fluids)
@@ -403,7 +403,7 @@ namespace NEPTUNE_EOS
       //
       // algorithme complet c2
       //
-      
+
       // calcul Pv, hv = f(P, h)
       ArrOfDouble xc0(nsca,0.e0);
       ArrOfDouble xc1(nsca,0.e0);
@@ -415,21 +415,21 @@ namespace NEPTUNE_EOS
       EOS_Field C2("c_2","c_2",xc2);
       EOS_Field C3("c_3","c_3",xc3);
       EOS_Field C4("c_4","c_4",xc4);
-      
+
       if (ic[0] != -1) C0 = input[ic[0]];
       if (ic[1] != -1) C1 = input[ic[1]];
       if (ic[2] != -1) C2 = input[ic[2]];
       if (ic[3] != -1) C3 = input[ic[3]];
       if (ic[4] != -1) C4 = input[ic[4]];
-      
+
       ArrOfDouble xPv(nsca);
       EOS_Field Pv("Pv","p",xPv);
       ArrOfDouble xhv(nsca);
       EOS_Field hv("hv","h",xhv);
-      
+
       for (int i=0; i<nsca; i++)
       {
-        this->compute_pv_hv_ph(input[iP][i], input[ih][i], Pv[i], hv[i], C0[i], C1[i], C2[i], C3[i], C4[i]); 
+        this->compute_pv_hv_ph(input[iP][i], input[ih][i], Pv[i], hv[i], C0[i], C1[i], C2[i], C3[i], C4[i]);
       }
       //
       // Calcul de toutes les proprietes standards, apres convergence calcul Pv, Hv
@@ -474,7 +474,7 @@ namespace NEPTUNE_EOS
       fsout_satp[12] = dcplsatdp;
       fsout_satp[13] = dcpvsatdp;
       fsout_satp[14] = d2tsatdp;
-  
+
       (*this)[0].fluid().compute(input[0],fsout_satp,errfield);
 
       // calcul saturation Tsatpv, Hsatpv = f(Pv)
@@ -513,7 +513,7 @@ namespace NEPTUNE_EOS
       fsout_satpv[12] = dcplsatdpv;
       fsout_satpv[13] = dcpvsatdpv;
       fsout_satpv[14] = d2tsatdpv;
-      
+
       (*this)[0].fluid().compute(fsin_vap[0],fsout_satpv,errfield);
 
       // calcul des proprietes vapeur
@@ -557,7 +557,9 @@ namespace NEPTUNE_EOS
       fsout_vap[15] = sigma;
       fsout_vap[16] = dsigmapv;
       // calcul proprietes vapeur
+
       (*this)[0].fluid().compute(fsin_vap,fsout_vap,errfield);
+
       //
       // Calcul des proprietes de melange
       //
@@ -691,7 +693,7 @@ namespace NEPTUNE_EOS
         mnc[i]=0.e0;
         dncv[i]=0.e0;
         for(int j=1; j<nb_fluids; j++)
-        { 
+        {
           xnc[i] += c[j] + 1.e-99;
           err = (*this)[j].fluid().compute_cp_pT(input[iP][i],tg[i],cpj);
           err = (*this)[j].fluid().get_mm(mmj);
@@ -1222,7 +1224,7 @@ namespace NEPTUNE_EOS
           }
         }
       }
-      
+
     }
     else if (idim == 2 && id_P == 1 && id_T == 1)
     {
@@ -1238,13 +1240,13 @@ namespace NEPTUNE_EOS
       EOS_Field C2("c_2","c_2",xc2);
       EOS_Field C3("c_3","c_3",xc3);
       EOS_Field C4("c_4","c_4",xc4);
-      
+
       if (ic[0] != -1) C0 = input[ic[0]];
       if (ic[1] != -1) C1 = input[ic[1]];
       if (ic[2] != -1) C2 = input[ic[2]];
       if (ic[3] != -1) C3 = input[ic[3]];
       if (ic[4] != -1) C4 = input[ic[4]];
-      
+
       ArrOfDouble xhg(nsca,0.e0);
       EOS_Field hg("hg","h",xhg);
 
@@ -1255,7 +1257,7 @@ namespace NEPTUNE_EOS
       {
         fsin_ph[i] = input[i];
       }
-      
+
       // calcul saturation Tsatp,hvsatp = f(P)
       ArrOfDouble xtsatp(nsca),xhvsatp(nsca);
       EOS_Field tsatp("tsatp","T_sat",xtsatp);
@@ -1264,7 +1266,7 @@ namespace NEPTUNE_EOS
       EOS_Fields fsout_sat (2);
       fsout_sat[0] = tsatp;
       fsout_sat[1] = hvsatp;
-    
+
       (*this)[0].fluid().compute(input[iP],fsout_sat,errfield);
 
       // initialisation hg
@@ -1276,13 +1278,13 @@ namespace NEPTUNE_EOS
         double hjsum=0.e0;
         double hj=0.e0;
         for(int j=1; j<nb_fluids; j++)
-        { 
+        {
           err = (*this)[j].fluid().compute_h_pT(input[iP][i],input[iT][i],hj);
           hjsum += c[j]*hj;
         }
         hg[i] = (hvsatp[i]+(input[iT][i]-tsatp[i])*2.e3)*C0[i] + hjsum; // Attention valeur de "CPCST" specifique a l'eau
       }
-      
+
       double hmax;
       //double hmin;
       err =(*this)[0].fluid().get_h_max(hmax);
@@ -1305,7 +1307,7 @@ namespace NEPTUNE_EOS
       {
         // calcul plan (p,H)
         this->compute_perfect_gas(fsin_ph,fsout_tmp,errfield);
-        
+
         // verification convergence
         for(int i=0; i<nsca; i++)
         {
@@ -1316,7 +1318,7 @@ namespace NEPTUNE_EOS
             hg[i] = std::min(hg[i],hmax) ;
             //hg[i] = std::max(hg[i],hmin) ;
             if (fabs(tdif) <= epsn)  indic[i] = 0 ;
-            if ((fabs(tdif) > epsn) && (k >= nb_iter_max)) 
+            if ((fabs(tdif) > epsn) && (k >= nb_iter_max))
             {
               cout << "EOS_Mixing solver : No convergence in hg computation" << endl;
               return EOS_Error::error ;
@@ -1327,7 +1329,7 @@ namespace NEPTUNE_EOS
         for(int i=0; i<nsca; i++) tindic += indic[i] ;
         if (tindic == 0) break ;
       }
-      
+
       // calcul final en fonction de p et H
       this->compute_perfect_gas(fsin_ph,r,errfield);
 
@@ -1344,7 +1346,7 @@ namespace NEPTUNE_EOS
         }
       }
 
-    }    
+    }
     else
     {
       cout << "EOS_Mixing : input field must be (p,h,X) or (p,T,X) and not :" << input[0].get_property_name() << " and " << input[1].get_property_name() << endl;
@@ -1353,7 +1355,7 @@ namespace NEPTUNE_EOS
     }
 
     return EOS_Error::good ;
-   
+
   }
 
   // provisional for EOS_Mixing
@@ -1406,7 +1408,7 @@ namespace NEPTUNE_EOS
     err = (*this)[0].fluid().get_T_crit(tcrit);
     double Tinit=tcrit;
     for(int i=1; i<nb_fluids; i++)
-      { 
+      {
         err = (*this)[i].fluid().compute_cp_pT(P,Tinit,cpi); //TODO modify this function as independant of P&T
         err = (*this)[i].fluid().compute_h_pT(P,Tinit,hi);
         cpsum += c[i]*cpi;
@@ -1414,18 +1416,18 @@ namespace NEPTUNE_EOS
         hi7sum += c[i]*hi - c[i]*cpi*(Tinit-273.15); // pour coller au hi7sum de c2
         valp = std::min(valp, epspp*c[i]);
       }
-    
+
     //
     // init Pv
     //
-    
+
     Pv = c[0]*P;
     Pv = std::max(Pv,1.e-10);
-    
+
     //
     // init hv
     //
-    
+
     // calcul saturation Tsatpv, Hsatpv = f(Pv)
     double Tsatpv, hvsatpv;
     int n=1;
@@ -1437,13 +1439,13 @@ namespace NEPTUNE_EOS
     EOS_Field fout_sat1 ("out_sat1", "T_sat", xtsatpv);
     EOS_Field fout_sat2 ("out_sat2", "h_v_sat", xhvsatpv);
     EOS_Error_Field ferr_sat(xerr);
-    
+
     EOS_Fields fsin_sat (1);
     fsin_sat[0] = fin_sat;
     EOS_Fields fsout_sat (2);
     fsout_sat[0] = fout_sat1;
     fsout_sat[1] = fout_sat2;
-    
+
     (*this)[0].fluid().compute(fsin_sat,fsout_sat,ferr_sat);
     Tsatpv = xtsatpv[0];
     hvsatpv = xhvsatpv[0];
@@ -1458,12 +1460,12 @@ namespace NEPTUNE_EOS
     double atv = (h - zerhvs*c[0] - hi7sum) / zdeno;
     hv = acpv*atv + zerhvs;
     xhv[0]=hv;
-    
+
     //
     // Newton method
     // Resolution of F(Pv, hv)=0 and G(Pv,hv)=0
     //
-    
+
     double fff, ggg, croipv, croihv, dfdpv, dfdhv, dgdpv, dgdhv, usden; // variables intermediaires
     double dpvr = 2*valp;
     double dhvr = 2*valh;
@@ -1482,7 +1484,7 @@ namespace NEPTUNE_EOS
       EOS_Field fout_tmp5 ("out_tmp5", "d_rho_d_p_h", xdrvpv);
       EOS_Field fout_tmp6 ("out_tmp6", "d_rho_d_h_p", xdrvhv);
       EOS_Error_Field ferr_tmp(xerr);
-      
+
       EOS_Fields fsin_tmp (2);
       fsin_tmp[0] = fin_tmp1;
       fsin_tmp[1] = fin_tmp2;
@@ -1493,7 +1495,7 @@ namespace NEPTUNE_EOS
       fsout_tmp[3] = fout_tmp4;
       fsout_tmp[4] = fout_tmp5;
       fsout_tmp[5] = fout_tmp6;
-      
+
       (*this)[0].fluid().compute(fsin_tmp,fsout_tmp,ferr_tmp);
       Tg = xtg[0];
       dtgpv = xdtgpv[0];
@@ -1501,16 +1503,16 @@ namespace NEPTUNE_EOS
       rv = xrv[0];
       drvpv = xdrvpv[0];
       drvhv = xdrvhv[0]; //TODO : pas beau...
-      
+
       // calcul hi7sum
       hi7sum=0.e0;
       for(int i=1; i<nb_fluids; i++)
-      { 
+      {
         err = (*this)[i].fluid().compute_h_pT(P,Tg,hi);
         hi7sum += c[i]*hi;// attention c'est different du hi7sum de c2: hi7sum = hi7sum(c2) + cpsum*Tg
       }
-      
-      // resolution du systeme 
+
+      // resolution du systeme
       fff = hi7sum + c[0]*hv - h; // cpsum*Tg inclut dans hi7sum
       ggg = xrsum*Tg*rv + c[0]*(Pv - P);
       croipv = Tg*drvpv + rv*dtgpv;
