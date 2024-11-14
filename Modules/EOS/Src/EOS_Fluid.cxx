@@ -24,10 +24,10 @@
 // for fluid_name, table_name, version_name
 static NEPTUNE::AString UNKNOWN("Unknown") ;
 // for numerical derivation
-static double epsilon = 1.e-6 ; 
+static double epsilon = 1.e-6 ;
 // for Newton
 static  int nb_iter_max = 50 ;
-static  int iter_Newton; 
+static  int iter_Newton;
 static  double epsn = 1.e-8 ;
 
 namespace NEPTUNE
@@ -77,17 +77,17 @@ namespace NEPTUNE
 
   const AString& EOS_Fluid::fluid_name() const
   { return UNKNOWN ;
-  } 
+  }
 
 
   const AString& EOS_Fluid::table_name() const
   { return UNKNOWN ;
-  } 
+  }
 
 
   const AString& EOS_Fluid::version_name() const
   { return UNKNOWN ;
-  } 
+  }
 
 
   EOS_Fluid::EOS_Fluid(){}
@@ -97,18 +97,18 @@ namespace NEPTUNE
   // Default implementation (can be overloaded in derived classes):
   //  call to compute(P) or compute(P, h).
   EOS_Error EOS_Fluid::compute( const EOS_Fields & input,
-                                EOS_Field & output, 
+                                EOS_Field & output,
                                 EOS_Error_Field & errfield) const
   { int nbi = input.size() ;
     errfield = EOS_Internal_Error::OK ;
-    
+
     if (nbi == 2)
        { const EOS_Field *p = NULL ;
          const EOS_Field *h = NULL ;
          const EOS_Field *T = NULL ;
          const EOS_Field *s = NULL ;
-         for (int i=0; i<nbi; i++) 
-            { switch(input[i].get_property()) 
+         for (int i=0; i<nbi; i++)
+            { switch(input[i].get_property())
                  { case NEPTUNE::p :  p = &(input[i]) ; break ;
                    case NEPTUNE::h :  h = &(input[i]) ; break ;
                    case NEPTUNE::T :  T = &(input[i]) ; break ;
@@ -117,11 +117,11 @@ namespace NEPTUNE
                  }
             }
 
-         if (p && h) 
+         if (p && h)
             return compute(*p, *h, output, errfield) ;
-         else if (p && s) 
+         else if (p && s)
             return compute(*p, *s, output, errfield) ;
-         else if (p && T) 
+         else if (p && T)
             { const EOS_Field& T = *h ;
               const EOS_Field& P = *p ;
               const int sz = p->size() ;
@@ -142,13 +142,13 @@ namespace NEPTUNE
        { const EOS_Field *p    = NULL ;
          const EOS_Field *psat = NULL ;
          const EOS_Field *plim = NULL ;
-         for (int i=0; i<nbi; i++) 
+         for (int i=0; i<nbi; i++)
             { switch(input[i].get_property())
                  { case NEPTUNE::p :  p = &(input[i]) ; break ;
                    default :
-                      switch(input[i].get_sat_property()) 
+                      switch(input[i].get_sat_property())
                          { case NEPTUNE::p_sat :  psat = &(input[i]) ; break ;
-                           default: 
+                           default:
                               switch(input[i].get_lim_property())
                                  { case NEPTUNE::p_lim :  plim = &(input[i]) ; break ;
                                    default : break;
@@ -158,21 +158,21 @@ namespace NEPTUNE
                    break;
                  }
             }
-         if      (p)  
+         if      (p)
             return compute(*p,    output, errfield) ;
-         else if (psat)  
+         else if (psat)
             return compute(*psat, output, errfield) ;
-         else if (plim)  
+         else if (plim)
             return compute(*plim, output, errfield) ;
        }
-      
+
     errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
     return EOS_Error::error ;
   }
 
 //
   EOS_Error EOS_Fluid::compute(const EOS_Fields& input,
-                               EOS_Fields& output, 
+                               EOS_Fields& output,
                                EOS_Error_Field& errfield) const
   { int nbi = input.size() ;
     errfield = EOS_Internal_Error::OK ;
@@ -182,8 +182,8 @@ namespace NEPTUNE
          const EOS_Field *h = NULL ;
          const EOS_Field *T = NULL ;
          const EOS_Field *s = NULL ;
-         for (int i=0; i<nbi; i++) 
-            { switch(input[i].get_property()) 
+         for (int i=0; i<nbi; i++)
+            { switch(input[i].get_property())
                  { case NEPTUNE::p :  p = &(input[i]) ; break ;
                    case NEPTUNE::h :  h = &(input[i]) ; break ;
                    case NEPTUNE::T :  T = &(input[i]) ; break ;
@@ -202,13 +202,13 @@ namespace NEPTUNE
        { const EOS_Field *p    = NULL ;
          const EOS_Field *psat = NULL ;
          const EOS_Field *plim = NULL ;
-         for (int i=0; i<nbi; i++) 
+         for (int i=0; i<nbi; i++)
             { switch(input[i].get_property())
                  { case NEPTUNE::p :  p = &(input[i]) ; break ;
                    default :
-                      switch(input[i].get_sat_property()) 
+                      switch(input[i].get_sat_property())
                          { case NEPTUNE::p_sat :  psat = &(input[i]) ; break ;
-                           default: 
+                           default:
                                switch(input[i].get_lim_property())
                                   { case NEPTUNE::p_lim :  plim = &(input[i]) ; break ;
                                     default : break;
@@ -218,22 +218,22 @@ namespace NEPTUNE
                       break;
                  }
             }
-         if      (p)  
+         if      (p)
             return compute(*p,    output, errfield) ;
-         else if (psat)  
+         else if (psat)
             return compute(*psat, output, errfield) ;
-         else if (plim)  
+         else if (plim)
             return compute(*plim, output, errfield) ;
        }
-      
+
     errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
     return EOS_Error::error ;
   }
 
 //
-  EOS_Error EOS_Fluid::compute(const EOS_Field& p, 
-                               const EOS_Field& h, 
-                               EOS_Fields& r, 
+  EOS_Error EOS_Fluid::compute(const EOS_Field& p,
+                               const EOS_Field& h,
+                               EOS_Fields& r,
                                EOS_Error_Field& errfield) const
   { const int nb_fields = r.size() ;
     const int sz        = errfield.size() ;
@@ -241,8 +241,9 @@ namespace NEPTUNE
     EOS_Error err = EOS_Error::good  ;
     ArrOfInt err_data(sz) ;
     EOS_Error_Field err_field2(err_data) ;
-    for (int i=0; i<nb_fields; i++) 
-       { EOS_Error err2 = compute(p, h, r[i], err_field2) ;
+    for (int i=0; i<nb_fields; i++)
+       {
+         EOS_Error err2 = compute(p, h, r[i], err_field2) ;
          err = worst_generic_error(err, err2) ;
          errfield.set_worst_error(err_field2) ;
        }
@@ -250,8 +251,8 @@ namespace NEPTUNE
   }
 
 //
-  EOS_Error EOS_Fluid::compute(const EOS_Field& p, 
-                               EOS_Fields& r, 
+  EOS_Error EOS_Fluid::compute(const EOS_Field& p,
+                               EOS_Fields& r,
                                EOS_Error_Field& errfield) const
   { const int nb_fields = r.size() ;
     const int sz        = errfield.size() ;
@@ -259,7 +260,7 @@ namespace NEPTUNE
     EOS_Error err = EOS_Error::good ;
     ArrOfInt err_data(sz) ;
     EOS_Error_Field err_field2(err_data) ;
-    for (int i=0; i<nb_fields; i++) 
+    for (int i=0; i<nb_fields; i++)
        { EOS_Error err2 = compute(p, r[i], err_field2) ;
          err = worst_generic_error(err, err2) ;
          errfield.set_worst_error(err_field2) ;
@@ -268,7 +269,7 @@ namespace NEPTUNE
   }
 
 //
-  int EOS_Fluid::init(const Strings&) {return EOS_Error::good ;}  
+  int EOS_Fluid::init(const Strings&) {return EOS_Error::good ;}
 
 //
   int EOS_Fluid::init(const Strings&, const Strings&) {return EOS_Error::good ;}
@@ -280,16 +281,16 @@ namespace NEPTUNE
 
 
 //
-  double EOS_Fluid::is_liquid(double p, double h) const 
-  { cerr << " *** eos_fluid *** Error is_liquid,  P = " << p << "  h = " << h << endl ; 
+  double EOS_Fluid::is_liquid(double p, double h) const
+  { cerr << " *** eos_fluid *** Error is_liquid,  P = " << p << "  h = " << h << endl ;
     assert(0)   ;
     exit(-1)    ;
     return (-1) ;
-  }  
+  }
 
 //
-  EOS_Error EOS_Fluid::compute(const EOS_Field& p, 
-                               EOS_Field& r, 
+  EOS_Error EOS_Fluid::compute(const EOS_Field& p,
+                               EOS_Field& r,
                                EOS_Error_Field& errfield) const
   { const int sz = p.size() ;
 
@@ -299,80 +300,80 @@ namespace NEPTUNE
     EOS_thermprop prop_p  = p.get_property()     ;
     EOS_saturprop propsat = r.get_sat_property() ;
 
-    if ( (prop_p == NEPTUNE::T) && (propsat == NEPTUNE::p_sat) ) 
-       { for (int i=0; i<sz; i++) 
+    if ( (prop_p == NEPTUNE::T) && (propsat == NEPTUNE::p_sat) )
+       { for (int i=0; i<sz; i++)
              errfield.set(i, compute_p_sat_T(p[i],r[i])) ;
          return errfield.find_worst_error().generic_error() ;
        }
 
-    if (    (p.get_property()     != NEPTUNE::p) 
+    if (    (p.get_property()     != NEPTUNE::p)
          && (p.get_sat_property() != NEPTUNE::p_sat)
          && (p.get_lim_property() != NEPTUNE::p_lim) )
        { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
-         return EOS_Error::error ;   
+         return EOS_Error::error ;
        }
 
     switch(propsat)
        { // Saturation of Thermodynamic Properties
-         case NEPTUNE::rho_l_sat : 
+         case NEPTUNE::rho_l_sat :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_rho_l_sat_p(p[i],r[i])) ;
             break ;
-         case NEPTUNE::rho_v_sat : 
+         case NEPTUNE::rho_v_sat :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_rho_v_sat_p(p[i],r[i])) ;
             break ;
-         case NEPTUNE::h_l_sat : 
+         case NEPTUNE::h_l_sat :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_h_l_sat_p(p[i],r[i])) ;
             break ;
-         case NEPTUNE::h_v_sat : 
+         case NEPTUNE::h_v_sat :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_h_v_sat_p(p[i],r[i])) ;
             break ;
-         case NEPTUNE::cp_l_sat : 
+         case NEPTUNE::cp_l_sat :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_cp_l_sat_p(p[i],r[i])) ;
             break ;
-         case NEPTUNE::cp_v_sat : 
+         case NEPTUNE::cp_v_sat :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_cp_v_sat_p(p[i], r[i])) ;
             break ;
-         case NEPTUNE::T_sat : 
+         case NEPTUNE::T_sat :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_T_sat_p(p[i], r[i])) ;
             break ;
-         // Derivatives     
-         case NEPTUNE::d_rho_l_sat_d_p : 
+         // Derivatives
+         case NEPTUNE::d_rho_l_sat_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d_rho_l_sat_d_p_p(p[i], r[i])) ;
             break ;
-         case NEPTUNE::d_rho_v_sat_d_p : 
+         case NEPTUNE::d_rho_v_sat_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d_rho_v_sat_d_p_p(p[i], r[i])) ;
             break ;
-         case NEPTUNE::d_h_l_sat_d_p : 
+         case NEPTUNE::d_h_l_sat_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d_h_l_sat_d_p_p(p[i], r[i])) ;
             break;
-         case NEPTUNE::d_h_v_sat_d_p : 
+         case NEPTUNE::d_h_v_sat_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d_h_v_sat_d_p_p(p[i], r[i])) ;
             break ;
-         case NEPTUNE::d_cp_l_sat_d_p : 
+         case NEPTUNE::d_cp_l_sat_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d_cp_l_sat_d_p_p(p[i], r[i])) ;
             break ;
-         case NEPTUNE::d_cp_v_sat_d_p : 
+         case NEPTUNE::d_cp_v_sat_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d_cp_v_sat_d_p_p(p[i], r[i])) ;
             break ;
-         case NEPTUNE::d_T_sat_d_p : 
+         case NEPTUNE::d_T_sat_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d_T_sat_d_p_p(p[i], r[i])) ;
             break ;
 
-         case NEPTUNE::d2_T_sat_d_p_d_p : 
+         case NEPTUNE::d2_T_sat_d_p_d_p :
             for (int i=0; i<sz; i++)
                errfield.set(i, compute_d2_T_sat_d_p_d_p_p(p[i], r[i])) ;
             break;
@@ -381,11 +382,11 @@ namespace NEPTUNE
             // Spinodale limits of Thermodynamic properties
             EOS_splimprop proplim = r.get_lim_property() ;
             switch(proplim)
-               { case NEPTUNE::h_l_lim : 
+               { case NEPTUNE::h_l_lim :
                     for (int i=0; i<sz; i++)
                        errfield.set(i, compute_h_l_lim_p(p[i], r[i])) ;
                     break ;
-                 case NEPTUNE::h_v_lim : 
+                 case NEPTUNE::h_v_lim :
                     for (int i=0; i<sz; i++)
                        errfield.set(i, compute_h_v_lim_p(p[i], r[i])) ;
                     break ;
@@ -395,14 +396,14 @@ namespace NEPTUNE
                     break ;
                }
        }
-     
+
     return errfield.find_worst_error().generic_error() ;
   }
 
 
-  EOS_Error EOS_Fluid::compute(const EOS_Field& p, 
-                               const EOS_Field& h, 
-                               EOS_Field& r, 
+  EOS_Error EOS_Fluid::compute(const EOS_Field& p,
+                               const EOS_Field& h,
+                               EOS_Field& r,
                                EOS_Error_Field& errfield) const
   { const int sz = p.size() ;
 
@@ -470,32 +471,32 @@ namespace NEPTUNE
          lh = 1 ;
        }
 
-    if ( (lp == 1) && (ls == 1) ) 
+    if ( (lp == 1) && (ls == 1) )
        { EOS_thermprop prop = r.get_property() ;
-         switch(prop) 
-            { case NEPTUNE::h : 
-                 for (int i=0; i<sz; i++) 
+         switch(prop)
+            { case NEPTUNE::h :
+                 for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_h_ps(pp[i], ss[i], r[i]) ;
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err) ;
                     }
                  return errfield.find_worst_error().generic_error() ;
 
-              case NEPTUNE::d_h_d_p_s : 
-                 for (int i=0; i<sz; i++) 
+              case NEPTUNE::d_h_d_p_s :
+                 for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_h_d_p_s_ps(pp[i], ss[i], r[i]) ;
                       err = worst_internal_error(errfield[i], err) ;
                       errfield.set(i, err) ;
                     }
-                 return errfield.find_worst_error().generic_error() ; 
+                 return errfield.find_worst_error().generic_error() ;
 
-              case NEPTUNE::d_h_d_s_p : 
-                 for (int i=0; i<sz; i++) 
+              case NEPTUNE::d_h_d_s_p :
+                 for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_h_d_s_p_ps(pp[i], ss[i], r[i]) ;
                       err = worst_internal_error(errfield[i], err) ;
                       errfield.set(i, err) ;
                     }
-                 return errfield.find_worst_error().generic_error() ; 
+                 return errfield.find_worst_error().generic_error() ;
 
               default :
                  errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
@@ -519,484 +520,599 @@ namespace NEPTUNE
                     { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
                       return EOS_Error::error ;
                     }
-              case NEPTUNE::T : 
+              case NEPTUNE::T :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::rho : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::rho :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_rho_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::u : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::u :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_u_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::s : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::s :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_s_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::mu : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::mu :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_mu_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::lambda : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::lambda :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_lambda_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::cp : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::cp :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_cp_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::cv : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::cv :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_cv_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::sigma : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::sigma :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_sigma_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::w : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::w :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_w_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::g : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::g :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_g_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::f : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::f :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_f_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::pr : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::pr :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_pr_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::beta : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::beta :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_beta_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::gamma : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::gamma :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_gamma_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
+                 return errfield.find_worst_error().generic_error();
 
               // Derivatives
-              case NEPTUNE::d_T_d_p_h : 
+              case NEPTUNE::d_T_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_T_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_T_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_T_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_T_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_rho_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_rho_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_rho_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_rho_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_rho_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_rho_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_u_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_u_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_u_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_u_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_u_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_u_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_s_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_s_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_s_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_s_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_s_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_s_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_mu_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_mu_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_mu_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_mu_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_mu_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_mu_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_lambda_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_lambda_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_lambda_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_lambda_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_lambda_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_lambda_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cp_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cp_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cp_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cp_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cp_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cp_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cv_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cv_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cv_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cv_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cv_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cv_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_sigma_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_sigma_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_sigma_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_sigma_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_sigma_d_h_p :
                     for (int i=0; i<sz; i++)
                        { EOS_Internal_Error err = compute_d_sigma_d_h_p_ph(pp[i],hh[i],r[i]);
                          err = worst_internal_error(errfield[i], err);
                          errfield.set(i, err);
                        }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_w_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_w_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_w_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_w_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_w_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_w_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_g_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_g_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_g_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_g_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_g_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_g_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_f_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_f_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_f_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_f_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_f_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_f_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_pr_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_pr_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_pr_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_pr_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_pr_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_pr_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_beta_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_beta_d_p_h :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_beta_d_p_h_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_beta_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_beta_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_beta_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_gamma_d_p_h : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_gamma_d_p_h :
                     for (int i=0; i<sz; i++)
                        { EOS_Internal_Error err = compute_d_gamma_d_p_h_ph(pp[i],hh[i],r[i]);
                          err = worst_internal_error(errfield[i], err);
                          errfield.set(i, err);
                        }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_gamma_d_h_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_gamma_d_h_p :
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_gamma_d_h_p_ph(pp[i],hh[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_rho_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_rho_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_rho_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_rho_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_rho_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_rho_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_u_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_u_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_u_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_s_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_s_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_s_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_s_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_s_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_s_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_mu_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_mu_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_mu_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_mu_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_mu_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_mu_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_lambda_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_lambda_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_lambda_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_lambda_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_lambda_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_lambda_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cp_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cp_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cp_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cp_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cp_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cp_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cv_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cv_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cv_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_cv_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_cv_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cv_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_sigma_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_sigma_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_sigma_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_w_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_w_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_w_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_w_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_w_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_w_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_g_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_g_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_g_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_f_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_f_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_f_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_pr_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_pr_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_pr_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_beta_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_beta_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_beta_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_gamma_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_gamma_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_gamma_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_h_d_T_p : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_h_d_T_p :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_h_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
-              case NEPTUNE::d_h_d_p_T : 
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d_h_d_p_T :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_h_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
                       errfield.set(i, err);
                     }
-                 return errfield.find_worst_error().generic_error(); 
+                 return errfield.find_worst_error().generic_error();
               default :
                  errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
                  return EOS_Error::error ;
@@ -1013,8 +1129,8 @@ namespace NEPTUNE
 
 //
   EOS_Internal_Error EOS_Fluid::compute(const char* const property_name,
-                                        double p, 
-                                        double h, 
+                                        double p,
+                                        double h,
                                         double& x) const
   { EOS_thermprop prop = nam2num_thermprop(property_name) ;
 
@@ -1032,7 +1148,7 @@ namespace NEPTUNE
          case NEPTUNE::g              :  return compute_g_ph(p, h, x)            ;
          case NEPTUNE::f              :  return compute_f_ph(p, h, x)            ;
          case NEPTUNE::pr             :  return compute_pr_ph(p, h, x)           ;
-         case NEPTUNE::beta           :  return compute_beta_ph(p, h, x)         ; 
+         case NEPTUNE::beta           :  return compute_beta_ph(p, h, x)         ;
          case NEPTUNE::gamma          :  return compute_gamma_ph(p, h, x)        ;
          // Derivatives
          case NEPTUNE::d_T_d_p_h      :  return compute_d_T_d_p_h_ph(p,h,x)      ;
@@ -1086,13 +1202,13 @@ namespace NEPTUNE
          case NEPTUNE::d_h_d_T_p      :  return compute_d_h_d_T_p_pT(p,h,x)      ;
          case NEPTUNE::d_h_d_p_T      :  return compute_d_h_d_p_T_pT(p,h,x)      ;
          default :  return EOS_Internal_Error::NOT_IMPLEMENTED ;
-            
+
        }
   }
 
 //
   EOS_Internal_Error EOS_Fluid::compute(const char* const property_name,
-                                        double p, 
+                                        double p,
                                         double& x) const
   { EOS_saturprop propsat = nam2num_saturprop(property_name) ;
 
@@ -1271,7 +1387,7 @@ namespace NEPTUNE
 
     return ierr ;
   }
- 
+
   //
   EOS_Internal_Error EOS_Fluid::compute_pr_pT(double p, double T, double& pr) const
   { double mu, cp, lambda ;
@@ -1298,23 +1414,23 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_p_sat_T(double T, double& p) const
   { EOS_Internal_Error err1(EOS_Internal_Error::OK) ;
     EOS_Internal_Error err2(EOS_Internal_Error::OK) ;
-    
+
     double Ti, dTi, deltap ;
     double func = 1.e0 ;
     double pi   = 1.e5 ; // Starting from 1 bar.
     for (iter_Newton = 0 ;
-        (iter_Newton < nb_iter_max) && (fabs(func) > epsn); 
-        iter_Newton++ ) 
+        (iter_Newton < nb_iter_max) && (fabs(func) > epsn);
+        iter_Newton++ )
       { err1   = compute_T_sat_p(pi,Ti) ;
         err2   = compute_d_T_sat_d_p_p(pi, dTi) ;
         func   = T - Ti      ;
         deltap = func / dTi  ;
         pi     = pi + deltap ;
         // If bad value encountered during Newton iterations, error
-        switch (worst_internal_error(err1, err2).generic_error()) 
+        switch (worst_internal_error(err1, err2).generic_error())
            { case EOS_Error::error :  return worst_internal_error(err1, err2) ;
              case EOS_Error::bad   :  return Error_p_sat_T_compute            ;
-             default               :  break ;   
+             default               :  break ;
         }
       }
     // If not converged, error.
@@ -1324,7 +1440,7 @@ namespace NEPTUNE
     // Result is based on the last compute_T_sat_p, so return the same error code:
     return err1 ;
   }
-  
+
 
   // - --- Auto --- -
 
@@ -1602,7 +1718,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_rho_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1614,7 +1730,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_u_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1626,7 +1742,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_s_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1638,7 +1754,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_mu_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1650,7 +1766,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_lambda_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1662,7 +1778,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_cp_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1674,7 +1790,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_cv_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1686,7 +1802,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_sigma_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1698,7 +1814,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_w_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1710,7 +1826,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_g_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1722,7 +1838,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_f_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1735,7 +1851,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_beta_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1747,7 +1863,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_pT(p, T, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_gamma_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1776,7 +1892,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_T_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1788,7 +1904,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_rho_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1800,7 +1916,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_u_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1812,7 +1928,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_mu_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1824,7 +1940,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_lambda_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1836,7 +1952,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_cp_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1848,7 +1964,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_cv_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1860,7 +1976,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_sigma_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1872,7 +1988,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_w_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1884,7 +2000,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_g_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1896,7 +2012,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_f_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1908,7 +2024,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_pr_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1920,7 +2036,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_beta_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1932,7 +2048,7 @@ namespace NEPTUNE
   { double r2 ;
     EOS_Internal_Error ierr1, ierr2 ;
     ierr1 = compute_h_ps(p, s, r2) ;
-    if (ierr1 == EOS_Internal_Error::OK) 
+    if (ierr1 == EOS_Internal_Error::OK)
        { ierr2 = compute_gamma_ph(p, r2, r) ;
          return ierr2 ;
        }
@@ -1960,8 +2076,8 @@ namespace NEPTUNE
   { EOS_Internal_Error ierrm, ierrp ;
     r = 0.e0 ;
     if (p == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
-    double vm = h*(1.e0-epsilon) ;
-    double vp = h*(1.e0+epsilon) ;
+    double vm = h*(1.e0-epsilon) + 100000;
+    double vp = h*(1.e0+epsilon) + 100000;
     double rm, rp ;
     ierrm = compute_T_ph(p, vm, rm) ;
     if (ierrm == EOS_Internal_Error::OK)
@@ -4082,8 +4198,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_T_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_T_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4091,8 +4207,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_rho_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_rho_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4100,8 +4216,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_u_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_u_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4109,8 +4225,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_s_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_s_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4118,8 +4234,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_mu_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_mu_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4127,8 +4243,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_lambda_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_lambda_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4136,8 +4252,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cp_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cp_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4145,8 +4261,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cv_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cv_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4154,8 +4270,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_sigma_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_sigma_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4163,8 +4279,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_w_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_w_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4172,8 +4288,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_g_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_g_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4181,8 +4297,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_f_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_f_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4190,8 +4306,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_pr_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_pr_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4199,8 +4315,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_beta_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_beta_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4208,8 +4324,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_gamma_ph(double p, double h, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_gamma_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4217,8 +4333,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_h_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_h_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4226,8 +4342,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_rho_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_rho_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4235,8 +4351,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_u_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_u_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4244,8 +4360,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_s_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_s_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4253,8 +4369,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_mu_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_mu_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4262,8 +4378,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_lambda_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_lambda_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4271,8 +4387,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cp_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cp_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4280,8 +4396,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cv_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cv_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4289,8 +4405,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_sigma_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_sigma_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4298,8 +4414,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_w_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_w_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4307,8 +4423,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_g_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_g_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4316,8 +4432,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_f_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_f_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4325,8 +4441,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_pr_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_pr_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4334,8 +4450,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_beta_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_beta_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4343,8 +4459,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_gamma_pT(double p, double T, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_gamma_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4352,8 +4468,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_h_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_h_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4361,8 +4477,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_T_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_T_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4370,8 +4486,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_rho_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_rho_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4379,8 +4495,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_u_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_u_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4388,8 +4504,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_mu_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_mu_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4397,8 +4513,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_lambda_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_lambda_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4406,8 +4522,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cp_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cp_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4415,8 +4531,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cv_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cv_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4424,8 +4540,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_sigma_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_sigma_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4433,8 +4549,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_w_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_w_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4442,8 +4558,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_g_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_g_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4451,8 +4567,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_f_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_f_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4460,8 +4576,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_pr_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_pr_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4469,8 +4585,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_beta_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_beta_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4478,8 +4594,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_gamma_ps(double p, double s, double& r, double c_0,
                  double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_gamma_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4521,8 +4637,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4530,8 +4646,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4539,8 +4655,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4548,8 +4664,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4557,8 +4673,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4600,8 +4716,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4609,8 +4725,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4618,8 +4734,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4627,8 +4743,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4636,8 +4752,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4679,8 +4795,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4688,8 +4804,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4697,8 +4813,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4706,8 +4822,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4715,8 +4831,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4758,8 +4874,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4767,8 +4883,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4776,8 +4892,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4785,8 +4901,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4794,8 +4910,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4837,8 +4953,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4846,8 +4962,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4855,8 +4971,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4864,8 +4980,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4873,8 +4989,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4916,8 +5032,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4925,8 +5041,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4934,8 +5050,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4943,8 +5059,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4952,8 +5068,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -4995,8 +5111,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5004,8 +5120,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5013,8 +5129,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5022,8 +5138,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5031,8 +5147,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5074,8 +5190,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5083,8 +5199,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5092,8 +5208,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5101,8 +5217,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5110,8 +5226,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5153,8 +5269,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5162,8 +5278,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5171,8 +5287,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5180,8 +5296,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5189,8 +5305,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5232,8 +5348,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_compute_d_w_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5241,8 +5357,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5250,8 +5366,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5259,8 +5375,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5268,8 +5384,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5311,8 +5427,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5320,8 +5436,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_1_ph_phcompute_d_w_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5329,8 +5445,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5338,8 +5454,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5347,8 +5463,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5390,8 +5506,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5399,8 +5515,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5408,8 +5524,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5417,8 +5533,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5426,8 +5542,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5469,8 +5585,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5478,8 +5594,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5487,8 +5603,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5496,8 +5612,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5505,8 +5621,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5548,8 +5664,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5557,8 +5673,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5566,8 +5682,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5575,8 +5691,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5584,8 +5700,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5627,8 +5743,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_0_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_0_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5636,8 +5752,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_1_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_1_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5645,8 +5761,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_2_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_2_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5654,18 +5770,18 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_3_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_3_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
-   
+
 
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_4_ph_ph(double p, double h, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_4_ph_ph,  p = " << p << "  h = " << h << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5707,8 +5823,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5716,8 +5832,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5725,8 +5841,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5734,8 +5850,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5743,8 +5859,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5786,8 +5902,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5795,8 +5911,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5804,8 +5920,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5813,8 +5929,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5822,8 +5938,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5865,8 +5981,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5874,8 +5990,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5883,8 +5999,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5892,8 +6008,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5901,8 +6017,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5944,8 +6060,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5953,8 +6069,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5962,8 +6078,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5971,8 +6087,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -5980,8 +6096,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_s_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_s_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6023,8 +6139,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6032,8 +6148,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6041,8 +6157,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6050,8 +6166,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6059,8 +6175,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6102,8 +6218,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6111,8 +6227,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6120,8 +6236,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6129,8 +6245,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6138,8 +6254,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6181,8 +6297,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6190,8 +6306,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6199,8 +6315,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6208,8 +6324,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6217,8 +6333,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6260,8 +6376,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_compute_d_cv_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6269,8 +6385,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6278,8 +6394,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6287,8 +6403,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6296,8 +6412,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6339,8 +6455,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6348,8 +6464,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6357,8 +6473,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6366,8 +6482,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6375,8 +6491,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6418,8 +6534,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6427,8 +6543,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6436,8 +6552,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6445,8 +6561,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6454,8 +6570,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6497,8 +6613,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6506,8 +6622,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6515,8 +6631,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6524,8 +6640,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6533,8 +6649,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6576,8 +6692,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6585,8 +6701,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6594,8 +6710,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6603,8 +6719,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6612,8 +6728,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6655,8 +6771,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6664,8 +6780,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6673,8 +6789,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6682,8 +6798,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6691,8 +6807,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6734,8 +6850,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6743,8 +6859,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6752,8 +6868,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6761,8 +6877,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6770,8 +6886,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6813,8 +6929,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_0_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_0_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6822,8 +6938,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_1_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_1_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6831,8 +6947,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_2_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_2_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6840,8 +6956,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_3_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_3_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6849,8 +6965,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_4_pT_pT(double p, double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_4_pT_pT,  p = " << p << "  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6892,8 +7008,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6901,8 +7017,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6910,8 +7026,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6919,8 +7035,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6928,8 +7044,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_h_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6971,8 +7087,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6980,8 +7096,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6989,8 +7105,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -6998,8 +7114,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7007,8 +7123,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_T_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_T_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7050,8 +7166,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7059,8 +7175,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7068,8 +7184,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7077,8 +7193,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7086,8 +7202,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_rho_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_rho_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7129,8 +7245,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7138,8 +7254,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7147,8 +7263,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7156,8 +7272,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7165,8 +7281,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_u_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7208,8 +7324,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7217,8 +7333,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7226,8 +7342,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7235,8 +7351,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7244,8 +7360,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_mu_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_mu_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7287,8 +7403,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7296,8 +7412,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7305,8 +7421,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7314,8 +7430,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7323,8 +7439,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_lambda_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_lambda_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7366,8 +7482,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7375,8 +7491,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7384,8 +7500,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7393,8 +7509,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7402,8 +7518,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cp_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cp_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7445,8 +7561,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_compute_d_cv_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7454,8 +7570,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7463,8 +7579,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7472,8 +7588,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7481,8 +7597,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_cv_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_cv_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7524,8 +7640,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7533,8 +7649,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7542,8 +7658,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7551,8 +7667,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7560,8 +7676,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_sigma_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_sigma_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7603,8 +7719,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7612,8 +7728,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7621,8 +7737,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7630,8 +7746,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7639,8 +7755,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_w_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_w_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7682,8 +7798,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7691,8 +7807,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7700,8 +7816,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7709,8 +7825,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7718,8 +7834,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_g_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_g_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7761,8 +7877,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7770,8 +7886,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7779,8 +7895,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7788,8 +7904,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7797,8 +7913,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_f_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_f_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7840,8 +7956,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7849,8 +7965,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7858,8 +7974,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7867,8 +7983,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7876,8 +7992,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_pr_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_pr_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7919,8 +8035,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7928,8 +8044,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7937,8 +8053,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7946,8 +8062,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_3_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7955,8 +8071,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_beta_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_beta_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -7998,8 +8114,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_0_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_0_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8007,8 +8123,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_1_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_1_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8016,8 +8132,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_2_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_2_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8025,8 +8141,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_3_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** compute_d_gamma_d_c_3_ps_ps compute_d_beta_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8034,8 +8150,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_d_gamma_d_c_4_ps_ps(double p, double s, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_d_gamma_d_c_4_ps_ps,  p = " << p << "  s = " << s << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8045,8 +8161,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_T_sat_p(double p, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_T_sat_p,  p = " << p << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8054,8 +8170,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_rho_l_sat_p(double p, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_rho_l_sat_p,  p = " << p << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8063,8 +8179,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_rho_v_sat_p(double p, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_rho_v_sat_p,  p = " << p << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8072,8 +8188,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_h_l_sat_p(double p, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_h_l_sat_p,  p = " << p << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8081,8 +8197,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_h_v_sat_p(double p, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_h_v_sat_p,  p = " << p << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8090,8 +8206,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cp_l_sat_p(double p, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cp_l_sat_p,  p = " << p << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8099,8 +8215,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cp_v_sat_p(double p, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cp_v_sat_p,  p = " << p << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8108,8 +8224,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_p_sat_T(double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_p_sat_T,  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8117,8 +8233,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_rho_l_sat_T(double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_rho_l_sat_T,  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8126,8 +8242,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_rho_v_sat_T(double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_rho_v_sat_T,  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8135,8 +8251,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_h_l_sat_T(double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_h_l_sat_T,  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8144,8 +8260,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_h_v_sat_T(double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_h_v_sat_T,  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8153,8 +8269,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cp_l_sat_T(double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cp_l_sat_T,  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
@@ -8162,8 +8278,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_cp_v_sat_T(double T, double& r,
                  double c_0, double c_1, double c_2, double c_3, double c_4) const
   { cerr << " *** eos_fluid *** Not_implemented compute_cp_v_sat_T,  T = " << T << "  r = " << r << endl
-         << "                          c_0 = " << c_0 << "  c_1 = " << c_1 
-                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3 
+         << "                          c_0 = " << c_0 << "  c_1 = " << c_1
+                                 << "  c_2 = " << c_2 << "  c_3 = " << c_3
                                  << "  c_4 = " << c_4 << endl ;
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }

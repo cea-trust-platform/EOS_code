@@ -24,10 +24,10 @@ STRING(REGEX REPLACE "(^.*/)(.*$)" "\\2" TGT_OBJ "${CMAKE_CURRENT_SOURCE_DIR}")
 #  T.M. elementary library definition
 felemlib(${TGT_OBJ} LTM_TGT_OBJ GLOB_RECURSE)
 
-message (STATUS "TGB: ${TGT_OBJ}")
-message (STATUS "LTM : ${LTM_TGT_OBJ}")
-include_directories(${EOS_SOURCE_DIR}/Modules/EOS/Src/EOS_Coolprop ${LIBCOOLPROP_INC})
+#include_directories(${EOS_SOURCE_DIR}/Modules/EOS/Src/EOS_Coolprop ${LIBCOOLPROP_INC})
+include_directories(${GLOBALEXT_INC})
 
+# Temporary link to CoolProp lib
 if(BUILD_SHARED_LIB)
   target_link_libraries(${TGT_OBJ}_shar PUBLIC ${LIBCOOLPROP_SHAREDLIB})
 endif()
