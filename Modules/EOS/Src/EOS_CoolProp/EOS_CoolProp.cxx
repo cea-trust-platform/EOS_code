@@ -1725,7 +1725,7 @@ namespace NEPTUNE_EOS
 
     err_ = compute_h_pT(P, T, h_min);
     if (err_ != EOS_Internal_Error::OK) {
-      h_min = 0.;
+      h_min = 1.;
       err_ = EOS_Internal_Error::OK;
     }
 
