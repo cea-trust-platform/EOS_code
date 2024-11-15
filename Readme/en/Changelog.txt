@@ -13,11 +13,15 @@ Legend:
 
 
 ============================
- EOS-X.X.X       :: TBA
+ EOS-2.1.0       :: 15-11-2024
 ============================
-
-Thermodynamic Model (T.M.) :
-+ New T.M. Cathare2, version is now 10.4
++ EOS compatibility with OpenMP (15-10-2024)
++ Performance optimization of EOS (added Enum) (15-10-2024)
+- Fixed some warnings (05-11-2024)
+- Bug fix: Mixing (15-10-2024)
+- Bug fix: Cathare 2 sodium (15-10-2024)
++ Added interpolator (17-10-2024)
++ New thermal model for Cathare2, version 10.4
 
 ============================
  EOS-2.0       :: 29-09-2023

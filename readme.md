@@ -25,7 +25,7 @@ _____________
 A good tip to use is to keep a file 'user_env.txt' outside the git repository and to use the configure option:
 
 ```
-> ./configure --user-env-file=relative/or/absolute/path/to/user_env.txt --prefix=relative/or/absolute/path/
+> ./configure --user-env-file=relative/or/absolute/path/to/user_env.txt --prefix=relative/or/absolute/path/ --execdir=relative/or/absolute/path/
 ```
 
 If the --user-env-file option is not specified, then it is the user_env.txt of the root source directory which will be read.

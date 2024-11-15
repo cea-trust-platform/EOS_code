@@ -149,7 +149,8 @@
                                  cf. ci-dessous "Structure d'un plugin"
 
  --with-interpolator         : intégration de l'Interpolateur dans la Biliothèque EOS
-                               (en préparation)
+                               
+ --with-openmp               : intégration de openmp 
 
  --debug                     : installation d'EOS en mode debug
                                par défaut mode release
