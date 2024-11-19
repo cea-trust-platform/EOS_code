@@ -317,6 +317,10 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
   set(CMAKE_Fortran_FLAGS "-extend-source 132 -diag-disable=7713,7841")
 endif()
 
+if (APPLE)
+  set(CMAKE_Fortran_FLAGS "-Wall -ffixed-line-length-none -Wno-unused-label")
+endif()
+
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC ")
 SET(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fPIC ")
 SET(CMAKE_C_FLAGS_RELEASE "-O2 -fPIC ")
@@ -470,11 +474,15 @@ if (WITH_DOC_DOXYGEN)
              DESTINATION ${EOS_DOC_DIR}/Modules/EOS_IGen)
   endif (WITH_IPP)
 endif (WITH_DOC_DOXYGEN)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/Readme ${CMAKE_BINARY_DIR}/Readme DESTINATION ${EOS_DOC_DIR})
-install(FILES ${CMAKE_BINARY_DIR}/Modules/index.html DESTINATION ${EOS_DOC_DIR}/Modules)
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/Doc ${CMAKE_BINARY_DIR}/Doc
-        DESTINATION ${EOS_DOC_DIR}
-        PATTERN "CMake*" EXCLUDE PATTERN "*.cmake" EXCLUDE PATTERN "Makefile" EXCLUDE)
+
+if (NOT APPLE)
+  install(DIRECTORY ${CMAKE_SOURCE_DIR}/Readme ${CMAKE_BINARY_DIR}/Readme DESTINATION ${EOS_DOC_DIR})
+  install(FILES ${CMAKE_BINARY_DIR}/Modules/index.html DESTINATION ${EOS_DOC_DIR}/Modules)
+  install(DIRECTORY ${CMAKE_SOURCE_DIR}/Doc ${CMAKE_BINARY_DIR}/Doc
+          DESTINATION ${EOS_DOC_DIR}
+          PATTERN "CMake*" EXCLUDE PATTERN "*.cmake" EXCLUDE PATTERN "Makefile" EXCLUDE)
+endif()
+
 #
 # Tests files
 set(EOS_TESTS_DIR ${CMAKE_INSTALL_PREFIX}/share/tests)

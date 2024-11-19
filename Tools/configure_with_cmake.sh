@@ -41,43 +41,107 @@ unknown_option()
     exit 1
 }
 
-declare -A listoptknown
-declare -A listopteqknown
+if [[ "$(uname)" == "Darwin" ]]; then
+    istoptknown=""
+    listopteqknown=""
+else
+    declare -A listoptknown
+    declare -A listopteqknown
+fi
 
 add_opt()
 {
     if [ "$#" != "2" ] ; then
         error "function add_opt takes 2 arguments and not $#"
     fi
-    listoptknown["$1"]="$2"
+
+    if [[ "$(uname)" == "Darwin" ]]; then
+        listoptknown="${listoptknown} $1:$2"
+    else
+        listoptknown["$1"]="$2"
+    fi
 }
 add_opteq()
 {
     if [ "$#" != "2" ] ; then
         error "function add_opteq takes 2 arguments and not $#"
     fi
-    listopteqknown["$1"]="$2"
+
+    if [[ "$(uname)" == "Darwin" ]]; then
+        listopteqknown="${listopteqknown} $1:$2"
+    else
+        listopteqknown["$1"]="$2"
+    fi
 }
 
 cmake_options="-DCMAKE_BUILD_TYPE:STRING=Release" #default option, can be overridden
 
+# Helper function to fetch the value for a key from a string-based list
+get_value_from_list() {
+    local key=$1
+    local list=$2
+    for item in $list; do
+        local k=${item%%:*}
+        local v=${item#*:}
+        if [ "$k" = "$key" ]; then
+            echo "$v"
+            return 0
+        fi
+    done
+    return 1
+}
+
 fill_opt()
 {
-    if [ "$#" != "1" ] ; then
-        error "function fill_opt takes 2 arguments and not $#"
-    elif [ -z ${listoptknown[$1]} ] ; then
-        error "option $1 is not a known option"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        if [ "$#" != "1" ]; then
+            echo "Error: function fill_opt takes 1 argument, not $#"
+            return 1
+        fi
+
+        local value
+        value=$(get_value_from_list "$1" "$listoptknown")
+        if [ -z "$value" ]; then
+            echo "Error: option $1 is not a known option"
+            return 1
+        fi
+
+        cmake_options="${cmake_options} -D${value}"
+    else
+        if [ "$#" != "1" ] ; then
+            error "function fill_opt takes 2 arguments and not $#"
+        elif [ -z ${listoptknown[$1]} ] ; then
+           error "option $1 is not a known option"
+       fi
+
+       cmake_options="${cmake_options} -D${listoptknown[$1]}"
     fi
-    cmake_options="${cmake_options} -D${listoptknown[$1]}"
 }
-fill_opt_with_value()
+
+fill_opt_with_value() 
 {
-    if [ "$#" != "2" ] ; then
-        error "function fill_opt_with_value takes 2 arguments and not $#"
-    elif [ -z ${listopteqknown[$1]} ] ; then
-        error "option $1 is not a known option"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        if [ "$#" != "2" ]; then
+            echo "Error: function fill_opt_with_value takes 2 arguments, not $#"
+            return 1
+        fi
+
+        local value
+        value=$(get_value_from_list "$1" "$listopteqknown")
+        if [ -z "$value" ]; then
+            echo "Error: option $1 is not a known option"
+            return 1
+        fi
+
+        cmake_options="${cmake_options} -D${value}=$2"
+    else
+        if [ "$#" != "2" ] ; then
+            error "function fill_opt_with_value takes 2 arguments and not $#"
+        elif [ -z ${listopteqknown[$1]} ] ; then
+           error "option $1 is not a known option"
+         fi
+        cmake_options="${cmake_options} -D${listopteqknown[$1]}=$2"
     fi
-    cmake_options="${cmake_options} -D${listopteqknown[$1]}=$2"
 }
 
 #=============================================================================
