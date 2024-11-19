@@ -47,6 +47,9 @@ namespace NEPTUNE
        int init(const char* const property_title, 
                 const char* const property_name,
                 ArrOfDouble&);
+       int init(const char* const property_title,
+                const char* const property_name,
+				int nsz, double* ptr);
        //! AField.set_property_title("Pressure");
        void set_property_title(const char* const name);
        //! AField.set_property_name("P");

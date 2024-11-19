@@ -82,6 +82,16 @@ namespace NEPTUNE
     return good ;
   }
 
+  int EOS_Field::init(const char* const namet,
+                      const char* const namep,
+					  int nsz, double* ptr)
+  { property_title  = namet ;
+    property_name   = namep ;
+    property_number = gen_property_number(namep)   ;
+    data            = ArrOfDouble(nsz, ptr) ;
+    return good ;
+  }
+
   ArrOfDouble& EOS_Field::set_data()
   { return data ;
   }
