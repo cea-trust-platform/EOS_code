@@ -248,7 +248,8 @@ class Steps:
 
     def save(self):    
         currentDir = os.path.join(self.workDir, "step_" + str(self.currentStep))
-        shutil.copytree(currentDir, self.destDir, dirs_exist_ok=True)
+        for f in os.listdir(currentDir):
+            shutil.copy2(os.path.join(currentDir, f), self.destDir)
         shutil.rmtree(currentDir)
 
 t_start = timeit.default_timer()
