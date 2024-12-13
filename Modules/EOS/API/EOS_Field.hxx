@@ -69,6 +69,9 @@ namespace NEPTUNE
         int reset_property_number(const char* const property_title, 
                                        const char* const property_name,
                                        int prop_numb);
+       int init(const char* const property_title,
+                const char* const property_name,
+				int nsz, double* ptr);
        //! AField.set_property_title("Pressure");
        void set_property_title(const char* const name);
        //! AField.set_property_name("P");
