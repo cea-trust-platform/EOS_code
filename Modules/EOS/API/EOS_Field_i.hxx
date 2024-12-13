@@ -35,6 +35,16 @@ namespace NEPTUNE
   { property_number = gen_property_number(namep) ;
   }
 
+  inline  EOS_Field::EOS_Field(const char* const namet, 
+                               const char* const namep,
+                               int prop_numb,
+                               int nsz,    double* ptr) :
+    data(nsz, ptr),
+    property_title(namet), 
+    property_name(namep)
+  { property_number = prop_numb ;
+  }
+
   inline const double& EOS_Field::operator [] (int i) const
   { return data[i] ;
   }

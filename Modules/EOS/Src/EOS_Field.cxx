@@ -54,6 +54,16 @@ namespace NEPTUNE
   property_name(namep) 
   { property_number = gen_property_number(namep) ;
   }
+  
+  EOS_Field::EOS_Field(const char* const namet, 
+                       const char* const namep,
+                       int prop_numb, ArrOfDouble& x) :
+  data(x.size(), &x[0]),
+  property_title(namet),
+  property_name(namep),
+  property_number(prop_numb)
+  { 
+  }
 
   EOS_Field::EOS_Field(const EOS_Field &f):
   UObject(),
@@ -80,6 +90,44 @@ namespace NEPTUNE
     property_number = gen_property_number(namep)   ;
     data            = ArrOfDouble(x.size(), &x[0]) ;
     return good ;
+  }
+  int EOS_Field::init(const char* const namet, 
+                      const char* const namep,
+                      int prop_numb,
+                      ArrOfDouble &x) 
+  { property_title  = namet ;
+    property_name   = namep ;
+    property_number = prop_numb  ;
+    data            = ArrOfDouble(x.size(), &x[0]) ;
+    return good ;
+  }
+
+    int EOS_Field::init(const char* const namet,
+                      const char* const namep,
+                      int prop_numb,
+					  int nsz, double* ptr)
+  { property_title  = namet ;
+    property_name   = namep ;
+    property_number = prop_numb  ;
+    data            = ArrOfDouble(nsz, ptr) ;
+    return good ;
+  }
+
+
+  int EOS_Field::reset_data_ptr(ArrOfDouble &x)
+  {
+    data = ArrOfDouble(x.size(), &x[0]);
+    return good;
+  }
+
+  int EOS_Field::reset_property_number(const char* const namet, 
+                                       const char* const namep,
+                                       int prop_numb)
+  {
+    property_title  = namet ;
+    property_name   = namep ;
+    property_number = prop_numb ;
+    return good;
   }
 
   ArrOfDouble& EOS_Field::set_data()

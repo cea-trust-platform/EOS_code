@@ -38,15 +38,36 @@ namespace NEPTUNE
        EOS_Field(const char* const property_title, 
                  const char* const property_name,
                  int nsz, double* ptr);
+       //! EOS_Field("Pressure", "P", n_prop, n, x_ptr);
+       EOS_Field(const char* const property_title, 
+                 const char* const property_name,
+                 int property_number, int nsz, double* ptr);
        //! ArrOfDouble x(n);
        //! EOS_Field("Pressure", "P", x);
        EOS_Field(const char* const property_title, 
                  const char* const property_name,
                  ArrOfDouble&);
+      //! EOS_Field("Pressure", "P",n_prop, x);         
+       EOS_Field(const char* const property_title, 
+                 const char* const property_name,
+                 int property_number, ArrOfDouble&);
        EOS_Field& operator = (const EOS_Field&);
        int init(const char* const property_title, 
                 const char* const property_name,
+                ArrOfDouble&);       
+       int init(const char* const property_title, 
+                const char* const property_name,
+                int prop_numb,
                 ArrOfDouble&);
+       int init(const char* const property_title, 
+                const char* const property_name,
+                int property_number,
+                int nsz, double* ptr);
+       // Change the field without re-defining everything : 
+        int reset_data_ptr(ArrOfDouble &);
+        int reset_property_number(const char* const property_title, 
+                                       const char* const property_name,
+                                       int prop_numb);
        //! AField.set_property_title("Pressure");
        void set_property_title(const char* const name);
        //! AField.set_property_name("P");
