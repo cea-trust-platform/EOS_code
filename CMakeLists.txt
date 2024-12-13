@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 #
 # Project name
-project(EOS VERSION 2.0.0 LANGUAGES CXX C Fortran)
+project(EOS VERSION 2.1.0 LANGUAGES CXX C Fortran)
 #
 # Include CMAKE
 # - path
@@ -15,6 +15,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_INSTALL_MESSAGE LAZY)
 
 find_package(Python QUIET REQUIRED COMPONENTS Interpreter)
+
+# Vérifier la version de Python
+if(PYTHON_VERSION_MAJOR LESS 3)
+    message(FATAL_ERROR "Python version 3 or higher is required. Found version: ${PYTHON_VERSION}")
+else()
+    message(STATUS "Python version ${PYTHON_VERSION} found.")
+endif()
 
 # Initialisation
 # --------------
