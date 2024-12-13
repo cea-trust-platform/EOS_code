@@ -65,6 +65,7 @@ namespace NEPTUNE
                 int nsz, double* ptr);
        // Change the field without re-defining everything : 
         int reset_data_ptr(ArrOfDouble &);
+        int reset_data_ptr(int nsz, double* ptr);
         int reset_property_number(const char* const property_title, 
                                        const char* const property_name,
                                        int prop_numb);

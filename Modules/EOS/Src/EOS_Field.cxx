@@ -120,6 +120,12 @@ namespace NEPTUNE
     return good;
   }
 
+  int EOS_Field::reset_data_ptr(int nsz, double* ptr)
+  {
+    data = ArrOfDouble(nsz, ptr) ;
+    return good;
+  }
+
   int EOS_Field::reset_property_number(const char* const namet, 
                                        const char* const namep,
                                        int prop_numb)
