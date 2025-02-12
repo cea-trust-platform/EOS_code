@@ -24,7 +24,7 @@ Usage: $0 [options]
 
 Options: [defaults in brackets after descriptions]
   --user-env-file=<path>/<file>         use <file> for eos configuration
-                                        [$user_env_file] 
+                                        [$user_env_file]
   --release                             build for release (default)
   --debug                               build for debug
   --with-sanitizer                      build with sanitizers
@@ -66,11 +66,11 @@ Options: [defaults in brackets after descriptions]
   --help, -h                            print this message and exit
 
 Options only used for GUI:
-  --with-med=<path>                     path to med 
+  --with-med=<path>                     path to med
   --with-med-lib=<path>                 path to med/lib     (optional)
   --with-med-include=<path>             path to med/include (optional)
   --with-hdf5=<path>                    path to hdf5
-  --with-hdf5-lib=<path>                path to hdf5/lib    (optional) 
+  --with-hdf5-lib=<path>                path to hdf5/lib    (optional)
   --with-mpi=<path>                     path to mpi         (optional)
   --with-mpi-lib=<path>                 path to mpi/lib     (optional)
   --with-mpi-include=<path>             path to mpi/include (optional)
@@ -86,6 +86,11 @@ Options to install plugins:
   --with-flica4=<file/path>             build EOS with plugin Flica4    (.tgz/.bz2 file or directory path)
                                         May need libtirpc on recent systems
   --with-interpolator                   build EOS with interpolator
+
+  --with-coolprop
+  --with-libcoolprop
+  --with-libcoolprop-lib
+  --with-libcoolprop-include
 
 Some influential environment variables:
   CXX                                   force the c++ compiler

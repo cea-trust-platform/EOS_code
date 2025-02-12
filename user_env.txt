@@ -114,6 +114,15 @@
 # optional interpolator
 #--with-interpolator                   # build EOS with interpolator
 
+
+#-------------------------------------------------------------------
+# optional plugin CoolProp                 # build EOS with CoolProp
+#--with-libcoolprop-lib=<path>             # Path to CoolProp library
+#--with-libcoolprop-include=<path>/include # Path to CoolProp include folder
+#--with-coolprop=<path>                    # Path to CoolProp ThermoModel
+
+
+
 #-------------------------------------------------------------------
 # print the help message and exit
 #--help

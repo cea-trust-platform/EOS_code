@@ -82,4 +82,11 @@ else (WITH_PLUGIN_FLICA4)
   message (STATUS " > Plug-Flica4     OFF")
 endif(WITH_PLUGIN_FLICA4)
 
+if(WITH_PLUGIN_COOLPROP)
+  add_subdirectory(EOS_CoolProp)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E echo "Done")
+else(WITH_PLUGIN_COOLPROP)
+  message (STATUS " > Plug-CoolProp   OFF")
+endif(WITH_PLUGIN_COOLPROP)
+
 message ("")

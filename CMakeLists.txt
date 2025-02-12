@@ -88,6 +88,7 @@ set(WITH_PLUGIN_THETIS     "" CACHE PATH "Defines the root of Thetis plugin sour
 set(WITH_PLUGIN_REFPROP_9  "" CACHE PATH "Defines the root of Refprop9 plugin sources")
 set(WITH_PLUGIN_REFPROP_10 "" CACHE PATH "Defines the root of Refprop10 plugin sources")
 set(WITH_PLUGIN_FLICA4     "" CACHE PATH "Defines the root of Flica4 plugin sources")
+set(WITH_PLUGIN_COOLPROP   "" CACHE PATH "Defines the root of Coolprop plugin sources")
 
 
 # Prerequisites
@@ -200,26 +201,70 @@ if(WITH_PLUGIN_FLICA4)
   include(EOS_RPC)
 endif()
 
-#
+# COOLPROP
+if (USER_LIBCOOLPROP_PATH)
+  message(STATUS "lib coolprop path specified by used : ${USER_COOLPROP_PATH}")
+  set(LIBCOOLPROP_INC ${USER_LIBCOOLPROP_PATH}/include)
+  set(LIBCOOLPROP_LIB_DIR ${USER_LIBCOOLPROP_PATH}/lib)
+  set(ENV{LD_LIBRARY_PATH} ${USER_LIBCOOLPROP_PATH}/lib/:$ENV{LD_LIBRARY_PATH} )
+  message(STATUS "options --with-libcoolprop=<path> adds ${USER_LIBCOOLPROP_PATH}/lib to LD_LIBRARY_PATH")
+endif(USER_LIBCOOLPROP_PATH)
+if (USER_LIBCOOLPROP_INCLUDE_PATH)
+  message(STATUS "lib coolprop include path specified by user : ${USER_LIBCOOLPROP_INCLUDE_PATH}")
+  set(LIBCOOLPROP_INC ${USER_LIBCOOLPROP_INCLUDE_PATH})
+endif(USER_LIBCOOLPROP_INCLUDE_PATH)
+if (USER_LIBCOOLPROP_LIB_PATH)
+  message(STATUS "lib coolprop library path specified by user : ${USER_LIBCOOLPROP_LIB_PATH}")
+  set(LIBCOOLPROP_LIB_DIR ${USER_LIBCOOLPROP_LIB_PATH})
+endif(USER_LIBCOOLPROP_LIB_PATH)
+
+if (LIBCOOLPROP_LIB_DIR)
+  # Static
+  set (CMAKE_FIND_LIBRARY_SUFFIXES .a)
+  find_library(LIBCOOLPROP_STATLIB1 NAMES CoolProp PATHS ${LIBCOOLPROP_LIB_DIR} NO_DEFAULT_PATH)
+  set (LIBCOOLPROP_STATICLIB ${LIBCOOLPROP_STATLIB1})
+
+  # Shared
+  set (CMAKE_FIND_LIBRARY_SUFFIXES .so)
+  find_library(LIBCOOLPROP_SHARLIB1 NAMES CoolProp PATHS ${LIBCOOLPROP_LIB_DIR} NO_DEFAULT_PATH)
+  set (LIBCOOLPROP_SHAREDLIB ${LIBCOOLPROP_SHARLIB1})
+
+  # Test
+  if (NOT LIBCOOLPROP_STATICLIB AND NOT LIBCOOLPROP_SHAREDLIB)
+    message(FATAL_ERROR "Not found CoolProp library after CoolProp user request")
+  endif (NOT LIBCOOLPROP_STATICLIB AND NOT LIBCOOLPROP_SHAREDLIB)
+
+  # Sanity
+  if (NOT LIBCOOLPROP_STATICLIB)
+    set(LIBCOOLPROP_STATICLIB "")
+  endif()
+  if (NOT LIBCOOLPROP_SHAREDLIB)
+    set(LIBCOOLPROP_SHAREDLIB "")
+  endif()
+
+  list(APPEND pc_libs_private "-L${LIBCOOLPROP_LIB_DIR} -lCoolProp")
+endif (LIBCOOLPROP_LIB_DIR)
+
+
 # Error messages
 if (WITH_IPP)
-  if (NOT EXISTS ${MED_INC}) 
+  if (NOT EXISTS ${MED_INC})
     message(FATAL_ERROR "MED include files are required for Interpolator. You must choose one option among : --with-med=<path> --with-med-include=<path>")
   endif (NOT EXISTS ${MED_INC})
-  if (NOT EXISTS ${MED_LIB_DIR}) 
+  if (NOT EXISTS ${MED_LIB_DIR})
     message(FATAL_ERROR "MED library file is required for Interpolator. You must choose one option among : --with-med=<path> --with-med-lib=<path>")
   endif (NOT EXISTS ${MED_LIB_DIR})
-  if (NOT EXISTS ${HDF5_LIB_DIR}) 
+  if (NOT EXISTS ${HDF5_LIB_DIR})
     message(FATAL_ERROR "HDF5 library file is required for Interpolator. You must choose one option among : --with-hdf5=<path> --with-hdf5-lib=<path>")
-  endif (NOT EXISTS ${HDF5_LIB_DIR}) 
+  endif (NOT EXISTS ${HDF5_LIB_DIR})
 endif (WITH_IPP)
 #
 # Exterior include directories : GLOBALEXT_INC variable
-set (GLOBALEXT_INC ${MPI_INC} ${HDF5_INC} ${MED_INC} ${RPC_INC})
+set (GLOBALEXT_INC ${MPI_INC} ${HDF5_INC} ${MED_INC} ${LIBCOOLPROP_INC} ${RPC_INC})
 #
 # Exterior library files : GLOBALEXT_LIB variable
-set (GLOBALEXT_LIB       ${MPI_LIB} ${HDF5_SHAREDLIB} ${MED_SHAREDLIB} ${RPC_LIB})
-set (GLOBALEXT_STATICLIB ${MPI_LIB} ${HDF5_STATICLIB} ${MED_STATICLIB} ${RPC_STATIC_LIB})
+set (GLOBALEXT_LIB       ${MPI_LIB} ${HDF5_SHAREDLIB} ${MED_SHAREDLIB} ${LIBCOOLPROP_SHAREDLIB} ${RPC_LIB})
+set (GLOBALEXT_STATICLIB ${MPI_LIB} ${HDF5_STATICLIB} ${MED_STATICLIB} ${LIBCOOLPROP_STATICLIB} ${RPC_STATIC_LIB})
 
 # Configure parameters
 # --------------------
@@ -232,7 +277,7 @@ if (WITH_DOC_DOXYGEN)
     message(STATUS "Doxygen executable specified by user : ${USER_DOXYGEN_EXECUTABLE}")
     set (DOXYGEN_EXECUTABLE ${USER_DOXYGEN_EXECUTABLE})
   else (USER_DOXYGEN_EXECUTABLE)
-    find_package(Doxygen) 
+    find_package(Doxygen)
     if (NOT DOXYGEN_FOUND)
       message(STATUS "Not found Doxygen")
       message(FATAL_ERROR "Doxygen is required to build documentation. You must choose one option among :--without-doc-doxygen, --with-doxygen=<path>, --with-doxygen-exec=<path>/doxygen")
@@ -266,7 +311,7 @@ endif (WITH_PYTHON_API)
 # ----------------------------------
 #
 #
-# Initialisation  Objects libraries targets lists 
+# Initialisation  Objects libraries targets lists
 set(LCOMM_TGT_OBJ "" CACHE STRING LCOMM_TGT_OBJ FORCE)  # Common
 set(LLANG_TGT_OBJ "" CACHE STRING LLANG_TGT_OBJ FORCE)  # EOS Language
 set(LFUNC_TGT_OBJ "" CACHE STRING LFUNC_TGT_OBJ FORCE)  # EOS Functions
@@ -294,7 +339,7 @@ endif()
 
 
 #
-# General compilation options 
+# General compilation options
 set(COMP_FLAGS  -DNO_PVM_ -DCN_RSIZE=8 -DCN_ISIZE=4 -D_COMPILE_AVEC_GCC_ -DF77CALLWITH_ -fPIC)
 if (USER_MED_PATH OR USER_MED_INCLUDE_PATH)
   set(COMP_FLAGS "${COMP_FLAGS}  -DMED_API_23")
@@ -374,8 +419,8 @@ configure_file(Tools/EOS_Config.hxx.in
 
 # objects list
 set(LSO "")
-foreach(TGT_OBJ ${LCOMM_TGT_OBJ} ${LLANG_TGT_OBJ} 
-                ${LFUNC_TGT_OBJ} ${LTM_TGT_OBJ} 
+foreach(TGT_OBJ ${LCOMM_TGT_OBJ} ${LLANG_TGT_OBJ}
+                ${LFUNC_TGT_OBJ} ${LTM_TGT_OBJ}
                 ${LIPP_TGT_OBJ})
   set(LSO ${LSO} $<TARGET_OBJECTS:${TGT_OBJ}>)
 endforeach(TGT_OBJ)
@@ -450,7 +495,7 @@ if(WITH_PLUGIN_FLICA4)
     install(DIRECTORY ${dir}
             DESTINATION ${EOS_INCLUDE_DIR}
             FILES_MATCHING PATTERN "*.hxx" PATTERN "*.h" PATTERN "*.H"
-            PATTERN "CMake*" EXCLUDE PATTERN "Tests" EXCLUDE PATTERN "Doc"      EXCLUDE 
+            PATTERN "CMake*" EXCLUDE PATTERN "Tests" EXCLUDE PATTERN "Doc"      EXCLUDE
             PATTERN "Data"   EXCLUDE PATTERN "PyAPI" EXCLUDE)
   endforeach()
 else(WITH_PLUGIN_FLICA4)
@@ -458,14 +503,14 @@ else(WITH_PLUGIN_FLICA4)
     install(DIRECTORY ${dir}
             DESTINATION ${EOS_INCLUDE_DIR}
             FILES_MATCHING PATTERN "*.hxx" PATTERN "*.h" PATTERN "*.H"
-            PATTERN "CMake*" EXCLUDE PATTERN "Tests" EXCLUDE PATTERN "Doc" EXCLUDE 
+            PATTERN "CMake*" EXCLUDE PATTERN "Tests" EXCLUDE PATTERN "Doc" EXCLUDE
             PATTERN "Data"   EXCLUDE PATTERN "PyAPI" EXCLUDE PATTERN "*FLICA4*" EXCLUDE
             PATTERN "*ubicSpline*" EXCLUDE)
   endforeach()
 endif(WITH_PLUGIN_FLICA4)
 #
 # Data and documentation
-install(DIRECTORY ${CMAKE_BINARY_DIR}/Modules/EOS/Data/ DESTINATION ${EOS_DATA_DIR} 
+install(DIRECTORY ${CMAKE_BINARY_DIR}/Modules/EOS/Data/ DESTINATION ${EOS_DATA_DIR}
         PATTERN "CMake*" EXCLUDE PATTERN "*.cmake" EXCLUDE PATTERN "Makefile" EXCLUDE)
 if (WITH_DOC_DOXYGEN)
   install(DIRECTORY ${CMAKE_BINARY_DIR}/Modules/Doc
@@ -495,12 +540,12 @@ endif()
 set(EOS_TESTS_DIR ${CMAKE_INSTALL_PREFIX}/share/tests)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/Modules/EOS/Tests/ ${CMAKE_BINARY_DIR}/Modules/EOS/Tests/
         DESTINATION ${EOS_TESTS_DIR}/EOS
-        FILES_MATCHING  PATTERN "*.cxx" PATTERN "*.f" PATTERN "*Test*" 
+        FILES_MATCHING  PATTERN "*.cxx" PATTERN "*.f" PATTERN "*Test*"
         PATTERN "output*" PATTERN "*.val" PATTERN "*.valeos*"
         PATTERN "CMake*" EXCLUDE PATTERN "*.cmake" EXCLUDE)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/Modules/Language/Tests/ ${CMAKE_BINARY_DIR}/Modules/Language/Tests/
         DESTINATION ${EOS_TESTS_DIR}/Language
-        FILES_MATCHING  PATTERN "*.cxx" PATTERN "*.f" PATTERN "*Test*" 
+        FILES_MATCHING  PATTERN "*.cxx" PATTERN "*.f" PATTERN "*Test*"
         PATTERN "output*"  PATTERN "CMake*" EXCLUDE PATTERN "*.cmake" EXCLUDE)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/Modules/Functions/Tests/ ${CMAKE_BINARY_DIR}/Modules/Functions/Tests/
         DESTINATION ${EOS_TESTS_DIR}/Functions
@@ -524,7 +569,7 @@ if   (WITH_GUI)
   set(LIB_IHM $<TARGET_FILE:${NLIB_IHM}>)
   install(FILES ${LIB_IHM} DESTINATION ${EOS_LIB_DIR} RENAME _eosihm${CMAKE_SHARED_LIBRARY_SUFFIX}
           PERMISSIONS OWNER_READ    OWNER_WRITE   OWNER_EXECUTE
-                      GROUP_READ                  GROUP_EXECUTE 
+                      GROUP_READ                  GROUP_EXECUTE
                       WORLD_READ                  WORLD_EXECUTE)
   install(PROGRAMS ${files_py} DESTINATION ${EOS_PYTHON_SITE_PACKAGES_DIR})
   file(GLOB files_txt ${EOS_GUI_SRC}/*.txt ${EOS_GUI_SRC}/*.png ${EOS_GUI_SR2}/../README)

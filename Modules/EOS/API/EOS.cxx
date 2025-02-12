@@ -99,6 +99,12 @@
 #include "EOS/Src/EOS_Flica4/EOS_FLICA4.hxx"
 #endif
 
+//PLUGIN INSERT COOLPROP
+#ifdef WITH_PLUGIN_COOLPROP
+#include "EOS/Src/EOS_Coolprop/EOS_Coolprop.hxx"
+#include "EOS/Src/EOS_Coolprop/EOS_Coolprop_vapor.hxx"
+#include "EOS/Src/EOS_Coolprop/EOS_Coolprop_liquid.hxx"
+#endif
 
 
 #include <fstream>
@@ -148,7 +154,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
   // pointer  cpt_method, cpt_ref
   cpt0 = method_str_maj ;
   cpt  = strstr(method_str_maj,pref_eos) ;
-  if (cpt0 == cpt)  
+  if (cpt0 == cpt)
      cpt_method = method_str_maj + strlen(pref_eos) ;
   else
      cpt_method = method_str_maj ;
@@ -159,7 +165,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
   AString index_file_name;
   get_index_file(index_file_name);
   std::ifstream index_file_desc(index_file_name.aschar());
-  if (!index_file_desc) 
+  if (!index_file_desc)
      { cerr << index_file_name.aschar() << " file not found !"<< endl;
        strcpy(fluid_model_class,"Class Not Found : index.eos file not found ") ;
        return fluid_model_class ;
@@ -206,7 +212,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
 
 
-   // File index.eos 
+   // File index.eos
    void EOS::get_index_file(AString &index_file_name)
    { if (iret_eos_data_dir) return exit(1) ;
      index_file_name  = eos_data_dir.c_str() ;
@@ -233,41 +239,41 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
      char tmname_read[50], fename_read[50] ;
      char *cpt_tmname_in, *cpt_fename_in ;
      char *cpt0, *cpt, *cpt2, *cpt3 ;
-   
+
      static const int longmax = 1000 ;
      static const char pref_eos[5] = "EOS_" ;
      char line_indeos[longmax] ;
      char mot[100] ;
-   
+
      // uppercase : tmname_in_maj, fename_in_maj
      strcpy(tmname_in_maj,tmname_in) ;
      cpt = tmname_in_maj ;
      while ((*cpt = toupper(*cpt)))  cpt++ ;
-   
+
      strcpy(fename_in_maj,fename_in) ;
      cpt = fename_in_maj ;
      while ((*cpt = toupper(*cpt)))  cpt++ ;
-   
+
      // pointer  cpt_tmname_in, cpt_fename_in
      cpt0 = tmname_in_maj ;
      cpt  = strstr(tmname_in_maj,pref_eos) ;
-     if (cpt0 == cpt)  
+     if (cpt0 == cpt)
         cpt_tmname_in = tmname_in_maj + strlen(pref_eos) ;
      else
         cpt_tmname_in = tmname_in_maj ;
      cpt_fename_in = fename_in_maj ;
-   
-   
+
+
      // index.eos file :   name : index_file_name   desc : index_file_desc
      AString index_file_name;
      get_index_file(index_file_name);
      std::ifstream index_file_desc(index_file_name.aschar());
-     if (!index_file_desc) 
+     if (!index_file_desc)
         { cerr << index_file_name.aschar() << " file not found !"<< endl;
           strcpy(fluid_model_class,"Class Not Found : index.eos file not found ") ;
           return 2 ;
         }
-   
+
      // read in index.eos file : tmname_read, fename_read, fluid_model_class
      while(index_file_desc)
         { index_file_desc.getline(line_indeos,longmax) ;
@@ -379,7 +385,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   const AString EOS::eos_version("@EOS_VERSION@");
 
-  EOS::EOS(const char *const str) 
+  EOS::EOS(const char *const str)
       : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
      { err_handler = new EOS_Std_Error_Handler ;
      }
@@ -411,7 +417,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
        fluid_model_obj.init(fluid_model_args,init_args, h0, s0, t0, p0) ;
        err_handler = new EOS_Std_Error_Handler ;
      }
-  EOS::EOS(const char *const str, const Strings &args) 
+  EOS::EOS(const char *const str, const Strings &args)
      : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
      { fluid_model_obj.init(args);
        err_handler = new EOS_Std_Error_Handler ;
@@ -421,7 +427,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
     : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
      { fluid_model_obj.init(dynamic_cast<const Strings&> (get_object(obj.id())));
        err_handler = new EOS_Std_Error_Handler ;
-     }                                
+     }
 
   // Duplicate the "handler", destroy the old handler and store the new one.
   void EOS::set_error_handler(const EOS_Error_Handler  &handler)
@@ -437,18 +443,18 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   void EOS::restore_error_handler()
      { const EOS_Error_Handler  *handler = err_handler_stack_.top_of_stack();
-       if (handler) 
+       if (handler)
           { // If stack not empty:
             set_error_handler(*handler);
             err_handler_stack_.pop();
-          } 
+          }
        else
           { // Stack empty, reset to default error handler
             set_error_handler(EOS_Std_Error_Handler());
           }
      }
 
-  vector<string> EOS::is_implemented(const char *pprop1, const char *pprop2, 
+  vector<string> EOS::is_implemented(const char *pprop1, const char *pprop2,
                                      const vector<string> list_prop, double vprop1, double vprop2)
      { vector<string> list_propv ;
 
@@ -473,7 +479,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
           { pcha = list_prop[i].c_str() ;
             if (eostp_strcmp(pcha, propcov1) == 0)  continue ;
             if (eostp_strcmp(pcha, propcov2) == 0)  continue ;
-            
+
             EOS_Field fieldr(pcha, pcha, result) ;
             fluid_model_obj.compute(field1, field2, fieldr, err_field) ;
             if (err_field[0] != EOS_Internal_Error::NOT_IMPLEMENTED)
@@ -602,6 +608,12 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
     //PLUGIN INSERT FLICA4
 #ifdef WITH_PLUGIN_FLICA4
     ::NEPTUNE_EOS::EOS_FLICA4 flica4;
+#endif
+
+    //PLUGIN INSERT COOLPROP
+#ifdef WITH_PLUGIN_COOLPROP
+    ::NEPTUNE_EOS::EOS_Coolprop_Liquid x301;
+    ::NEPTUNE_EOS::EOS_Coolprop_Vapor x302;
 #endif
 
     ::NEPTUNE::EOS_Error_Field x999;
