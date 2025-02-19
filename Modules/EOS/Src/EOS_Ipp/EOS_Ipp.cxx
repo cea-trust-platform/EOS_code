@@ -514,7 +514,7 @@ namespace NEPTUNE_EOS
       if (dim[i] == 1) // sat or spinodal
       {
         n_p_satlim.resize(nb_nodes);
-        EOS_Field pf("P", "p", n_p_satlim);
+        EOS_Field pf("P", "p",NEPTUNE::p, n_p_satlim);
 
         if (names[i] == "sat_domain") // saturation
         {
@@ -562,8 +562,8 @@ namespace NEPTUNE_EOS
         n_p_ph.resize(nb_nodes);
         n_h_ph.resize(nb_nodes);
 
-        EOS_Field pf("P", "p", n_p_ph);
-        EOS_Field hf("h", "h", n_h_ph);
+        EOS_Field pf("P", "p",NEPTUNE::p, n_p_ph);
+        EOS_Field hf("h", "h",NEPTUNE::h, n_h_ph);
 
         nodes_ph[0] = pf;
         nodes_ph[1] = hf;
@@ -1474,12 +1474,12 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(4);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     ArrOfDouble ap_bary(1);
     ArrOfDouble ah_bary(1);
-    EOS_Field p_bary("P", "p", ap_bary);
-    EOS_Field h_bary("h", "h", ah_bary);
+    EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
+    EOS_Field h_bary("h", "h",NEPTUNE::h, ah_bary);
     EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
 
     EOS_Field rf(propchar, propchar, ar);
@@ -1566,9 +1566,9 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(2);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p", ap);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
     ArrOfDouble ap_bary(1);
-    EOS_Field p_bary("P", "p", ap_bary);
+    EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
     EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
     EOS_Field rf(propchar, propchar, ar);
     values[0] = pf;
@@ -1678,8 +1678,8 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     EOS_Field rf(prop.aschar(), prop.aschar(), ar);
     values[0] = pf;
     values[1] = hf;
@@ -1735,8 +1735,8 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     EOS_Field rf(prop.aschar(), prop.aschar(), ar);
     values[0] = pf;
     values[1] = hf;
@@ -1788,8 +1788,8 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
     // EOS_Field rf(prop,prop,ar)
     values[0] = pf;
@@ -1820,7 +1820,7 @@ namespace NEPTUNE_EOS
 
     ArrOfDouble ap(2);
     ArrOfDouble ar(2);
-    EOS_Field pf("P", "p", ap);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
     AString name_prop = n_prop->first;
     EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
 

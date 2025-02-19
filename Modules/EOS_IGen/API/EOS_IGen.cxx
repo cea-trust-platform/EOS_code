@@ -890,8 +890,8 @@ namespace NEPTUNE_EOS_IGEN
                  sz = 0 ;
               ArrOfDouble xp(sz) ;
               ArrOfDouble xh(sz) ;
-              EOS_Field p("p","p",xp) ;
-              EOS_Field h("h","h",xh) ;
+              EOS_Field p("p","p", NEPTUNE::p,xp) ;
+              EOS_Field h("h","h", NEPTUNE::h,xh) ;
               nodes[1] = p ;
               nodes[0] = h ;
                     
@@ -932,7 +932,7 @@ namespace NEPTUNE_EOS_IGEN
                  sz = 0 ;
               
               ArrOfDouble xp(sz) ;
-              EOS_Field p("p","p",xp) ;
+              EOS_Field p("p","p", NEPTUNE::p,xp) ;
               nodes[0] = p ;
               
               qualities[i].set_quality_mesh(mesh_p, nodes) ;

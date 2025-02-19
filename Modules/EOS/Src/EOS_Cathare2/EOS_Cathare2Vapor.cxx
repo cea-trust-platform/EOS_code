@@ -122,7 +122,7 @@ namespace NEPTUNE_EOS
        { // check if h is in the EOS_Fields "out"
          int nscai = in[0].size() ;
          ArrOfDouble xhi(nscai) ;
-         EOS_Field hi("hi","h",xhi) ;
+         EOS_Field hi("hi","h",NEPTUNE::h,xhi) ;
          int nout=out.size() ;
          EOS_Fields outi(nout-1) ;
          int ih =  0 ;

@@ -2298,7 +2298,7 @@ namespace CATHARE2
   {
     // set_mixing_properties has already been done for (r,cp0,cp1,... and c_i)
     nsca = 1 ;
-    EOS_Field fh("h","h",1,&h) ;
+    EOS_Field fh("h","h",NEPTUNE::h,1,&h) ;
     if (map_eos_field(fh, phase) == 0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
     rezise_eos_fields(nsca, phase) ;
     lp[0] = p ;
@@ -2365,13 +2365,13 @@ namespace CATHARE2
        { ArrOfInt err_arr(1) ;
          EOS_Error_Field ferr(err_arr) ;
          ferr = EOS_Internal_Error::OK ;
-         EOS_Field p("P", "p", 1, &pc) ;
-         EOS_Field t("T_sat", "T_sat", 1, &tc) ;
+         EOS_Field p("P", "p",NEPTUNE::p, 1, &pc) ;
+         EOS_Field t("T_sat", "T_sat",NEPTUNE::T_sat, 1, &tc) ;
          EOS_Field h ;
          if (phase == liquid ) 
-            { h = EOS_Field("h_l_sat","h_l_sat", 1, &hc); }
+            { h = EOS_Field("h_l_sat","h_l_sat",NEPTUNE::h_l_sat, 1, &hc); }
          else
-            { h = EOS_Field("h_v_sat","h_v_sat", 1, &hc); }
+            { h = EOS_Field("h_v_sat","h_v_sat",NEPTUNE::h_v_sat, 1, &hc); }
          EOS_Fields out(2) ;
          out[0] = t ;
          out[1] = h ;                 
@@ -2474,8 +2474,8 @@ namespace CATHARE2
   { ArrOfInt err_arr(1) ;
     EOS_Error_Field ferr(err_arr) ;
     ferr = EOS_Internal_Error::OK ;
-    EOS_Field pf("P", "p", 1, &p) ;
-    EOS_Field hf("h_l_lim","h_l_lim", 1, &h_l_lim) ;
+    EOS_Field pf("P", "p",NEPTUNE::p, 1, &p) ;
+    EOS_Field hf("h_l_lim","h_l_lim",NEPTUNE::h_l_lim, 1, &h_l_lim) ;
     EOS_Fields out(1) ;
     out[0] = hf ;
     calc2_p(pf, out, ferr) ;
@@ -2486,8 +2486,8 @@ namespace CATHARE2
   { ArrOfInt err_arr(1) ;
     EOS_Error_Field ferr(err_arr) ;
     ferr = EOS_Internal_Error::OK ;
-    EOS_Field pf("P", "p", 1, &p);
-    EOS_Field hf("h_v_lim","h_v_lim", 1, &h_v_lim) ;
+    EOS_Field pf("P", "p",NEPTUNE::p, 1, &p);
+    EOS_Field hf("h_v_lim","h_v_lim",NEPTUNE::h_v_lim, 1, &h_v_lim) ;
     EOS_Fields out(1) ;
     out[0] = hf ;
     calc2_p(pf, out, ferr) ;

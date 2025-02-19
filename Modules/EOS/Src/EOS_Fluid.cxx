@@ -414,10 +414,10 @@ namespace NEPTUNE
     ArrOfDouble hh_data(sz) ;
     ArrOfDouble tt_data(sz) ;
     ArrOfDouble ss_data(sz) ;
-    EOS_Field pp("pp","p",pp_data) ;
-    EOS_Field hh("hh","h",hh_data) ;
-    EOS_Field tt("tt","T",tt_data) ;
-    EOS_Field ss("ss","s",ss_data) ;
+    EOS_Field pp("pp","p",NEPTUNE::p,pp_data) ;
+    EOS_Field hh("hh","h",NEPTUNE::h,hh_data) ;
+    EOS_Field tt("tt","T",NEPTUNE::T,tt_data) ;
+    EOS_Field ss("ss","s",NEPTUNE::s,ss_data) ;
     int lp = 0 ;
     int lh = 0 ;
     int lt = 0 ;
@@ -1236,8 +1236,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_Ph(const char* const property_name,
                                            double in1, double in2, double& out) const
   { int err_data[1]  ;
-    EOS_Field fP("P","P",1,&in1) ;
-    EOS_Field fh("h","h",1,&in2) ;
+    EOS_Field fP("P","P",NEPTUNE::p,1,&in1) ;
+    EOS_Field fh("h","h",NEPTUNE::h,1,&in2) ;
     EOS_Field fout(property_name,property_name,1,&out) ;
     EOS_Error_Field ferr(1,err_data) ;
 
@@ -1248,8 +1248,8 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_PT(const char* const property_name,
                                            double in1, double in2, double& out) const
   { int err_data[1]  ;
-    EOS_Field fP("P","P",1,&in1) ;
-    EOS_Field fT("T","T",1,&in2) ;
+    EOS_Field fP("P","P",NEPTUNE::p,1,&in1) ;
+    EOS_Field fT("T","T",NEPTUNE::T,1,&in2) ;
     EOS_Field fout(property_name,property_name,1,&out) ;
     EOS_Error_Field ferr(1,err_data) ;
 
@@ -1260,7 +1260,7 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_Psat(const char* const property_name,
                                              double in, double& out) const
   { int err_data[1]  ;
-    EOS_Field fP("Psat","Psat",1,&in) ;
+    EOS_Field fP("Psat","Psat",NEPTUNE::p_sat,1,&in) ;
     EOS_Field fout(property_name,property_name,1,&out) ;
     EOS_Error_Field ferr(1,err_data) ;
 
@@ -1271,7 +1271,7 @@ namespace NEPTUNE
   EOS_Internal_Error EOS_Fluid::compute_Tsat(const char* const property_name,
                                              double in, double& out) const
   { int err_data[1]  ;
-    EOS_Field fT("Tsat","Tsat",1,&in) ;
+    EOS_Field fT("Tsat","Tsat",NEPTUNE::T_sat,1,&in) ;
     EOS_Field fout(property_name,property_name,1,&out) ;
     EOS_Error_Field ferr(1,err_data) ;
 
@@ -1452,9 +1452,9 @@ namespace NEPTUNE
 
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("T", "T", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("T", "T",NEPTUNE::T, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1472,9 +1472,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("rho", "rho", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("rho", "rho",NEPTUNE::rho, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1492,9 +1492,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("u", "u", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("u", "u",NEPTUNE::u, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1510,9 +1510,9 @@ namespace NEPTUNE
   { static int loop = 0 ;
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("s", "s", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("s", "s",NEPTUNE::s, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1530,9 +1530,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("mu", "mu", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("mu", "mu",NEPTUNE::mu, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1550,9 +1550,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("lambda", "lambda", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("lambda", "lambda",NEPTUNE::lambda, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1571,9 +1571,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("cp", "cp", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("cp", "cp",NEPTUNE::cp, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1591,9 +1591,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("cv", "cv", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("cv", "cv",NEPTUNE::cv, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1611,9 +1611,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("sigma", "sigma", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("sigma", "sigma",NEPTUNE::sigma, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1631,9 +1631,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("w", "w", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("w", "w",NEPTUNE::w, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1651,9 +1651,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("g", "g", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("g", "g",NEPTUNE::g, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1671,9 +1671,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("f", "f", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("f", "f",NEPTUNE::f, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1692,9 +1692,9 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("beta", "beta", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("beta", "beta",NEPTUNE::beta, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1712,9 +1712,9 @@ namespace NEPTUNE
   #endif
    if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("h", "h", 1, &h) ;
-         EOS_Field fout("gamma", "gamma", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("h", "h",NEPTUNE::h, 1, &h) ;
+         EOS_Field fout("gamma", "gamma",NEPTUNE::gamma, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1733,9 +1733,9 @@ namespace NEPTUNE
     EOS_Internal_Error ierr(EOS_Internal_Error::NOT_IMPLEMENTED) ;
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("T", "T", 1, &T) ;
-         EOS_Field fout("h", "h", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("T", "T",NEPTUNE::T, 1, &T) ;
+         EOS_Field fout("h", "h",NEPTUNE::h, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -1910,9 +1910,9 @@ namespace NEPTUNE
     EOS_Internal_Error ierr(EOS_Internal_Error::NOT_IMPLEMENTED) ;
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin1("p", "p", 1, &p) ;
-         const EOS_Field fin2("s", "s", 1, &s) ;
-         EOS_Field fout("h", "h", 1, &r) ;
+         const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
+         const EOS_Field fin2("s", "s",NEPTUNE::s, 1, &s) ;
+         EOS_Field fout("h", "h",NEPTUNE::h, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
@@ -3537,8 +3537,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("p", "p", 1, &p) ;
-         EOS_Field fout("T_sat", "T_sat", 1, &r) ;
+         const EOS_Field fin("p", "p",NEPTUNE::p, 1, &p) ;
+         EOS_Field fout("T_sat", "T_sat",NEPTUNE::T_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3556,8 +3556,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("p", "p", 1, &p) ;
-         EOS_Field fout("rho_l_sat", "rho_l_sat", 1, &r) ;
+         const EOS_Field fin("p", "p",NEPTUNE::p, 1, &p) ;
+         EOS_Field fout("rho_l_sat", "rho_l_sat",NEPTUNE::rho_l_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3575,8 +3575,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("p", "p", 1, &p) ;
-         EOS_Field fout("rho_v_sat", "rho_v_sat", 1, &r) ;
+         const EOS_Field fin("p", "p",NEPTUNE::p, 1, &p) ;
+         EOS_Field fout("rho_v_sat", "rho_v_sat",NEPTUNE::rho_v_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3594,8 +3594,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("p", "p", 1, &p) ;
-         EOS_Field fout("h_l_sat", "h_l_sat", 1, &r) ;
+         const EOS_Field fin("p", "p",NEPTUNE::p, 1, &p) ;
+         EOS_Field fout("h_l_sat", "h_l_sat",NEPTUNE::h_l_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3613,8 +3613,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("p", "p", 1, &p) ;
-         EOS_Field fout("h_v_sat", "h_v_sat", 1, &r) ;
+         const EOS_Field fin("p", "p",NEPTUNE::p, 1, &p) ;
+         EOS_Field fout("h_v_sat", "h_v_sat",NEPTUNE::h_v_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3632,8 +3632,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("p", "p", 1, &p) ;
-         EOS_Field fout("cp_l_sat", "cp_l_sat", 1, &r) ;
+         const EOS_Field fin("p", "p",NEPTUNE::p, 1, &p) ;
+         EOS_Field fout("cp_l_sat", "cp_l_sat",NEPTUNE::cp_l_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3651,8 +3651,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("p", "p", 1, &p) ;
-         EOS_Field fout("cp_v_sat", "cp_v_sat", 1, &r) ;
+         const EOS_Field fin("p", "p",NEPTUNE::p, 1, &p) ;
+         EOS_Field fout("cp_v_sat", "cp_v_sat",NEPTUNE::cp_v_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3670,8 +3670,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("T", "T", 1, &T) ;
-         EOS_Field fout("rho_l_sat", "rho_l_sat", 1, &r) ;
+         const EOS_Field fin("T", "T",NEPTUNE::T, 1, &T) ;
+         EOS_Field fout("rho_l_sat", "rho_l_sat",NEPTUNE::rho_l_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3689,8 +3689,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("T", "T", 1, &T) ;
-         EOS_Field fout("rho_v_sat", "rho_v_sat", 1, &r) ;
+         const EOS_Field fin("T", "T",NEPTUNE::T, 1, &T) ;
+         EOS_Field fout("rho_v_sat", "rho_v_sat",NEPTUNE::rho_v_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3708,8 +3708,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("T", "T", 1, &T) ;
-         EOS_Field fout("h_l_sat", "h_l_sat", 1, &r) ;
+         const EOS_Field fin("T", "T",NEPTUNE::T, 1, &T) ;
+         EOS_Field fout("h_l_sat", "h_l_sat",NEPTUNE::h_l_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3727,8 +3727,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("T", "T", 1, &T) ;
-         EOS_Field fout("h_v_sat", "h_v_sat", 1, &r) ;
+         const EOS_Field fin("T", "T",NEPTUNE::T, 1, &T) ;
+         EOS_Field fout("h_v_sat", "h_v_sat",NEPTUNE::h_v_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3746,8 +3746,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("T", "T", 1, &T) ;
-         EOS_Field fout("cp_l_sat", "cp_l_sat", 1, &r) ;
+         const EOS_Field fin("T", "T",NEPTUNE::T, 1, &T) ;
+         EOS_Field fout("cp_l_sat", "cp_l_sat",NEPTUNE::cp_l_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;
@@ -3765,8 +3765,8 @@ namespace NEPTUNE
   #endif
     if (!loop)
        { loop = 1 ;
-         const EOS_Field fin("T", "T", 1, &T) ;
-         EOS_Field fout("cp_v_sat", "cp_v_sat", 1, &r) ;
+         const EOS_Field fin("T", "T",NEPTUNE::T, 1, &T) ;
+         EOS_Field fout("cp_v_sat", "cp_v_sat",NEPTUNE::cp_v_sat, 1, &r) ;
          ArrOfInt tmp(1) ;
          EOS_Error_Field ferr(tmp) ;
          compute(fin, fout, ferr) ;

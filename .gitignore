@@ -17,7 +17,7 @@ prototype_function
 sortie.out
 user_env_optim.txt
 Modules/EOS/Tests/C++/CMakeLists.txt
-
+user_env.txt
 
 .vscode/settings.json
 Modules/.vscode/settings.json

@@ -180,13 +180,13 @@
     EOS_Field fpression("P","P",nbpoint,pression) ;
     EOS_Field fenthalpi("h","h",nbpoint,enthalpi) ;
     EOS_Fields vfresultat(7) ;
-    EOS_Field fresulta1("T",               "T",            nbpoint,resulta1); vfresultat[0] = fresulta1 ;
-    EOS_Field fresulta2("cp",              "cp",           nbpoint,resulta2); vfresultat[1] = fresulta2 ;
-    EOS_Field fresulta3("lambda",          "lambda",       nbpoint,resulta3); vfresultat[2] = fresulta3 ;
-    EOS_Field fresulta4("mu",              "mu",           nbpoint,resulta4); vfresultat[3] = fresulta4 ;
-    EOS_Field fresulta5("rho",             "rho",          nbpoint,resulta5); vfresultat[4] = fresulta5 ;
-    EOS_Field fresulta6("[d(rho)/dP]h",    "[d(rho)/dP]h", nbpoint,resulta6); vfresultat[5] = fresulta6 ;
-    EOS_Field fresulta7("[d(rho)/dh]P",    "[d(rho)/dh]P", nbpoint,resulta7); vfresultat[6] = fresulta7 ;
+    EOS_Field fresulta1("T",               "T", NEPTUNE::T,            nbpoint,resulta1); vfresultat[0] = fresulta1 ;
+    EOS_Field fresulta2("cp",              "cp", NEPTUNE::cp,           nbpoint,resulta2); vfresultat[1] = fresulta2 ;
+    EOS_Field fresulta3("lambda",          "lambda", NEPTUNE::lambda,       nbpoint,resulta3); vfresultat[2] = fresulta3 ;
+    EOS_Field fresulta4("mu",              "mu", NEPTUNE::mu,           nbpoint,resulta4); vfresultat[3] = fresulta4 ;
+    EOS_Field fresulta5("rho",             "rho", NEPTUNE::rho,          nbpoint,resulta5); vfresultat[4] = fresulta5 ;
+    EOS_Field fresulta6("[d(rho)/dP]h",    "[d(rho)/dP]h", NEPTUNE::d_rho_d_p_h, nbpoint,resulta6); vfresultat[5] = fresulta6 ;
+    EOS_Field fresulta7("[d(rho)/dh]P",    "[d(rho)/dh]P", NEPTUNE::d_rho_d_h_p, nbpoint,resulta7); vfresultat[6] = fresulta7 ;
     EOS_Error_Field ferr(nbpoint, terr) ;
  
     er = obj_eos->compute(fpression, fenthalpi, vfresultat, ferr) ;

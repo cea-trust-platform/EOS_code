@@ -321,8 +321,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
             
       ArrOfDouble xrholsat(n);
@@ -394,12 +394,12 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0]=EOS_Field("rholsat", "rho_l_sat",NEPTUNE::rho_l_sat,xrholsat);
+      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",NEPTUNE::rho_v_sat,xrhovsat);
+      outsat[2]=EOS_Field("hlsat","h_l_sat",NEPTUNE::h_l_sat,xhlsat);
+      outsat[3]=EOS_Field("hvsat","h_v_sat",NEPTUNE::h_v_sat,xhvsat);
+      outsat[4]=EOS_Field("tsat","T_sat",NEPTUNE::T_sat,xtsat);
+      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",NEPTUNE::d_T_sat_d_p,xdtsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -466,9 +466,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T",NEPTUNE::T,xt);
       for(int i=0; i<n; i++)
         xt[i]=t;
       xt[0]=t;
@@ -532,26 +532,26 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      outph[0]=EOS_Field("temperature","T",NEPTUNE::T,xtout);
+      outph[1]=EOS_Field("rho","rho",NEPTUNE::rho,xrho);
+      outph[2]=EOS_Field("w","w",NEPTUNE::w,xw);
+      outph[3]=EOS_Field("u","u",NEPTUNE::u,xu);
+      outph[4]=EOS_Field("cp","cp",NEPTUNE::cp,xcp);
+      outph[5]=EOS_Field("mu","mu",NEPTUNE::mu,xmu);
+      outph[6]=EOS_Field("lambda","lambda",NEPTUNE::lambda,xlambda);
+      outph[7]=EOS_Field("sigma","sigma",NEPTUNE::sigma,xsigma);
+      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",NEPTUNE::d_rho_d_p_h,xdrhodp);
+      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",NEPTUNE::d_rho_d_h_p,xdrhodh);
+      outph[10]=EOS_Field("dtdh","d_T_d_h_p",NEPTUNE::d_T_d_h_p,xdtdh);
+      outph[11]=EOS_Field("g","g",NEPTUNE::g,xg);
+      outph[12]=EOS_Field("f","f",NEPTUNE::f,xf);
+      outph[13]=EOS_Field("pr","pr",NEPTUNE::pr,xpr);
+      outph[14]=EOS_Field("cv","cv",NEPTUNE::cv,xcv);
+      outph[15]=EOS_Field("beta","beta",NEPTUNE::beta,xbeta);
 
       cr=refprop9l.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -583,11 +583,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s",NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xhout);
           
       cr=refprop9l.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -617,8 +617,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xrholsat(n);

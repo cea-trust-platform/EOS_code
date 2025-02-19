@@ -162,12 +162,12 @@ int main()
       for (int i=1; i<n ; i++)
 	  p_i[i]=p_i[i-1]+del_p;
 
-      EOS_Field h_f("h","h",h_i);
-      EOS_Field p_f("p","p",p_i);
-      EOS_Field cp_f_ipp("cp","cp",cp_ipp);
-      EOS_Field cp_f_ipp_r("cp","cp",cp_ipp_r);
-      EOS_Field cp_f_ipp_n("cp","cp",cp_ipp_n);
-      EOS_Field cp_f_eos("cp","cp",cp_eos);
+      EOS_Field h_f("h","h",NEPTUNE::h,h_i);
+      EOS_Field p_f("p","p",NEPTUNE::p,p_i);
+      EOS_Field cp_f_ipp("cp","cp",NEPTUNE::cp,cp_ipp);
+      EOS_Field cp_f_ipp_r("cp","cp",NEPTUNE::cp,cp_ipp_r);
+      EOS_Field cp_f_ipp_n("cp","cp",NEPTUNE::cp,cp_ipp_n);
+      EOS_Field cp_f_eos("cp","cp",NEPTUNE::cp,cp_eos);
       
       AString med_file = "sans_raffinement_";
       med_file+=methodes[m];
@@ -243,8 +243,8 @@ int main()
 	}
       }
       
-      EOS_Field p_f("p","p",p_i);
-      EOS_Field h_f("h","h",h_i);
+      EOS_Field p_f("p","p",NEPTUNE::p,p_i);
+      EOS_Field h_f("h","h",NEPTUNE::h,h_i);
       
      
       EOS_Fields input(2);
@@ -252,8 +252,8 @@ int main()
       input[1]=h_f;
       
       
-      EOS_Field output_ipp("T", "T", T_ipp);
-      EOS_Field output_eos("T", "T", T_eos);
+      EOS_Field output_ipp("T", "T",NEPTUNE::T, T_ipp);
+      EOS_Field output_eos("T", "T",NEPTUNE::T, T_eos);
       
       ArrOfInt ierr_ipp(n);
       ArrOfInt ierr_eos(n);

@@ -46,9 +46,9 @@ void F77NAME(f_compute_h_pt)(int& p, int& T, int& h)
   assert(xT.size()==sz);
   assert(xh.size()==sz);
  
-  EOS_Field pres("pressure","p",xp);
-  EOS_Field temp("temperature","T",xT);
-  EOS_Field enthal("enthalpy","h",xh);
+  EOS_Field pres("pressure","p", NEPTUNE::p,xp);
+  EOS_Field temp("temperature","T", NEPTUNE::T,xT);
+  EOS_Field enthal("enthalpy","h", NEPTUNE::h,xh);
 
   ArrOfInt ierr(sz);
   EOS_Error_Field err(ierr);
@@ -88,13 +88,13 @@ void F77NAME(f_compute_fields_ph)(int& p, int& h, int& T, int& cp)
   
   int nin=2;
   EOS_Fields input(nin);
-  input[0]=EOS_Field("pressure","p",xp);
-  input[1]=EOS_Field("enthalpy","h",xh);
+  input[0]=EOS_Field("pressure","p", NEPTUNE::p,xp);
+  input[1]=EOS_Field("enthalpy","h", NEPTUNE::h,xh);
 
   int nout=2;
   EOS_Fields output(nout);
-  output[0]=EOS_Field("temperature","T",xT);
-  output[1]=EOS_Field("cp","cp",xcp);  
+  output[0]=EOS_Field("temperature","T", NEPTUNE::T,xT);
+  output[1]=EOS_Field("cp","cp", NEPTUNE::cp,xcp);  
   
   ArrOfInt ierr(sz);
   EOS_Error_Field err(ierr);
