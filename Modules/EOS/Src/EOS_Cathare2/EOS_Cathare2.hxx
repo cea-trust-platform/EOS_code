@@ -153,6 +153,11 @@ namespace NEPTUNE_EOS
     EOS_Error compute_Psat(const char* const property_name, double in, double& out) const ;
     EOS_Error compute_Tsat(const char* const property_name, double in, double& out) const ;
 
+    EOS_Error compute_Ph(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
+    EOS_Error compute_PT(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
+    EOS_Error compute_Psat(const char* const property_name, const int property_number, double in, double& out) const ;
+    EOS_Error compute_Tsat(const char* const property_name, const int property_number, double in, double& out) const ;
+
     //General fluid properties
     //!  p at critical point
     virtual EOS_Internal_Error get_p_crit(double&) const;

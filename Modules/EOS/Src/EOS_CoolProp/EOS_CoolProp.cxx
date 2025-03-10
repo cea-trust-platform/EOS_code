@@ -757,12 +757,22 @@ namespace NEPTUNE_EOS
   EOS_CoolProp::compute_Ph(const char* const property_name,
                            double in1, double in2, double& out) const
   {
+    const int property_number = gen_property_number(property_name);
+    return EOS_CoolProp::compute_Ph(property_name,property_number,in1,in2,out);
+  }
+  
+  EOS_Error
+  EOS_CoolProp::compute_Ph(const char* const property_name,
+                           const int property_number,
+                           double in1, double in2, double& out) const
+  {
+    
     int ierr;
     EOS_Error er;
 
     EOS_Field fP("P", "P",NEPTUNE::p, 1, &in1);
     EOS_Field fh("h", "h",NEPTUNE::h, 1, &in2);
-    EOS_Field fout(property_name,property_name,1,&out);//TODO: eos_strcp 
+    EOS_Field fout(property_name,property_name,property_number,1,&out);
     EOS_Error_Field ferr(1, &ierr);
 
     er = compute(fP, fh, fout, ferr);
@@ -774,12 +784,21 @@ namespace NEPTUNE_EOS
   EOS_CoolProp::compute_PT(const char* const property_name,
                            double in1, double in2, double& out) const
   {
+    const int property_number = gen_property_number(property_name);
+    return EOS_CoolProp::compute_PT(property_name,property_number,in1,in2,out);
+  }
+
+  EOS_Error
+  EOS_CoolProp::compute_PT(const char* const property_name,
+                           const int property_number,
+                           double in1, double in2, double& out) const
+  {
     int ierr;
     EOS_Error er;
 
     EOS_Field fP("P", "P",NEPTUNE::p, 1, &in1);
     EOS_Field fT("T", "T",NEPTUNE::T, 1, &in2);
-    EOS_Field fout(property_name,property_name,1,&out); //TODO: eos_strcp 
+    EOS_Field fout(property_name,property_name,property_number,1,&out); 
     EOS_Error_Field ferr(1, &ierr);
 
     er = compute(fP, fT, fout, ferr);

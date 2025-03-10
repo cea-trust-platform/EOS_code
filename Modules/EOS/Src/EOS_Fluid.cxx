@@ -1132,6 +1132,15 @@ namespace NEPTUNE
                                         double& x) const
   { EOS_thermprop prop = nam2num_thermprop(property_name) ;
 
+    return EOS_Fluid::compute(property_name,prop,p,h,x);
+  }
+
+EOS_Internal_Error EOS_Fluid::compute(const char* const property_name,
+                                      const int prop,
+                                        double p,
+                                        double h,
+                                        double& x) const
+  { 
     switch(prop)
        { // Thermodynamic Properties
          case NEPTUNE::T              :  return compute_T_ph(p, h, x)            ;
@@ -1209,7 +1218,14 @@ namespace NEPTUNE
                                         double p,
                                         double& x) const
   { EOS_saturprop propsat = nam2num_saturprop(property_name) ;
+    return EOS_Fluid::compute(property_name,propsat,p,x);
+  }
 
+    EOS_Internal_Error EOS_Fluid::compute(const char* const property_name,
+                                        const int propsat, 
+                                        double p,
+                                        double& x) const
+  { 
     switch(propsat)
       { case NEPTUNE::T_sat            :  return compute_T_sat_p(p, x)           ;
         case NEPTUNE::rho_l_sat        :  return compute_rho_l_sat_p(p, x)       ;
@@ -1234,11 +1250,19 @@ namespace NEPTUNE
 
   //
   EOS_Internal_Error EOS_Fluid::compute_Ph(const char* const property_name,
-                                           double in1, double in2, double& out) const
+                                           double in1, double in2, double& out) const 
+  { 
+    const int property_number = gen_property_number(property_name);
+    return compute_Ph(property_name,property_number,in1,in2,out);
+  }
+
+    EOS_Internal_Error EOS_Fluid::compute_Ph(const char* const property_name,
+                                             const int property_number,
+                                           double in1, double in2, double& out) const 
   { int err_data[1]  ;
     EOS_Field fP("P","P",NEPTUNE::p,1,&in1) ;
     EOS_Field fh("h","h",NEPTUNE::h,1,&in2) ;
-    EOS_Field fout(property_name,property_name,1,&out) ; //TODO: eos_strcp 
+    EOS_Field fout(property_name,property_name,property_number,1,&out) ; 
     EOS_Error_Field ferr(1,err_data) ;
 
     compute(fP, fh, fout, ferr) ;
@@ -1247,10 +1271,19 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::compute_PT(const char* const property_name,
                                            double in1, double in2, double& out) const
-  { int err_data[1]  ;
+  { 
+    const int property_number = gen_property_number(property_name);
+    return compute_PT(property_name,property_number,in1,in2,out);
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_PT(const char* const property_name,
+                                           const int property_number,
+                                           double in1, double in2, double& out) const
+  { 
+    int err_data[1]  ;
     EOS_Field fP("P","P",NEPTUNE::p,1,&in1) ;
     EOS_Field fT("T","T",NEPTUNE::T,1,&in2) ;
-    EOS_Field fout(property_name,property_name,1,&out) ; //TODO: eos_strcp 
+    EOS_Field fout(property_name,property_name,property_number,1,&out) ; 
     EOS_Error_Field ferr(1,err_data) ;
 
     compute(fP, fT, fout, ferr) ;
@@ -1259,9 +1292,17 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::compute_Psat(const char* const property_name,
                                              double in, double& out) const
+  {
+    const int property_number = gen_property_number(property_name);
+    return compute_Psat(property_name,property_number,in,out);
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_Psat(const char* const property_name,
+                                             const int property_number,
+                                             double in, double& out) const
   { int err_data[1]  ;
     EOS_Field fP("Psat","Psat",NEPTUNE::p_sat,1,&in) ;
-    EOS_Field fout(property_name,property_name,1,&out) ; //TODO: eos_strcp 
+    EOS_Field fout(property_name,property_name,property_number,1,&out) ; 
     EOS_Error_Field ferr(1,err_data) ;
 
     compute(fP, fout, ferr) ;
@@ -1270,9 +1311,17 @@ namespace NEPTUNE
 
   EOS_Internal_Error EOS_Fluid::compute_Tsat(const char* const property_name,
                                              double in, double& out) const
+  { 
+    const int property_number = gen_property_number(property_name);
+    return compute_Tsat(property_name,property_number,in,out);
+  }
+
+    EOS_Internal_Error EOS_Fluid::compute_Tsat(const char* const property_name,
+                                             const int property_number,
+                                             double in, double& out) const
   { int err_data[1]  ;
     EOS_Field fT("Tsat","Tsat",NEPTUNE::T_sat,1,&in) ;
-    EOS_Field fout(property_name,property_name,1,&out) ;
+    EOS_Field fout(property_name,property_name,property_number,1,&out) ;
     EOS_Error_Field ferr(1,err_data) ;
 
     compute(fT, fout, ferr) ;

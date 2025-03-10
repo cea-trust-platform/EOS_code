@@ -184,8 +184,22 @@ namespace NEPTUNE
   } 
 
   inline EOS_Error EOS::compute(const char* const property_name,
+                                const int property_number,
+                                double p, double h, double& x) const
+  { EOS_Internal_Error err = fluid_model_obj.compute(property_name,property_number, p, h, x) ;
+    RETURN_ERROR(err, p, h, x) ;
+  } 
+
+  inline EOS_Error EOS::compute(const char* const property_name,
                                 double p, double& x) const
   { EOS_Internal_Error err = fluid_model_obj.compute(property_name, p, x) ;
+    RETURN_ERROR(err, p, 0.e0, x) ;
+  }
+
+  inline EOS_Error EOS::compute(const char* const property_name,
+                                const int property_number,
+                                double p, double& x) const
+  { EOS_Internal_Error err = fluid_model_obj.compute(property_name,property_number, p, x) ;
     RETURN_ERROR(err, p, 0.e0, x) ;
   }
 
@@ -194,10 +208,23 @@ namespace NEPTUNE
   { EOS_Internal_Error err = fluid_model_obj.compute_Ph(property_name, in1, in2, out) ;
     RETURN_ERROR(err, in1, in2, out) ;
   }
+  inline EOS_Error EOS::compute_Ph(const char* const property_name, 
+                                   const int property_number,
+                                   double in1, double in2, double& out) const
+  { EOS_Internal_Error err = fluid_model_obj.compute_Ph(property_name,property_number, in1, in2, out) ;
+    RETURN_ERROR(err, in1, in2, out) ;
+  }
 
   inline EOS_Error EOS::compute_PT(const char* const property_name, 
                                    double in1, double in2, double& out) const
   { EOS_Internal_Error err = fluid_model_obj.compute_PT(property_name, in1, in2, out) ;
+    RETURN_ERROR(err, in1, in2, out) ;
+  }
+  
+  inline EOS_Error EOS::compute_PT(const char* const property_name,  
+                                   const int property_number,
+                                   double in1, double in2, double& out) const
+  { EOS_Internal_Error err = fluid_model_obj.compute_PT(property_name, property_number, in1, in2, out) ;
     RETURN_ERROR(err, in1, in2, out) ;
   }
 
@@ -207,9 +234,23 @@ namespace NEPTUNE
     RETURN_ERROR(err, in, 0.e0, out) ;
   }
 
+  inline EOS_Error EOS::compute_Psat(const char* const property_name,  
+                                   const int property_number,
+                                  double in, double& out) const
+  { EOS_Internal_Error err = fluid_model_obj.compute_Psat(property_name,property_number, in, out) ;
+    RETURN_ERROR(err, in, 0.e0, out) ;
+  }
+
   inline EOS_Error EOS::compute_Tsat(const char* const property_name, 
                                   double in, double& out) const
   { EOS_Internal_Error err = fluid_model_obj.compute_Tsat(property_name, in, out) ;
+    RETURN_ERROR(err, in, 0.e0, out) ;
+  }
+
+  inline EOS_Error EOS::compute_Tsat(const char* const property_name,   
+                                   const int property_number,
+                                  double in, double& out) const
+  { EOS_Internal_Error err = fluid_model_obj.compute_Tsat(property_name,property_number, in, out) ;
     RETURN_ERROR(err, in, 0.e0, out) ;
   }
 

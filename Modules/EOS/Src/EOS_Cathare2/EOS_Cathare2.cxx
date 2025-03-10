@@ -273,50 +273,78 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Error EOS_Cathare2::compute_Ph(const char* const property_name, double in1, double in2, double& out) const
+  { 
+    const int property_number = gen_property_number(property_name);
+
+    return compute_Ph(property_name,property_number,in1,in2,out);
+  }
+
+    EOS_Error EOS_Cathare2::compute_Ph(const char* const property_name, const int property_number, double in1, double in2, double& out) const
   { int ierr ;
     EOS_Error er ;
 
     EOS_Field fin1("P", "P",NEPTUNE::p, 1, &in1) ;
     EOS_Field fin2("h", "h",NEPTUNE::h, 1, &in2) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
+    EOS_Field fout(property_name, property_name, 1, &out) ;
 
     er = compute(fin1, fin2, fout, ferr) ;
     return er ;
   }
 
   EOS_Error EOS_Cathare2::compute_PT(const char* const property_name, double in1, double in2, double& out) const
+  { 
+    const int property_number = gen_property_number(property_name);
+
+    return compute_PT(property_name,property_number,in1,in2,out);
+  }
+
+    EOS_Error EOS_Cathare2::compute_PT(const char* const property_name, const int property_number, double in1, double in2, double& out) const
   { int ierr ;
     EOS_Error er ;
 
     EOS_Field fin1("P", "P",NEPTUNE::p, 1, &in1) ;
     EOS_Field fin2("T", "T",NEPTUNE::T, 1, &in2) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
+    EOS_Field fout(property_name, property_name, property_number, 1, &out) ; 
 
     er = compute(fin1, fin2, fout, ferr) ;
     return er ;
   }
 
   EOS_Error EOS_Cathare2::compute_Psat(const char* const property_name, double in, double& out) const
+  { 
+    const int property_number = gen_property_number(property_name);
+
+    return EOS_Cathare2::compute_Psat(property_name,property_number,in,out) ;
+  }
+
+  EOS_Error EOS_Cathare2::compute_Psat(const char* const property_name,const int property_number, double in, double& out) const
   { int ierr ;
     EOS_Error er ;
 
     EOS_Field fin("Psat", "Psat",NEPTUNE::p_sat, 1, &in) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
+    EOS_Field fout(property_name, property_name,property_number, 1, &out) ; 
 
     er = compute(fin, fout, ferr) ;
     return er ;
   }
 
   EOS_Error EOS_Cathare2::compute_Tsat(const char* const property_name, double in, double& out) const
+  { 
+    const int property_number = gen_property_number(property_name);
+
+    return compute_Tsat(property_name,property_number,in,out);
+  }
+
+  EOS_Error EOS_Cathare2::compute_Tsat(const char* const property_name,const int property_number, double in, double& out) const
   { int ierr ;
     EOS_Error er ;
 
     EOS_Field fin("Tsat", "Tsat",NEPTUNE::T_sat, 1, &in) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
+    EOS_Field fout(property_name, property_name,property_number, 1, &out) ; 
 
     er = compute(fin, fout, ferr) ;
     return er ;

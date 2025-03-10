@@ -114,6 +114,8 @@ namespace NEPTUNE_EOS
     //! Global methods
     EOS_Error compute_Ph(const char* const property_name, double in1, double in2, double& out) const ;
     EOS_Error compute_PT(const char* const property_name, double in1, double in2, double& out) const ;
+    EOS_Error compute_Ph(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
+    EOS_Error compute_PT(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
     //Saturation methods
     // T_sat(P)
     EOS_Internal_Error compute_T_sat_p(double p, double& T_sat) const ;
