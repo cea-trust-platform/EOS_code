@@ -762,7 +762,7 @@ namespace NEPTUNE_EOS
 
     EOS_Field fP("P", "P",NEPTUNE::p, 1, &in1);
     EOS_Field fh("h", "h",NEPTUNE::h, 1, &in2);
-    EOS_Field fout(property_name,property_name,1,&out);
+    EOS_Field fout(property_name,property_name,1,&out);//TODO: eos_strcp 
     EOS_Error_Field ferr(1, &ierr);
 
     er = compute(fP, fh, fout, ferr);
@@ -779,7 +779,7 @@ namespace NEPTUNE_EOS
 
     EOS_Field fP("P", "P",NEPTUNE::p, 1, &in1);
     EOS_Field fT("T", "T",NEPTUNE::T, 1, &in2);
-    EOS_Field fout(property_name,property_name,1,&out);
+    EOS_Field fout(property_name,property_name,1,&out); //TODO: eos_strcp 
     EOS_Error_Field ferr(1, &ierr);
 
     er = compute(fP, fT, fout, ferr);

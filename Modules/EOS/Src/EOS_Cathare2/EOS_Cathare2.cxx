@@ -279,7 +279,7 @@ namespace NEPTUNE_EOS
     EOS_Field fin1("P", "P",NEPTUNE::p, 1, &in1) ;
     EOS_Field fin2("h", "h",NEPTUNE::h, 1, &in2) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ;
+    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
 
     er = compute(fin1, fin2, fout, ferr) ;
     return er ;
@@ -292,7 +292,7 @@ namespace NEPTUNE_EOS
     EOS_Field fin1("P", "P",NEPTUNE::p, 1, &in1) ;
     EOS_Field fin2("T", "T",NEPTUNE::T, 1, &in2) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ;
+    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
 
     er = compute(fin1, fin2, fout, ferr) ;
     return er ;
@@ -304,7 +304,7 @@ namespace NEPTUNE_EOS
 
     EOS_Field fin("Psat", "Psat",NEPTUNE::p_sat, 1, &in) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ;
+    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
 
     er = compute(fin, fout, ferr) ;
     return er ;
@@ -316,7 +316,7 @@ namespace NEPTUNE_EOS
 
     EOS_Field fin("Tsat", "Tsat",NEPTUNE::T_sat, 1, &in) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ;
+    EOS_Field fout(property_name, property_name, 1, &out) ; //TODO: eos_strcp 
 
     er = compute(fin, fout, ferr) ;
     return er ;

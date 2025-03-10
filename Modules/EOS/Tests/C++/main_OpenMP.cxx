@@ -122,7 +122,7 @@ void test_field_1parameter(EOS &eos, const char *valIn, int iSample, bool dump, 
 
   ArrOfDouble array(1);
   array[0] = 1e5 + iSample * 3e1;
-  EOS_Field fieldIn(valIn, valIn, array);
+  EOS_Field fieldIn(valIn, valIn, array); //TODO: eos_strcp 
 
   ArrOfDouble result(1);
   ArrOfInt errors(1);
@@ -136,7 +136,7 @@ void test_field_1parameter(EOS &eos, const char *valIn, int iSample, bool dump, 
 
   for (auto p : saturprop_r)
   {
-    EOS_Field fieldOut(p.c_str(), p.c_str(), result);
+    EOS_Field fieldOut(p.c_str(), p.c_str(), result);//TODO: eos_strcp 
 
     // Test field function
     eos.compute(fieldIn, fieldOut, err_field);
@@ -180,8 +180,8 @@ void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, in
   if (strcmp(valIn2, "h") == 0)
     array2[0] = 210000. + iSample * 100;
 
-  EOS_Field fieldIn1(valIn1, valIn1, array1);
-  EOS_Field fieldIn2(valIn2, valIn2, array2);
+  EOS_Field fieldIn1(valIn1, valIn1, array1);//TODO: eos_strcp 
+  EOS_Field fieldIn2(valIn2, valIn2, array2);//TODO: eos_strcp 
 
   EOS_Error_Field err_field(errors);
 
@@ -194,7 +194,7 @@ void test_field_2parameters(EOS &eos, const char *valIn1, const char *valIn2, in
 
   for (auto p : thermprop_r)
   {
-    EOS_Field fieldOut(p.c_str(), p.c_str(), result);
+    EOS_Field fieldOut(p.c_str(), p.c_str(), result);//TODO: eos_strcp 
     eos.compute(fieldIn1, fieldIn2, fieldOut, err_field);
     NEPTUNE::EOS_Internal_Error err = err_field[0];
 

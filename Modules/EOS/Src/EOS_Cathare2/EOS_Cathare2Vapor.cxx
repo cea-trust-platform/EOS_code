@@ -141,7 +141,7 @@ namespace NEPTUNE_EOS
          EOS_Fields Ci(np) ; // proportions of vapor and incondensables gases with size=1
          double xci[5] = {0.e0, 0.e0, 0.e0, 0.e0, 0.e0} ;
          for (int i=0; i<np; i++)
-            Ci[i] = EOS_Field("Ci", C[i].get_property_name().aschar(), 1, &xci[i]) ;
+            Ci[i] = EOS_Field("Ci", C[i].get_property_name().aschar(),C[i].get_property(), 1, &xci[i]) ;
          
          for (int j=0; j<nscai; j++)
             { for (int i=0; i<np; i++)

@@ -2155,7 +2155,7 @@ namespace CATHARE2
     assert (nsca > 0) ; 
     if (map_eos_field(p, phase) == 0)    return EOS_Error::error ;
     ArrOfDouble xtin = t.get_data() ;                              // Replace
-    EOS_Field tin("tin",t.get_property_name().aschar(),xtin) ;     // if (map_eos_field(t, phase))  return EOS_Error::error ;
+    EOS_Field tin("tin",t.get_property_name().aschar(),t.get_property(),xtin) ;     // if (map_eos_field(t, phase))  return EOS_Error::error ;
     if (map_eos_field(tin, phase) == 0)  return EOS_Error::error ; //
     int size_out = out.size() ;
     vector<int> existprop_fields(size_out) ;

@@ -145,7 +145,7 @@ namespace NEPTUNE
               const int sz = p->size() ;
 
               ArrOfDouble h_data(sz) ;
-              EOS_Field h("h", "h", h_data) ;
+              EOS_Field h("h", "h",NEPTUNE::h, h_data) ;
               ArrOfInt err_data(sz) ;
               EOS_Error_Field err(err_data) ;
               for (int i=0; i<sz; i++)
@@ -1238,7 +1238,7 @@ namespace NEPTUNE
   { int err_data[1]  ;
     EOS_Field fP("P","P",NEPTUNE::p,1,&in1) ;
     EOS_Field fh("h","h",NEPTUNE::h,1,&in2) ;
-    EOS_Field fout(property_name,property_name,1,&out) ;
+    EOS_Field fout(property_name,property_name,1,&out) ; //TODO: eos_strcp 
     EOS_Error_Field ferr(1,err_data) ;
 
     compute(fP, fh, fout, ferr) ;
@@ -1250,7 +1250,7 @@ namespace NEPTUNE
   { int err_data[1]  ;
     EOS_Field fP("P","P",NEPTUNE::p,1,&in1) ;
     EOS_Field fT("T","T",NEPTUNE::T,1,&in2) ;
-    EOS_Field fout(property_name,property_name,1,&out) ;
+    EOS_Field fout(property_name,property_name,1,&out) ; //TODO: eos_strcp 
     EOS_Error_Field ferr(1,err_data) ;
 
     compute(fP, fT, fout, ferr) ;
@@ -1261,7 +1261,7 @@ namespace NEPTUNE
                                              double in, double& out) const
   { int err_data[1]  ;
     EOS_Field fP("Psat","Psat",NEPTUNE::p_sat,1,&in) ;
-    EOS_Field fout(property_name,property_name,1,&out) ;
+    EOS_Field fout(property_name,property_name,1,&out) ; //TODO: eos_strcp 
     EOS_Error_Field ferr(1,err_data) ;
 
     compute(fP, fout, ferr) ;

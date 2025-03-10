@@ -188,8 +188,8 @@ void test_features(EOS & eos)
     while (**ptr1 != 0) 
        { for (int i=0; i<stz; i++)
             { ptr_satp = saturprop_r[i].c_str() ; 
-              EOS_Field field1(*ptr1, *ptr1, array1);
-              EOS_Field field3(ptr_satp, ptr_satp, result);
+              EOS_Field field1(*ptr1, *ptr1, array1); //TODO: eos_strcp 
+              EOS_Field field3(ptr_satp, ptr_satp, result); //TODO: eos_strcp 
 
               array1[0] = 1e5 ;
               // Test field function
@@ -210,9 +210,9 @@ void test_features(EOS & eos)
          while (**ptr2 != 0) 
             { for (int i=0; i<stz; i++)
                 { ptr_thep = thermprop_r[i].c_str() ; 
-                  EOS_Field field1(*ptr1, *ptr1, array1) ;
-                  EOS_Field field2(*ptr2, *ptr2, array2) ;
-                  EOS_Field field3(ptr_thep, ptr_thep, result) ;
+                  EOS_Field field1(*ptr1, *ptr1, array1) ; //TODO: eos_strcp 
+                  EOS_Field field2(*ptr2, *ptr2, array2) ; //TODO: eos_strcp 
+                  EOS_Field field3(ptr_thep, ptr_thep, result) ; //TODO: eos_strcp 
 
                   array1[0] = 1.5e5 ;
                   array2[0] = 350.  ;
@@ -423,7 +423,7 @@ int main()
     ArrOfDouble xdmudp_pt(n);
     ArrOfDouble xdmudh_pt(n);
     
-    EOS_Field T("Temperature","T",xt);
+    EOS_Field T("Temperature","T",NEPTUNE::T,xt);
     for(int i=0; i<n; i++)
       xt[i]=tref;
     xt[0]=tref;
@@ -584,7 +584,7 @@ int main()
     outcph[0]=EOS_Field("lambda","lambda",NEPTUNE::lambda,xlambda);
     outcph[1]=EOS_Field("vitesse","w",NEPTUNE::w,xw);
     //outcph[2]=EOS_Field("dcdh","d_w_d_h_p",xdcdh);
-    outcph[2]=EOS_Field("vitesse","w",xdcdh);
+    outcph[2]=EOS_Field("vitesse","w",NEPTUNE::w,xdcdh);
     cr=fluid.compute(P,hin,outcph,err);
     cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
     for(int i=0; i<ncout; i++)
@@ -1356,7 +1356,7 @@ int main()
     ArrOfDouble xrhomix(n);
     EOS_Fields outph(noutph);
     outph[0]=enthal;
-    outph[1]=EOS_Field("xrhomix","rho",xrhomix);
+    outph[1]=EOS_Field("xrhomix","rho",NEPTUNE::rho,xrhomix);
 
     cr=mixing.compute(inph,outph,err);
     cout << endl<< "mixing fields fields [cr=" << cr <<"]"<< endl;
@@ -2179,7 +2179,7 @@ int main()
         outph[15] = EOS_Field("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdadh);
         outph[16] = EOS_Field("sigma", "sigma", NEPTUNE::sigma, xsigma);
     } else {
-        outph[15] = EOS_Field("null", "d_lambda_d_h", xnull);
+        outph[15] = EOS_Field("null", "d_lambda_d_h", xnull); // This should cause an error, intentionally
         outph[16] = EOS_Field("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdadh);
     }
 

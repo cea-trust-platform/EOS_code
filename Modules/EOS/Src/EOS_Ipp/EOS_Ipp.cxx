@@ -631,7 +631,7 @@ namespace NEPTUNE_EOS
       {
         ArrOfDouble xval(nbcomp);
         all_prop_val[nprop_all] = xval;
-        EOS_Field res(name.aschar(), name.aschar(), all_prop_val[nprop_all]);
+        EOS_Field res(name.aschar(), name.aschar(), all_prop_val[nprop_all]); //TODO: eos_strcp hard
         errM = med.get_Champ_Noeud(name, res);
         if (errM != EOS_Error::good)
         {
@@ -770,7 +770,7 @@ namespace NEPTUNE_EOS
         {
           ArrOfDouble xval(nbcomp);
           all_prop_val.push_back(xval);
-          EOS_Field res(namecov, namecov, all_prop_val[all_prop_val.size() - 1]);
+          EOS_Field res(namecov, namecov, all_prop_val[all_prop_val.size() - 1]); //TODO: eos_strcp hard
 
           med.get_Champ_Noeud(name, res);
           if (m_ass == "ph_domain")
@@ -1480,9 +1480,9 @@ namespace NEPTUNE_EOS
     ArrOfDouble ah_bary(1);
     EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
     EOS_Field h_bary("h", "h",NEPTUNE::h, ah_bary);
-    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
+    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary); //TODO: eos_strcp hard
 
-    EOS_Field rf(propchar, propchar, ar);
+    EOS_Field rf(propchar, propchar, ar); //TODO: eos_strcp hard
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1569,8 +1569,8 @@ namespace NEPTUNE_EOS
     EOS_Field pf("P", "p",NEPTUNE::p, ap);
     ArrOfDouble ap_bary(1);
     EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
-    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
-    EOS_Field rf(propchar, propchar, ar);
+    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary); //TODO: eos_strcp hard
+    EOS_Field rf(propchar, propchar, ar); //TODO: eos_strcp hard
     values[0] = pf;
     values[1] = rf;
     std::cout << "Le nombre de noeuds est " << nodes_sat[0].size() << endl;
@@ -1680,7 +1680,7 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(4);
     EOS_Field pf("P", "p",NEPTUNE::p, ap);
     EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(prop.aschar(), prop.aschar(), ar);
+    EOS_Field rf(prop.aschar(), prop.aschar(), ar); //TODO: eos_strcp hard
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1737,7 +1737,7 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(4);
     EOS_Field pf("P", "p",NEPTUNE::p, ap);
     EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(prop.aschar(), prop.aschar(), ar);
+    EOS_Field rf(prop.aschar(), prop.aschar(), ar); //TODO: eos_strcp hard
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1790,7 +1790,7 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(4);
     EOS_Field pf("P", "p",NEPTUNE::p, ap);
     EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
+    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); //TODO: eos_strcp hard
     // EOS_Field rf(prop,prop,ar)
     values[0] = pf;
     values[1] = hf;
@@ -1822,7 +1822,7 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(2);
     EOS_Field pf("P", "p",NEPTUNE::p, ap);
     AString name_prop = n_prop->first;
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
+    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); //TODO: eos_strcp  hard
 
     values[0] = pf;
     values[1] = rf;

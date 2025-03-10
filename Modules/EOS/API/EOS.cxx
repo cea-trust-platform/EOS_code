@@ -469,7 +469,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
        ArrOfInt    errors(1) ;
        array1[0] = vprop1 ;
        array2[0] = vprop2 ;
-       EOS_Field field1("TProp1", pprop1, array1) ;
+       EOS_Field field1("TProp1", pprop1, array1) ; // Hard to get rid of eost_strcp
        EOS_Field field2("TProp2", pprop2, array2) ;
        EOS_Error_Field err_field(errors) ;
 
