@@ -286,7 +286,7 @@ namespace NEPTUNE_EOS
     EOS_Field fin1("P", "P",NEPTUNE::p, 1, &in1) ;
     EOS_Field fin2("h", "h",NEPTUNE::h, 1, &in2) ;
     EOS_Error_Field ferr(1, &ierr) ;
-    EOS_Field fout(property_name, property_name, 1, &out) ;
+    EOS_Field fout(property_name, property_name, property_number, 1, &out) ;
 
     er = compute(fin1, fin2, fout, ferr) ;
     return er ;

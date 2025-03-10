@@ -132,6 +132,87 @@ const char *list_prop2[] = {
                                       t_saturprop_r + sizeof(t_saturprop_r) / sizeof(string) ) ;
 #endif
 
+static EOS_Property n_list_prop1[] = {
+    NEPTUNE::p};
+static EOS_Property n_list_prop2[] = {
+    NEPTUNE::h,
+    NEPTUNE::T};
+
+static vector<EOS_Property> n_thermprop_r =
+    {NEPTUNE::T,
+     NEPTUNE::rho,
+     NEPTUNE::u,
+     NEPTUNE::s,
+     NEPTUNE::mu,
+     NEPTUNE::lambda,
+     NEPTUNE::cp,
+     NEPTUNE::sigma,
+     NEPTUNE::w,
+     NEPTUNE::g,
+     NEPTUNE::f,
+     NEPTUNE::pr,
+     NEPTUNE::beta,
+     NEPTUNE::gamma,
+     NEPTUNE::d_T_d_p_h,
+     NEPTUNE::d_T_d_h_p,
+     NEPTUNE::d_rho_d_p_h,
+     NEPTUNE::d_rho_d_h_p,
+     NEPTUNE::d_u_d_p_h,
+     NEPTUNE::d_u_d_h_p,
+     NEPTUNE::d_s_d_p_h,
+     NEPTUNE::d_s_d_h_p,
+     NEPTUNE::d_mu_d_p_h,
+     NEPTUNE::d_mu_d_h_p,
+     NEPTUNE::d_lambda_d_p_h,
+     NEPTUNE::d_lambda_d_h_p,
+     NEPTUNE::d_cp_d_p_h,
+     NEPTUNE::d_cp_d_h_p,
+     NEPTUNE::d_sigma_d_p_h,
+     NEPTUNE::d_sigma_d_h_p,
+     NEPTUNE::d_w_d_p_h,
+     NEPTUNE::d_w_d_h_p,
+     NEPTUNE::d_g_d_p_h,
+     NEPTUNE::d_g_d_h_p,
+     NEPTUNE::d_f_d_p_h,
+     NEPTUNE::d_f_d_h_p,
+     NEPTUNE::d_pr_d_p_h,
+     NEPTUNE::d_pr_d_h_p,
+     NEPTUNE::d_beta_d_p_h,
+     NEPTUNE::d_beta_d_h_p,
+     NEPTUNE::d_gamma_d_p_h,
+     NEPTUNE::d_gamma_d_h_p,
+     NEPTUNE::d_rho_d_T_p,
+     NEPTUNE::d_u_d_T_p,
+     NEPTUNE::d_s_d_T_p,
+     NEPTUNE::d_mu_d_T_p,
+     NEPTUNE::d_lambda_d_T_p,
+     NEPTUNE::d_cp_d_T_p,
+     NEPTUNE::d_sigma_d_T_p,
+     NEPTUNE::d_w_d_T_p,
+     NEPTUNE::d_g_d_T_p,
+     NEPTUNE::d_f_d_T_p,
+     NEPTUNE::d_pr_d_T_p,
+     NEPTUNE::d_beta_d_T_p,
+     NEPTUNE::d_gamma_d_T_p,
+     NEPTUNE::d_h_d_T_p,
+     NEPTUNE::d_h_d_p_T};
+
+static vector<EOS_Property> n_saturprop_r =
+    {NEPTUNE::rho_l_sat,
+     NEPTUNE::rho_v_sat,
+     NEPTUNE::h_l_sat,
+     NEPTUNE::h_v_sat,
+     NEPTUNE::cp_l_sat,
+     NEPTUNE::cp_v_sat,
+     NEPTUNE::T_sat,
+     NEPTUNE::d_rho_l_sat_d_p,
+     NEPTUNE::d_rho_v_sat_d_p,
+     NEPTUNE::d_h_l_sat_d_p,
+     NEPTUNE::d_h_v_sat_d_p,
+     NEPTUNE::d_cp_l_sat_d_p,
+     NEPTUNE::d_cp_v_sat_d_p,
+     NEPTUNE::d_T_sat_d_p,
+     NEPTUNE::d2_T_sat_d_p_d_p};
 
 
 
@@ -190,8 +271,8 @@ void test_features(EOS & eos)
     while (**ptr1 != 0) 
        { for (int i=0; i<stz; i++)
             { ptr_satp = saturprop_r[i].c_str() ; 
-              EOS_Field field1(*ptr1, *ptr1, array1);
-              EOS_Field field3(ptr_satp, ptr_satp, result);
+              EOS_Field field1(*ptr1, *ptr1, n_list_prop1[0], array1);
+              EOS_Field field3(ptr_satp, ptr_satp, n_saturprop_r[i], result);
 
               array1[0] = 1e5 ;
               // Test field function
@@ -208,13 +289,15 @@ void test_features(EOS & eos)
     int stz = thermprop_r.size() ;
     const char ** ptr1 = list_prop1 ;
     while (**ptr1 != 0) 
-       { const char ** ptr2 = list_prop2 ;
+       { int i1=0; 
+        const char ** ptr2 = list_prop2 ;
          while (**ptr2 != 0) 
-            { for (int i=0; i<stz; i++)
+            { int i2=0;
+              for (int i=0; i<stz; i++)
                 { ptr_thep = thermprop_r[i].c_str() ; 
-                  EOS_Field field1(*ptr1, *ptr1, array1) ;
-                  EOS_Field field2(*ptr2, *ptr2, array2) ;
-                  EOS_Field field3(ptr_thep, ptr_thep, result) ;
+                  EOS_Field field1(*ptr1, *ptr1, n_list_prop1[i1], array1) ;
+                  EOS_Field field2(*ptr2, *ptr2, n_list_prop2[i2], array2) ; 
+                  EOS_Field field3(ptr_thep, ptr_thep, n_thermprop_r[i], result) ;
 
                   array1[0] = 1.5e5 ;
                   array2[0] = 350.  ;
@@ -222,7 +305,9 @@ void test_features(EOS & eos)
                   features_status(eos, err_field[0], *ptr1, *ptr2, ptr_thep);
                 }
               ptr2++ ;
+              i2++;
             }
+         i1++;
          ptr1++ ;
        }
   }

@@ -1135,7 +1135,7 @@ namespace NEPTUNE
     return EOS_Fluid::compute(property_name,prop,p,h,x);
   }
 
-EOS_Internal_Error EOS_Fluid::compute(const char* const property_name,
+EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const property_name,
                                       const int prop,
                                         double p,
                                         double h,
@@ -1221,7 +1221,7 @@ EOS_Internal_Error EOS_Fluid::compute(const char* const property_name,
     return EOS_Fluid::compute(property_name,propsat,p,x);
   }
 
-    EOS_Internal_Error EOS_Fluid::compute(const char* const property_name,
+    EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]]const char* const property_name,
                                         const int propsat, 
                                         double p,
                                         double& x) const
