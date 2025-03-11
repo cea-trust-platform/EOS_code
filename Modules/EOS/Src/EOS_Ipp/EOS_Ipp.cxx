@@ -361,7 +361,7 @@ namespace NEPTUNE_EOS
         r2_val[prop][pts] = r[prop].get_data()[pts];
     // calcul de l'erreur pour chaque prop et pts et renvoie du max
     double err_ipp_rp = 0;
-    int propmax=0;
+    int propmax;
     if (err == EOS_Error::good && err2 == EOS_Error::good)
     {
       for (int prop = 0; prop < r.size(); prop++)
@@ -425,7 +425,7 @@ namespace NEPTUNE_EOS
         r2_val[prop][pts] = r[prop].get_data()[pts];
     // calcul de l'erreur pour chaque prop et pts et renvoie du max
     double err_ipp_rp = 0;
-    int propmax=0;
+    int propmax;
     for (int prop = 0; prop < r.size(); prop++)
     {
       double err_ipp_rp_prop = 0;
@@ -447,23 +447,20 @@ namespace NEPTUNE_EOS
                              EOS_Fields &r,
                              EOS_Error_Field &errfield) const
   {
-
     EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
-      if (err == EOS_Error::bad)
-      {
-
-        std::cout << "Le couple ph (" << pp.get_data()[0] << "," << hh.get_data()[0] << "), n'est pas dans le domaine d'interpolation" << std::endl;
-      }
+        std::cout << "Error detected : " << err << " ;";
+        std::cout << "for the pair (" << pp.get_data()[0] << "," << hh.get_data()[0] << ") " << std::endl;
+        //r.print_On(std::cout);
       if (obj_fluid == nullptr)
       {
-        std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() " << std::endl;
+        std::cerr << "Error: The interpolator fluid is not initialized. To continue the calculation, call the function init_model(). " << std::endl;
         return err;
       }
       err = obj_fluid->compute(pp, hh, r, errfield);
     }
-    errfield = EOS_Internal_Error::OK;
+    // errfield = EOS_Internal_Error::OK; 
     return err;
   }
 
@@ -471,18 +468,15 @@ namespace NEPTUNE_EOS
                              EOS_Fields &r,
                              EOS_Error_Field &errfield) const
   {
-
     EOS_Error err = EOS_Fluid::compute(p, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
-      if (err == EOS_Error::bad)
-      {
-
-        std::cout << "Le point p (" << p.get_data() << "), n'est pas dans le domaine d'interpolation" << std::endl;
-      }
+      std::cout <<" Erreur EOS : " << err; 
+      std::cout << "The point p= (" << p.get_data() << "), Did not produce a valid calculation. " << std::endl;
+      r.print_On(std::cout);
       if (obj_fluid == nullptr)
       {
-        std::cerr << "Erreur: le fluide de l'interpolateur n'est pas initialisé. Ajouter init_model() " << std::endl;
+        std::cerr << "Error: The interpolator fluid is not initialized. To continue the calculation, call the function init_model().  " << std::endl;
         return err;
       }
       err = obj_fluid->compute(p, r, errfield);
@@ -514,7 +508,7 @@ namespace NEPTUNE_EOS
       if (dim[i] == 1) // sat or spinodal
       {
         n_p_satlim.resize(nb_nodes);
-        EOS_Field pf("P", "p",NEPTUNE::p, n_p_satlim);
+        EOS_Field pf("P", "p", n_p_satlim);
 
         if (names[i] == "sat_domain") // saturation
         {
@@ -539,13 +533,13 @@ namespace NEPTUNE_EOS
           errM = med.get_nodes(names[i], dim[i], nodes_lim);
           if (errM != EOS_Error::good)
           {
-            cerr << "Error : EOS_Med::get_nodes: Error in reanding nodes of lim domain" << endl;
+            cerr << "Error : EOS_Med::get_nodes: Error in reading nodes of lim domain" << endl;
             return EOS_Error::error;
           }
           errM = med.get_Connectivity_1D(names[i], connect_lim);
           if (errM != EOS_Error::good)
           {
-            cerr << "Error : EOS_Med::get_nodes: Error in reanding connectivity nodes of lim domain" << endl;
+            cerr << "Error : EOS_Med::get_nodes: Error in reading connectivity nodes of lim domain" << endl;
             return EOS_Error::error;
           }
         }
@@ -562,8 +556,8 @@ namespace NEPTUNE_EOS
         n_p_ph.resize(nb_nodes);
         n_h_ph.resize(nb_nodes);
 
-        EOS_Field pf("P", "p",NEPTUNE::p, n_p_ph);
-        EOS_Field hf("h", "h",NEPTUNE::h, n_h_ph);
+        EOS_Field pf("P", "p", n_p_ph);
+        EOS_Field hf("h", "h", n_h_ph);
 
         nodes_ph[0] = pf;
         nodes_ph[1] = hf;
@@ -631,7 +625,7 @@ namespace NEPTUNE_EOS
       {
         ArrOfDouble xval(nbcomp);
         all_prop_val[nprop_all] = xval;
-        EOS_Field res(name.aschar(), name.aschar(), all_prop_val[nprop_all]); //TODO: eos_strcp hard
+        EOS_Field res(name.aschar(), name.aschar(), all_prop_val[nprop_all]);
         errM = med.get_Champ_Noeud(name, res);
         if (errM != EOS_Error::good)
         {
@@ -770,7 +764,7 @@ namespace NEPTUNE_EOS
         {
           ArrOfDouble xval(nbcomp);
           all_prop_val.push_back(xval);
-          EOS_Field res(namecov, namecov, all_prop_val[all_prop_val.size() - 1]); //TODO: eos_strcp hard
+          EOS_Field res(namecov, namecov, all_prop_val[all_prop_val.size() - 1]);
 
           med.get_Champ_Noeud(name, res);
           if (m_ass == "ph_domain")
@@ -1033,7 +1027,7 @@ namespace NEPTUNE_EOS
     return res;
   }
 
-  void EOS_Ipp::bilinear_interpolator(double p, double h, double &res) const
+ /* void EOS_Ipp::bilinear_interpolator(double p, double h, double &res) const
   {
 
     // nodes
@@ -1069,7 +1063,7 @@ namespace NEPTUNE_EOS
 
     res = (C1 * nodes[2][0]) + (C2 * nodes[2][1]) + (C3 * nodes[2][2]) + (C4 * nodes[2][3]);
   }
-
+*/
   double EOS_Ipp::bilinear_interpolator(double p, double h, EOS_Fields &cellval) const
   {
     // nodes
@@ -1096,12 +1090,12 @@ namespace NEPTUNE_EOS
     double C1, C2, C3, C4;
     double pcal, hcal;
 
-    pcal = (p - cellval[0][0]) / (cellval[0][2] - cellval[0][0]);
+    pcal = (p - cellval[0][0]) / (cellval[0][3] - cellval[0][0]);
     hcal = (h - cellval[1][0]) / (cellval[1][1] - cellval[1][0]);
 
-    C4 = pcal * hcal;
-    C3 = pcal - C4;
-    C2 = hcal - C4;
+    C3 = pcal * hcal;
+    C4 = pcal - C3;
+    C2 = hcal - C3;
     C1 = 1.e0 - pcal - C2;
 
     res = (C1 * cellval[2][0]) + (C2 * cellval[2][1]) + (C3 * cellval[2][2]) + (C4 * cellval[2][3]);
@@ -1474,15 +1468,15 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(4);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
+    EOS_Field pf("P", "p", ap);
+    EOS_Field hf("h", "h", ah);
     ArrOfDouble ap_bary(1);
     ArrOfDouble ah_bary(1);
-    EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
-    EOS_Field h_bary("h", "h",NEPTUNE::h, ah_bary);
-    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary); //TODO: eos_strcp hard
+    EOS_Field p_bary("P", "p", ap_bary);
+    EOS_Field h_bary("h", "h", ah_bary);
+    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
 
-    EOS_Field rf(propchar, propchar, ar); //TODO: eos_strcp hard
+    EOS_Field rf(propchar, propchar, ar);
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1566,11 +1560,11 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(2);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field pf("P", "p", ap);
     ArrOfDouble ap_bary(1);
-    EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
-    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary); //TODO: eos_strcp hard
-    EOS_Field rf(propchar, propchar, ar); //TODO: eos_strcp hard
+    EOS_Field p_bary("P", "p", ap_bary);
+    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
+    EOS_Field rf(propchar, propchar, ar);
     values[0] = pf;
     values[1] = rf;
     std::cout << "Le nombre de noeuds est " << nodes_sat[0].size() << endl;
@@ -1678,14 +1672,14 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(prop.aschar(), prop.aschar(), ar); //TODO: eos_strcp hard
+    EOS_Field pf("P", "p", ap);
+    EOS_Field hf("h", "h", ah);
+    EOS_Field rf(prop.aschar(), prop.aschar(), ar);
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
 
-    // Get all real cells containing p
+    // Get all real cells containing p   : TODO: Optimize these lines
     std::set<unsigned int> cells_containing_p;
     for (double h = hmin_ipp + delta_h_f / 2; h < hmax_ipp; h += delta_h_f)
     {
@@ -1701,10 +1695,17 @@ namespace NEPTUNE_EOS
       ierr = get_cell_values(med_cell, n_prop, values);
       pcal = (p - values[0][0]) / (values[0][2] - values[0][0]);
 
-      a = values[2][1] - values[2][0];
+      /* a = values[2][1] - values[2][0];   // This calcul doesn't correspond to the one on the report
       b = values[2][2] - values[2][0];
       c = values[2][3] - values[2][2] - a;
-      d = values[2][0];
+      d = values[2][0]; */ 
+      
+
+      a = values[2][1] - values[2][0];
+      b = values[2][3] - values[2][0];
+      c = values[2][2] - values[2][3] - a;
+      d = values[2][0]; 
+
 
       hcal = (T - (b * pcal + d)) / (a + c * pcal);
 
@@ -1735,9 +1736,9 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(prop.aschar(), prop.aschar(), ar); //TODO: eos_strcp hard
+    EOS_Field pf("P", "p", ap);
+    EOS_Field hf("h", "h", ah);
+    EOS_Field rf(prop.aschar(), prop.aschar(), ar);
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1757,10 +1758,15 @@ namespace NEPTUNE_EOS
     {
       ierr = get_cell_values(med_cell, n_prop, values);
       pcal = (p - values[0][0]) / (values[0][2] - values[0][0]);
-      a = values[2][1] - values[2][0];
+      /* a = values[2][1] - values[2][0];
       b = values[2][2] - values[2][0];
       c = values[2][3] - values[2][2] - a;
-      d = values[2][0];
+      d = values[2][0];*/ 
+      a = values[2][1] - values[2][0];
+      b = values[2][3] - values[2][0];
+      c = values[2][2] - values[2][3] - a;
+      d = values[2][0]; 
+
 
       hcal = (T - (b * pcal + d)) / (a + c * pcal);
       if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
@@ -1788,9 +1794,9 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); //TODO: eos_strcp hard
+    EOS_Field pf("P", "p", ap);
+    EOS_Field hf("h", "h", ah);
+    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
     // EOS_Field rf(prop,prop,ar)
     values[0] = pf;
     values[1] = hf;
@@ -1820,9 +1826,9 @@ namespace NEPTUNE_EOS
 
     ArrOfDouble ap(2);
     ArrOfDouble ar(2);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field pf("P", "p", ap);
     AString name_prop = n_prop->first;
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); //TODO: eos_strcp  hard
+    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
 
     values[0] = pf;
     values[1] = rf;
@@ -1881,19 +1887,19 @@ namespace NEPTUNE_EOS
     if (std::isnan(h))
       return OUT_OF_BOUNDS;
 
-    // if ((fabs(h - hmin_ipp)) > DBL_EPSILON)
-    if ((fabs(h - hmin)) > DBL_EPSILON)
+    if ((fabs(h - hmin_ipp)) > DBL_EPSILON)
+    //if ((fabs(h - hmin)) > DBL_EPSILON)
     {
-      // if (h < hmin_ipp)
-      if (h < hmin)
+      if (h < hmin_ipp)
+      //if (h < hmin)
         return OUT_OF_BOUNDS;
     }
 
-    // if ((fabs(h - hmax_ipp) > DBL_EPSILON))
-    if ((fabs(h - hmax) > DBL_EPSILON))
+    if ((fabs(h - hmax_ipp) > DBL_EPSILON))
+    //if ((fabs(h - hmax) > DBL_EPSILON))
     {
       // if ((h > hmax_ipp))
-      if ((h > hmax))
+      if ((h > hmax_ipp))
         return OUT_OF_BOUNDS;
     }
 
@@ -1903,19 +1909,19 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::check_p_bounds_ph(double p) const
   {
-    // if ((fabs(p - pmin_ipp) > DBL_EPSILON))
-    if ((fabs(p - pmin) > DBL_EPSILON))
+    if ((fabs(p - pmin_ipp) > DBL_EPSILON))
+    //if ((fabs(p - pmin) > DBL_EPSILON))
     {
-      // if ((p < pmin_ipp))
-      if ((p < pmin))
+      if ((p < pmin_ipp))
+      //if ((p < pmin))
         return OUT_OF_BOUNDS;
     }
 
-    // if ((fabs(p - pmax_ipp) > DBL_EPSILON))
-    if ((fabs(p - pmax) > DBL_EPSILON))
+    if ((fabs(p - pmax_ipp) > DBL_EPSILON))
+    //if ((fabs(p - pmax) > DBL_EPSILON))
     {
-      // if ((p > pmax_ipp))
-      if ((p > pmax))
+      if ((p > pmax_ipp))
+      //if ((p > pmax))
         return OUT_OF_BOUNDS;
     }
 
@@ -1926,20 +1932,20 @@ namespace NEPTUNE_EOS
   {
     double max;
 
-    // if ((fabs(p - pmin_ipp) > DBL_EPSILON))
-    if ((fabs(p - pmin) > DBL_EPSILON))
+    if ((fabs(p - pmin_ipp) > DBL_EPSILON))
+    //if ((fabs(p - pmin) > DBL_EPSILON))
     {
-      // if ((p < pmin_ipp))
-      if ((p < pmin))
+      if ((p < pmin_ipp))
+      //if ((p < pmin))
         return OUT_OF_BOUNDS;
     }
 
-    // if (pcrit < pmax_ipp)
-    if (pcrit < pmax)
+    if (pcrit < pmax_ipp)
+    //if (pcrit < pmax)
       max = pcrit;
     else
-      // max = pmax_ipp;
-      max = pmax;
+      max = pmax_ipp;
+      //max = pmax;
     if ((fabs(p - max) > DBL_EPSILON))
     {
       if ((p > max))

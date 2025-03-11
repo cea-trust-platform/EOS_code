@@ -357,7 +357,7 @@ namespace NEPTUNE_EOS
               int get_segmidx(double &p, int tag) const;
               void linear_interpolator(double p, double &res) const;
               double linear_interpolator(double p, EOS_Fields &segmval) const;
-              void bilinear_interpolator(double p, double h, double &res) const;
+              //void bilinear_interpolator(double p, double h, double &res) const;
               double bilinear_interpolator(double p, double h, EOS_Fields &cellval) const;
 
               EOS_Error find_in_Ipp_Prop_ph(std::map<AString, int>::const_iterator &it, const AString &prop) const;                     // permet de récupérer un iterateur dans la map correspondant à la bonne propriété
