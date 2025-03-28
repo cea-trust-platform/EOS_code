@@ -39,7 +39,7 @@ namespace NEPTUNE_EOS
               virtual const AString &table_name() const;
               mutable bool switch_model;         // If true : on surcharge les fcts compute si calcul pas ok
               mutable bool switch_comp_sat_;     // If true : on surcharge les fcts compute si calcul pas ok
-              mutable bool swch_calc_deriv_fld_; // If true: calcule d_lambda_d_h_p avec la méthode du fluide
+              mutable bool swch_calc_deriv_fld_; // If true: calcule d_lambda_d_h_p avec la methode du fluide
               mutable std::vector<std::vector<double>> r1_val;
               mutable std::vector<std::vector<double>> r2_val;
               EOS *obj_fluid = nullptr;
@@ -296,9 +296,9 @@ namespace NEPTUNE_EOS
               vector<ArrOfDouble> all_prop_val;
               vector<ArrOfInt> all_err_val;
 
-              std::map<AString, int> Ipp_Prop_ph;  // dictionnaire des propriétés dans le plan ph
-              std::map<AString, int> Ipp_Prop_sat; // dictionnaire des propriétés dans le plan sat
-              std::map<AString, int> Ipp_Prop_lim; // dictionnaire des propriétés dans le plan lim
+              std::map<AString, int> Ipp_Prop_ph;  // dictionnaire des proprietes dans le plan ph
+              std::map<AString, int> Ipp_Prop_sat; // dictionnaire des proprietes dans le plan sat
+              std::map<AString, int> Ipp_Prop_lim; // dictionnaire des proprietes dans le plan lim
               // pre-traitement
               // EOS_Fields fm_ph;
               vector<EOS_Error_Field> err_cell_ph;
@@ -347,7 +347,8 @@ namespace NEPTUNE_EOS
                                        // sommet i de la maille j -> corners[i + 4*j]
               ArrOfInt fnodes2phnodes; // correspondance entre chaque maille du maillage ph et la maille
                                        // du maillage non conforme (med) dans laquelle elle est
-              ArrOfInt fnodes2pnodes; // correspondance entre chaque maille du maillage ph et la maille
+              ArrOfInt fnodes2pnodes; // correspondance entre chaque maille du maillage p et la maille dans regime saturation
+              ArrOfInt fnodes2pnodes_lim; // correspondance entre chaque maille du maillage p et la maille dans regime limite
                                        // 
               void load_domain_values(EOS_Med &med);
               EOS_Error load_med_nodes(EOS_Med &med);
@@ -356,15 +357,15 @@ namespace NEPTUNE_EOS
               EOS_Error load_med_scalar(EOS_Med &med);
 
               int get_cellidx(double &p, double &h) const;
-              int get_segmidx(double &p) const;
+              int get_segmidx(double &p, int sat_lim) const;
               void linear_interpolator(double p, double &res) const;
               double linear_interpolator(double p, EOS_Fields &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;
               double bilinear_interpolator(double p, double h, EOS_Fields &cellval) const;
 
-              EOS_Error find_in_Ipp_Prop_ph(std::map<AString, int>::const_iterator &it, const AString &prop) const;                     // permet de récupérer un iterateur dans la map correspondant à la bonne propriété
-              EOS_Error find_in_Ipp_Prop_sat(std::map<AString, int>::const_iterator &it, const AString &prop) const;                    // permet de récupérer un iterateur dans la map correspondant à la bonne propriété
-              EOS_Error find(std::map<AString, int>::const_iterator &it, const AString &prop, const std::map<AString, int> &map) const; // permet de récupérer un iterateur dans la map correspondant à la bonne propriété
+              EOS_Error find_in_Ipp_Prop_ph(std::map<AString, int>::const_iterator &it, const AString &prop) const;                     // permet de recuperer un iterateur dans la map correspondant a la bonne propriete
+              EOS_Error find_in_Ipp_Prop_sat(std::map<AString, int>::const_iterator &it, const AString &prop) const;                    // permet de recuperer un iterateur dans la map correspondant a la bonne propriete
+              EOS_Error find(std::map<AString, int>::const_iterator &it, const AString &prop, const std::map<AString, int> &map) const; // permet de recuperer un iterateur dans la map correspondant a la bonne propriete
               EOS_Internal_Error check_ph_bounds(double p, double h) const;
               EOS_Internal_Error check_p_bounds_satlim(double p) const;
        };

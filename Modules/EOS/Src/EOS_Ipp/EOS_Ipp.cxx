@@ -1124,6 +1124,21 @@ namespace NEPTUNE_EOS
         fnodes2pnodes[i_p] = jseg;
       }
     }
+    fnodes2pnodes_lim.resize(nb_p_nodes);
+
+    nb_segm = connect_lim.size() / 2;
+
+    for (int jseg = 0; jseg < nb_segm;jseg++)
+    {
+        double p_min_cell = nodes_lim[0][jseg];
+        double p_max_cell = nodes_lim[0][jseg + 1];
+        unsigned int i_p_min = round((p_min_cell - pmin_ipp)/ delta_p_f);
+        unsigned int i_p_max = round((p_max_cell - pmin_ipp)/ delta_p_f);
+      for (unsigned int i_p = i_p_min; i_p <i_p_max; i_p++)
+      {
+        fnodes2pnodes_lim[i_p] = jseg;
+      }
+    }
   }
   // correspondance noeud fictif avec 1 noeud du polygone
   // On stocke la valeur de l'index pour pouvoir retrouver polygone dans connect_ph
@@ -1305,14 +1320,25 @@ namespace NEPTUNE_EOS
    *
    * return : int (indice)
    */
-  int EOS_Ipp::get_segmidx(double &p) const
+  int EOS_Ipp::get_segmidx(double &p, int sat_lim) const
   {
     unsigned int ip;
+    if (sat_lim == 0)
+    {
     ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
     // if p respectively equal to pmax_ipp
     if (ip == nb_p_virtual)
       ip--;
-    return fnodes2phnodes[ip];
+    return fnodes2pnodes[ip];
+    }
+    else
+    {
+      ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // if p respectively equal to pmax_ipp
+    if (ip == nb_p_virtual)
+      ip--;
+    return fnodes2pnodes_lim[ip];
+    }
   }
 
 
@@ -1798,7 +1824,7 @@ namespace NEPTUNE_EOS
     if (ierr == OUT_OF_BOUNDS)
       return ierr;
 
-    int index = get_segmidx(p);
+    int index = get_segmidx(p, sat_lim);
     ierr = get_segm_values(index, n_prop, sat_lim, values);
 
     res = linear_interpolator(p, values);
