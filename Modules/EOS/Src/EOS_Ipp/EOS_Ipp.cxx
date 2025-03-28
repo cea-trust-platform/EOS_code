@@ -1781,8 +1781,8 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
     // EOS_Field rf(prop,prop,ar)
     values[0] = pf;
@@ -1813,7 +1813,7 @@ namespace NEPTUNE_EOS
 
     ArrOfDouble ap(2);
     ArrOfDouble ar(2);
-    EOS_Field pf("P", "p", ap);
+    EOS_Field pf("P", "p", NEPTUNE::p, ap);
     AString name_prop = n_prop->first;
     EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
 
