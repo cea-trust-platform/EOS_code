@@ -1358,9 +1358,10 @@ namespace NEPTUNE_EOS
 
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
-      cell_val[0][i_node] = nodes_ph[0][corners[i_node + 4 * idx]];
-      cell_val[1][i_node] = nodes_ph[1][corners[i_node + 4 * idx]];
-      cell_val[2][i_node] = val_prop_ph[i_property][corners[i_node + 4 * idx]];
+      int id_corn = corners[i_node + 4 * idx];
+      cell_val[0][i_node] = nodes_ph[0][id_corn];
+      cell_val[1][i_node] = nodes_ph[1][id_corn];
+      cell_val[2][i_node] = val_prop_ph[i_property][id_corn];
     }
 
     return err_cell_ph[i_property][idx].get_code();
