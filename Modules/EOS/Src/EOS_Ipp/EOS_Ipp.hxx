@@ -307,6 +307,7 @@ namespace NEPTUNE_EOS
 
               // void make_f_mesh();
               void f_mesh2r_mesh();
+              void f_mesh1r_mesh();
               void node_err2mesh_err(EOS_Error_Field &val_nodes_ph);
               void node_err2segm_err(EOS_Error_Field &val_nodes_p, int satlim);
 
@@ -346,7 +347,8 @@ namespace NEPTUNE_EOS
                                        // sommet i de la maille j -> corners[i + 4*j]
               ArrOfInt fnodes2phnodes; // correspondance entre chaque maille du maillage ph et la maille
                                        // du maillage non conforme (med) dans laquelle elle est
-
+              ArrOfInt fnodes2pnodes; // correspondance entre chaque maille du maillage ph et la maille
+                                       // 
               void load_domain_values(EOS_Med &med);
               EOS_Error load_med_nodes(EOS_Med &med);
               EOS_Error load_med_champ(EOS_Med &med);
@@ -354,7 +356,7 @@ namespace NEPTUNE_EOS
               EOS_Error load_med_scalar(EOS_Med &med);
 
               int get_cellidx(double &p, double &h) const;
-              int get_segmidx(double &p, int tag) const;
+              int get_segmidx(double &p) const;
               void linear_interpolator(double p, double &res) const;
               double linear_interpolator(double p, EOS_Fields &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;

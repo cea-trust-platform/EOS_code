@@ -204,7 +204,9 @@ namespace NEPTUNE_EOS
     // pretraitements (2D)
     if (index_conn_ph.size() != 0)
       f_mesh2r_mesh();
-
+    
+    if( connect_sat.size() != 0)
+      f_mesh1r_mesh();
     return EOS_Error::ok;
   }
 
@@ -284,6 +286,8 @@ namespace NEPTUNE_EOS
     if (index_conn_ph.size() != 0)
       f_mesh2r_mesh();
 
+    if( connect_sat.size() != 0)
+      f_mesh1r_mesh();
     return EOS_Error::ok;
   }
 
@@ -1102,7 +1106,25 @@ namespace NEPTUNE_EOS
 
     return res;
   }
+  void EOS_Ipp::f_mesh1r_mesh()
+  {
+    unsigned int nb_p_nodes = round((pmax_ipp - pmin_ipp) /  delta_p_f);
+    fnodes2pnodes.resize(nb_p_nodes);
 
+    int nb_segm = connect_sat.size() / 2;
+
+    for (int jseg = 0; jseg < nb_segm;jseg++)
+    {
+        double p_min_cell = nodes_sat[0][jseg];
+        double p_max_cell = nodes_sat[0][jseg + 1];
+        unsigned int i_p_min = round((p_min_cell - pmin_ipp)/ delta_p_f);
+        unsigned int i_p_max = round((p_max_cell - pmin_ipp)/ delta_p_f);
+      for (unsigned int i_p = i_p_min; i_p <i_p_max; i_p++)
+      {
+        fnodes2pnodes[i_p] = jseg;
+      }
+    }
+  }
   // correspondance noeud fictif avec 1 noeud du polygone
   // On stocke la valeur de l'index pour pouvoir retrouver polygone dans connect_ph
   //(besoin des 4 noeuds pour les interpolations)
@@ -1283,77 +1305,16 @@ namespace NEPTUNE_EOS
    *
    * return : int (indice)
    */
-  int EOS_Ipp::get_segmidx(double &p, int sat_lim) const
+  int EOS_Ipp::get_segmidx(double &p) const
   {
-    int i = 0;
-    int found = 0;
-    int idx = 0;
-    if (sat_lim == 0)
-    {
-      int nb_cs = connect_sat.size();
-      // p == pmin_ipp or p == pmax_ipp
-      idx = connect_sat[i];
-      // pmin_ipp
-      if (fabs(p - nodes_sat[0][idx]) < DBL_EPSILON)
-        found = 1;
-
-      if (!found) // TODO: Parcourir le tableau avec une dichotomie pour aller plus vite où s'inspirer de get_cellidx
-      {
-        idx = connect_sat[nb_cs - 1];
-        if (fabs(p - nodes_sat[0][idx]) < DBL_EPSILON) // pmax_ipp
-        {
-          found = 1;
-          idx = idx - 1;
-        }
-      }
-      // not pmin_ipp/pmax_ipp, found segment
-      i = 1;
-      while (i < nb_cs && !found)
-      {
-        idx = connect_sat[i];
-        if (p < nodes_sat[0][idx])
-        {
-          found = 1;
-          idx = idx - 1;
-        }
-        i = i + 2;
-      }
-    }
-
-    else
-    {
-      int nb_cl = connect_lim.size();
-      // p == pmin_ipp or p == pmax_ipp
-      idx = connect_lim[i];
-      // pmin
-      if ((fabs(p - nodes_lim[0][idx]) < DBL_EPSILON))
-        found = 1;
-
-      if (!found)
-      {
-        idx = connect_lim[nb_cl - 1];
-        if (fabs(p - nodes_lim[0][idx]) < DBL_EPSILON) // pmax_ipp
-        {
-          found = 1;
-          idx = idx - 1;
-        }
-      }
-      // not pmin_ipp/pmax_ipp, found segment
-      i = 1;
-      while (i < nb_cl && !found)
-      {
-        idx = connect_lim[i];
-        if (p < nodes_lim[0][idx])
-        {
-          found = 1;
-          idx = idx - 1;
-        }
-        i = i + 2;
-      }
-    }
-
-    return idx;
+    unsigned int ip;
+    ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // if p respectively equal to pmax_ipp
+    if (ip == nb_p_virtual)
+      ip--;
+    return fnodes2phnodes[ip];
   }
+
 
   // recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille réelle
   //  idx = indice dans le maillage med = fnodes2phnodes[indice_h + Nb_pts_h * indice_p]
@@ -1837,7 +1798,7 @@ namespace NEPTUNE_EOS
     if (ierr == OUT_OF_BOUNDS)
       return ierr;
 
-    int index = get_segmidx(p, sat_lim);
+    int index = get_segmidx(p);
     ierr = get_segm_values(index, n_prop, sat_lim, values);
 
     res = linear_interpolator(p, values);
