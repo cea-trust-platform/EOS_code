@@ -346,5 +346,16 @@ namespace LANGUAGE_KERNEL
   {
     p->add_one_ref();
   }
+  template <class T> 
+  inline void ArrOf<T>::clear()
+  {
+    if (p)
+    {
+      p->sz=0; 
+      p->data=0; 
+      p->ref_count=1; 
+      p->owner=1;
+    }
+  }
 }
 #endif
