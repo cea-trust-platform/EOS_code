@@ -351,10 +351,13 @@ namespace LANGUAGE_KERNEL
   {
     if (p)
     {
-      p->sz=0; 
-      p->data=0; 
-      p->ref_count=1; 
-      p->owner=1;
+      if (p->owner && p->data)
+        delete[] p->data;  
+
+      p->data = nullptr;
+      p->sz = 0;
+      p->ref_count = 1; 
+      p->owner = 1;
     }
   }
 }
