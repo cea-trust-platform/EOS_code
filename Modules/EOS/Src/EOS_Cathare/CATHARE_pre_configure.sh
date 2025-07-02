@@ -151,7 +151,17 @@ BEGIN{IGNORECASE=1}
 }
 eof
 
+ 
+# . Normalize lowercase 'call' to uppercase 'CALL' in Fortran files
+# . Ensures consistent substitution in later steps
+#   (problem seen on devosa11 - Debian GNU/Linux 11)
+#   -------------------------------
+for filef in $(find $CATHARE_SOURCES -name "*.F")
+do
+    sed -i -E 's/^(\s+)call\b/\1CALL/' $filef
+done
 
+ 
 
 # . Copy and Rename fortran files
 # . List of strings to remplace in fortran subroutine
