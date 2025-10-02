@@ -118,6 +118,8 @@ int main(int argc, char* argv[])
 
     while(file)
        { file >> tmp_read ;
+          cout << "DEBUG: tmp_read='" << tmp_read << "' at file position " << file.tellg() << endl;
+
          if (tmp_read == "EOS")
             { if (file) file >> typwrd ;
               if (typwrd == "" ) 
@@ -166,8 +168,10 @@ int main(int argc, char* argv[])
                            }
                       }
                    else
-                      { cout << "Unvalid keyword : " << tmp_read << endl ;
-                        return 1 ;
+                      {     cerr << "Ignoring unknown line: " << tmp_read << endl;
+                            std::string tmp_line;
+                            getline(file, tmp_line); // ignore le reste de la ligne
+                            continue;
                       }
                  }
               if (iref == 0)

@@ -47,6 +47,11 @@ if [ ! -d $THETIS_ROOT_DIR/DATA ] ; then
 elif [ ! -d $THETIS_ROOT_DIR/SRC ] ; then
    error 51 "Directory SRC is not found : $THETIS_ROOT_DIR/SRC"
 fi
+if [ -d $THETIS_ROOT_DIR/TCS ] ; then
+   THETIS_ROOT_DIR_TCS=$THETIS_ROOT_DIR/TCS
+else
+   eos_error 46 "the repertory TCS is not found in $THETIS_ROOT_DIR"
+fi
 
 mkdir -p $BINARY_DIR/Thetis
 mkdir -p $EOS_DATA_DIR
@@ -103,6 +108,10 @@ echo "Thetis  R12Vapor        EOS_ThetisFreonR12Vapor   R12        Unknown  0" >
 cp $THETIS_ROOT_DIR/model-version.txt $BINARY_DIR
 cat $THETIS_ROOT_DIR/model-version.txt | col -b |\
    tr '[A-Z]' '[a-z]'  >> $EOS_BINARY_DIR/model-version.txt
+# Tests
+mkdir -p $EOS_BINARY_DIR/Tests/C++
+find $THETIS_ROOT_DIR_TCS -name "*.val" -exec cp {} $EOS_BINARY_DIR/Tests/C++ \;
+
 
 # ----------------------------------------
 # end
