@@ -80,7 +80,7 @@ namespace LANGUAGE_KERNEL
     ArrOf<T>& copy(const ArrOf<T>&);
     void attach(const ArrOf<T>&);
     int detach();
-    
+    void clear();  // clear memory of the ArrOf
   protected :
     Vdata<T>* p;
     T* data;
