@@ -399,7 +399,7 @@ namespace NEPTUNE_EOS
 
     if (   (idim < 1) || (2 < idim)
         || (1 < id_P) || (1 < id_T) || (1 < id_h)
-        || (id_c == 0) || (4 < id_c) || (id_c != nb_fluids)
+        || (id_c == 0) || (5 < id_c) || (id_c != nb_fluids)
         || (idim == 1 && id_P == 0 && id_T == 0)
         || (idim == 2 && 0 < id_T && 0 < id_h) )
        { errfield = EOS_Internal_Error::INPUT_PROPERTY ;
