@@ -365,7 +365,7 @@ namespace NEPTUNE_EOS
         r2_val[prop][pts] = r[prop].get_data()[pts];
     // calcul de l'erreur pour chaque prop et pts et renvoie du max
     double err_ipp_rp = 0;
-    int propmax;
+    int propmax = 0;
     if (err == EOS_Error::good && err2 == EOS_Error::good)
     {
       for (int prop = 0; prop < r.size(); prop++)
@@ -429,7 +429,7 @@ namespace NEPTUNE_EOS
         r2_val[prop][pts] = r[prop].get_data()[pts];
     // calcul de l'erreur pour chaque prop et pts et renvoie du max
     double err_ipp_rp = 0;
-    int propmax;
+    int propmax = 0;
     for (int prop = 0; prop < r.size(); prop++)
     {
       double err_ipp_rp_prop = 0;
