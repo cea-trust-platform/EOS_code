@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 #
 # Project name
-project(EOS VERSION 2.1.0 LANGUAGES CXX C Fortran)
+project(EOS VERSION 2.2.0 LANGUAGES CXX C Fortran)
 #
 # Include CMAKE
 # - path
