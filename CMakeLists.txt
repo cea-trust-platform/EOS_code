@@ -300,11 +300,17 @@ if (WITH_DOC_LATEX)
 endif (WITH_DOC_LATEX)
 #
 # WITH_PYTHON_API
-option (WITH_PYTHON_API "Build EOS python API" OFF)
-message(STATUS "Option WITH_PYTHON_API : ${WITH_PYTHON_API}")
-if (WITH_PYTHON_API)
-  message(FATAL_ERROR "Build EOS python API is not yet implemented. You must use the option --without-python-api")
-endif (WITH_PYTHON_API)
+if(WITH_PYTHON_API)
+  message(STATUS ">>> Building EOS Python API (SWIG)")
+
+  find_package(SWIG REQUIRED)
+  include(${SWIG_USE_FILE})
+
+  find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+  include_directories(${Python3_INCLUDE_DIRS})
+else()
+  message(STATUS ">>> EOS Python API build disabled.")
+endif()
 
 
 # Compilation and Linking Definition

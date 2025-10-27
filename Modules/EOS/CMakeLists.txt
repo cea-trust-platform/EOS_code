@@ -12,3 +12,7 @@ add_subdirectory(API)
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/Data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory(Data)
 add_subdirectory(Tests)
+
+if(WITH_PYTHON_API)
+  add_subdirectory(PyAPI)
+endif() 

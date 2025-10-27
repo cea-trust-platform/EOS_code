@@ -1,2 +1,5 @@
 add_subdirectory(F77)
 add_subdirectory(C++)
+if(WITH_PYTHON_API)
+  add_subdirectory(Python)
+endif() 
