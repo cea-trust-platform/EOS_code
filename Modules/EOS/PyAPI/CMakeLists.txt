@@ -28,6 +28,7 @@ swig_add_library(EOS_py
   SOURCES EOS_py.i EOS_py.cxx
 )
 
+
 # --- Dépendance : s’assurer que la lib EOS est construite avant ---
 add_dependencies(${SWIG_MODULE_EOS_py_REAL_NAME} ${NLIB_TM})
 
@@ -59,6 +60,30 @@ target_link_libraries(${SWIG_MODULE_EOS_py_REAL_NAME}
     LanguageSrc
     LanguageAPI
 )
+file(GLOB_RECURSE SWIG_WRAP_FILES
+     "${CMAKE_BINARY_DIR}/*_wrap.cxx"
+     "${CMAKE_BINARY_DIR}/*PYTHON_wrap.cxx"
+)
+
+if (SWIG_WRAP_FILES)
+    message(STATUS "Fichiers wrapper SWIG trouvés :")
+    foreach(_f ${SWIG_WRAP_FILES})
+        message(STATUS "  - ${_f}")
+        # Appliquer des flags uniquement sur ce fichier généré
+        # Utiliser COMPILE_OPTIONS si tu préfères (séparateur ';')
+        set_source_files_properties(${_f} PROPERTIES
+            COMPILE_FLAGS "-Wno-missing-field-initializers -Wno-unused-parameter"
+        )
+    endforeach()
+else()
+    message(STATUS "Aucun wrapper SWIG trouvé pour l'instant (ok si configuration avant génération).")
+    # On peut tout de même définir la propriété sur le chemin attendu (sera prise en compte plus tard)
+    set(EXPECTED_WRAP "${CMAKE_BINARY_DIR}/Modules/EOS/PyAPI/EOS_pyPYTHON_wrap.cxx")
+    set_source_files_properties(${EXPECTED_WRAP} PROPERTIES
+        COMPILE_FLAGS "-Wno-missing-field-initializers -Wno-unused-parameter"
+    )
+    message(STATUS "Propriété ajoutée pour (attendu) : ${EXPECTED_WRAP}")
+endif()
 
 # --- Installation des bibliothèques ---
 install(FILES
@@ -86,3 +111,6 @@ install(TARGETS ${SWIG_MODULE_EOS_py_REAL_NAME}
 
 # --- Message de fin ---
 message(STATUS ">>> EOS Python API (SWIG) configurée depuis ${CMAKE_CURRENT_SOURCE_DIR}")
+
+
+
