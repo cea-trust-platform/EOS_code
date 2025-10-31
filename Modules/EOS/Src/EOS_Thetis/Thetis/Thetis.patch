@@ -1218,6 +1218,7 @@ diff -Nar -u0 old/TH_TVxxPH.c new/TH_TVxxPH.c
 +     REAL *AR_RESULTAT, /* Vecteur resultat */
 +     int *AI_CR        /* Vecteur compte rendu */
 +     )
+
 @@ -277,12 +265,8 @@
 -int  TVCPPH( NO_FLUIDE,
 -             N, 
