@@ -944,8 +944,8 @@ diff -Nar -u0 old/TH_TVCALCSAT.c new/TH_TVCALCSAT.c
 +     int NO_FONCTION,
 +     int N,
 +     REAL *AR_PRESSION,
-+     REAL **AR_RESULTAT2,
 +     REAL **AR_RESULTAT1,
++     REAL **AR_RESULTAT2,
 +     int **AI_CR
 +     )
 diff -Nar -u0 old/TH_TVCALCSATMEM.c new/TH_TVCALCSATMEM.c

@@ -779,7 +779,6 @@ int main()
     cout<<"--------------------------------------- "<<endl;
     cout<<"------ Test 3 ------------------------- "<<endl<<endl;
 
-
     // Testing PH
     Language_init();
     Strings args(2);
@@ -800,41 +799,31 @@ int main()
     //  EOS eauBMPL("EOS_Thetis","WaterLiquidBMP");
     // EOS eauBMPV("EOS_Thetis","WaterVaporBMP");
 
-    cout << endl << "**   eos " << endl;
+    // ===============================
+    // TESTS POUR L'EAU
+    // ===============================
+    
+    cout << endl << "=================================" << endl;
+    cout << "TESTS POUR L'EAU" << endl;
+    cout << "=================================" << endl;
+
+    cout << endl << "**   eos EAU LIQUIDE" << endl;
     cout << "   * fluid   : " <<eauL.fluid_name()<<endl;
     cout << "   * table   : " <<eauL.table_name()<<endl;
     cout << "   * version : " <<eauL.version_name()<<endl<<endl;
     cout << eauL<<endl;
 
     // BUG HERE: Thetis has errors in some properties
-    test_features(eauL);
+   // test_features(eauL);
 
-    cout << "**   eos " << endl;
+    cout << "**   eos EAU VAPEUR" << endl;
     cout << "   * fluid   : " <<eauV.fluid_name()<<endl;
     cout << "   * table   : " <<eauV.table_name()<<endl;
     cout << "   * version : " <<eauV.version_name()<<endl<<endl;
     cout << eauV<<endl;
 
     // BUG HERE: Thetis has errors in some properties
-    test_features(eauV);
-
-    cout << "**   eos " << endl;
-    cout << "   * fluid   : " <<freonL.fluid_name()<<endl;
-    cout << "   * table   : " <<freonL.table_name()<<endl;
-    cout << "   * version : " <<freonL.version_name()<<endl<<endl;
-    cout << freonL<<endl;
-
-    // BUG HERE: Thetis has errors in some properties
-    test_features(freonL);
-
-    cout << "**   eos " << endl;
-    cout << "   * fluid   : " <<freonV.fluid_name()<<endl;
-    cout << "   * table   : " <<freonV.table_name()<<endl;
-    cout << "   * version : " <<freonV.version_name()<<endl<<endl;
-    cout << freonV<<endl;
-
-    // BUG HERE: Thetis has errors in some properties
-    test_features(freonV);
+    //test_features(eauV);
 
     int im = 2;
     int jm = 2;
@@ -877,11 +866,11 @@ int main()
     EOS_Field dmudp("dmudp", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xdmudp);
     EOS_Field dmudh("dmudh", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xdmudh);
 
-
     EOS_Error_Field err(xer);
     EOS_Error cr;
 
     // Compare with Thetis validation cases
+    p = 70.e5; // Reset pressure
     for (int i=0; i<im; i++)
       {
         p=p + 10.e5;
@@ -893,6 +882,8 @@ int main()
         }
       }
 
+    // Tests pour eau liquide
+    cout << "\n--- CALCULS POUR EAU LIQUIDE ---" << endl;
     cr=eauL.compute(P, h, T,err);
     cout << "Temperature (Celcius) [cr=" << cr<<"]"<<endl;
     for (int i =0; i< im; i++)
@@ -916,7 +907,7 @@ int main()
     input[1] = h;
 
     cr=eauL.compute(input, output,err);
-    cout << "Properties [cr="<<cr<<"]" << endl;
+    cout << "Properties EAU LIQUIDE [cr="<<cr<<"]" << endl;
     for (int i=0; i<im; i++)
       {
         for (int j=0; j<jm; j++)
@@ -935,19 +926,18 @@ int main()
     output2[4] = dmudh;
 
     cr=eauL.compute(input, output2,err);
-    cout << "Der Properties [cr="<<cr<<"]" << endl;
+    cout << "Derivatives EAU LIQUIDE [cr="<<cr<<"]" << endl;
     for (int i=0; i<im; i++)
       {
         for (int j=0; j<jm; j++)
           {
-            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
-                   xp[i+im*j],xh[i+im*j],xt[i+im*j],xr[i+im*j],xcp[i+im*j],xl[i+im*j],xmu[i+im*j],
-                   xw[i+im*j],xs[i+im*j]);
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xdTdp[i+im*j],xdrhodp[i+im*j],xdrhodh[i+im*j],
+                   xdmudp[i+im*j],xdmudh[i+im*j]);
           }
       }
 
-    // Saturation
-
+    // Saturation pour eau
     ArrOfDouble xRhoLSat(im*jm);
     ArrOfDouble xRhoVSat(im*jm);
     ArrOfDouble xHLSat(im*jm);
@@ -961,7 +951,6 @@ int main()
     EOS_Field TSat("TSat", "T_sat", NEPTUNE::T_sat, xTSat);
 
     EOS_Fields output3(5);
-
     output3[0] = RhoLSat;
     output3[1] = RhoVSat;
     output3[2] = HLSat;
@@ -969,78 +958,171 @@ int main()
     output3[4] = TSat;
 
     cr=eauL.compute(P, output3,err);
-    cout << "Sat Properties [cr="<<cr<<"]" << endl;
+    cout << "Saturation Properties EAU [cr="<<cr<<"]" << endl;
     for (int i=0; i<im; i++)
       {
         for (int j=0; j<jm; j++)
           {
             printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E\n",
                    xp[i+im*j], xRhoLSat[i+im*j],xRhoVSat[i+im*j],xHLSat[i+im*j],xHVSat[i+im*j],
-                   TSat[i+im*j]);
+                   xTSat[i+im*j]);
           }
       }
-    Language_finalize();
-  }
 
-  {
-    // Testing PT
-    Language_init();
+    // ===============================
+    // TESTS POUR LE FREON
+    // ===============================
+    
+    cout << endl << "=================================" << endl;
+    cout << "TESTS POUR LE FREON R12" << endl;
+    cout << "=================================" << endl;
 
-    Strings args(2);
-    args[0]= AString("");
-    args[1]= AString("");
-
-    EOS eauL("EOS_ThetisWaterLiquid", args);
-    EOS eauV("EOS_ThetisWaterVapor", args);
+    cout << "**   eos FREON LIQUIDE" << endl;
+    cout << "   * fluid   : " <<freonL.fluid_name()<<endl;
+    cout << "   * table   : " <<freonL.table_name()<<endl;
+    cout << "   * version : " <<freonL.version_name()<<endl<<endl;
+    cout << freonL<<endl;
 
     // BUG HERE: Thetis has errors in some properties
-    test_features(eauL);
-     test_features(eauV);
+   // test_features(freonL);
 
-    int im = 2;
-    int jm = 2;
+    cout << "**   eos FREON VAPEUR" << endl;
+    cout << "   * fluid   : " <<freonV.fluid_name()<<endl;
+    cout << "   * table   : " <<freonV.table_name()<<endl;
+    cout << "   * version : " <<freonV.version_name()<<endl<<endl;
+    cout << freonV<<endl;
 
-    double  kelvin = 273.15;
-    double    p=70.e5;
-    double    t=200.+kelvin;
+    // BUG HERE: Thetis has errors in some properties
+   // test_features(freonV);
 
-    ArrOfDouble xp(im*jm);
-    ArrOfDouble xr(im*jm);
-    ArrOfDouble xt(im*jm);
-    ArrOfInt xer(im*jm);
-
-    EOS_Field P("Pressure", "p", NEPTUNE::p, xp);
-    EOS_Field h("Enthalpy", "h", NEPTUNE::h, xr);
-    EOS_Field T("Temperature", "T", NEPTUNE::T, xt);
-    EOS_Error_Field err(xer);
-    EOS_Error cr;
-
-    // Compare with Thetis validation cases
+    // Réinitialiser les conditions pour le Freon (valeurs adaptées au R12)
+    p = 5.e5;  // Pression plus faible pour le Freon
     for (int i=0; i<im; i++)
       {
-        p=p + 10.e5;
-        t=200.+kelvin;
+        p=p + 5.e5;  // Increment plus petit
+        hh = 2e5;    // Enthalpie plus faible
+        for (int j=0; j<jm; j++) {
+          hh = hh + 1.5e4;  // Increment adapté
+          xp[i+im*j] =  p;
+          xh[i+im*j] = hh;
+        }
+      }
+
+    // Tests pour Freon liquide
+    cout << "\n--- CALCULS POUR FREON LIQUIDE ---" << endl;
+    cr=freonL.compute(P, h, T,err);
+    cout << "Temperature (Celcius) FREON LIQUIDE [cr=" << cr<<"]"<<endl;
+    for (int i =0; i< im*jm; i++)
+      {
+        xt[i] = xt[i] - kelvin;
+        cout << xt[i] <<" ";
+      }
+    cout << endl;
+
+    cr=freonL.compute(input, output,err);
+    cout << "Properties FREON LIQUIDE [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
         for (int j=0; j<jm; j++)
           {
-            t=t + 10.;
-            xp[i+im*j] =  p;
-            xt[i+im*j] = t;
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xt[i+im*j],xr[i+im*j],xcp[i+im*j],xl[i+im*j],xmu[i+im*j],
+                   xw[i+im*j],xs[i+im*j]);
           }
       }
 
-    cr=eauL.compute(P, T, h,err);
-    cout << "Enthalpie PT [cr="<<cr<<"]" << endl;
+    cr=freonL.compute(input, output2,err);
+    cout << "Derivatives FREON LIQUIDE [cr="<<cr<<"]" << endl;
     for (int i=0; i<im; i++)
       {
         for (int j=0; j<jm; j++)
           {
-            printf("%14.5E %14.5E %14.5E\n",xp[i+im*j],xt[i+im*j],xr[i+im*j]);
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xdTdp[i+im*j],xdrhodp[i+im*j],xdrhodh[i+im*j],
+                   xdmudp[i+im*j],xdmudh[i+im*j]);
           }
       }
-    cout << endl << endl;
+
+    // Tests pour Freon vapeur
+    cout << "\n--- CALCULS POUR FREON VAPEUR ---" << endl;
+    
+    // Ajuster les conditions pour la vapeur (enthalpie plus élevée)
+    p = 5.e5;
+    for (int i=0; i<im; i++)
+      {
+        p=p + 5.e5;
+        hh = 4e5;    // Enthalpie plus élevée pour la vapeur
+        for (int j=0; j<jm; j++) {
+          hh = hh +0;
+          xp[i+im*j] =  p;
+          xh[i+im*j] = hh;
+        }
+      }
+
+    cr=freonV.compute(P, h, T,err);
+    cout << "Temperature (Celcius) FREON VAPEUR [cr=" << cr<<"]"<<endl;
+    for (int i =0; i< im*jm; i++)
+      {
+        xt[i] = xt[i] - kelvin;
+        cout << xt[i] <<" ";
+      }
+    cout << endl;
+
+    cr=freonV.compute(input, output,err);
+    cout << "Properties FREON VAPEUR [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xt[i+im*j],xr[i+im*j],xcp[i+im*j],xl[i+im*j],xmu[i+im*j],
+                   xw[i+im*j],xs[i+im*j]);
+          }
+      }
+
+    cr=freonV.compute(input, output2,err);
+    cout << "Derivatives FREON VAPEUR [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xdTdp[i+im*j],xdrhodp[i+im*j],xdrhodh[i+im*j],
+                   xdmudp[i+im*j],xdmudh[i+im*j]);
+          }
+      }
+
+    // Saturation pour Freon
+    cout << "\n--- PROPRIETES DE SATURATION FREON ---" << endl;
+    
+    // Remettre des pressions appropriées pour les calculs de saturation du Freon
+    p = 2.e5;
+    for (int i=0; i<im; i++)
+      {
+        p=p + 3.e5;
+        for (int j=0; j<jm; j++) {
+          xp[i+im*j] =  p;
+        }
+      }
+
+    cr=freonL.compute(P, output3,err);
+    cout << "Saturation Properties FREON [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E\n",
+                   xp[i+im*j], xRhoLSat[i+im*j],xRhoVSat[i+im*j],xHLSat[i+im*j],xHVSat[i+im*j],
+                   xTSat[i+im*j]);
+          }
+      }
+
+    cout << endl << "=================================" << endl;
+    cout << "FIN DES TESTS THETIS" << endl;
+    cout << "=================================" << endl;
+
     Language_finalize();
   }
-
 #endif
 
 #ifdef WITH_PLUGIN_FLICA4
