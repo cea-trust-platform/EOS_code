@@ -17,6 +17,7 @@ Légende :
 ============================
 Features :
 +Ajout du plugin COOLPROP (15/11/2024)
++Ajout de l'API python (4/11/2025)
 
 Structure EOS: 
 + Ajout de nouvelles fonctions EOS pour améliorer les performances lors de la manipulation des EOS_fields (26/11/2024)

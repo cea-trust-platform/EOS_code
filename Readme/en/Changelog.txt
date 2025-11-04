@@ -16,6 +16,7 @@ Legend:
 ============================
 Features :
  +Added COOLPROP plugin (15/11/2024)
+ +Added python API (04/11/2025)
 
 EOS Structure:
 
