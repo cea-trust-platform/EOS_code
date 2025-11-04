@@ -219,6 +219,37 @@ if (USER_LIBCOOLPROP_LIB_PATH)
   set(LIBCOOLPROP_LIB_DIR ${USER_LIBCOOLPROP_LIB_PATH})
 endif(USER_LIBCOOLPROP_LIB_PATH)
 
+# -------------------------------------------------------------------------
+# Automatically add all CoolProp externals include directories
+# -------------------------------------------------------------------------
+if (LIBCOOLPROP_INC)
+  message(STATUS "Configuring CoolProp include directories...")
+
+  # Détermination de la racine CoolProp à partir du dossier include
+  get_filename_component(COOLPROP_ROOT "${LIBCOOLPROP_INC}" DIRECTORY)
+
+  set(COOLPROP_EXTERNAL_DIRS
+      ${LIBCOOLPROP_INC}
+      ${COOLPROP_ROOT}/externals
+      ${COOLPROP_ROOT}/externals/fmtlib
+      ${COOLPROP_ROOT}/externals/Eigen
+      ${COOLPROP_ROOT}/externals/REFPROP-headers
+      ${COOLPROP_ROOT}/externals/IF97
+      ${COOLPROP_ROOT}/externals/msgpack
+      ${COOLPROP_ROOT}/externals/rapidjson
+      ${COOLPROP_ROOT}/install/include
+  )
+
+  foreach(dir ${COOLPROP_EXTERNAL_DIRS})
+    if (EXISTS ${dir})
+      include_directories(${dir})
+      message(STATUS "Added CoolProp include dir: ${dir}")
+    else()
+      message(WARNING "CoolProp external include dir not found: ${dir}")
+    endif()
+  endforeach()
+endif()
+
 if (LIBCOOLPROP_LIB_DIR)
   # Static
   set (CMAKE_FIND_LIBRARY_SUFFIXES .a)
