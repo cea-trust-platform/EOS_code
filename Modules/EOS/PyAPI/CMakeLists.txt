@@ -42,8 +42,13 @@ add_library(LanguageAPI SHARED IMPORTED)
 set_target_properties(LanguageAPI PROPERTIES
   IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/Modules/Language/API/libCCLanguageAPI.so
 )
-
-
+# --- Bibliothèques importées pour l'interpolateur ---
+if (WITH_IPP)
+  add_library(LanguageIGENAPI SHARED IMPORTED)
+  set_target_properties(LanguageIGENAPI PROPERTIES
+    IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/Modules/EOS_IGen/API/libCCEOSIGenAPI.so
+  )
+endif()
 
 # --- RPATH ---
 set_target_properties(${SWIG_MODULE_EOS_py_REAL_NAME} PROPERTIES
@@ -60,6 +65,14 @@ target_link_libraries(${SWIG_MODULE_EOS_py_REAL_NAME}
     LanguageSrc
     LanguageAPI
 )
+# --- Liens pour IPP---
+if (WITH_IPP)
+  target_link_libraries(${SWIG_MODULE_EOS_py_REAL_NAME}
+    PRIVATE
+    LanguageIGENAPI 
+  )
+endif()
+
 file(GLOB_RECURSE SWIG_WRAP_FILES
      "${CMAKE_BINARY_DIR}/*_wrap.cxx"
      "${CMAKE_BINARY_DIR}/*PYTHON_wrap.cxx"
@@ -102,6 +115,14 @@ install(FILES
   ${CMAKE_BINARY_DIR}/Modules/Language/API/libCCLanguageAPI.so
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
+
+# --- Installation des libs Language nécessaires pour IPP---
+if (WITH_IPP)
+  install(FILES
+    ${CMAKE_BINARY_DIR}/Modules/EOS_IGen/API/libCCEOSIGenAPI.so
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+  )
+endif()
 
 # --- Installation du module SWIG ---
 install(TARGETS ${SWIG_MODULE_EOS_py_REAL_NAME}
