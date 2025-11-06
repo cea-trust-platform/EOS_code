@@ -35,7 +35,11 @@ fi
 if [ -z $NEPTUNE_EOS_COOLPROP ] || [ ! -d $NEPTUNE_EOS_COOLPROP && ! -f $NEPTUNE_EOS_COOLPROP ] ; then
     eos_error 43 "unvalid path for --with-coolprop option : $NEPTUNE_EOS_COOLPROP"
 fi
-
+if [ -d $NEPTUNE_EOS_COOLPROP/TCS ] ; then
+   NEPTUNE_EOS_COOLPROP_TCS=$NEPTUNE_EOS_COOLPROP/TCS
+else
+   eos_error 46 "the repertory TCS is not found in $NEPTUNE_EOS_COOLPROP"
+fi
 # Copy index file
 echo "Build index.eos file"
 if [ -d $NEPTUNE_EOS_COOLPROP/DATA ]; then
@@ -46,3 +50,14 @@ else
 fi
 
 cp $NEPTUNE_EOS_COOLPROP/model-version.txt $BINARY_DIR
+
+# Tests
+if [ -n "$NEPTUNE_EOS_COOLPROP_TCS" ] && [ -d "$NEPTUNE_EOS_COOLPROP_TCS" ]; then
+   mkdir -p $EOS_BINARY_DIR/Tests/C++
+   find $NEPTUNE_EOS_COOLPROP_TCS -name "*.val" -exec cp {} $EOS_BINARY_DIR/Tests/C++ \;
+else
+    echo "ℹ️  Skipping TCS test copy (no TCS directory found)" >&2
+fi
+# ----------------------------------------
+# end
+exit 0
