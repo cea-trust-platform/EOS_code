@@ -4,13 +4,14 @@ if (USE_OPENMP)
   set(RUN_ENV "${RUN_ENV};OMP_NUM_THREADS=3;OMP_STACKSIZE=16M")
 endif()
 
+message(STATUS "RUN_ENV: ${RUN_ENV}")
 
 # (add executable EOSTest)
 message(STATUS "Add test EOSTest")
 add_executable (EOSTest "${CMAKE_CURRENT_SOURCE_DIR}/main.cxx")
 target_include_directories(EOSTest PRIVATE ${EOS_BINARY_DIR}/Modules)
 target_link_libraries(EOSTest PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
-add_test(EOSTest bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTest 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output")
+add_test(EOSTest bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTest 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output")
 set_tests_properties(EOSTest PROPERTIES ENVIRONMENT ${RUN_ENV}
                                         COST        5.)
                                         
@@ -40,7 +41,7 @@ foreach(fileval ${listval})
   get_filename_component(filevalname ${fileval} NAME_WE)
   message(STATUS "  |test-val-${filevalname}")
   add_test(test-val-${filevalname} ${CMAKE_CURRENT_BINARY_DIR}/EOSTestVal ${fileval} ${CMAKE_CURRENT_BINARY_DIR}/${filevalname}.valeos)
-  set_tests_properties(test-val-${filevalname} PROPERTIES ENVIRONMENT ${RUN_ENV}
+  set_tests_properties(test-val-${filevalname} PROPERTIES ENVIRONMENT "OMP_NUM_THREADS=3;OMP_STACKSIZE=16M;${RUN_ENV}"
                                                           DEPENDS index-eos)
 endforeach(fileval)
 
@@ -51,7 +52,7 @@ if (WITH_IPP)
   add_executable (EOSTestIpp  "${CMAKE_CURRENT_SOURCE_DIR}/main_ipp.cxx")
   target_include_directories(EOSTestIpp PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
   target_link_libraries(EOSTestIpp PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
-  add_test(EOSTestIpp bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIpp 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp")
+  add_test(EOSTestIpp bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIpp 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp")
   set_tests_properties(EOSTestIpp PROPERTIES DEPENDS      EOSIGenTest
                                              COST         10.
                                              ENVIRONMENT ${RUN_ENV})

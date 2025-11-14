@@ -128,8 +128,8 @@ diff -Nar -u0 old/TH_CALCULER_COEFS_EMULSION.c new/TH_CALCULER_COEFS_EMULSION.c
 -     REAL *** PA_COEFS; /*(N)*/
 +void CALCULER_COEFS_EMULSION(
 +     int N,
-+     REAL *PA_VS, /*(3,4,N)*/
 +     REAL *PA_CS, /*(2,4,N)*/
++     REAL *PA_VS, /*(3,4,N)*/
 +     REAL *** PA_COEFS  /*(N)*/
 +     )
 diff -Nar -u0 old/TH_CALCULER_COEFS_FCT.c new/TH_CALCULER_COEFS_FCT.c
@@ -373,8 +373,8 @@ diff -Nar -u0 old/TH_CALCULER_INIT_DERIVEES_EMUL.c new/TH_CALCULER_INIT_DERIVEES
 +void CALCULER_INIT_DERIVEES_EMUL (
 +     int NO_FONCTION,
 +     int N,
-+     REAL *PA_COEFS_FCT_SAT_VAP, /*(4,*)*/
 +     REAL *PA_COEFS_FCT_SAT_LIQ, /*(4,*)*/
++     REAL *PA_COEFS_FCT_SAT_VAP, /*(4,*)*/
 +     REAL **PA_VS /*(3,4,N)*/
 +     )
 diff -Nar -u0 old/TH_CALCULER_PRESSION_SAT.c new/TH_CALCULER_PRESSION_SAT.c
@@ -944,8 +944,8 @@ diff -Nar -u0 old/TH_TVCALCSAT.c new/TH_TVCALCSAT.c
 +     int NO_FONCTION,
 +     int N,
 +     REAL *AR_PRESSION,
-+     REAL **AR_RESULTAT2,
 +     REAL **AR_RESULTAT1,
++     REAL **AR_RESULTAT2,
 +     int **AI_CR
 +     )
 diff -Nar -u0 old/TH_TVCALCSATMEM.c new/TH_TVCALCSATMEM.c
@@ -1218,6 +1218,7 @@ diff -Nar -u0 old/TH_TVxxPH.c new/TH_TVxxPH.c
 +     REAL *AR_RESULTAT, /* Vecteur resultat */
 +     int *AI_CR        /* Vecteur compte rendu */
 +     )
+
 @@ -277,12 +265,8 @@
 -int  TVCPPH( NO_FLUIDE,
 -             N, 

@@ -123,6 +123,15 @@ namespace NEPTUNE
                       double h, 
                       double &x) const ;
     EOS_Error compute(const char *const property_name,
+                      const int property_number,
+                      double p, 
+                      double h, 
+                      double &x) const ;
+    EOS_Error compute(const char *const property_name,
+                      double p, 
+                      double &x) const ;
+    EOS_Error compute(const char *const property_name,
+                      const int property_number,
                       double p, 
                       double &x) const ;
     EOS_Error compute(const EOS_Field &p, 
@@ -133,11 +142,23 @@ namespace NEPTUNE
                       EOS_Error_Field &errfield) const ;
     EOS_Error compute_Ph(const char* const property_name, 
                       double in1, double in2, double& out) const;
+    EOS_Error compute_Ph(const char* const property_name,
+                         const int property_number, 
+                  double in1, double in2, double& out) const;
     EOS_Error compute_PT(const char* const property_name, 
+                      double in1, double in2, double& out) const;
+    EOS_Error compute_PT(const char* const property_name, 
+                         const int property_number, 
                       double in1, double in2, double& out) const;
     EOS_Error compute_Psat(const char* const property_name,
                       double in, double& out) const;
+    EOS_Error compute_Psat(const char* const property_name,
+                           const int property_number, 
+                      double in, double& out) const;
     EOS_Error compute_Tsat(const char* const property_name, 
+                      double in, double& out) const;
+    EOS_Error compute_Tsat(const char* const property_name, 
+                           const int property_number, 
                       double in, double& out) const;
 
     EOS_Error get_p(double &p) const   ;

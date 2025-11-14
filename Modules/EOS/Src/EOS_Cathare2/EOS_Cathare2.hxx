@@ -45,7 +45,7 @@ namespace NEPTUNE_EOS
     virtual const AString& table_name()    const ;
     virtual const AString& version_name()  const ;
     virtual const AString& equation_name() const ;
-    
+
     //! Output stream method: see language documentation
     ostream& print_On (ostream& stream) const;
     //! Input stream method: see language documentation
@@ -152,6 +152,11 @@ namespace NEPTUNE_EOS
     EOS_Error compute_PT(const char* const property_name, double in1, double in2, double& out) const ;
     EOS_Error compute_Psat(const char* const property_name, double in, double& out) const ;
     EOS_Error compute_Tsat(const char* const property_name, double in, double& out) const ;
+
+    EOS_Error compute_Ph(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
+    EOS_Error compute_PT(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
+    EOS_Error compute_Psat(const char* const property_name, const int property_number, double in, double& out) const ;
+    EOS_Error compute_Tsat(const char* const property_name, const int property_number, double in, double& out) const ;
 
     //General fluid properties
     //!  p at critical point

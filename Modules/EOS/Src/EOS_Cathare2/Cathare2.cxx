@@ -1127,397 +1127,397 @@ namespace CATHARE2
 
   int CATHARE2::unmap_eos_field(const EOS_Field& f, domain mode)
   { assert(f.size() == nsca) ;
-    ArrOfDouble ltmp ;
+    //ArrOfDouble ltmp ;
 
     switch(f.get_property_number()) 
        {
          case NEPTUNE::p :
-            lp=ltmp ;
+            lp.clear();
             break ;
          case NEPTUNE::h :
             if (mode == liquid) 
                { if (typ_ths == TH_space::PT)
-                    lhlpt = ltmp ;
+                    lhlpt.clear() ;
                  else
-                    lhl = ltmp ;
+                    lhl.clear() ;
                }
             else if (mode == vapor)
                {  if (nincon == 0 && typ_ths == TH_space::PT)
-                     lhvpt = ltmp ;
+                     lhvpt.clear() ;
                   else
-                     { lhl = ltmp ;
-                       lhg = ltmp ;
+                     { lhl.clear() ;
+                       lhg.clear() ;
                      }
                }
-            else if (mode == unknown) lh=ltmp;
+            else if (mode == unknown) lh.clear();
             break;
          case NEPTUNE::T:
-            if (mode == liquid) ltl=ltmp;
-            else if (mode == vapor) ltg=ltmp;
-            else if (mode == unknown) lt=ltmp;
+            if (mode == liquid) ltl.clear();
+            else if (mode == vapor) ltg.clear();
+            else if (mode == unknown) lt.clear();
             break;
          case NEPTUNE::rho:
             if (mode == liquid)
                { if (typ_ths == TH_space::PT)
-                    lrlpt = ltmp ;
+                    lrlpt.clear() ;
                  else
-                    lrl = ltmp ;
+                    lrl.clear() ;
                }
             else if (mode == vapor)
                { if (nincon == 0 && typ_ths == TH_space::PT)
-                   lrvpt = ltmp ;
+                   lrvpt.clear() ;
                  else
-                   lrg = ltmp ;
+                   lrg.clear() ;
                }
-            else if (mode == unknown) lr=ltmp;
+            else if (mode == unknown) lr.clear();
             break;
          case NEPTUNE::cp:
             if (mode == liquid)
                { if (typ_ths == TH_space::PT)
-                    lcplpt = ltmp ;
+                    lcplpt.clear() ;
                  else
-                    lcpl = ltmp ;
+                    lcpl.clear() ;
                }
             else if (mode == vapor) 
                { if (nincon == 0 && typ_ths == TH_space::PT)
-                    lcpvpt = ltmp ;
+                    lcpvpt.clear() ;
                  else
-                    lcpg = ltmp ;
+                    lcpg.clear() ;
                }
-            else if (mode == unknown) lcp=ltmp;
+            else if (mode == unknown) lcp.clear();
             break;
          case NEPTUNE::beta:
-            if (mode == liquid) lbetal=ltmp;
-            else if (mode == unknown) lbetal=ltmp;
+            if (mode == liquid) lbetal.clear();
+            else if (mode == unknown) lbetal.clear();
             break;
          case NEPTUNE::lambda:
-            if (mode == liquid) ltlal=ltmp;
-            else if (mode == vapor) ltlag=ltmp;
-            else if (mode == unknown) lla=ltmp;
+            if (mode == liquid) ltlal.clear();
+            else if (mode == vapor) ltlag.clear();
+            else if (mode == unknown) lla.clear();
             break;
          case NEPTUNE::mu:
-            if (mode == liquid) ltmul=ltmp;
-            else if (mode == vapor) ltmug=ltmp;
-            else if (mode == unknown) lmu=ltmp;
+            if (mode == liquid) ltmul.clear();
+            else if (mode == vapor) ltmug.clear();
+            else if (mode == unknown) lmu.clear();
             break;
          case NEPTUNE::sigma:
-            if (mode == vapor) lsi=ltmp;
-            else if (mode == unknown) lsi=ltmp;
+            if (mode == vapor) lsi.clear();
+            else if (mode == unknown) lsi.clear();
             break;
-         case NEPTUNE::gamma: lkiseng=ltmp; break ;
+         case NEPTUNE::gamma: lkiseng.clear(); break ;
          case NEPTUNE::pr:
-            if (mode == vapor) lprandg=ltmp;
-            if (mode == unknown) lprandg=ltmp;
+            if (mode == vapor) lprandg.clear();
+            if (mode == unknown) lprandg.clear();
             break;
          case NEPTUNE::d_T_d_p_h:
-            if (mode == liquid) ltl1=ltmp;
-            else if (mode == vapor) ltg1=ltmp;
-            else if (mode == unknown) lt1=ltmp;
+            if (mode == liquid) ltl1.clear();
+            else if (mode == vapor) ltg1.clear();
+            else if (mode == unknown) lt1.clear();
             break;
          case NEPTUNE::d_T_d_h_p:
-            if (mode == liquid) ltl2=ltmp;
-            else if (mode == vapor) ltg3=ltmp;
-            else if (mode == unknown) lt2=ltmp;
+            if (mode == liquid) ltl2.clear();
+            else if (mode == vapor) ltg3.clear();
+            else if (mode == unknown) lt2.clear();
             break;
          case NEPTUNE::d_h_d_T_p:
             if (mode == liquid)
                { if (typ_ths == TH_space::PT)
-                    lhl2pt = ltmp ;
+                    lhl2pt.clear() ;
                  else
-                    lhl2 = ltmp ;
+                    lhl2.clear() ;
                }
             else if (mode == vapor) 
                { if (nincon == 0 && typ_ths == TH_space::PT)
-                    lcpvpt = ltmp ;
+                    lcpvpt.clear() ;
                  else
-                    lcpg = ltmp ;
+                    lcpg.clear() ;
                }
             break;
          case NEPTUNE::d_h_d_p_T:
             if (mode == liquid)
                { if (typ_ths == TH_space::PT)
-                    lhl1pt = ltmp ;
+                    lhl1pt.clear() ;
                  else
-                    lhl1 = ltmp ;
+                    lhl1.clear() ;
                }
             else if (mode == vapor) 
                { if (nincon == 0 && typ_ths == TH_space::PT)
-                    lhv1pt = ltmp ;
+                    lhv1pt.clear() ;
                  else
-                    lhg1 = ltmp ;
+                    lhg1.clear() ;
                }
             break;
          case NEPTUNE::d_rho_d_p_h:
-            if (mode == liquid) lrl1=ltmp;
+            if (mode == liquid) lrl1.clear();
             else if (mode == vapor)
                { if (nincon == 0) 
-                    lrvpv=ltmp;
+                    lrvpv.clear();
                  else
-                    lrg1=ltmp;
+                    lrg1.clear();
                }
-            else if (mode == unknown) lr1=ltmp;
+            else if (mode == unknown) lr1.clear();
             break;
          case NEPTUNE::d_rho_d_h_p:
-            if (mode == liquid) lrl2=ltmp;
+            if (mode == liquid) lrl2.clear();
             else if (mode == vapor)
                { if (nincon == 0) 
-                    lrvhv=ltmp;
+                    lrvhv.clear();
                  else
-                    lrg3=ltmp;
+                    lrg3.clear();
                }
-            else if (mode == unknown) lr2=ltmp;
+            else if (mode == unknown) lr2.clear();
             break;
          case NEPTUNE::d_rho_d_p_T:
-            if      (mode == liquid) lrl1pt=ltmp;
-            else if (mode == vapor)  lrv1pt=ltmp;
+            if      (mode == liquid) lrl1pt.clear();
+            else if (mode == vapor)  lrv1pt.clear();
             break;
          case NEPTUNE::d_rho_d_T_p:
-            if      (mode == liquid) lrl2pt=ltmp;
-            else if (mode == vapor)  lrv3pt=ltmp;
+            if      (mode == liquid) lrl2pt.clear();
+            else if (mode == vapor)  lrv3pt.clear();
             break;
          case NEPTUNE::d_cp_d_p_h:
-            if (mode == liquid) lcpl1=ltmp;
+            if (mode == liquid) lcpl1.clear();
             else if (mode == vapor)
                { if (nincon == 0) 
-                    lcpvpv=ltmp;
+                    lcpvpv.clear();
                  else
-                    lcpg1=ltmp;
+                    lcpg1.clear();
                }
-            else if (mode == unknown) lcp1=ltmp;
+            else if (mode == unknown) lcp1.clear();
             break;
          case NEPTUNE::d_cp_d_h_p:
-            if (mode == liquid) lcpl2=ltmp;
+            if (mode == liquid) lcpl2.clear();
             else if (mode == vapor)
                { if (nincon == 0) 
-                    lcpvhv=ltmp;
+                    lcpvhv.clear();
                  else
-                    lcpg3=ltmp;
+                    lcpg3.clear();
                }
-            else if (mode == unknown) lcp2=ltmp;
+            else if (mode == unknown) lcp2.clear();
             break;
          case NEPTUNE::d_beta_d_p_h:
-            if (mode == liquid) lbetal1=ltmp;
-            else if (mode == unknown) lbetal1=ltmp;
+            if (mode == liquid) lbetal1.clear();
+            else if (mode == unknown) lbetal1.clear();
             break;
          case NEPTUNE::d_beta_d_h_p:
-            if (mode == liquid) lbetal2=ltmp;
-            else if (mode == unknown) lbetal2=ltmp;
+            if (mode == liquid) lbetal2.clear();
+            else if (mode == unknown) lbetal2.clear();
             break;
          case NEPTUNE::d_lambda_d_p_h:
-            if (mode == liquid) ltlal1=ltmp;
-            else if (mode == vapor) ltlag1=ltmp;
-            else if (mode == unknown) lla1=ltmp;
+            if (mode == liquid) ltlal1.clear();
+            else if (mode == vapor) ltlag1.clear();
+            else if (mode == unknown) lla1.clear();
             break;
          case NEPTUNE::d_lambda_d_h_p:
-            if (mode == liquid) ltlal2=ltmp;
-            else if (mode == vapor) ltlag3=ltmp;
-            else if (mode == unknown) lla2=ltmp;
+            if (mode == liquid) ltlal2.clear();
+            else if (mode == vapor) ltlag3.clear();
+            else if (mode == unknown) lla2.clear();
             break;
          case NEPTUNE::d_lambda_d_T_p:
-            if (mode == vapor) llagtg=ltmp;
-            else if (mode == unknown) llagtg=ltmp;
+            if (mode == vapor) llagtg.clear();
+            else if (mode == unknown) llagtg.clear();
             break;
          case NEPTUNE::d_mu_d_p_h:
-            if (mode == liquid) ltmul1=ltmp;
-            else if (mode == vapor) ltmug1=ltmp;
-            else if (mode == unknown) lmu1=ltmp;
+            if (mode == liquid) ltmul1.clear();
+            else if (mode == vapor) ltmug1.clear();
+            else if (mode == unknown) lmu1.clear();
             break;
          case NEPTUNE::d_mu_d_h_p:
-            if (mode == liquid) ltmul2=ltmp;
-            else if (mode == vapor) ltmug3=ltmp;
-            else if (mode == unknown) lmu2=ltmp;
+            if (mode == liquid) ltmul2.clear();
+            else if (mode == vapor) ltmug3.clear();
+            else if (mode == unknown) lmu2.clear();
             break;
          case NEPTUNE::d_mu_d_T_p:
-            if (mode == vapor) lmugtg=ltmp;
+            if (mode == vapor) lmugtg.clear();
             break;
          case NEPTUNE::d_sigma_d_p_h:
-            if (mode == vapor) lsi1=ltmp;
-            else if (mode == unknown) lsi1=ltmp;
+            if (mode == vapor) lsi1.clear();
+            else if (mode == unknown) lsi1.clear();
             break;
          case NEPTUNE::d_sigma_d_h_p:
-            if (mode == vapor) lsi3=ltmp;
-            else if (mode == unknown) lsi3=ltmp;
+            if (mode == vapor) lsi3.clear();
+            else if (mode == unknown) lsi3.clear();
             break;
          case NEPTUNE::d_cp_d_p_T:
-            if      (mode == liquid)  lcpl1pt=ltmp;
-            else if (mode == vapor)   lcpvpvpt=ltmp;
-            else if (mode == unknown) lcpl1pt=ltmp;
+            if      (mode == liquid)  lcpl1pt.clear();
+            else if (mode == vapor)   lcpvpvpt.clear();
+            else if (mode == unknown) lcpl1pt.clear();
             break;
          case NEPTUNE::d_cp_d_T_p:
-            if      (mode == liquid)  lcpl2pt=ltmp;
-            else if (mode == vapor)   lcpgtgpt=ltmp;
-            else if (mode == unknown) lcpgtg=ltmp;
+            if      (mode == liquid)  lcpl2pt.clear();
+            else if (mode == vapor)   lcpgtgpt.clear();
+            else if (mode == unknown) lcpgtg.clear();
             break;
-         case NEPTUNE::p_sat            : lp     = ltmp ; break ;
-         case NEPTUNE::T_sat            : ltsp   = ltmp ; break ;
-         case NEPTUNE::h_l_sat          : lhlsp  = ltmp ; break ;
-         case NEPTUNE::h_v_sat          : lhvsp  = ltmp ; break ;
-         case NEPTUNE::cp_l_sat         : lcplsp = ltmp ; break ;
-         case NEPTUNE::cp_v_sat         : lcpvsp = ltmp ; break ;
-         case NEPTUNE::rho_l_sat        : lrlsp  = ltmp ; break ;
-         case NEPTUNE::rho_v_sat        : lrvsp  = ltmp ; break ;
-         case NEPTUNE::d_T_sat_d_p      : ltsp1  = ltmp ; break ;
-         case NEPTUNE::d_h_l_sat_d_p    : lhlsp1 = ltmp ; break ;
-         case NEPTUNE::d_h_v_sat_d_p    : lhvsp1 = ltmp ; break ;
-         case NEPTUNE::d_cp_l_sat_d_p   : lclsp1 = ltmp ; break ;
-         case NEPTUNE::d_cp_v_sat_d_p   : lcvsp1 = ltmp ; break ;
-         case NEPTUNE::d_rho_l_sat_d_p  : lrlsp1 = ltmp ; break ;
-         case NEPTUNE::d_rho_v_sat_d_p  : lrvsp1 = ltmp ; break ;
-         case NEPTUNE::d2_T_sat_d_p_d_p : l2tsp1 = ltmp ; break ;
+         case NEPTUNE::p_sat            : lp.clear() ; break ;
+         case NEPTUNE::T_sat            : ltsp.clear() ; break ;
+         case NEPTUNE::h_l_sat          : lhlsp.clear() ; break ;
+         case NEPTUNE::h_v_sat          : lhvsp.clear() ; break ;
+         case NEPTUNE::cp_l_sat         : lcplsp.clear() ; break ;
+         case NEPTUNE::cp_v_sat         : lcpvsp.clear() ; break ;
+         case NEPTUNE::rho_l_sat        : lrlsp.clear() ; break ;
+         case NEPTUNE::rho_v_sat        : lrvsp.clear() ; break ;
+         case NEPTUNE::d_T_sat_d_p      : ltsp1.clear() ; break ;
+         case NEPTUNE::d_h_l_sat_d_p    : lhlsp1.clear() ; break ;
+         case NEPTUNE::d_h_v_sat_d_p    : lhvsp1.clear() ; break ;
+         case NEPTUNE::d_cp_l_sat_d_p   : lclsp1.clear() ; break ;
+         case NEPTUNE::d_cp_v_sat_d_p   : lcvsp1.clear() ; break ;
+         case NEPTUNE::d_rho_l_sat_d_p  : lrlsp1.clear() ; break ;
+         case NEPTUNE::d_rho_v_sat_d_p  : lrvsp1.clear() ; break ;
+         case NEPTUNE::d2_T_sat_d_p_d_p : l2tsp1.clear() ; break ;
 
-         case NEPTUNE::p_lim   : lp    = ltmp ; break ;
-         case NEPTUNE::h_l_lim : hllim = ltmp ; break ;
-         case NEPTUNE::h_v_lim : hvlim = ltmp ; break ;
+         case NEPTUNE::p_lim   : lp.clear() ; break ;
+         case NEPTUNE::h_l_lim : hllim.clear() ; break ;
+         case NEPTUNE::h_v_lim : hvlim.clear() ; break ;
 
-         case NEPTUNE::c_0:        if (nincon > 0 && mode == vapor)  lxvap  = ltmp; break;
-         case NEPTUNE::c_1:        if (nincon > 0 && mode == vapor)  lx[0]  = ltmp; break;
-         case NEPTUNE::c_2:        if (nincon > 0 && mode == vapor)  lx[1]  = ltmp; break;
-         case NEPTUNE::c_3:        if (nincon > 0 && mode == vapor)  lx[2]  = ltmp; break;
-         case NEPTUNE::c_4:        if (nincon > 0 && mode == vapor)  lx[3]  = ltmp; break;
-         case NEPTUNE::p_0:        if (nincon > 0 && mode == vapor)  lpv    = ltmp; break;
-         case NEPTUNE::p_1:        if (nincon > 0 && mode == vapor)  lpx[0] = ltmp; break;
-         case NEPTUNE::p_2:        if (nincon > 0 && mode == vapor)  lpx[1] = ltmp; break;
-         case NEPTUNE::p_3:        if (nincon > 0 && mode == vapor)  lpx[2] = ltmp; break;
-         case NEPTUNE::p_4:        if (nincon > 0 && mode == vapor)  lpx[3] = ltmp; break;
-         case NEPTUNE::h_0:        if (nincon > 0 && mode == vapor)  lhv    = ltmp; break;
-         case NEPTUNE::h_1:        if (nincon > 0 && mode == vapor)  lhx[0] = ltmp; break;
-         case NEPTUNE::h_2:        if (nincon > 0 && mode == vapor)  lhx[1] = ltmp; break;
-         case NEPTUNE::h_3:        if (nincon > 0 && mode == vapor)  lhx[2] = ltmp; break;
-         case NEPTUNE::h_4:        if (nincon > 0 && mode == vapor)  lhx[3] = ltmp; break;
-         case NEPTUNE::cp_0:       if (nincon > 0 && mode == vapor)  lcpv   = ltmp; break;
-         case NEPTUNE::rho_0:      if (nincon > 0 && mode == vapor)  lrv    = ltmp; break;
-         case NEPTUNE::lambda_0:   if (nincon > 0 && mode == vapor)  ltlav  = ltmp; break;
-         case NEPTUNE::mu_0:       if (nincon > 0 && mode == vapor)  ltmuv  = ltmp; break;
-         case NEPTUNE::T_sat_0:    if (nincon > 0 && mode == vapor)  ltspv  = ltmp; break;
-         case NEPTUNE::h_l_sat_0:  if (nincon > 0 && mode == vapor)  lhlsv  = ltmp; break;
-         case NEPTUNE::h_v_sat_0:  if (nincon > 0 && mode == vapor)  lhvsv  = ltmp; break;
-         case NEPTUNE::cp_l_sat_0: if (nincon > 0 && mode == vapor)  lcplsv = ltmp; break;
-         case NEPTUNE::cp_v_sat_0: if (nincon > 0 && mode == vapor)  lcpvsv = ltmp; break;
-         case NEPTUNE::rho_l_sat_0:if (nincon > 0 && mode == vapor)  lrlsv  = ltmp; break;
-         case NEPTUNE::rho_v_sat_0:if (nincon > 0 && mode == vapor)  lrvsv  = ltmp; break;
-         case NEPTUNE::dncv:       if (nincon > 0 && mode == vapor)  ldncv  = ltmp; break;
-         case NEPTUNE::rnc:        if (nincon > 0 && mode == vapor)  lrnc   = ltmp; break;
-         case NEPTUNE::mnc:        if (nincon > 0 && mode == vapor)  lmnc   = ltmp; break;
-         case NEPTUNE::prgr:       if (nincon > 0 && mode == vapor)  lprgr  = ltmp; break;
-         case NEPTUNE::xnc:        if (nincon > 0 && mode == vapor)  lxnc   = ltmp; break;
+         case NEPTUNE::c_0:        if (nincon > 0 && mode == vapor)  lxvap.clear(); break;
+         case NEPTUNE::c_1:        if (nincon > 0 && mode == vapor)  lx[0].clear(); break;
+         case NEPTUNE::c_2:        if (nincon > 0 && mode == vapor)  lx[1].clear(); break;
+         case NEPTUNE::c_3:        if (nincon > 0 && mode == vapor)  lx[2].clear(); break;
+         case NEPTUNE::c_4:        if (nincon > 0 && mode == vapor)  lx[3].clear(); break;
+         case NEPTUNE::p_0:        if (nincon > 0 && mode == vapor)  lpv.clear(); break;
+         case NEPTUNE::p_1:        if (nincon > 0 && mode == vapor)  lpx[0].clear(); break;
+         case NEPTUNE::p_2:        if (nincon > 0 && mode == vapor)  lpx[1].clear(); break;
+         case NEPTUNE::p_3:        if (nincon > 0 && mode == vapor)  lpx[2].clear(); break;
+         case NEPTUNE::p_4:        if (nincon > 0 && mode == vapor)  lpx[3].clear(); break;
+         case NEPTUNE::h_0:        if (nincon > 0 && mode == vapor)  lhv.clear(); break;
+         case NEPTUNE::h_1:        if (nincon > 0 && mode == vapor)  lhx[0].clear(); break;
+         case NEPTUNE::h_2:        if (nincon > 0 && mode == vapor)  lhx[1].clear(); break;
+         case NEPTUNE::h_3:        if (nincon > 0 && mode == vapor)  lhx[2].clear(); break;
+         case NEPTUNE::h_4:        if (nincon > 0 && mode == vapor)  lhx[3].clear(); break;
+         case NEPTUNE::cp_0:       if (nincon > 0 && mode == vapor)  lcpv.clear(); break;
+         case NEPTUNE::rho_0:      if (nincon > 0 && mode == vapor)  lrv.clear(); break;
+         case NEPTUNE::lambda_0:   if (nincon > 0 && mode == vapor)  ltlav.clear(); break;
+         case NEPTUNE::mu_0:       if (nincon > 0 && mode == vapor)  ltmuv.clear(); break;
+         case NEPTUNE::T_sat_0:    if (nincon > 0 && mode == vapor)  ltspv.clear(); break;
+         case NEPTUNE::h_l_sat_0:  if (nincon > 0 && mode == vapor)  lhlsv.clear(); break;
+         case NEPTUNE::h_v_sat_0:  if (nincon > 0 && mode == vapor)  lhvsv.clear(); break;
+         case NEPTUNE::cp_l_sat_0: if (nincon > 0 && mode == vapor)  lcplsv.clear(); break;
+         case NEPTUNE::cp_v_sat_0: if (nincon > 0 && mode == vapor)  lcpvsv.clear(); break;
+         case NEPTUNE::rho_l_sat_0:if (nincon > 0 && mode == vapor)  lrlsv.clear(); break;
+         case NEPTUNE::rho_v_sat_0:if (nincon > 0 && mode == vapor)  lrvsv.clear(); break;
+         case NEPTUNE::dncv:       if (nincon > 0 && mode == vapor)  ldncv.clear(); break;
+         case NEPTUNE::rnc:        if (nincon > 0 && mode == vapor)  lrnc.clear(); break;
+         case NEPTUNE::mnc:        if (nincon > 0 && mode == vapor)  lmnc.clear(); break;
+         case NEPTUNE::prgr:       if (nincon > 0 && mode == vapor)  lprgr.clear(); break;
+         case NEPTUNE::xnc:        if (nincon > 0 && mode == vapor)  lxnc.clear(); break;
          // First Derivatives
-         case NEPTUNE::d_p_0_d_p_h:           if (nincon > 0 && mode == vapor)  lpv1     = ltmp; break;
-         case NEPTUNE::d_p_0_d_h_p:           if (nincon > 0 && mode == vapor)  lpv3     = ltmp; break;
-         case NEPTUNE::d_p_0_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lpvx[0]  = ltmp; break;
-         case NEPTUNE::d_p_0_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lpvx[1]  = ltmp; break;
-         case NEPTUNE::d_p_0_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lpvx[2]  = ltmp; break;
-         case NEPTUNE::d_p_0_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lpvx[3]  = ltmp; break;
-         case NEPTUNE::d_h_0_d_p_h:           if (nincon > 0 && mode == vapor)  lhv1     = ltmp; break;
-         case NEPTUNE::d_h_0_d_h_p:           if (nincon > 0 && mode == vapor)  lhv3     = ltmp; break;
-         case NEPTUNE::d_h_0_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lhvx[0]  = ltmp; break;
-         case NEPTUNE::d_h_0_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lhvx[1]  = ltmp; break;
-         case NEPTUNE::d_h_0_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lhvx[2]  = ltmp; break;
-         case NEPTUNE::d_h_0_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lhvx[3]  = ltmp; break;
-         case NEPTUNE::d_h_d_c_1_pT:          if (nincon > 0 && mode == vapor)  lhgx[0]  = ltmp; break;
-         case NEPTUNE::d_h_d_c_2_pT:          if (nincon > 0 && mode == vapor)  lhgx[1]  = ltmp; break;
-         case NEPTUNE::d_h_d_c_3_pT:          if (nincon > 0 && mode == vapor)  lhgx[2]  = ltmp; break;
-         case NEPTUNE::d_h_d_c_4_pT:          if (nincon > 0 && mode == vapor)  lhgx[3]  = ltmp; break;
-         case NEPTUNE::d_T_d_h_0_p:           if (nincon > 0 && mode == vapor)  ltghv    = ltmp; break;
-         case NEPTUNE::d_T_d_p_0_h:           if (nincon > 0 && mode == vapor)  ltgpv    = ltmp; break;
-         case NEPTUNE::d_T_d_c_1_ph:          if (nincon > 0 && mode == vapor)  ltgx[0]  = ltmp; break;
-         case NEPTUNE::d_T_d_c_2_ph:          if (nincon > 0 && mode == vapor)  ltgx[1]  = ltmp; break;
-         case NEPTUNE::d_T_d_c_3_ph:          if (nincon > 0 && mode == vapor)  ltgx[2]  = ltmp; break;
-         case NEPTUNE::d_T_d_c_4_ph:          if (nincon > 0 && mode == vapor)  ltgx[3]  = ltmp; break;
-         case NEPTUNE::d_cp_d_c_1_ph:         if (nincon > 0 && mode == vapor)  lcpgx[0] = ltmp; break;
-         case NEPTUNE::d_cp_d_c_2_ph:         if (nincon > 0 && mode == vapor)  lcpgx[1] = ltmp; break;
-         case NEPTUNE::d_cp_d_c_3_ph:         if (nincon > 0 && mode == vapor)  lcpgx[2] = ltmp; break;
-         case NEPTUNE::d_cp_d_c_4_ph:         if (nincon > 0 && mode == vapor)  lcpgx[3] = ltmp; break;
-         case NEPTUNE::d_cp_0_d_p_0_h:        if (nincon > 0 && mode == vapor)  lcpvpv   = ltmp; break;
-         case NEPTUNE::d_cp_0_d_h_0_p:        if (nincon > 0 && mode == vapor)  lcpvhv   = ltmp; break;
-         case NEPTUNE::d_rho_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lrgx[0]  = ltmp; break;
-         case NEPTUNE::d_rho_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lrgx[1]  = ltmp; break;
-         case NEPTUNE::d_rho_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lrgx[2]  = ltmp; break;
-         case NEPTUNE::d_rho_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lrgx[3]  = ltmp; break;
-         case NEPTUNE::d_mu_d_c_1_ph:         if (nincon > 0 && mode == vapor)  ltmugx[0]= ltmp; break;
-         case NEPTUNE::d_mu_d_c_2_ph:         if (nincon > 0 && mode == vapor)  ltmugx[1]= ltmp; break;
-         case NEPTUNE::d_mu_d_c_3_ph:         if (nincon > 0 && mode == vapor)  ltmugx[2]= ltmp; break;
-         case NEPTUNE::d_mu_d_c_4_ph:         if (nincon > 0 && mode == vapor)  ltmugx[3]= ltmp; break;
-         case NEPTUNE::d_sigma_d_c_1_ph:      if (nincon > 0 && mode == vapor)  lsix[0]  = ltmp; break;
-         case NEPTUNE::d_sigma_d_c_2_ph:      if (nincon > 0 && mode == vapor)  lsix[1]  = ltmp; break;
-         case NEPTUNE::d_sigma_d_c_3_ph:      if (nincon > 0 && mode == vapor)  lsix[2]  = ltmp; break;
-         case NEPTUNE::d_sigma_d_c_4_ph:      if (nincon > 0 && mode == vapor)  lsix[3]  = ltmp; break;
-         case NEPTUNE::d_lambda_d_c_1_ph:     if (nincon > 0 && mode == vapor)  ltlagx[0]= ltmp; break;
-         case NEPTUNE::d_lambda_d_c_2_ph:     if (nincon > 0 && mode == vapor)  ltlagx[1]= ltmp; break;
-         case NEPTUNE::d_lambda_d_c_3_ph:     if (nincon > 0 && mode == vapor)  ltlagx[2]= ltmp; break;
-         case NEPTUNE::d_lambda_d_c_4_ph:     if (nincon > 0 && mode == vapor)  ltlagx[3]= ltmp; break;
-         case NEPTUNE::d_sigma_d_p_0_h:       if (nincon > 0 && mode == vapor)  lsipv    = ltmp; break;
-         case NEPTUNE::d_T_sat_0_d_p_0_h:     if (nincon > 0 && mode == vapor)  ltspvv   = ltmp; break;
-         case NEPTUNE::d_h_l_sat_0_d_p_0_h:   if (nincon > 0 && mode == vapor)  lhlsvv   = ltmp; break;
-         case NEPTUNE::d_h_v_sat_0_d_p_0_h:   if (nincon > 0 && mode == vapor)  lhvsvv   = ltmp; break;
-         case NEPTUNE::d_cp_l_sat_0_d_p_0_h:  if (nincon > 0 && mode == vapor)  lclsvv   = ltmp; break;
-         case NEPTUNE::d_cp_v_sat_0_d_p_0_h:  if (nincon > 0 && mode == vapor)  lcvsvv   = ltmp; break;
-         case NEPTUNE::d_rho_l_sat_0_d_p_0_h: if (nincon > 0 && mode == vapor)  lrlsvv   = ltmp; break;
-         case NEPTUNE::d_rho_v_sat_0_d_p_0_h: if (nincon > 0 && mode == vapor)  lrvsvv   = ltmp; break;
-         case NEPTUNE::d_lambda_0_d_p_0_h:    if (nincon > 0 && mode == vapor)  llavpv   = ltmp; break;
-         case NEPTUNE::d_lambda_0_d_T_p:      if (nincon > 0 && mode == vapor)  llavtg   = ltmp; break;
-         case NEPTUNE::d_rho_0_d_p_h:         if (nincon > 0 && mode == vapor)  lrv1     = ltmp; break;
-         case NEPTUNE::d_rho_0_d_h_p:         if (nincon > 0 && mode == vapor)  lrv3     = ltmp; break;
-         case NEPTUNE::d_rho_0_d_p_0_h:       if (nincon > 0 && mode == vapor)  lrvpv    = ltmp; break;
-         case NEPTUNE::d_rho_0_d_h_0_p:       if (nincon > 0 && mode == vapor)  lrvhv    = ltmp; break;
-         case NEPTUNE::d_rho_0_d_c_1_ph:      if (nincon > 0 && mode == vapor)  lrvx[0]  = ltmp; break;
-         case NEPTUNE::d_rho_0_d_c_2_ph:      if (nincon > 0 && mode == vapor)  lrvx[1]  = ltmp; break;
-         case NEPTUNE::d_rho_0_d_c_3_ph:      if (nincon > 0 && mode == vapor)  lrvx[2]  = ltmp; break;
-         case NEPTUNE::d_rho_0_d_c_4_ph:      if (nincon > 0 && mode == vapor)  lrvx[3]  = ltmp; break;
-         case NEPTUNE::d_rnc_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lrncx[0] = ltmp; break;
-         case NEPTUNE::d_rnc_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lrncx[1] = ltmp; break;
-         case NEPTUNE::d_rnc_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lrncx[2] = ltmp; break;
-         case NEPTUNE::d_rnc_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lrncx[3] = ltmp; break;
-         case NEPTUNE::d_mnc_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lmncx[0] = ltmp; break;
-         case NEPTUNE::d_mnc_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lmncx[1] = ltmp; break;
-         case NEPTUNE::d_mnc_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lmncx[2] = ltmp; break;
-         case NEPTUNE::d_mnc_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lmncx[3] = ltmp; break;
-         case NEPTUNE::d_dncv_d_c_1_ph:       if (nincon > 0 && mode == vapor)  ldncvx[0]= ltmp; break;
-         case NEPTUNE::d_dncv_d_c_2_ph:       if (nincon > 0 && mode == vapor)  ldncvx[1]= ltmp; break;
-         case NEPTUNE::d_dncv_d_c_3_ph:       if (nincon > 0 && mode == vapor)  ldncvx[2]= ltmp; break;
-         case NEPTUNE::d_dncv_d_c_4_ph:       if (nincon > 0 && mode == vapor)  ldncvx[3]= ltmp; break;
-         case NEPTUNE::d_dncv_d_p_h:          if (nincon > 0 && mode == vapor)  ldncv1   = ltmp; break;
-         case NEPTUNE::d_dncv_d_h_p:          if (nincon > 0 && mode == vapor)  ldncv3   = ltmp; break;
-         case NEPTUNE::d_mu_0_d_T_p:          if (nincon > 0 && mode == vapor)  lmuvtg   = ltmp; break;
-         case NEPTUNE::d_mu_0_d_p_0_h:        if (nincon > 0 && mode == vapor)  lmuvpv   = ltmp; break;
+         case NEPTUNE::d_p_0_d_p_h:           if (nincon > 0 && mode == vapor)  lpv1.clear(); break;
+         case NEPTUNE::d_p_0_d_h_p:           if (nincon > 0 && mode == vapor)  lpv3.clear(); break;
+         case NEPTUNE::d_p_0_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lpvx[0].clear(); break;
+         case NEPTUNE::d_p_0_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lpvx[1].clear(); break;
+         case NEPTUNE::d_p_0_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lpvx[2].clear(); break;
+         case NEPTUNE::d_p_0_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lpvx[3].clear(); break;
+         case NEPTUNE::d_h_0_d_p_h:           if (nincon > 0 && mode == vapor)  lhv1.clear(); break;
+         case NEPTUNE::d_h_0_d_h_p:           if (nincon > 0 && mode == vapor)  lhv3.clear(); break;
+         case NEPTUNE::d_h_0_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lhvx[0].clear(); break;
+         case NEPTUNE::d_h_0_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lhvx[1].clear(); break;
+         case NEPTUNE::d_h_0_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lhvx[2].clear(); break;
+         case NEPTUNE::d_h_0_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lhvx[3].clear(); break;
+         case NEPTUNE::d_h_d_c_1_pT:          if (nincon > 0 && mode == vapor)  lhgx[0].clear(); break;
+         case NEPTUNE::d_h_d_c_2_pT:          if (nincon > 0 && mode == vapor)  lhgx[1].clear(); break;
+         case NEPTUNE::d_h_d_c_3_pT:          if (nincon > 0 && mode == vapor)  lhgx[2].clear(); break;
+         case NEPTUNE::d_h_d_c_4_pT:          if (nincon > 0 && mode == vapor)  lhgx[3].clear(); break;
+         case NEPTUNE::d_T_d_h_0_p:           if (nincon > 0 && mode == vapor)  ltghv.clear(); break;
+         case NEPTUNE::d_T_d_p_0_h:           if (nincon > 0 && mode == vapor)  ltgpv.clear(); break;
+         case NEPTUNE::d_T_d_c_1_ph:          if (nincon > 0 && mode == vapor)  ltgx[0].clear(); break;
+         case NEPTUNE::d_T_d_c_2_ph:          if (nincon > 0 && mode == vapor)  ltgx[1].clear(); break;
+         case NEPTUNE::d_T_d_c_3_ph:          if (nincon > 0 && mode == vapor)  ltgx[2].clear(); break;
+         case NEPTUNE::d_T_d_c_4_ph:          if (nincon > 0 && mode == vapor)  ltgx[3].clear(); break;
+         case NEPTUNE::d_cp_d_c_1_ph:         if (nincon > 0 && mode == vapor)  lcpgx[0].clear(); break;
+         case NEPTUNE::d_cp_d_c_2_ph:         if (nincon > 0 && mode == vapor)  lcpgx[1].clear(); break;
+         case NEPTUNE::d_cp_d_c_3_ph:         if (nincon > 0 && mode == vapor)  lcpgx[2].clear(); break;
+         case NEPTUNE::d_cp_d_c_4_ph:         if (nincon > 0 && mode == vapor)  lcpgx[3].clear(); break;
+         case NEPTUNE::d_cp_0_d_p_0_h:        if (nincon > 0 && mode == vapor)  lcpvpv.clear(); break;
+         case NEPTUNE::d_cp_0_d_h_0_p:        if (nincon > 0 && mode == vapor)  lcpvhv.clear(); break;
+         case NEPTUNE::d_rho_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lrgx[0].clear(); break;
+         case NEPTUNE::d_rho_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lrgx[1].clear(); break;
+         case NEPTUNE::d_rho_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lrgx[2].clear(); break;
+         case NEPTUNE::d_rho_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lrgx[3].clear(); break;
+         case NEPTUNE::d_mu_d_c_1_ph:         if (nincon > 0 && mode == vapor)  ltmugx[0].clear(); break;
+         case NEPTUNE::d_mu_d_c_2_ph:         if (nincon > 0 && mode == vapor)  ltmugx[1].clear(); break;
+         case NEPTUNE::d_mu_d_c_3_ph:         if (nincon > 0 && mode == vapor)  ltmugx[2].clear(); break;
+         case NEPTUNE::d_mu_d_c_4_ph:         if (nincon > 0 && mode == vapor)  ltmugx[3].clear(); break;
+         case NEPTUNE::d_sigma_d_c_1_ph:      if (nincon > 0 && mode == vapor)  lsix[0].clear(); break;
+         case NEPTUNE::d_sigma_d_c_2_ph:      if (nincon > 0 && mode == vapor)  lsix[1].clear(); break;
+         case NEPTUNE::d_sigma_d_c_3_ph:      if (nincon > 0 && mode == vapor)  lsix[2].clear(); break;
+         case NEPTUNE::d_sigma_d_c_4_ph:      if (nincon > 0 && mode == vapor)  lsix[3].clear(); break;
+         case NEPTUNE::d_lambda_d_c_1_ph:     if (nincon > 0 && mode == vapor)  ltlagx[0].clear(); break;
+         case NEPTUNE::d_lambda_d_c_2_ph:     if (nincon > 0 && mode == vapor)  ltlagx[1].clear(); break;
+         case NEPTUNE::d_lambda_d_c_3_ph:     if (nincon > 0 && mode == vapor)  ltlagx[2].clear(); break;
+         case NEPTUNE::d_lambda_d_c_4_ph:     if (nincon > 0 && mode == vapor)  ltlagx[3].clear(); break;
+         case NEPTUNE::d_sigma_d_p_0_h:       if (nincon > 0 && mode == vapor)  lsipv.clear(); break;
+         case NEPTUNE::d_T_sat_0_d_p_0_h:     if (nincon > 0 && mode == vapor)  ltspvv.clear(); break;
+         case NEPTUNE::d_h_l_sat_0_d_p_0_h:   if (nincon > 0 && mode == vapor)  lhlsvv.clear(); break;
+         case NEPTUNE::d_h_v_sat_0_d_p_0_h:   if (nincon > 0 && mode == vapor)  lhvsvv.clear(); break;
+         case NEPTUNE::d_cp_l_sat_0_d_p_0_h:  if (nincon > 0 && mode == vapor)  lclsvv.clear(); break;
+         case NEPTUNE::d_cp_v_sat_0_d_p_0_h:  if (nincon > 0 && mode == vapor)  lcvsvv.clear(); break;
+         case NEPTUNE::d_rho_l_sat_0_d_p_0_h: if (nincon > 0 && mode == vapor)  lrlsvv.clear(); break;
+         case NEPTUNE::d_rho_v_sat_0_d_p_0_h: if (nincon > 0 && mode == vapor)  lrvsvv.clear(); break;
+         case NEPTUNE::d_lambda_0_d_p_0_h:    if (nincon > 0 && mode == vapor)  llavpv.clear(); break;
+         case NEPTUNE::d_lambda_0_d_T_p:      if (nincon > 0 && mode == vapor)  llavtg.clear(); break;
+         case NEPTUNE::d_rho_0_d_p_h:         if (nincon > 0 && mode == vapor)  lrv1.clear(); break;
+         case NEPTUNE::d_rho_0_d_h_p:         if (nincon > 0 && mode == vapor)  lrv3.clear(); break;
+         case NEPTUNE::d_rho_0_d_p_0_h:       if (nincon > 0 && mode == vapor)  lrvpv.clear(); break;
+         case NEPTUNE::d_rho_0_d_h_0_p:       if (nincon > 0 && mode == vapor)  lrvhv.clear(); break;
+         case NEPTUNE::d_rho_0_d_c_1_ph:      if (nincon > 0 && mode == vapor)  lrvx[0].clear(); break;
+         case NEPTUNE::d_rho_0_d_c_2_ph:      if (nincon > 0 && mode == vapor)  lrvx[1].clear(); break;
+         case NEPTUNE::d_rho_0_d_c_3_ph:      if (nincon > 0 && mode == vapor)  lrvx[2].clear(); break;
+         case NEPTUNE::d_rho_0_d_c_4_ph:      if (nincon > 0 && mode == vapor)  lrvx[3].clear(); break;
+         case NEPTUNE::d_rnc_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lrncx[0].clear(); break;
+         case NEPTUNE::d_rnc_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lrncx[1].clear(); break;
+         case NEPTUNE::d_rnc_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lrncx[2].clear(); break;
+         case NEPTUNE::d_rnc_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lrncx[3].clear(); break;
+         case NEPTUNE::d_mnc_d_c_1_ph:        if (nincon > 0 && mode == vapor)  lmncx[0].clear(); break;
+         case NEPTUNE::d_mnc_d_c_2_ph:        if (nincon > 0 && mode == vapor)  lmncx[1].clear(); break;
+         case NEPTUNE::d_mnc_d_c_3_ph:        if (nincon > 0 && mode == vapor)  lmncx[2].clear(); break;
+         case NEPTUNE::d_mnc_d_c_4_ph:        if (nincon > 0 && mode == vapor)  lmncx[3].clear(); break;
+         case NEPTUNE::d_dncv_d_c_1_ph:       if (nincon > 0 && mode == vapor)  ldncvx[0].clear(); break;
+         case NEPTUNE::d_dncv_d_c_2_ph:       if (nincon > 0 && mode == vapor)  ldncvx[1].clear(); break;
+         case NEPTUNE::d_dncv_d_c_3_ph:       if (nincon > 0 && mode == vapor)  ldncvx[2].clear(); break;
+         case NEPTUNE::d_dncv_d_c_4_ph:       if (nincon > 0 && mode == vapor)  ldncvx[3].clear(); break;
+         case NEPTUNE::d_dncv_d_p_h:          if (nincon > 0 && mode == vapor)  ldncv1.clear(); break;
+         case NEPTUNE::d_dncv_d_h_p:          if (nincon > 0 && mode == vapor)  ldncv3.clear(); break;
+         case NEPTUNE::d_mu_0_d_T_p:          if (nincon > 0 && mode == vapor)  lmuvtg.clear(); break;
+         case NEPTUNE::d_mu_0_d_p_0_h:        if (nincon > 0 && mode == vapor)  lmuvpv.clear(); break;
          // Second Derivatives
-         case NEPTUNE::d2_T_sat_0_d_p_0_d_p_0: if (nincon > 0 && mode == vapor) l2tsdpvv = ltmp; break;
+         case NEPTUNE::d2_T_sat_0_d_p_0_d_p_0: if (nincon > 0 && mode == vapor) l2tsdpvv.clear(); break;
 
          // Cathare2 IAPWS Thermodynamic Properties
-         case NEPTUNE::epstl:              if (mode == liquid)  lepstliq     = ltmp;  break;
-         case NEPTUNE::hlspsc:             if (mode == liquid)  lhlspsc      = ltmp;  break;
-         case NEPTUNE::hlsvsc:             if (mode == liquid)  lhlsvsc      = ltmp;  break;
-         case NEPTUNE::epstg:              if (mode == liquid)  lepstgas     = ltmp;  break;
-         case NEPTUNE::hvspsc:             if (mode == liquid)  lhvspsc      = ltmp;  break;
-         case NEPTUNE::hvsvsc:             if (mode == liquid)  lhvsvsc      = ltmp;  break;
-         case NEPTUNE::d_epstl_dp_h:       if (mode == liquid)  lepstliq1    = ltmp;  break;
-         case NEPTUNE::d_epstl_dh_p:       if (mode == liquid)  lepstliq2    = ltmp;  break;
-         case NEPTUNE::d_hlspsc_dp_h:      if (mode == liquid)  lhlspsc1     = ltmp;  break;
-         case NEPTUNE::d_hlspsc_dh_p:      if (mode == liquid)  lhlspsc2     = ltmp;  break;
-         case NEPTUNE::d_hlsvsc_dp_h:      if (mode == liquid)  lhlsvsc1     = ltmp;  break;
-         case NEPTUNE::d_hlsvsc_dh_p0:     if (mode == liquid)  lhlsvsc2     = ltmp;  break;
-         case NEPTUNE::d_hlsvsc_dh_p:      if (mode == liquid)  lhlsvsc3     = ltmp;  break;
-         case NEPTUNE::d_hlsvsc_d_c_1_ph:  if (mode == liquid)  lhlsvscx[0]  = ltmp;  break;
-         case NEPTUNE::d_hlsvsc_d_c_2_ph:  if (mode == liquid)  lhlsvscx[1]  = ltmp;  break;
-         case NEPTUNE::d_hlsvsc_d_c_3_ph:  if (mode == liquid)  lhlsvscx[2]  = ltmp;  break;
-         case NEPTUNE::d_hlsvsc_d_c_4_ph:  if (mode == liquid)  lhlsvscx[3]  = ltmp;  break;
-         case NEPTUNE::d_epstg_dp_h:       if (mode == vapor)   lepstgas1    = ltmp;  break;
-         case NEPTUNE::d_epstg_dh_p:       if (mode == vapor)   lepstgas3    = ltmp;  break;
-         case NEPTUNE::d_epstg_d_c_1_ph:   if (mode == vapor)   lepstgasx[0] = ltmp;  break;
-         case NEPTUNE::d_epstg_d_c_2_ph:   if (mode == vapor)   lepstgasx[1] = ltmp;  break;
-         case NEPTUNE::d_epstg_d_c_3_ph:   if (mode == vapor)   lepstgasx[2] = ltmp;  break;
-         case NEPTUNE::d_epstg_d_c_4_ph:   if (mode == vapor)   lepstgasx[3] = ltmp;  break;
-         case NEPTUNE::d_hvspsc_dp_h:      if (mode == vapor)   lhvspsc1     = ltmp;  break;
-         case NEPTUNE::d_hvspsc_dh_p:      if (mode == vapor)   lhvspsc3     = ltmp;  break;
-         case NEPTUNE::d_hvspsc_d_c_1_ph:  if (mode == vapor)   lhvspscx[0]  = ltmp;  break;
-         case NEPTUNE::d_hvspsc_d_c_2_ph:  if (mode == vapor)   lhvspscx[1]  = ltmp;  break;
-         case NEPTUNE::d_hvspsc_d_c_3_ph:  if (mode == vapor)   lhvspscx[2]  = ltmp;  break;
-         case NEPTUNE::d_hvspsc_d_c_4_ph:  if (mode == vapor)   lhvspscx[3]  = ltmp;  break;
-         case NEPTUNE::d_hvsvsc_dp_h:      if (mode == vapor)   lhvsvsc1     = ltmp;  break;
-         case NEPTUNE::d_hvsvsc_dh_p:      if (mode == vapor)   lhvsvsc3     = ltmp;  break;
-         case NEPTUNE::d_hvsvsc_d_c_1_ph:  if (mode == vapor)   lhvsvscx[0]  = ltmp;  break;
-         case NEPTUNE::d_hvsvsc_d_c_2_ph:  if (mode == vapor)   lhvsvscx[1]  = ltmp;  break;
-         case NEPTUNE::d_hvsvsc_d_c_3_ph:  if (mode == vapor)   lhvsvscx[2]  = ltmp;  break;
-         case NEPTUNE::d_hvsvsc_d_c_4_ph:  if (mode == vapor)   lhvsvscx[3]  = ltmp;  break;
+         case NEPTUNE::epstl:              if (mode == liquid)  lepstliq.clear();  break;
+         case NEPTUNE::hlspsc:             if (mode == liquid)  lhlspsc.clear();  break;
+         case NEPTUNE::hlsvsc:             if (mode == liquid)  lhlsvsc.clear();  break;
+         case NEPTUNE::epstg:              if (mode == liquid)  lepstgas.clear();  break;
+         case NEPTUNE::hvspsc:             if (mode == liquid)  lhvspsc.clear();  break;
+         case NEPTUNE::hvsvsc:             if (mode == liquid)  lhvsvsc.clear();  break;
+         case NEPTUNE::d_epstl_dp_h:       if (mode == liquid)  lepstliq1.clear();  break;
+         case NEPTUNE::d_epstl_dh_p:       if (mode == liquid)  lepstliq2.clear();  break;
+         case NEPTUNE::d_hlspsc_dp_h:      if (mode == liquid)  lhlspsc1.clear();  break;
+         case NEPTUNE::d_hlspsc_dh_p:      if (mode == liquid)  lhlspsc2.clear();  break;
+         case NEPTUNE::d_hlsvsc_dp_h:      if (mode == liquid)  lhlsvsc1.clear();  break;
+         case NEPTUNE::d_hlsvsc_dh_p0:     if (mode == liquid)  lhlsvsc2.clear();  break;
+         case NEPTUNE::d_hlsvsc_dh_p:      if (mode == liquid)  lhlsvsc3.clear();  break;
+         case NEPTUNE::d_hlsvsc_d_c_1_ph:  if (mode == liquid)  lhlsvscx[0].clear();  break;
+         case NEPTUNE::d_hlsvsc_d_c_2_ph:  if (mode == liquid)  lhlsvscx[1].clear();  break;
+         case NEPTUNE::d_hlsvsc_d_c_3_ph:  if (mode == liquid)  lhlsvscx[2].clear();  break;
+         case NEPTUNE::d_hlsvsc_d_c_4_ph:  if (mode == liquid)  lhlsvscx[3].clear();  break;
+         case NEPTUNE::d_epstg_dp_h:       if (mode == vapor)   lepstgas1.clear();  break;
+         case NEPTUNE::d_epstg_dh_p:       if (mode == vapor)   lepstgas3.clear();  break;
+         case NEPTUNE::d_epstg_d_c_1_ph:   if (mode == vapor)   lepstgasx[0].clear();  break;
+         case NEPTUNE::d_epstg_d_c_2_ph:   if (mode == vapor)   lepstgasx[1].clear();  break;
+         case NEPTUNE::d_epstg_d_c_3_ph:   if (mode == vapor)   lepstgasx[2].clear();  break;
+         case NEPTUNE::d_epstg_d_c_4_ph:   if (mode == vapor)   lepstgasx[3].clear();  break;
+         case NEPTUNE::d_hvspsc_dp_h:      if (mode == vapor)   lhvspsc1.clear();  break;
+         case NEPTUNE::d_hvspsc_dh_p:      if (mode == vapor)   lhvspsc3.clear();  break;
+         case NEPTUNE::d_hvspsc_d_c_1_ph:  if (mode == vapor)   lhvspscx[0].clear();  break;
+         case NEPTUNE::d_hvspsc_d_c_2_ph:  if (mode == vapor)   lhvspscx[1].clear();  break;
+         case NEPTUNE::d_hvspsc_d_c_3_ph:  if (mode == vapor)   lhvspscx[2].clear();  break;
+         case NEPTUNE::d_hvspsc_d_c_4_ph:  if (mode == vapor)   lhvspscx[3].clear();  break;
+         case NEPTUNE::d_hvsvsc_dp_h:      if (mode == vapor)   lhvsvsc1.clear();  break;
+         case NEPTUNE::d_hvsvsc_dh_p:      if (mode == vapor)   lhvsvsc3.clear();  break;
+         case NEPTUNE::d_hvsvsc_d_c_1_ph:  if (mode == vapor)   lhvsvscx[0].clear();  break;
+         case NEPTUNE::d_hvsvsc_d_c_2_ph:  if (mode == vapor)   lhvsvscx[1].clear();  break;
+         case NEPTUNE::d_hvsvsc_d_c_3_ph:  if (mode == vapor)   lhvsvscx[2].clear();  break;
+         case NEPTUNE::d_hvsvsc_d_c_4_ph:  if (mode == vapor)   lhvsvscx[3].clear();  break;
          default: 
             return 0 ;
        }
@@ -2155,7 +2155,7 @@ namespace CATHARE2
     assert (nsca > 0) ; 
     if (map_eos_field(p, phase) == 0)    return EOS_Error::error ;
     ArrOfDouble xtin = t.get_data() ;                              // Replace
-    EOS_Field tin("tin",t.get_property_name().aschar(),xtin) ;     // if (map_eos_field(t, phase))  return EOS_Error::error ;
+    EOS_Field tin("tin",t.get_property_name().aschar(),t.get_property(),xtin) ;     // if (map_eos_field(t, phase))  return EOS_Error::error ;
     if (map_eos_field(tin, phase) == 0)  return EOS_Error::error ; //
     int size_out = out.size() ;
     vector<int> existprop_fields(size_out) ;
@@ -2298,7 +2298,7 @@ namespace CATHARE2
   {
     // set_mixing_properties has already been done for (r,cp0,cp1,... and c_i)
     nsca = 1 ;
-    EOS_Field fh("h","h",1,&h) ;
+    EOS_Field fh("h","h",NEPTUNE::h,1,&h) ;
     if (map_eos_field(fh, phase) == 0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
     rezise_eos_fields(nsca, phase) ;
     lp[0] = p ;
@@ -2365,13 +2365,13 @@ namespace CATHARE2
        { ArrOfInt err_arr(1) ;
          EOS_Error_Field ferr(err_arr) ;
          ferr = EOS_Internal_Error::OK ;
-         EOS_Field p("P", "p", 1, &pc) ;
-         EOS_Field t("T_sat", "T_sat", 1, &tc) ;
+         EOS_Field p("P", "p",NEPTUNE::p, 1, &pc) ;
+         EOS_Field t("T_sat", "T_sat",NEPTUNE::T_sat, 1, &tc) ;
          EOS_Field h ;
          if (phase == liquid ) 
-            { h = EOS_Field("h_l_sat","h_l_sat", 1, &hc); }
+            { h = EOS_Field("h_l_sat","h_l_sat",NEPTUNE::h_l_sat, 1, &hc); }
          else
-            { h = EOS_Field("h_v_sat","h_v_sat", 1, &hc); }
+            { h = EOS_Field("h_v_sat","h_v_sat",NEPTUNE::h_v_sat, 1, &hc); }
          EOS_Fields out(2) ;
          out[0] = t ;
          out[1] = h ;                 
@@ -2474,8 +2474,8 @@ namespace CATHARE2
   { ArrOfInt err_arr(1) ;
     EOS_Error_Field ferr(err_arr) ;
     ferr = EOS_Internal_Error::OK ;
-    EOS_Field pf("P", "p", 1, &p) ;
-    EOS_Field hf("h_l_lim","h_l_lim", 1, &h_l_lim) ;
+    EOS_Field pf("P", "p",NEPTUNE::p, 1, &p) ;
+    EOS_Field hf("h_l_lim","h_l_lim",NEPTUNE::h_l_lim, 1, &h_l_lim) ;
     EOS_Fields out(1) ;
     out[0] = hf ;
     calc2_p(pf, out, ferr) ;
@@ -2486,8 +2486,8 @@ namespace CATHARE2
   { ArrOfInt err_arr(1) ;
     EOS_Error_Field ferr(err_arr) ;
     ferr = EOS_Internal_Error::OK ;
-    EOS_Field pf("P", "p", 1, &p);
-    EOS_Field hf("h_v_lim","h_v_lim", 1, &h_v_lim) ;
+    EOS_Field pf("P", "p",NEPTUNE::p, 1, &p);
+    EOS_Field hf("h_v_lim","h_v_lim",NEPTUNE::h_v_lim, 1, &h_v_lim) ;
     EOS_Fields out(1) ;
     out[0] = hf ;
     calc2_p(pf, out, ferr) ;

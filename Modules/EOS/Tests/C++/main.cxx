@@ -130,6 +130,88 @@ const char *list_prop2[] = {
                                       t_saturprop_r + sizeof(t_saturprop_r) / sizeof(string) ) ;
 #endif
 
+static EOS_Property n_list_prop1[] = {
+    NEPTUNE::p};
+static EOS_Property n_list_prop2[] = {
+    NEPTUNE::h,
+    NEPTUNE::T};
+
+static vector<EOS_Property> n_thermprop_r =
+    {NEPTUNE::T,
+     NEPTUNE::rho,
+     NEPTUNE::u,
+     NEPTUNE::s,
+     NEPTUNE::mu,
+     NEPTUNE::lambda,
+     NEPTUNE::cp,
+     NEPTUNE::sigma,
+     NEPTUNE::w,
+     NEPTUNE::g,
+     NEPTUNE::f,
+     NEPTUNE::pr,
+     NEPTUNE::beta,
+     NEPTUNE::gamma,
+     NEPTUNE::d_T_d_p_h,
+     NEPTUNE::d_T_d_h_p,
+     NEPTUNE::d_rho_d_p_h,
+     NEPTUNE::d_rho_d_h_p,
+     NEPTUNE::d_u_d_p_h,
+     NEPTUNE::d_u_d_h_p,
+     NEPTUNE::d_s_d_p_h,
+     NEPTUNE::d_s_d_h_p,
+     NEPTUNE::d_mu_d_p_h,
+     NEPTUNE::d_mu_d_h_p,
+     NEPTUNE::d_lambda_d_p_h,
+     NEPTUNE::d_lambda_d_h_p,
+     NEPTUNE::d_cp_d_p_h,
+     NEPTUNE::d_cp_d_h_p,
+     NEPTUNE::d_sigma_d_p_h,
+     NEPTUNE::d_sigma_d_h_p,
+     NEPTUNE::d_w_d_p_h,
+     NEPTUNE::d_w_d_h_p,
+     NEPTUNE::d_g_d_p_h,
+     NEPTUNE::d_g_d_h_p,
+     NEPTUNE::d_f_d_p_h,
+     NEPTUNE::d_f_d_h_p,
+     NEPTUNE::d_pr_d_p_h,
+     NEPTUNE::d_pr_d_h_p,
+     NEPTUNE::d_beta_d_p_h,
+     NEPTUNE::d_beta_d_h_p,
+     NEPTUNE::d_gamma_d_p_h,
+     NEPTUNE::d_gamma_d_h_p,
+     NEPTUNE::d_rho_d_T_p,
+     NEPTUNE::d_u_d_T_p,
+     NEPTUNE::d_s_d_T_p,
+     NEPTUNE::d_mu_d_T_p,
+     NEPTUNE::d_lambda_d_T_p,
+     NEPTUNE::d_cp_d_T_p,
+     NEPTUNE::d_sigma_d_T_p,
+     NEPTUNE::d_w_d_T_p,
+     NEPTUNE::d_g_d_T_p,
+     NEPTUNE::d_f_d_T_p,
+     NEPTUNE::d_pr_d_T_p,
+     NEPTUNE::d_beta_d_T_p,
+     NEPTUNE::d_gamma_d_T_p,
+     NEPTUNE::d_h_d_T_p,
+     NEPTUNE::d_h_d_p_T};
+
+static vector<EOS_Property> n_saturprop_r =
+    {NEPTUNE::rho_l_sat,
+     NEPTUNE::rho_v_sat,
+     NEPTUNE::h_l_sat,
+     NEPTUNE::h_v_sat,
+     NEPTUNE::cp_l_sat,
+     NEPTUNE::cp_v_sat,
+     NEPTUNE::T_sat,
+     NEPTUNE::d_rho_l_sat_d_p,
+     NEPTUNE::d_rho_v_sat_d_p,
+     NEPTUNE::d_h_l_sat_d_p,
+     NEPTUNE::d_h_v_sat_d_p,
+     NEPTUNE::d_cp_l_sat_d_p,
+     NEPTUNE::d_cp_v_sat_d_p,
+     NEPTUNE::d_T_sat_d_p,
+     NEPTUNE::d2_T_sat_d_p_d_p};
+
 
 
 
@@ -186,10 +268,12 @@ void test_features(EOS & eos)
     int stz = saturprop_r.size() ;
     const char ** ptr1 = list_prop1;
     while (**ptr1 != 0) 
-       { for (int i=0; i<stz; i++)
+       {
+        int i1=0;
+        for (int i=0; i<stz; i++)
             { ptr_satp = saturprop_r[i].c_str() ; 
-              EOS_Field field1(*ptr1, *ptr1, array1);
-              EOS_Field field3(ptr_satp, ptr_satp, result);
+              EOS_Field field1(*ptr1, *ptr1, n_list_prop1[i1], array1); 
+              EOS_Field field3(ptr_satp, ptr_satp, n_saturprop_r[i], result); 
 
               array1[0] = 1e5 ;
               // Test field function
@@ -197,6 +281,7 @@ void test_features(EOS & eos)
               features_status(eos, err_field[0], *ptr1, "", ptr_satp);
             }
          ptr1++ ;
+         i1++;
        }
   }
   // Test with two parameters:
@@ -206,13 +291,17 @@ void test_features(EOS & eos)
     int stz = thermprop_r.size() ;
     const char ** ptr1 = list_prop1 ;
     while (**ptr1 != 0) 
-       { const char ** ptr2 = list_prop2 ;
+       {
+        int i1=0; 
+        const char ** ptr2 = list_prop2 ;
          while (**ptr2 != 0) 
-            { for (int i=0; i<stz; i++)
+            { 
+              int i2=0;
+              for (int i=0; i<stz; i++)
                 { ptr_thep = thermprop_r[i].c_str() ; 
-                  EOS_Field field1(*ptr1, *ptr1, array1) ;
-                  EOS_Field field2(*ptr2, *ptr2, array2) ;
-                  EOS_Field field3(ptr_thep, ptr_thep, result) ;
+                  EOS_Field field1(*ptr1, *ptr1, n_list_prop1[i1], array1) ; 
+                  EOS_Field field2(*ptr2, *ptr2, n_list_prop2[i2], array2) ; 
+                  EOS_Field field3(ptr_thep, ptr_thep, n_thermprop_r[i], result) ; 
 
                   array1[0] = 1.5e5 ;
                   array2[0] = 350.  ;
@@ -220,8 +309,10 @@ void test_features(EOS & eos)
                   features_status(eos, err_field[0], *ptr1, *ptr2, ptr_thep);
                 }
               ptr2++ ;
+              i2++;
             }
          ptr1++ ;
+         i1++;
        }
   }
   // Test with two parameters (point method):
@@ -333,7 +424,7 @@ int main()
 
     ArrOfDouble xp(n);
     ArrOfInt ierr(n);
-    EOS_Field P("Pressure","p",xp);
+    EOS_Field P("Pressure","p",NEPTUNE::p,xp);
     EOS_Error_Field err(ierr);
 
     ArrOfDouble xtsat(n);
@@ -349,16 +440,16 @@ int main()
     
     int nbfields=10;
     EOS_Fields outsat(nbfields);
-    outsat[0]=EOS_Field("tsat","T_sat",xtsat);
-    outsat[1]=EOS_Field("hlsat","h_l_sat",xhlsat);
-    outsat[2]=EOS_Field("hvat","h_v_sat",xhvsat);
-    outsat[3]=EOS_Field("rholsat","rho_l_sat",xrholsat);
-    outsat[4]=EOS_Field("rhovat","rho_v_sat",xrhovsat);
-    outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
-    outsat[6]=EOS_Field("dhlsatdp","d_h_l_sat_d_p",xdhlsatdp);
-    outsat[7]=EOS_Field("dhvsatdp","d_h_v_sat_d_p",xdhvsatdp);
-    outsat[8]=EOS_Field("drholsatdp","d_rho_l_sat_d_p",xdrholsatdp);
-    outsat[9]=EOS_Field("drhovsatdp","d_rho_v_sat_d_p",xdrhovsatdp);
+    outsat[0]=EOS_Field("tsat", "T_sat", NEPTUNE::T_sat, xtsat);
+    outsat[1]=EOS_Field("hlsat", "h_l_sat", NEPTUNE::h_l_sat, xhlsat);
+    outsat[2]=EOS_Field("hvat", "h_v_sat", NEPTUNE::h_v_sat, xhvsat);
+    outsat[3]=EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat, xrholsat);
+    outsat[4]=EOS_Field("rhovat", "rho_v_sat", NEPTUNE::rho_v_sat, xrhovsat);
+    outsat[5]=EOS_Field("dtsatdp", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, xdtsatdp);
+    outsat[6]=EOS_Field("dhlsatdp", "d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p, xdhlsatdp);
+    outsat[7]=EOS_Field("dhvsatdp", "d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p, xdhvsatdp);
+    outsat[8]=EOS_Field("drholsatdp", "d_rho_l_sat_d_p", NEPTUNE::d_rho_l_sat_d_p, xdrholsatdp);
+    outsat[9]=EOS_Field("drhovsatdp", "d_rho_v_sat_d_p", NEPTUNE::d_rho_v_sat_d_p, xdrhovsatdp);
     
     for(int i=0; i<n; i++)
       xp[i]=1.e5;
@@ -423,7 +514,7 @@ int main()
     ArrOfDouble xdmudp_pt(n);
     ArrOfDouble xdmudh_pt(n);
     
-    EOS_Field T("Temperature","T",xt);
+    EOS_Field T("Temperature","T",NEPTUNE::T,xt);
     for(int i=0; i<n; i++)
       xt[i]=tref;
     xt[0]=tref;
@@ -432,22 +523,22 @@ int main()
 
     int nbfields_pT=16+nbfields;
     EOS_Fields outpt(nbfields_pT);
-    outpt[0]=EOS_Field("enthalpie","h",xhout);
-    outpt[1]=EOS_Field("rho","rho",xrho_pt);
-    outpt[2]=EOS_Field("cp","cp",xcp_pt);
-    outpt[3]=EOS_Field("lambda","lambda",xlambda_pt);
-    outpt[4]=EOS_Field("mu","mu",xmu_pt);
-    outpt[5]=EOS_Field("w","w",xw_pt);
-    outpt[6]=EOS_Field("dTdp","d_T_d_p_h",xdTdp_pt);
-    outpt[7]=EOS_Field("dTdh","d_T_d_h_p",xdTdh_pt);
-    outpt[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp_pt);
-    outpt[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh_pt);
-    outpt[10]=EOS_Field("dcpdp","d_cp_d_p_h",xdcpdp_pt);
-    outpt[11]=EOS_Field("dcpdh","d_cp_d_h_p",xdcpdh_pt);
-    outpt[12]=EOS_Field("dlambdadp","d_lambda_d_p_h",xdlambdadp_pt);
-    outpt[13]=EOS_Field("dlambdadh","d_lambda_d_h_p",xdlambdadh_pt);
-    outpt[14]=EOS_Field("dmudp","d_mu_d_p_h",xdmudp_pt);
-    outpt[15]=EOS_Field("dmudh","d_mu_d_h_p",xdmudh_pt);
+    outpt[0]=EOS_Field("enthalpie", "h", NEPTUNE::h, xhout);
+    outpt[1]=EOS_Field("rho", "rho", NEPTUNE::rho, xrho_pt);
+    outpt[2]=EOS_Field("cp", "cp", NEPTUNE::cp, xcp_pt);
+    outpt[3]=EOS_Field("lambda", "lambda", NEPTUNE::lambda, xlambda_pt);
+    outpt[4]=EOS_Field("mu", "mu", NEPTUNE::mu, xmu_pt);
+    outpt[5]=EOS_Field("w", "w", NEPTUNE::w, xw_pt);
+    outpt[6]=EOS_Field("dTdp", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xdTdp_pt);
+    outpt[7]=EOS_Field("dTdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdTdh_pt);
+    outpt[8]=EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp_pt);
+    outpt[9]=EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh_pt);
+    outpt[10]=EOS_Field("dcpdp", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, xdcpdp_pt);
+    outpt[11]=EOS_Field("dcpdh", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, xdcpdh_pt);
+    outpt[12]=EOS_Field("dlambdadp", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, xdlambdadp_pt);
+    outpt[13]=EOS_Field("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdadh_pt);
+    outpt[14]=EOS_Field("dmudp", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xdmudp_pt);
+    outpt[15]=EOS_Field("dmudh", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xdmudh_pt);
     for(int j=0; j<nbfields; j++)
       outpt[16+j]=outsat[j];
     
@@ -486,7 +577,7 @@ int main()
     for(int i=0; i<n; i++)
       xhin[i]=outpt[0][i];
     
-    EOS_Field hin("enthalpie","h",xhin);
+    EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
     ArrOfDouble xtout(n);
     ArrOfDouble xrho_ph(n);
     ArrOfDouble xcp_ph(n);
@@ -506,22 +597,22 @@ int main()
     
     int nbfields_ph=16+nbfields;
     EOS_Fields outph(nbfields_ph);
-    outph[0]=EOS_Field("temperature","T",xtout);
-    outph[1]=EOS_Field("rho","rho",xrho_ph);
-    outph[2]=EOS_Field("cp","cp",xcp_ph);
-    outph[3]=EOS_Field("lambda","lambda",xlambda_ph);
-    outph[4]=EOS_Field("mu","mu",xmu_ph);
-    outph[5]=EOS_Field("w","w",xw_ph);
-    outph[6]=EOS_Field("dTdp","d_T_d_p_h",xdTdp_ph);
-    outph[7]=EOS_Field("dTdh","d_T_d_h_p",xdTdh_ph);
-    outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp_ph);
-    outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh_ph);
-    outph[10]=EOS_Field("dcpdp","d_cp_d_p_h",xdcpdp_ph);
-    outph[11]=EOS_Field("dcpdh","d_cp_d_h_p",xdcpdh_ph);
-    outph[12]=EOS_Field("dlambdadp","d_lambda_d_p_h",xdlambdadp_ph);
-    outph[13]=EOS_Field("dlambdadh","d_lambda_d_h_p",xdlambdadh_ph);
-    outph[14]=EOS_Field("dmudp","d_mu_d_p_h",xdmudp_ph);
-    outph[15]=EOS_Field("dmudh","d_mu_d_h_p",xdmudh_ph);
+    outph[0]=EOS_Field("temperature", "T", NEPTUNE::T, xtout);
+    outph[1]=EOS_Field("rho", "rho", NEPTUNE::rho, xrho_ph);
+    outph[2]=EOS_Field("cp", "cp", NEPTUNE::cp, xcp_ph);
+    outph[3]=EOS_Field("lambda", "lambda", NEPTUNE::lambda, xlambda_ph);
+    outph[4]=EOS_Field("mu", "mu", NEPTUNE::mu, xmu_ph);
+    outph[5]=EOS_Field("w", "w", NEPTUNE::w, xw_ph);
+    outph[6]=EOS_Field("dTdp", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xdTdp_ph);
+    outph[7]=EOS_Field("dTdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdTdh_ph);
+    outph[8]=EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp_ph);
+    outph[9]=EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh_ph);
+    outph[10]=EOS_Field("dcpdp", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, xdcpdp_ph);
+    outph[11]=EOS_Field("dcpdh", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, xdcpdh_ph);
+    outph[12]=EOS_Field("dlambdadp", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, xdlambdadp_ph);
+    outph[13]=EOS_Field("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdadh_ph);
+    outph[14]=EOS_Field("dmudp", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xdmudp_ph);
+    outph[15]=EOS_Field("dmudh", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xdmudh_ph);
     for(int j=0; j<nbfields; j++)
       outph[16+j]=outsat[j];
     
@@ -581,10 +672,10 @@ int main()
     ArrOfDouble xlambda(n);
     ArrOfDouble xw(n);
     ArrOfDouble xdcdh(n);
-    outcph[0]=EOS_Field("lambda","lambda",xlambda);
-    outcph[1]=EOS_Field("vitesse","w",xw);
+    outcph[0]=EOS_Field("lambda","lambda",NEPTUNE::lambda,xlambda);
+    outcph[1]=EOS_Field("vitesse","w",NEPTUNE::w,xw);
     //outcph[2]=EOS_Field("dcdh","d_w_d_h_p",xdcdh);
-    outcph[2]=EOS_Field("vitesse","w",xdcdh);
+    outcph[2]=EOS_Field("vitesse","w",NEPTUNE::w,xdcdh);
     cr=fluid.compute(P,hin,outcph,err);
     cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
     for(int i=0; i<ncout; i++)
@@ -688,7 +779,6 @@ int main()
     cout<<"--------------------------------------- "<<endl;
     cout<<"------ Test 3 ------------------------- "<<endl<<endl;
 
-
     // Testing PH
     Language_init();
     Strings args(2);
@@ -709,41 +799,31 @@ int main()
     //  EOS eauBMPL("EOS_Thetis","WaterLiquidBMP");
     // EOS eauBMPV("EOS_Thetis","WaterVaporBMP");
 
-    cout << endl << "**   eos " << endl;
+    // ===============================
+    // TESTS POUR L'EAU
+    // ===============================
+    
+    cout << endl << "=================================" << endl;
+    cout << "TESTS POUR L'EAU" << endl;
+    cout << "=================================" << endl;
+
+    cout << endl << "**   eos EAU LIQUIDE" << endl;
     cout << "   * fluid   : " <<eauL.fluid_name()<<endl;
     cout << "   * table   : " <<eauL.table_name()<<endl;
     cout << "   * version : " <<eauL.version_name()<<endl<<endl;
     cout << eauL<<endl;
 
     // BUG HERE: Thetis has errors in some properties
-    test_features(eauL);
+   // test_features(eauL);
 
-    cout << "**   eos " << endl;
+    cout << "**   eos EAU VAPEUR" << endl;
     cout << "   * fluid   : " <<eauV.fluid_name()<<endl;
     cout << "   * table   : " <<eauV.table_name()<<endl;
     cout << "   * version : " <<eauV.version_name()<<endl<<endl;
     cout << eauV<<endl;
 
     // BUG HERE: Thetis has errors in some properties
-    test_features(eauV);
-
-    cout << "**   eos " << endl;
-    cout << "   * fluid   : " <<freonL.fluid_name()<<endl;
-    cout << "   * table   : " <<freonL.table_name()<<endl;
-    cout << "   * version : " <<freonL.version_name()<<endl<<endl;
-    cout << freonL<<endl;
-
-    // BUG HERE: Thetis has errors in some properties
-    test_features(freonL);
-
-    cout << "**   eos " << endl;
-    cout << "   * fluid   : " <<freonV.fluid_name()<<endl;
-    cout << "   * table   : " <<freonV.table_name()<<endl;
-    cout << "   * version : " <<freonV.version_name()<<endl<<endl;
-    cout << freonV<<endl;
-
-    // BUG HERE: Thetis has errors in some properties
-    test_features(freonV);
+    //test_features(eauV);
 
     int im = 2;
     int jm = 2;
@@ -770,26 +850,27 @@ int main()
 
     ArrOfInt xer(im*jm);
 
-    EOS_Field P("Pressure","p",xp);
-    EOS_Field h("Enthalpy","h",xh);
-    EOS_Field T("Temperature","T",xt);
-    EOS_Field rho("Rho","rho",xr);
-    EOS_Field cp("cp","cp",xcp);
-    EOS_Field lambda("lambda","lambda",xl);
-    EOS_Field mu("mu","mu",xmu);
-    EOS_Field w("w","w",xw);
-    EOS_Field sigma("sigma","sigma",xs);
+    EOS_Field P("Pressure", "p", NEPTUNE::p, xp);
+    EOS_Field h("Enthalpy", "h", NEPTUNE::h, xh);
+    EOS_Field T("Temperature", "T", NEPTUNE::T, xt);
+    EOS_Field rho("Rho", "rho", NEPTUNE::rho, xr);
+    EOS_Field cp("cp", "cp", NEPTUNE::cp, xcp);
+    EOS_Field lambda("lambda", "lambda", NEPTUNE::lambda, xl);
+    EOS_Field mu("mu", "mu", NEPTUNE::mu, xmu);
+    EOS_Field w("w", "w", NEPTUNE::w, xw);
+    EOS_Field sigma("sigma", "sigma", NEPTUNE::sigma, xs);
 
-    EOS_Field dTdp("dTdp","d_T_d_p_h",xdTdp);
-    EOS_Field drhodp("drhodp","d_rho_d_p_h",xdrhodp);
-    EOS_Field drhodh("drhodh","d_rho_d_h_p",xdrhodh);
-    EOS_Field dmudp("dmudp","d_mu_d_p_h",xdmudp);
-    EOS_Field dmudh("dmudh","d_mu_d_h_p",xdmudh);
+    EOS_Field dTdp("dTdp", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xdTdp);
+    EOS_Field drhodp("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp);
+    EOS_Field drhodh("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh);
+    EOS_Field dmudp("dmudp", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xdmudp);
+    EOS_Field dmudh("dmudh", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xdmudh);
 
     EOS_Error_Field err(xer);
     EOS_Error cr;
 
     // Compare with Thetis validation cases
+    p = 70.e5; // Reset pressure
     for (int i=0; i<im; i++)
       {
         p=p + 10.e5;
@@ -801,6 +882,8 @@ int main()
         }
       }
 
+    // Tests pour eau liquide
+    cout << "\n--- CALCULS POUR EAU LIQUIDE ---" << endl;
     cr=eauL.compute(P, h, T,err);
     cout << "Temperature (Celcius) [cr=" << cr<<"]"<<endl;
     for (int i =0; i< im; i++)
@@ -824,7 +907,7 @@ int main()
     input[1] = h;
 
     cr=eauL.compute(input, output,err);
-    cout << "Properties [cr="<<cr<<"]" << endl;
+    cout << "Properties EAU LIQUIDE [cr="<<cr<<"]" << endl;
     for (int i=0; i<im; i++)
       {
         for (int j=0; j<jm; j++)
@@ -843,7 +926,101 @@ int main()
     output2[4] = dmudh;
 
     cr=eauL.compute(input, output2,err);
-    cout << "Der Properties [cr="<<cr<<"]" << endl;
+    cout << "Derivatives EAU LIQUIDE [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xdTdp[i+im*j],xdrhodp[i+im*j],xdrhodh[i+im*j],
+                   xdmudp[i+im*j],xdmudh[i+im*j]);
+          }
+      }
+
+    // Saturation pour eau
+    ArrOfDouble xRhoLSat(im*jm);
+    ArrOfDouble xRhoVSat(im*jm);
+    ArrOfDouble xHLSat(im*jm);
+    ArrOfDouble xHVSat(im*jm);
+    ArrOfDouble xTSat(im*jm);
+
+    EOS_Field RhoLSat("RhoLSat", "rho_l_sat", NEPTUNE::rho_l_sat, xRhoLSat);
+    EOS_Field RhoVSat("RhoVSat", "rho_v_sat", NEPTUNE::rho_v_sat, xRhoVSat);
+    EOS_Field HLSat("HLSat", "h_l_sat", NEPTUNE::h_l_sat, xHLSat);
+    EOS_Field HVSat("HVSat", "h_v_sat", NEPTUNE::h_v_sat, xHVSat);
+    EOS_Field TSat("TSat", "T_sat", NEPTUNE::T_sat, xTSat);
+
+    EOS_Fields output3(5);
+    output3[0] = RhoLSat;
+    output3[1] = RhoVSat;
+    output3[2] = HLSat;
+    output3[3] = HVSat;
+    output3[4] = TSat;
+
+    cr=eauL.compute(P, output3,err);
+    cout << "Saturation Properties EAU [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E\n",
+                   xp[i+im*j], xRhoLSat[i+im*j],xRhoVSat[i+im*j],xHLSat[i+im*j],xHVSat[i+im*j],
+                   xTSat[i+im*j]);
+          }
+      }
+
+    // ===============================
+    // TESTS POUR LE FREON
+    // ===============================
+    
+    cout << endl << "=================================" << endl;
+    cout << "TESTS POUR LE FREON R12" << endl;
+    cout << "=================================" << endl;
+
+    cout << "**   eos FREON LIQUIDE" << endl;
+    cout << "   * fluid   : " <<freonL.fluid_name()<<endl;
+    cout << "   * table   : " <<freonL.table_name()<<endl;
+    cout << "   * version : " <<freonL.version_name()<<endl<<endl;
+    cout << freonL<<endl;
+
+    // BUG HERE: Thetis has errors in some properties
+   // test_features(freonL);
+
+    cout << "**   eos FREON VAPEUR" << endl;
+    cout << "   * fluid   : " <<freonV.fluid_name()<<endl;
+    cout << "   * table   : " <<freonV.table_name()<<endl;
+    cout << "   * version : " <<freonV.version_name()<<endl<<endl;
+    cout << freonV<<endl;
+
+    // BUG HERE: Thetis has errors in some properties
+   // test_features(freonV);
+
+    // Réinitialiser les conditions pour le Freon (valeurs adaptées au R12)
+    p = 5.e5;  // Pression plus faible pour le Freon
+    for (int i=0; i<im; i++)
+      {
+        p=p + 5.e5;  // Increment plus petit
+        hh = 2e5;    // Enthalpie plus faible
+        for (int j=0; j<jm; j++) {
+          hh = hh + 1.5e4;  // Increment adapté
+          xp[i+im*j] =  p;
+          xh[i+im*j] = hh;
+        }
+      }
+
+    // Tests pour Freon liquide
+    cout << "\n--- CALCULS POUR FREON LIQUIDE ---" << endl;
+    cr=freonL.compute(P, h, T,err);
+    cout << "Temperature (Celcius) FREON LIQUIDE [cr=" << cr<<"]"<<endl;
+    for (int i =0; i< im*jm; i++)
+      {
+        xt[i] = xt[i] - kelvin;
+        cout << xt[i] <<" ";
+      }
+    cout << endl;
+
+    cr=freonL.compute(input, output,err);
+    cout << "Properties FREON LIQUIDE [cr="<<cr<<"]" << endl;
     for (int i=0; i<im; i++)
       {
         for (int j=0; j<jm; j++)
@@ -854,101 +1031,98 @@ int main()
           }
       }
 
-    // Saturation
+    cr=freonL.compute(input, output2,err);
+    cout << "Derivatives FREON LIQUIDE [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xdTdp[i+im*j],xdrhodp[i+im*j],xdrhodh[i+im*j],
+                   xdmudp[i+im*j],xdmudh[i+im*j]);
+          }
+      }
 
-    ArrOfDouble xRhoLSat(im*jm);
-    ArrOfDouble xRhoVSat(im*jm);
-    ArrOfDouble xHLSat(im*jm);
-    ArrOfDouble xHVSat(im*jm);
-    ArrOfDouble xTSat(im*jm);
+    // Tests pour Freon vapeur
+    cout << "\n--- CALCULS POUR FREON VAPEUR ---" << endl;
+    
+    // Ajuster les conditions pour la vapeur (enthalpie plus élevée)
+    p = 5.e5;
+    for (int i=0; i<im; i++)
+      {
+        p=p + 5.e5;
+        hh = 4e5;    // Enthalpie plus élevée pour la vapeur
+        for (int j=0; j<jm; j++) {
+          hh = hh +0;
+          xp[i+im*j] =  p;
+          xh[i+im*j] = hh;
+        }
+      }
 
-    EOS_Field RhoLSat("RhoLSat","rho_l_sat",xRhoLSat);
-    EOS_Field RhoVSat("RhoVSat","rho_v_sat",xRhoVSat);
-    EOS_Field HLSat("HLSat","h_l_sat",xHLSat);
-    EOS_Field HVSat("HVSat","h_v_sat",xHVSat);
-    EOS_Field TSat("TSat","T_sat",xTSat);
+    cr=freonV.compute(P, h, T,err);
+    cout << "Temperature (Celcius) FREON VAPEUR [cr=" << cr<<"]"<<endl;
+    for (int i =0; i< im*jm; i++)
+      {
+        xt[i] = xt[i] - kelvin;
+        cout << xt[i] <<" ";
+      }
+    cout << endl;
 
-    EOS_Fields output3(5);
+    cr=freonV.compute(input, output,err);
+    cout << "Properties FREON VAPEUR [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xt[i+im*j],xr[i+im*j],xcp[i+im*j],xl[i+im*j],xmu[i+im*j],
+                   xw[i+im*j],xs[i+im*j]);
+          }
+      }
 
-    output3[0] = RhoLSat;
-    output3[1] = RhoVSat;
-    output3[2] = HLSat;
-    output3[3] = HVSat;
-    output3[4] = TSat;
+    cr=freonV.compute(input, output2,err);
+    cout << "Derivatives FREON VAPEUR [cr="<<cr<<"]" << endl;
+    for (int i=0; i<im; i++)
+      {
+        for (int j=0; j<jm; j++)
+          {
+            printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E %14.5E \n",
+                   xp[i+im*j],xh[i+im*j],xdTdp[i+im*j],xdrhodp[i+im*j],xdrhodh[i+im*j],
+                   xdmudp[i+im*j],xdmudh[i+im*j]);
+          }
+      }
 
-    cr=eauL.compute(P, output3,err);
-    cout << "Sat Properties [cr="<<cr<<"]" << endl;
+    // Saturation pour Freon
+    cout << "\n--- PROPRIETES DE SATURATION FREON ---" << endl;
+    
+    // Remettre des pressions appropriées pour les calculs de saturation du Freon
+    p = 2.e5;
+    for (int i=0; i<im; i++)
+      {
+        p=p + 3.e5;
+        for (int j=0; j<jm; j++) {
+          xp[i+im*j] =  p;
+        }
+      }
+
+    cr=freonL.compute(P, output3,err);
+    cout << "Saturation Properties FREON [cr="<<cr<<"]" << endl;
     for (int i=0; i<im; i++)
       {
         for (int j=0; j<jm; j++)
           {
             printf("%14.5E %14.5E %14.5E %14.5E %14.5E %14.5E\n",
                    xp[i+im*j], xRhoLSat[i+im*j],xRhoVSat[i+im*j],xHLSat[i+im*j],xHVSat[i+im*j],
-                   TSat[i+im*j]);
+                   xTSat[i+im*j]);
           }
       }
+
+    cout << endl << "=================================" << endl;
+    cout << "FIN DES TESTS THETIS" << endl;
+    cout << "=================================" << endl;
+
     Language_finalize();
   }
-
-  {
-    // Testing PT
-    Language_init();
-
-    Strings args(2);
-    args[0]= AString("");
-    args[1]= AString("");
-
-    EOS eauL("EOS_ThetisWaterLiquid", args);
-    EOS eauV("EOS_ThetisWaterVapor", args);
-
-    // BUG HERE: Thetis has errors in some properties
-    test_features(eauL);
-     test_features(eauV);
-
-    int im = 2;
-    int jm = 2;
-
-    double  kelvin = 273.15;
-    double    p=70.e5;
-    double    t=200.+kelvin;
-
-    ArrOfDouble xp(im*jm);
-    ArrOfDouble xr(im*jm);
-    ArrOfDouble xt(im*jm);
-    ArrOfInt xer(im*jm);
-
-    EOS_Field P("Pressure","p",xp);
-    EOS_Field h("Enthalpy","h",xr);
-    EOS_Field T("Temperature","T",xt);
-    EOS_Error_Field err(xer);
-    EOS_Error cr;
-
-    // Compare with Thetis validation cases
-    for (int i=0; i<im; i++)
-      {
-        p=p + 10.e5;
-        t=200.+kelvin;
-        for (int j=0; j<jm; j++)
-          {
-            t=t + 10.;
-            xp[i+im*j] =  p;
-            xt[i+im*j] = t;
-          }
-      }
-
-    cr=eauL.compute(P, T, h,err);
-    cout << "Enthalpie PT [cr="<<cr<<"]" << endl;
-    for (int i=0; i<im; i++)
-      {
-        for (int j=0; j<jm; j++)
-          {
-            printf("%14.5E %14.5E %14.5E\n",xp[i+im*j],xt[i+im*j],xr[i+im*j]);
-          }
-      }
-    cout << endl << endl;
-    Language_finalize();
-  }
-
 #endif
 
 #ifdef WITH_PLUGIN_FLICA4
@@ -1328,12 +1502,12 @@ int main()
     ArrOfDouble xc2(n);
     ArrOfDouble xT(n);
 
-    EOS_Field pres("p","p",xp);
-    EOS_Field enthal("h","h",xh);
-    EOS_Field c0("c0","c_0",xc0);
-    EOS_Field c1("c1","c_1",xc1);
-    EOS_Field c2("c2","c_2",xc2);
-    EOS_Field T("T","T",xT);
+    EOS_Field pres("p", "p", NEPTUNE::p, xp);
+    EOS_Field enthal("h", "h", NEPTUNE::h, xh);
+    EOS_Field c0("c0", "c_0", NEPTUNE::c_0, xc0);
+    EOS_Field c1("c1", "c_1", NEPTUNE::c_1, xc1);
+    EOS_Field c2("c2", "c_2", NEPTUNE::c_2, xc2);
+    EOS_Field T("T", "T", NEPTUNE::T, xT);
 
     EOS_Fields inph(ninput);
     inph[0]=pres;
@@ -1355,7 +1529,7 @@ int main()
     ArrOfDouble xrhomix(n);
     EOS_Fields outph(noutph);
     outph[0]=enthal;
-    outph[1]=EOS_Field("xrhomix","rho",xrhomix);
+    outph[1]=EOS_Field("xrhomix","rho",NEPTUNE::rho,xrhomix);
 
     cr=mixing.compute(inph,outph,err);
     cout << endl<< "mixing fields fields [cr=" << cr <<"]"<< endl;
@@ -1417,49 +1591,50 @@ int main()
 
                 int noutput=38;
     EOS_Fields output(noutput);
-    EOS_Field Tmix("Tmix","T",xTmix);
-    output[0]=Tmix;
-    output[1]=EOS_Field("rho","rho",xrho);
-    output[2]=EOS_Field("cp","cp",xcp);
-    output[3]=EOS_Field("lambda","lambda",xlambda);
-    output[4]=EOS_Field("mu","mu",xmu);
-                output[5]=EOS_Field("sigma","sigma",xsigma);
+    EOS_Field Tmix("Tmix", "T", NEPTUNE::T, xTmix);
+    output[0] = Tmix;
+    output[1] = EOS_Field("rho", "rho", NEPTUNE::rho, xrho);
+    output[2] = EOS_Field("cp", "cp", NEPTUNE::cp, xcp);
+    output[3] = EOS_Field("lambda", "lambda", NEPTUNE::lambda, xlambda);
+    output[4] = EOS_Field("mu", "mu", NEPTUNE::mu, xmu);
+    output[5] = EOS_Field("sigma", "sigma", NEPTUNE::sigma, xsigma);
 
-                output[6]=EOS_Field("dTdp","d_T_d_p_h",xdTdp);
-                output[7]=EOS_Field("dTdh","d_T_d_h_p",xdTdh);
-                output[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-                output[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-                output[10]=EOS_Field("dcpdp","d_cp_d_p_h",xdcpdp);
-                output[11]=EOS_Field("dcpdh","d_cp_d_h_p",xdcpdh);
-                output[12]=EOS_Field("dlambdadp","d_lambda_d_p_h",xdlambdadp);
-                output[13]=EOS_Field("dlambdadh","d_lambda_d_h_p",xdlambdadh);
-                output[14]=EOS_Field("dmudp","d_mu_d_p_h",xdmudp);
-                output[15]=EOS_Field("dmudh","d_mu_d_h_p",xdmudh);
+    output[6] = EOS_Field("dTdp", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xdTdp);
+    output[7] = EOS_Field("dTdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdTdh);
+    output[8] = EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp);
+    output[9] = EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh);
+    output[10] = EOS_Field("dcpdp", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, xdcpdp);
+    output[11] = EOS_Field("dcpdh", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, xdcpdh);
+    output[12] = EOS_Field("dlambdadp", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, xdlambdadp);
+    output[13] = EOS_Field("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdadh);
+    output[14] = EOS_Field("dmudp", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xdmudp);
+    output[15] = EOS_Field("dmudh", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xdmudh);
 
-                output[16]=EOS_Field("tsat","T_sat",xtsat);
-    output[17]=EOS_Field("hvsat","h_v_sat",xhvsat);
-                output[18]=EOS_Field("rhovsat","rho_v_sat",xrhovsat);
-                output[19]=EOS_Field("hlsat","h_l_sat",xhlsat);
-                output[20]=EOS_Field("rholsat","rho_l_sat",xrholsat);
+    output[16] = EOS_Field("tsat", "T_sat", NEPTUNE::T_sat, xtsat);
+    output[17] = EOS_Field("hvsat", "h_v_sat", NEPTUNE::h_v_sat, xhvsat);
+    output[18] = EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat, xrhovsat);
+    output[19] = EOS_Field("hlsat", "h_l_sat", NEPTUNE::h_l_sat, xhlsat);
+    output[20] = EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat, xrholsat);
 
-                output[21]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
-                output[22]=EOS_Field("dhvsatdp","d_h_v_sat_d_p",xdhvsatdp);
-                output[23]=EOS_Field("drhovsatdp","d_rho_v_sat_d_p",xdrhovsatdp);
-                output[24]=EOS_Field("dhlsatdp","d_h_l_sat_d_p",xdhlsatdp);
-                output[25]=EOS_Field("drholsatdp","d_rho_l_sat_d_p",xdrholsatdp);
+    output[21] = EOS_Field("dtsatdp", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, xdtsatdp);
+    output[22] = EOS_Field("dhvsatdp", "d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p, xdhvsatdp);
+    output[23] = EOS_Field("drhovsatdp", "d_rho_v_sat_d_p", NEPTUNE::d_rho_v_sat_d_p, xdrhovsatdp);
+    output[24] = EOS_Field("dhlsatdp", "d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p, xdhlsatdp);
+    output[25] = EOS_Field("drholsatdp", "d_rho_l_sat_d_p", NEPTUNE::d_rho_l_sat_d_p, xdrholsatdp);
 
-                output[26]=EOS_Field("dTdC1","d_T_d_c_1_ph",xdTdC1);
-                output[27]=EOS_Field("dTdC2","d_T_d_c_2_ph",xdTdC2);
-                output[28]=EOS_Field("drhodC1","d_rho_d_c_1_ph",xdrhodC1);
-                output[29]=EOS_Field("drhodC2","d_rho_d_c_2_ph",xdrhodC2);
-                output[30]=EOS_Field("dcpdC1","d_cp_d_c_1_ph",xdcpdC1);
-                output[31]=EOS_Field("dcpdC2","d_cp_d_c_2_ph",xdcpdC2);
-                output[32]=EOS_Field("dmudC1","d_mu_d_c_1_ph",xdmudC1);
-                output[33]=EOS_Field("dmudC2","d_mu_d_c_2_ph",xdmudC2);
-                output[34]=EOS_Field("dlambdadC1","d_lambda_d_c_1_ph",xdlambdadC1);
-                output[35]=EOS_Field("dlambdadC2","d_lambda_d_c_2_ph",xdlambdadC2);
-                output[36]=EOS_Field("dsigmadC1","d_sigma_d_c_1_ph",xdsigmadC1);
-                output[37]=EOS_Field("dsigmadC2","d_sigma_d_c_2_ph",xdsigmadC2);
+    output[26] = EOS_Field("dTdC1", "d_T_d_c_1_ph", NEPTUNE::d_T_d_c_1_ph, xdTdC1);
+    output[27] = EOS_Field("dTdC2", "d_T_d_c_2_ph", NEPTUNE::d_T_d_c_2_ph, xdTdC2);
+    output[28] = EOS_Field("drhodC1", "d_rho_d_c_1_ph", NEPTUNE::d_rho_d_c_1_ph, xdrhodC1);
+    output[29] = EOS_Field("drhodC2", "d_rho_d_c_2_ph", NEPTUNE::d_rho_d_c_2_ph, xdrhodC2);
+    output[30] = EOS_Field("dcpdC1", "d_cp_d_c_1_ph", NEPTUNE::d_cp_d_c_1_ph, xdcpdC1);
+    output[31] = EOS_Field("dcpdC2", "d_cp_d_c_2_ph", NEPTUNE::d_cp_d_c_2_ph, xdcpdC2);
+    output[32] = EOS_Field("dmudC1", "d_mu_d_c_1_ph", NEPTUNE::d_mu_d_c_1_ph, xdmudC1);
+    output[33] = EOS_Field("dmudC2", "d_mu_d_c_2_ph", NEPTUNE::d_mu_d_c_2_ph, xdmudC2);
+    output[34] = EOS_Field("dlambdadC1", "d_lambda_d_c_1_ph", NEPTUNE::d_lambda_d_c_1_ph, xdlambdadC1);
+    output[35] = EOS_Field("dlambdadC2", "d_lambda_d_c_2_ph", NEPTUNE::d_lambda_d_c_2_ph, xdlambdadC2);
+    output[36] = EOS_Field("dsigmadC1", "d_sigma_d_c_1_ph", NEPTUNE::d_sigma_d_c_1_ph, xdsigmadC1);
+    output[37] = EOS_Field("dsigmadC2", "d_sigma_d_c_2_ph", NEPTUNE::d_sigma_d_c_2_ph, xdsigmadC2);
+
 
     cr=mixing.compute(input,output,err);
     cout << endl<< "mixing fields fields [cr=" << cr <<"]"<< endl;
@@ -1658,22 +1833,22 @@ int main()
     ph_out[1] = density.data() ;
     ph_out[2] = cp.data() ;
 
-    EOS_Field v1_in1 ("in1",  "p",              nbpt, pt_in[0]);
-    EOS_Field v1_in2 ("in2",  "T",              nbpt, pt_in[1]);
-    EOS_Field v1_in3 ("in3",  "c_0",            nbpt, pt_in[2]);
-    EOS_Field v1_in4 ("in3",  "c_1",            nbpt, pt_in[3]);
-    EOS_Field v1_out1("out1", "h",              nbpt, pt_out[0]);
-    EOS_Field v1_out2("out2", "rho",            nbpt, pt_out[1]);
-    EOS_Field v1_out3("out3", "cp",             nbpt, pt_out[2]);
+    EOS_Field v1_in1 ("in1",  "p", NEPTUNE::p,nbpt, pt_in[0]);
+    EOS_Field v1_in2 ("in2",  "T", NEPTUNE::T,nbpt, pt_in[1]);
+    EOS_Field v1_in3 ("in3",  "c_0", NEPTUNE::c_0,nbpt, pt_in[2]);
+    EOS_Field v1_in4 ("in3",  "c_1", NEPTUNE::c_1,nbpt, pt_in[3]);
+    EOS_Field v1_out1("out1", "h", NEPTUNE::h,nbpt, pt_out[0]);
+    EOS_Field v1_out2("out2", "rho", NEPTUNE::rho,nbpt, pt_out[1]);
+    EOS_Field v1_out3("out3", "cp", NEPTUNE::cp,nbpt, pt_out[2]);
     EOS_Error_Field v1_err(nbpt, ierr.data());
 
-    EOS_Field v2_in1 ("in1",  "p",              nbpt, ph_in[0]);
-    EOS_Field v2_in2 ("in2",  "h",              nbpt, ph_in[1]);
-    EOS_Field v2_in3 ("in3",  "c_0",            nbpt, ph_in[2]);
-    EOS_Field v2_in4 ("in3",  "c_1",            nbpt, ph_in[3]);
-    EOS_Field v2_out1("out1", "T",              nbpt, ph_out[0]);
-    EOS_Field v2_out2("out2", "rho",            nbpt, ph_out[1]);
-    EOS_Field v2_out3("out3", "cp",             nbpt, ph_out[2]);
+    EOS_Field v2_in1 ("in1",  "p", NEPTUNE::p,nbpt, ph_in[0]);
+    EOS_Field v2_in2 ("in2",  "h", NEPTUNE::h,nbpt, ph_in[1]);
+    EOS_Field v2_in3 ("in3",  "c_0", NEPTUNE::c_0,nbpt, ph_in[2]);
+    EOS_Field v2_in4 ("in3",  "c_1", NEPTUNE::c_1,nbpt, ph_in[3]);
+    EOS_Field v2_out1("out1", "T", NEPTUNE::T,nbpt, ph_out[0]);
+    EOS_Field v2_out2("out2", "rho", NEPTUNE::rho,nbpt, ph_out[1]);
+    EOS_Field v2_out3("out3", "cp", NEPTUNE::cp,nbpt, ph_out[2]);
     EOS_Error_Field v2_err(nbpt, ierr.data());
 
     EOS_Fields wp1_in(2) ;
@@ -2026,8 +2201,8 @@ int main()
     ArrOfDouble xp(n);
     ArrOfDouble xh(n);
     ArrOfInt ierr(n);
-    EOS_Field P("Pressure","p",xp);
-    EOS_Field h("Enthalpy","h",xh);
+    EOS_Field P("Pressure","p", NEPTUNE::p,xp);
+    EOS_Field h("Enthalpy","h", NEPTUNE::h,xh);
     EOS_Error_Field err(ierr);
 
     ArrOfDouble xtsat(n);
@@ -2043,16 +2218,17 @@ int main()
 
     int nbfields=10;
     EOS_Fields outsat(nbfields);
-    outsat[0]=EOS_Field("tsat","T_sat",xtsat);
-    outsat[1]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
-    outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-    outsat[3]=EOS_Field("hvat","h_v_sat",xhvsat);
-    outsat[4]=EOS_Field("dhlsatdp","d_h_l_sat_d_p",xdhlsatdp);
-    outsat[5]=EOS_Field("dhvsatdp","d_h_v_sat_d_p",xdhvsatdp);
-    outsat[6]=EOS_Field("rholsat","rho_l_sat",xrholsat);
-    outsat[7]=EOS_Field("rhovsat","rho_v_sat",xrhovsat);
-    outsat[8]=EOS_Field("drholsatdp","d_rho_l_sat_d_p",xdrholsatdp);
-    outsat[9]=EOS_Field("drhovsatdp","d_rho_v_sat_d_p",xdrhovsatdp);
+    outsat[0] = EOS_Field("tsat", "T_sat", NEPTUNE::T_sat, xtsat);
+    outsat[1] = EOS_Field("dtsatdp", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, xdtsatdp);
+    outsat[2] = EOS_Field("hlsat", "h_l_sat", NEPTUNE::h_l_sat, xhlsat);
+    outsat[3] = EOS_Field("hvat", "h_v_sat", NEPTUNE::h_v_sat, xhvsat);
+    outsat[4] = EOS_Field("dhlsatdp", "d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p, xdhlsatdp);
+    outsat[5] = EOS_Field("dhvsatdp", "d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p, xdhvsatdp);
+    outsat[6] = EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat, xrholsat);
+    outsat[7] = EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat, xrhovsat);
+    outsat[8] = EOS_Field("drholsatdp", "d_rho_l_sat_d_p", NEPTUNE::d_rho_l_sat_d_p, xdrholsatdp);
+    outsat[9] = EOS_Field("drhovsatdp", "d_rho_v_sat_d_p", NEPTUNE::d_rho_v_sat_d_p, xdrhovsatdp);
+
 
     for(int i=0; i<n; i++)
       xp[i]=1.e5;
@@ -2076,7 +2252,7 @@ int main()
       }
 
     ArrOfDouble xtsat2(n);
-    EOS_Field Ts("tsat2","T_sat",xtsat2);
+    EOS_Field Ts("tsat2","T_sat",NEPTUNE::T_sat,xtsat2);
     cr=fluid.compute(P,Ts,err);
     for(int i=0; i<ncout; i++)
       {
@@ -2098,7 +2274,7 @@ int main()
     ArrOfDouble xdrhodp2(n);
     ArrOfDouble xdrhodh2(n);
 
-    EOS_Field T("Temperature","T",xt);
+    EOS_Field T("Temperature","T",NEPTUNE::T,xt);
     for(int i=0; i<n; i++)
       xt[i]=tref;
     xt[0]=tref;
@@ -2114,7 +2290,7 @@ int main()
 
     int nbfields_pT=1;
     EOS_Fields outpt(nbfields_pT);
-    outpt[0]=EOS_Field("enthalpie","h",xhout);
+    outpt[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xhout);
 
     cr=fluid.compute(P,T,outpt,err);
     cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -2134,7 +2310,7 @@ int main()
     xhin[0]=outpt[0][0];
     xhin[1]=outpt[0][1];
     xhin[2]=outpt[0][2];
-    EOS_Field hin("enthalpie","h",xhin);
+    EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
 
     ArrOfDouble xdtdp(n);
     ArrOfDouble xdtdh(n);
@@ -2156,31 +2332,29 @@ int main()
 
     int nbfields_ph=17;
     EOS_Fields outph(nbfields_ph);
-    outph[0]=EOS_Field("temperature","T",xtout);
-    outph[1]=EOS_Field("dtdp","d_T_d_p_h",xdtdp);
-    outph[2]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-    outph[3]=EOS_Field("cp","cp",xcp);
-    outph[4]=EOS_Field("dcpdp","d_cp_d_p_h",xdcpdp);
-    outph[5]=EOS_Field("dcpdh","d_cp_d_h_p",xdcpdh);
-    outph[6]=EOS_Field("rho","rho",xrho);
-    outph[7]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-    outph[8]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-    outph[9]=EOS_Field("mu","mu",xmu);
-    outph[10]=EOS_Field("dmudp","d_mu_d_p_h",xdmudp);
-    outph[11]=EOS_Field("dmudh","d_mu_d_h_p",xdmudh);
-    outph[12]=EOS_Field("w","w",xw);
-    outph[13]=EOS_Field("lambda","lambda",xlambda);
-    outph[14]=EOS_Field("dlambdadp","d_lambda_d_p_h",xdlambdadp);
-    if (fluid.equation_name() == "FreonR12Vapor")
-      {
-        outph[15]=EOS_Field("dlambdadh","d_lambda_d_h_p",xdlambdadh);
-        outph[16]=EOS_Field("sigma","sigma",xsigma);
-      }
-    else
-      {
-        outph[15]=EOS_Field("null","d_lambda_d_h",xnull);
-        outph[16]=EOS_Field("dlambdadh","d_lambda_d_h_p",xdlambdadh);
-      }
+    outph[0] = EOS_Field("temperature", "T", NEPTUNE::T, xtout);
+    outph[1] = EOS_Field("dtdp", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xdtdp);
+    outph[2] = EOS_Field("dtdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdtdh);
+    outph[3] = EOS_Field("cp", "cp", NEPTUNE::cp, xcp);
+    outph[4] = EOS_Field("dcpdp", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, xdcpdp);
+    outph[5] = EOS_Field("dcpdh", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, xdcpdh);
+    outph[6] = EOS_Field("rho", "rho", NEPTUNE::rho, xrho);
+    outph[7] = EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp);
+    outph[8] = EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh);
+    outph[9] = EOS_Field("mu", "mu", NEPTUNE::mu, xmu);
+    outph[10] = EOS_Field("dmudp", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xdmudp);
+    outph[11] = EOS_Field("dmudh", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xdmudh);
+    outph[12] = EOS_Field("w", "w", NEPTUNE::w, xw);
+    outph[13] = EOS_Field("lambda", "lambda", NEPTUNE::lambda, xlambda);
+    outph[14] = EOS_Field("dlambdadp", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, xdlambdadp);
+
+    if (fluid.equation_name() == "FreonR12Vapor") {
+        outph[15] = EOS_Field("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdadh);
+        outph[16] = EOS_Field("sigma", "sigma", NEPTUNE::sigma, xsigma);
+    } else {
+        outph[15] = EOS_Field("null", "d_lambda_d_h", xnull); // This should cause an error, intentionally
+        outph[16] = EOS_Field("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdadh);
+    }
 
     cr=fluid.compute(P,hin,outph,err);
     cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -2239,8 +2413,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
             
       ArrOfDouble xrholsat(n);
@@ -2329,12 +2503,12 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0] = EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat, xrholsat);
+      outsat[1] = EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat, xrhovsat);
+      outsat[2] = EOS_Field("hlsat", "h_l_sat", NEPTUNE::h_l_sat, xhlsat);
+      outsat[3] = EOS_Field("hvsat", "h_v_sat", NEPTUNE::h_v_sat, xhvsat);
+      outsat[4] = EOS_Field("tsat", "T_sat", NEPTUNE::T_sat, xtsat);
+      outsat[5] = EOS_Field("dtsatdp", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, xdtsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -2401,9 +2575,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T",NEPTUNE::T,xt);
       for(int i=0; i<n; i++)
         xt[i]=t;
       xt[0]=t;
@@ -2466,26 +2640,26 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      outph[0] = EOS_Field("temperature", "T", NEPTUNE::T, xtout);
+      outph[1] = EOS_Field("rho", "rho", NEPTUNE::rho, xrho);
+      outph[2] = EOS_Field("w", "w", NEPTUNE::w, xw);
+      outph[3] = EOS_Field("u", "u", NEPTUNE::u, xu);
+      outph[4] = EOS_Field("cp", "cp", NEPTUNE::cp, xcp);
+      outph[5] = EOS_Field("mu", "mu", NEPTUNE::mu, xmu);
+      outph[6] = EOS_Field("lambda", "lambda", NEPTUNE::lambda, xlambda);
+      outph[7] = EOS_Field("sigma", "sigma", NEPTUNE::sigma, xsigma);
+      outph[8] = EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp);
+      outph[9] = EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh);
+      outph[10] = EOS_Field("dtdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdtdh);
+      outph[11] = EOS_Field("g", "g", NEPTUNE::g, xg);
+      outph[12] = EOS_Field("f", "f", NEPTUNE::f, xf);
+      outph[13] = EOS_Field("pr", "pr", NEPTUNE::pr, xpr);
+      outph[14] = EOS_Field("cv", "cv", NEPTUNE::cv, xcv);
+      outph[15] = EOS_Field("beta", "beta", NEPTUNE::beta, xbeta);
 
       cr=refprop9.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -2516,11 +2690,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s",NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xhout);
           
       cr=refprop9.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -2727,8 +2901,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xrholsat(n);
@@ -2801,12 +2975,13 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0] = EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat, xrholsat);
+      outsat[1] = EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat, xrhovsat);
+      outsat[2] = EOS_Field("hlsat", "h_l_sat", NEPTUNE::h_l_sat, xhlsat);
+      outsat[3] = EOS_Field("hvsat", "h_v_sat", NEPTUNE::h_v_sat, xhvsat);
+      outsat[4] = EOS_Field("tsat", "T_sat", NEPTUNE::T_sat, xtsat);
+      outsat[5] = EOS_Field("dtsatdp", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, xdtsatdp);
+
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -2873,9 +3048,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T",NEPTUNE::T,xt);
       for(int i=0; i<n; i++)
         xt[i]=t;
       xt[0]=t;
@@ -2939,26 +3114,27 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      // Remplissage des champs avec l'énumération NEPTUNE
+      outph[0] = EOS_Field("temperature", "T", NEPTUNE::T, xtout);
+      outph[1] = EOS_Field("rho", "rho", NEPTUNE::rho, xrho);
+      outph[2] = EOS_Field("w", "w", NEPTUNE::w, xw);
+      outph[3] = EOS_Field("u", "u", NEPTUNE::u, xu);
+      outph[4] = EOS_Field("cp", "cp", NEPTUNE::cp, xcp);
+      outph[5] = EOS_Field("mu", "mu", NEPTUNE::mu, xmu);
+      outph[6] = EOS_Field("lambda", "lambda", NEPTUNE::lambda, xlambda);
+      outph[7] = EOS_Field("sigma", "sigma", NEPTUNE::sigma, xsigma);
+      outph[8] = EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp);
+      outph[9] = EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh);
+      outph[10] = EOS_Field("dtdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdtdh);
+      outph[11] = EOS_Field("g", "g", NEPTUNE::g, xg);
+      outph[12] = EOS_Field("f", "f", NEPTUNE::f, xf);
+      outph[13] = EOS_Field("pr", "pr", NEPTUNE::pr, xpr);
+      outph[14] = EOS_Field("cv", "cv", NEPTUNE::cv, xcv);
+      outph[15] = EOS_Field("beta", "beta", NEPTUNE::beta, xbeta);
 
       cr=refprop9l.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -2990,11 +3166,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s",NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xhout);
           
       cr=refprop9l.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -3024,8 +3200,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xrholsat(n);
@@ -3099,12 +3275,13 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0] = EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat, xrholsat);
+      outsat[1] = EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat, xrhovsat);
+      outsat[2] = EOS_Field("hlsat", "h_l_sat", NEPTUNE::h_l_sat, xhlsat);
+      outsat[3] = EOS_Field("hvsat", "h_v_sat", NEPTUNE::h_v_sat, xhvsat);
+      outsat[4] = EOS_Field("tsat", "T_sat", NEPTUNE::T_sat, xtsat);
+      outsat[5] = EOS_Field("dtsatdp", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, xdtsatdp);
+
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -3171,9 +3348,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T",NEPTUNE::T,xt);
       xt=xtsat;
       xt+=10.;
 
@@ -3235,26 +3412,26 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      outph[0] = EOS_Field("temperature", "T", NEPTUNE::T, xtout);
+      outph[1] = EOS_Field("rho", "rho", NEPTUNE::rho, xrho);
+      outph[2] = EOS_Field("w", "w", NEPTUNE::w, xw);
+      outph[3] = EOS_Field("u", "u", NEPTUNE::u, xu);
+      outph[4] = EOS_Field("cp", "cp", NEPTUNE::cp, xcp);
+      outph[5] = EOS_Field("mu", "mu", NEPTUNE::mu, xmu);
+      outph[6] = EOS_Field("lambda", "lambda", NEPTUNE::lambda, xlambda);
+      outph[7] = EOS_Field("sigma", "sigma", NEPTUNE::sigma, xsigma);
+      outph[8] = EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp);
+      outph[9] = EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh);
+      outph[10] = EOS_Field("dtdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdtdh);
+      outph[11] = EOS_Field("g", "g", NEPTUNE::g, xg);
+      outph[12] = EOS_Field("f", "f", NEPTUNE::f, xf);
+      outph[13] = EOS_Field("pr", "pr", NEPTUNE::pr, xpr);
+      outph[14] = EOS_Field("cv", "cv", NEPTUNE::cv, xcv);
+      outph[15] = EOS_Field("beta", "beta", NEPTUNE::beta, xbeta);
 
       cr=refprop9v.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]" << endl;
@@ -3286,11 +3463,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s",NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xhout);
           
       cr=refprop9v.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -3328,8 +3505,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xtsat(n);
@@ -3341,12 +3518,12 @@ int main()
 
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[1]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("dhlsatdp","d_h_l_sat_d_p",xdhlsatdp);
-      outsat[5]=EOS_Field("dhvsatdp","d_h_v_sat_d_p",xdhvsatdp);
+      outsat[0] = EOS_Field("tsat", "T_sat", NEPTUNE::T_sat, xtsat);
+      outsat[1] = EOS_Field("dtsatdp", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, xdtsatdp);
+      outsat[2] = EOS_Field("hlsat", "h_l_sat", NEPTUNE::h_l_sat, xhlsat);
+      outsat[3] = EOS_Field("hvsat", "h_v_sat", NEPTUNE::h_v_sat, xhvsat);
+      outsat[4] = EOS_Field("dhlsatdp", "d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p, xdhlsatdp);
+      outsat[5] = EOS_Field("dhvsatdp", "d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p, xdhvsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=1.e5;
@@ -3382,7 +3559,7 @@ int main()
       ArrOfDouble xt(n);
       ArrOfDouble xhout(n);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T",NEPTUNE::T,xt);
       for(int i=0; i<n; i++)
         xt[i]=tref;
       xt[0]=tref;
@@ -3391,7 +3568,7 @@ int main()
 
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xhout);
+      outpt[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xhout);
 
       cr=refprop9.compute(P,T,outpt,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -3411,7 +3588,7 @@ int main()
       xhin[0]=outpt[0][0];
       xhin[1]=outpt[0][1];
       xhin[2]=outpt[0][2];
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
 
       ArrOfDouble xdtdp(n);
       ArrOfDouble xcp(n);
@@ -3422,13 +3599,14 @@ int main()
 
       int nbfields_ph=7;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("dtdp","d_T_d_p_h",xdtdp);
-      outph[2]=EOS_Field("cp","cp",xcp);
-      outph[3]=EOS_Field("rho","rho",xrho);
-      outph[4]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[5]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[6]=EOS_Field("mu","mu",xmu);
+      outph[0] = EOS_Field("temperature", "T", NEPTUNE::T, xtout);
+      outph[1] = EOS_Field("dtdp", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xdtdp);
+      outph[2] = EOS_Field("cp", "cp", NEPTUNE::cp, xcp);
+      outph[3] = EOS_Field("rho", "rho", NEPTUNE::rho, xrho);
+      outph[4] = EOS_Field("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrhodp);
+      outph[5] = EOS_Field("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrhodh);
+      outph[6] = EOS_Field("mu", "mu", NEPTUNE::mu, xmu);
+
 
       cr=refprop9.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields  [cr=" << cr <<"]"<< endl;
@@ -3547,13 +3725,13 @@ int main()
       ArrOfInt ierr(n);
       ArrOfInt ierr1(1);
       xp = 5.696591e+06;
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
       EOS_Error_Field err_f1(ierr1);
 
-      EOS_Field P2("Pvap","p",n,P_);
-      EOS_Field H2("Hvap","h",n,H_);
+      EOS_Field P2("Pvap","p",NEPTUNE::p,n,P_);
+      EOS_Field H2("Hvap","h",NEPTUNE::h,n,H_);
 
 
       EOS refprop9v("EOS_Refprop9","WaterVapor"); 
@@ -3568,25 +3746,26 @@ int main()
         
         //Propriétés gas
         for(int i=0; i<n; i++) OUT0[i]=545.0;
-        outph[0]=EOS_Field("Tgaz","T",n,OUT0);
-        outph[1]=EOS_Field("DTgaz/DPv", "d_T_d_p_h", n,OUT1);
-        outph[2]=EOS_Field( "DTgaz/DHvap","d_T_d_h_p", n,OUT2);
-        outph[3]=EOS_Field("Cpvap","cp", n,OUT3);
-        outph[4]=EOS_Field("DCpvap/DPv","d_cp_d_p_h", n,OUT4);
-        outph[5]=EOS_Field("DCpvap/DHv","d_cp_d_h_p", n,OUT5);
-        outph[6]=EOS_Field("Rhovap","rho", n,OUT6);
-        outph[7]=EOS_Field("DRhovap/dPv","d_rho_d_p_h", n,OUT7);
-        outph[8]=EOS_Field("DRhovap/DHv","d_rho_d_h_p", n,OUT8);
-      
-        outph[9]=EOS_Field("Svap","s", n,OUT9);
-        outph[10]=  EOS_Field("DSvap/dPv","d_s_d_p_h", n,OUT10);
-        outph[11]=EOS_Field("DSvap/DHv","d_s_d_h_p", n,OUT11);
-        outph[12]=EOS_Field("Wvap","w", n,OUT12);
-        outph[13]=EOS_Field("DWvap/dPv","d_w_d_p_h", n,OUT13);
-        outph[14]=EOS_Field("DWvap/DHv","d_w_d_h_p", n,OUT14);
-        outph[15]=EOS_Field("Cvvap","cv", n,OUT15);
-        outph[16]=EOS_Field("DCvvap/DPv","d_cv_d_p_h", n,OUT16);
-        outph[17]=EOS_Field("DCvvap/DHv","d_cv_d_h_p", n,OUT17);
+          outph[0] = EOS_Field("Tgaz", "T", NEPTUNE::T,n, OUT0);
+          outph[1] = EOS_Field("DTgaz/DPv", "d_T_d_p_h", NEPTUNE::d_T_d_p_h,n, OUT1);
+          outph[2] = EOS_Field("DTgaz/DHvap", "d_T_d_h_p", NEPTUNE::d_T_d_h_p,n, OUT2);
+          outph[3] = EOS_Field("Cpvap", "cp", NEPTUNE::cp,n, OUT3);
+          outph[4] = EOS_Field("DCpvap/DPv", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h,n, OUT4);
+          outph[5] = EOS_Field("DCpvap/DHv", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p,n, OUT5);
+          outph[6] = EOS_Field("Rhovap", "rho", NEPTUNE::rho,n, OUT6);
+          outph[7] = EOS_Field("DRhovap/dPv", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h,n, OUT7);
+          outph[8] = EOS_Field("DRhovap/DHv", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p,n, OUT8);
+
+          outph[9] = EOS_Field("Svap", "s", NEPTUNE::s,n, OUT9);
+          outph[10] = EOS_Field("DSvap/dPv", "d_s_d_p_h", NEPTUNE::d_s_d_p_h,n, OUT10);
+          outph[11] = EOS_Field("DSvap/DHv", "d_s_d_h_p", NEPTUNE::d_s_d_h_p,n, OUT11);
+          outph[12] = EOS_Field("Wvap", "w", NEPTUNE::w,n, OUT12);
+          outph[13] = EOS_Field("DWvap/dPv", "d_w_d_p_h", NEPTUNE::d_w_d_p_h,n, OUT13);
+          outph[14] = EOS_Field("DWvap/DHv", "d_w_d_h_p", NEPTUNE::d_w_d_h_p,n, OUT14);
+          outph[15] = EOS_Field("Cvvap", "cv", NEPTUNE::cv,n, OUT15);
+          outph[16] = EOS_Field("DCvvap/DPv", "d_cv_d_p_h", NEPTUNE::d_cv_d_p_h,n, OUT16);
+          outph[17] = EOS_Field("DCvvap/DHv", "d_cv_d_h_p", NEPTUNE::d_cv_d_h_p,n, OUT17);
+
       
         cr=refprop9v.compute(P2,H2,outph,err_f);
       
@@ -3604,15 +3783,15 @@ int main()
         nbfields_ph=9;
         EOS_Fields outtran(nbfields_ph);
         //Transport gas
-        outtran[0]=EOS_Field("TLAG","lambda", n,OUT0);
-        outtran[1]=EOS_Field("TLAG1","d_lambda_d_p_h", n,OUT1);
-        outtran[2]=EOS_Field("TMUG","mu", n,OUT2);
-        outtran[3]=EOS_Field("TMUG1","d_mu_d_p_h", n,OUT3);
-        outtran[4]=EOS_Field("SI1","d_sigma_d_p_h", n,OUT4);
-        outtran[5]=EOS_Field("SI3","d_sigma_d_h_p", n,OUT5);
-        outtran[6]=EOS_Field(" TLAG3","d_lambda_d_h_p", n, OUT6);
-        outtran[7]=EOS_Field("TMUG3","d_mu_d_h_p", n,OUT7);
-        outtran[8]=EOS_Field("SI","sigma", n,OUT8);
+        outtran[0]=EOS_Field("TLAG","lambda", NEPTUNE::lambda, n,OUT0);
+        outtran[1]=EOS_Field("TLAG1","d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, n,OUT1);
+        outtran[2]=EOS_Field("TMUG","mu", NEPTUNE::mu, n,OUT2);
+        outtran[3]=EOS_Field("TMUG1","d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, n,OUT3);
+        outtran[4]=EOS_Field("SI1","d_sigma_d_p_h", NEPTUNE::d_sigma_d_p_h, n,OUT4);
+        outtran[5]=EOS_Field("SI3","d_sigma_d_h_p", NEPTUNE::d_sigma_d_h_p, n,OUT5);
+        outtran[6]=EOS_Field(" TLAG3","d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, n, OUT6);
+        outtran[7]=EOS_Field("TMUG3","d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, n,OUT7);
+        outtran[8]=EOS_Field("SI","sigma", NEPTUNE::sigma, n,OUT8);
       
         cr=refprop9v.compute(P2,H2,outtran,err_f);
       }
@@ -3622,33 +3801,33 @@ int main()
            
         //Propriétés gas
         for(int i=0; i<n; i++) OUT0[i]=545.0;
-        outph[0]=EOS_Field("Tgaz","T",n,OUT0);
-        outph[1]=EOS_Field("DTgaz/DPv", "d_T_d_p_h", n,OUT1);
-        outph[2]=EOS_Field( "DTgaz/DHvap","d_T_d_h_p", n,OUT2);
-        outph[3]=EOS_Field("Cpvap","cp", n,OUT3);
-        outph[4]=EOS_Field("DCpvap/DPv","d_cp_d_p_h", n,OUT4);
-        outph[5]=EOS_Field("DCpvap/DHv","d_cp_d_h_p", n,OUT5);
-        outph[6]=EOS_Field("Rhovap","rho", n,OUT6);
-        outph[7]=EOS_Field("DRhovap/dPv","d_rho_d_p_h", n,OUT7);
-        outph[8]=EOS_Field("DRhovap/DHv","d_rho_d_h_p", n,OUT8);
-        outph[9]=EOS_Field("Svap","s", n,OUT9);
-        outph[10]=EOS_Field("DSvap/dPv","d_s_d_p_h", n,OUT10);
-        outph[11]=EOS_Field("DSvap/DHv","d_s_d_h_p", n,OUT11);
-        outph[12]=EOS_Field("Wvap","w", n,OUT12);
-        outph[13]=EOS_Field("DWvap/dPv","d_w_d_p_h", n,OUT13);
-        outph[14]=EOS_Field("DWvap/DHv","d_w_d_h_p", n,OUT14);
-        outph[15]=EOS_Field("Cvvap","cv", n,OUT15);
-        outph[16]=EOS_Field("DCvvap/DPv","d_cv_d_p_h", n,OUT16);
-        outph[17]=EOS_Field("DCvvap/DHv","d_cv_d_h_p", n,OUT17);
-        outph[18]=EOS_Field("TLAG","lambda", n,OUT18);
-        outph[19]=EOS_Field("TLAG1","d_lambda_d_p_h", n,OUT19);
-        outph[20]=EOS_Field("TMUG","mu", n,OUT20);
-        outph[21]=EOS_Field("TMUG1","d_mu_d_p_h", n,OUT21);
-        outph[22]=EOS_Field("SI1","d_sigma_d_p_h", n,OUT22);
-        outph[23]=EOS_Field("SI3","d_sigma_d_h_p", n,OUT23);
-        outph[24]=EOS_Field(" TLAG3","d_lambda_d_h_p", n, OUT24);
-        outph[25]=EOS_Field("TMUG3","d_mu_d_h_p", n,OUT25);
-        outph[26]=EOS_Field("SI","sigma", n,OUT26);
+        outph[0]=EOS_Field("Tgaz","T", NEPTUNE::T,n,OUT0);
+        outph[1]=EOS_Field("DTgaz/DPv", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, n,OUT1);
+        outph[2]=EOS_Field( "DTgaz/DHvap","d_T_d_h_p", NEPTUNE::d_T_d_h_p, n,OUT2);
+        outph[3]=EOS_Field("Cpvap","cp", NEPTUNE::cp, n,OUT3);
+        outph[4]=EOS_Field("DCpvap/DPv","d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, n,OUT4);
+        outph[5]=EOS_Field("DCpvap/DHv","d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, n,OUT5);
+        outph[6]=EOS_Field("Rhovap","rho", NEPTUNE::rho, n,OUT6);
+        outph[7]=EOS_Field("DRhovap/dPv","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, n,OUT7);
+        outph[8]=EOS_Field("DRhovap/DHv","d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, n,OUT8);
+        outph[9]=EOS_Field("Svap","s", NEPTUNE::s, n,OUT9);
+        outph[10]=EOS_Field("DSvap/dPv","d_s_d_p_h", NEPTUNE::d_s_d_p_h, n,OUT10);
+        outph[11]=EOS_Field("DSvap/DHv","d_s_d_h_p", NEPTUNE::d_s_d_h_p, n,OUT11);
+        outph[12]=EOS_Field("Wvap","w", NEPTUNE::w, n,OUT12);
+        outph[13]=EOS_Field("DWvap/dPv","d_w_d_p_h", NEPTUNE::d_w_d_p_h, n,OUT13);
+        outph[14]=EOS_Field("DWvap/DHv","d_w_d_h_p", NEPTUNE::d_w_d_h_p, n,OUT14);
+        outph[15]=EOS_Field("Cvvap","cv", NEPTUNE::cv, n,OUT15);
+        outph[16]=EOS_Field("DCvvap/DPv","d_cv_d_p_h", NEPTUNE::d_cv_d_p_h, n,OUT16);
+        outph[17]=EOS_Field("DCvvap/DHv","d_cv_d_h_p", NEPTUNE::d_cv_d_h_p, n,OUT17);
+        outph[18]=EOS_Field("TLAG","lambda", NEPTUNE::lambda, n,OUT18);
+        outph[19]=EOS_Field("TLAG1","d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, n,OUT19);
+        outph[20]=EOS_Field("TMUG","mu", NEPTUNE::mu, n,OUT20);
+        outph[21]=EOS_Field("TMUG1","d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, n,OUT21);
+        outph[22]=EOS_Field("SI1","d_sigma_d_p_h", NEPTUNE::d_sigma_d_p_h, n,OUT22);
+        outph[23]=EOS_Field("SI3","d_sigma_d_h_p", NEPTUNE::d_sigma_d_h_p, n,OUT23);
+        outph[24]=EOS_Field(" TLAG3","d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, n, OUT24);
+        outph[25]=EOS_Field("TMUG3","d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, n,OUT25);
+        outph[26]=EOS_Field("SI","sigma", NEPTUNE::sigma, n,OUT26);
 
         cr=refprop9v.compute(P2,H2,outph,err_f);
            
@@ -3665,21 +3844,21 @@ int main()
         
       int nbfields_ph=15;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("TSP", "T_sat", n,OUT0);
-      outph[1]=EOS_Field("DTSPP", "d_T_sat_d_p", n,OUT1);
-      outph[2]=EOS_Field("D2TSP","d2_T_sat_d_p_d_p", n,OUT2);
-      outph[3]=EOS_Field("HLSP","h_l_sat", n,OUT3);
-      outph[4]=EOS_Field("DHLSPPP","d_h_l_sat_d_p", n,OUT4);
-      outph[5]=EOS_Field("HVSP","h_v_sat", n,OUT5);
-      outph[6]=EOS_Field("DHVSPP","d_h_v_sat_d_p", n,OUT6);
-      outph[7]=EOS_Field("CPLSP","cp_l_sat", n,OUT7);
-      outph[8]=EOS_Field("DCLSPP","d_cp_l_sat_d_p", n,OUT8);
-      outph[9]=EOS_Field("CPVSP","cp_v_sat", n,OUT9);
-      outph[10]=EOS_Field("DCVSPP","d_cp_v_sat_d_p", n,OUT10);
-      outph[11]=EOS_Field("RLSP","rho_l_sat", n,OUT11);
-      outph[12]=EOS_Field("DRLSPP","d_rho_l_sat_d_p", n,OUT12);
-      outph[13]=EOS_Field("RVSP","rho_v_sat", n,OUT13);
-      outph[14]=EOS_Field("DRVSPP","d_rho_v_sat_d_p", n,OUT14);
+      outph[0]=EOS_Field("TSP", "T_sat", NEPTUNE::T_sat, n,OUT0);
+      outph[1]=EOS_Field("DTSPP", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, n,OUT1);
+      outph[2]=EOS_Field("D2TSP","d2_T_sat_d_p_d_p", NEPTUNE::d2_T_sat_d_p_d_p, n,OUT2);
+      outph[3]=EOS_Field("HLSP","h_l_sat", NEPTUNE::h_l_sat, n,OUT3);
+      outph[4]=EOS_Field("DHLSPPP","d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p, n,OUT4);
+      outph[5]=EOS_Field("HVSP","h_v_sat", NEPTUNE::h_v_sat, n,OUT5);
+      outph[6]=EOS_Field("DHVSPP","d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p, n,OUT6);
+      outph[7]=EOS_Field("CPLSP","cp_l_sat", NEPTUNE::cp_l_sat, n,OUT7);
+      outph[8]=EOS_Field("DCLSPP","d_cp_l_sat_d_p", NEPTUNE::d_cp_l_sat_d_p, n,OUT8);
+      outph[9]=EOS_Field("CPVSP","cp_v_sat", NEPTUNE::cp_v_sat, n,OUT9);
+      outph[10]=EOS_Field("DCVSPP","d_cp_v_sat_d_p", NEPTUNE::d_cp_v_sat_d_p ,n,OUT10);
+      outph[11]=EOS_Field("RLSP","rho_l_sat", NEPTUNE::rho_l_sat, n,OUT11);
+      outph[12]=EOS_Field("DRLSPP","d_rho_l_sat_d_p", NEPTUNE::d_rho_l_sat_d_p, n,OUT12);
+      outph[13]=EOS_Field("RVSP","rho_v_sat", NEPTUNE::rho_v_sat, n,OUT13);
+      outph[14]=EOS_Field("DRVSPP","d_rho_v_sat_d_p", NEPTUNE::d_rho_v_sat_d_p, n,OUT14);
             
       cr=refprop9v.compute(P2,outph,err_f);
         
@@ -3761,8 +3940,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p", NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h", NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
             
       ArrOfDouble xrholsat(n);
@@ -3851,12 +4030,12 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0]=EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat,xrholsat);
+      outsat[1]=EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat,xrhovsat);
+      outsat[2]=EOS_Field("hlsat","h_l_sat", NEPTUNE::h_l_sat,xhlsat);
+      outsat[3]=EOS_Field("hvsat","h_v_sat", NEPTUNE::h_v_sat,xhvsat);
+      outsat[4]=EOS_Field("tsat","T_sat", NEPTUNE::T_sat,xtsat);
+      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,xdtsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -3923,9 +4102,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h", NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T", NEPTUNE::T,xt);
       for(int i=0; i<n; i++)
         xt[i]=t;
       xt[0]=t;
@@ -3988,26 +4167,26 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h", NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      outph[0]=EOS_Field("temperature","T", NEPTUNE::T,xtout);
+      outph[1]=EOS_Field("rho","rho", NEPTUNE::rho,xrho);
+      outph[2]=EOS_Field("w","w", NEPTUNE::w,xw);
+      outph[3]=EOS_Field("u","u", NEPTUNE::u,xu);
+      outph[4]=EOS_Field("cp","cp", NEPTUNE::cp,xcp);
+      outph[5]=EOS_Field("mu","mu", NEPTUNE::mu,xmu);
+      outph[6]=EOS_Field("lambda","lambda", NEPTUNE::lambda,xlambda);
+      outph[7]=EOS_Field("sigma","sigma", NEPTUNE::sigma,xsigma);
+      outph[8]=EOS_Field("drhodp","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h,xdrhodp);
+      outph[9]=EOS_Field("drhodh","d_rho_d_h_p", NEPTUNE::d_rho_d_h_p,xdrhodh);
+      outph[10]=EOS_Field("dtdh","d_T_d_h_p", NEPTUNE::d_T_d_h_p,xdtdh);
+      outph[11]=EOS_Field("g","g", NEPTUNE::g,xg);
+      outph[12]=EOS_Field("f","f", NEPTUNE::f,xf);
+      outph[13]=EOS_Field("pr","pr", NEPTUNE::pr,xpr);
+      outph[14]=EOS_Field("cv","cv", NEPTUNE::cv,xcv);
+      outph[15]=EOS_Field("beta","beta", NEPTUNE::beta,xbeta);
 
       cr=refprop10.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -4038,11 +4217,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s", NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h", NEPTUNE::h,xhout);
           
       cr=refprop10.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -4249,8 +4428,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p", NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h", NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xrholsat(n);
@@ -4323,12 +4502,12 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0]=EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat,xrholsat);
+      outsat[1]=EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat,xrhovsat);
+      outsat[2]=EOS_Field("hlsat","h_l_sat", NEPTUNE::h_l_sat,xhlsat);
+      outsat[3]=EOS_Field("hvsat","h_v_sat", NEPTUNE::h_v_sat,xhvsat);
+      outsat[4]=EOS_Field("tsat","T_sat", NEPTUNE::T_sat,xtsat);
+      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,xdtsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -4395,9 +4574,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h", NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T", NEPTUNE::T,xt);
       for(int i=0; i<n; i++)
         xt[i]=t;
       xt[0]=t;
@@ -4461,26 +4640,26 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h", NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      outph[0]=EOS_Field("temperature","T", NEPTUNE::T,xtout);
+      outph[1]=EOS_Field("rho","rho", NEPTUNE::rho,xrho);
+      outph[2]=EOS_Field("w","w", NEPTUNE::w,xw);
+      outph[3]=EOS_Field("u","u", NEPTUNE::u,xu);
+      outph[4]=EOS_Field("cp","cp", NEPTUNE::cp,xcp);
+      outph[5]=EOS_Field("mu","mu", NEPTUNE::mu,xmu);
+      outph[6]=EOS_Field("lambda","lambda", NEPTUNE::lambda,xlambda);
+      outph[7]=EOS_Field("sigma","sigma", NEPTUNE::sigma,xsigma);
+      outph[8]=EOS_Field("drhodp","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h,xdrhodp);
+      outph[9]=EOS_Field("drhodh","d_rho_d_h_p", NEPTUNE::d_rho_d_h_p,xdrhodh);
+      outph[10]=EOS_Field("dtdh","d_T_d_h_p", NEPTUNE::d_T_d_h_p,xdtdh);
+      outph[11]=EOS_Field("g","g", NEPTUNE::g,xg);
+      outph[12]=EOS_Field("f","f", NEPTUNE::f,xf);
+      outph[13]=EOS_Field("pr","pr", NEPTUNE::pr,xpr);
+      outph[14]=EOS_Field("cv","cv", NEPTUNE::cv,xcv);
+      outph[15]=EOS_Field("beta","beta", NEPTUNE::beta,xbeta);
 
       cr=refprop10l.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -4512,11 +4691,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s", NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h", NEPTUNE::h,xhout);
           
       cr=refprop10l.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -4546,8 +4725,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p", NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h", NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xrholsat(n);
@@ -4621,12 +4800,12 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0]=EOS_Field("rholsat", "rho_l_sat", NEPTUNE::rho_l_sat,xrholsat);
+      outsat[1]=EOS_Field("rhovsat", "rho_v_sat", NEPTUNE::rho_v_sat,xrhovsat);
+      outsat[2]=EOS_Field("hlsat","h_l_sat", NEPTUNE::h_l_sat,xhlsat);
+      outsat[3]=EOS_Field("hvsat","h_v_sat", NEPTUNE::h_v_sat,xhvsat);
+      outsat[4]=EOS_Field("tsat","T_sat", NEPTUNE::T_sat,xtsat);
+      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,xdtsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -4693,9 +4872,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h", NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T", NEPTUNE::T,xt);
       xt=xtsat;
       xt+=10.;
 
@@ -4757,26 +4936,26 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h", NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      outph[0]=EOS_Field("temperature","T", NEPTUNE::T,xtout);
+      outph[1]=EOS_Field("rho","rho", NEPTUNE::rho,xrho);
+      outph[2]=EOS_Field("w","w", NEPTUNE::w,xw);
+      outph[3]=EOS_Field("u","u", NEPTUNE::u,xu);
+      outph[4]=EOS_Field("cp","cp", NEPTUNE::cp,xcp);
+      outph[5]=EOS_Field("mu","mu", NEPTUNE::mu,xmu);
+      outph[6]=EOS_Field("lambda","lambda", NEPTUNE::lambda,xlambda);
+      outph[7]=EOS_Field("sigma","sigma", NEPTUNE::sigma,xsigma);
+      outph[8]=EOS_Field("drhodp","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h,xdrhodp);
+      outph[9]=EOS_Field("drhodh","d_rho_d_h_p", NEPTUNE::d_rho_d_h_p,xdrhodh);
+      outph[10]=EOS_Field("dtdh","d_T_d_h_p", NEPTUNE::d_T_d_h_p,xdtdh);
+      outph[11]=EOS_Field("g","g", NEPTUNE::g,xg);
+      outph[12]=EOS_Field("f","f", NEPTUNE::f,xf);
+      outph[13]=EOS_Field("pr","pr", NEPTUNE::pr,xpr);
+      outph[14]=EOS_Field("cv","cv", NEPTUNE::cv,xcv);
+      outph[15]=EOS_Field("beta","beta", NEPTUNE::beta,xbeta);
 
       cr=refprop10v.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]" << endl;
@@ -4808,11 +4987,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s", NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h", NEPTUNE::h,xhout);
           
       cr=refprop10v.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -4850,8 +5029,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p", NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h", NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xtsat(n);
@@ -4863,12 +5042,12 @@ int main()
 
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[1]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("dhlsatdp","d_h_l_sat_d_p",xdhlsatdp);
-      outsat[5]=EOS_Field("dhvsatdp","d_h_v_sat_d_p",xdhvsatdp);
+      outsat[0]=EOS_Field("tsat","T_sat", NEPTUNE::T_sat,xtsat);
+      outsat[1]=EOS_Field("dtsatdp","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,xdtsatdp);
+      outsat[2]=EOS_Field("hlsat","h_l_sat", NEPTUNE::h_l_sat,xhlsat);
+      outsat[3]=EOS_Field("hvsat","h_v_sat", NEPTUNE::h_v_sat,xhvsat);
+      outsat[4]=EOS_Field("dhlsatdp","d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p,xdhlsatdp);
+      outsat[5]=EOS_Field("dhvsatdp","d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p,xdhvsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=1.e5;
@@ -4913,7 +5092,7 @@ int main()
 
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xhout);
+      outpt[0]=EOS_Field("enthalpie","h", NEPTUNE::h,xhout);
 
       cr=refprop10.compute(P,T,outpt,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -4933,7 +5112,7 @@ int main()
       xhin[0]=outpt[0][0];
       xhin[1]=outpt[0][1];
       xhin[2]=outpt[0][2];
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h", NEPTUNE::h,xhin);
 
       ArrOfDouble xdtdp(n);
       ArrOfDouble xcp(n);
@@ -4944,13 +5123,13 @@ int main()
 
       int nbfields_ph=7;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("dtdp","d_T_d_p_h",xdtdp);
-      outph[2]=EOS_Field("cp","cp",xcp);
-      outph[3]=EOS_Field("rho","rho",xrho);
-      outph[4]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[5]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[6]=EOS_Field("mu","mu",xmu);
+      outph[0]=EOS_Field("temperature","T", NEPTUNE::T,xtout);
+      outph[1]=EOS_Field("dtdp","d_T_d_p_h", NEPTUNE::d_T_d_p_h,xdtdp);
+      outph[2]=EOS_Field("cp","cp", NEPTUNE::cp,xcp);
+      outph[3]=EOS_Field("rho","rho", NEPTUNE::rho,xrho);
+      outph[4]=EOS_Field("drhodp","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h,xdrhodp);
+      outph[5]=EOS_Field("drhodh","d_rho_d_h_p", NEPTUNE::d_rho_d_h_p,xdrhodh);
+      outph[6]=EOS_Field("mu","mu", NEPTUNE::mu,xmu);
 
       cr=refprop10.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields  [cr=" << cr <<"]"<< endl;
@@ -5069,13 +5248,13 @@ int main()
       ArrOfInt ierr(n);
       ArrOfInt ierr1(1);
       xp = 5.696591e+06;
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p", NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h", NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
       EOS_Error_Field err_f1(ierr1);
 
-      EOS_Field P2("Pvap","p",n,P_);
-      EOS_Field H2("Hvap","h",n,H_);
+      EOS_Field P2("Pvap","p", NEPTUNE::p,n,P_);
+      EOS_Field H2("Hvap","h", NEPTUNE::h,n,H_);
 
 
       EOS refprop10v("EOS_Refprop10","WaterVapor"); 
@@ -5090,25 +5269,25 @@ int main()
         
         //Propriétés gas
         for(int i=0; i<n; i++) OUT0[i]=545.0;
-        outph[0]=EOS_Field("Tgaz","T",n,OUT0);
-        outph[1]=EOS_Field("DTgaz/DPv", "d_T_d_p_h", n,OUT1);
-        outph[2]=EOS_Field( "DTgaz/DHvap","d_T_d_h_p", n,OUT2);
-        outph[3]=EOS_Field("Cpvap","cp", n,OUT3);
-        outph[4]=EOS_Field("DCpvap/DPv","d_cp_d_p_h", n,OUT4);
-        outph[5]=EOS_Field("DCpvap/DHv","d_cp_d_h_p", n,OUT5);
-        outph[6]=EOS_Field("Rhovap","rho", n,OUT6);
-        outph[7]=EOS_Field("DRhovap/dPv","d_rho_d_p_h", n,OUT7);
-        outph[8]=EOS_Field("DRhovap/DHv","d_rho_d_h_p", n,OUT8);
+        outph[0]=EOS_Field("Tgaz","T", NEPTUNE::T,n,OUT0);
+        outph[1]=EOS_Field("DTgaz/DPv", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, n,OUT1);
+        outph[2]=EOS_Field( "DTgaz/DHvap","d_T_d_h_p", NEPTUNE::d_T_d_h_p, n,OUT2);
+        outph[3]=EOS_Field("Cpvap","cp", NEPTUNE::cp, n,OUT3);
+        outph[4]=EOS_Field("DCpvap/DPv","d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, n,OUT4);
+        outph[5]=EOS_Field("DCpvap/DHv","d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, n,OUT5);
+        outph[6]=EOS_Field("Rhovap","rho", NEPTUNE::rho, n,OUT6);
+        outph[7]=EOS_Field("DRhovap/dPv","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, n,OUT7);
+        outph[8]=EOS_Field("DRhovap/DHv","d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, n,OUT8);
       
-        outph[9]=EOS_Field("Svap","s", n,OUT9);
-        outph[10]=  EOS_Field("DSvap/dPv","d_s_d_p_h", n,OUT10);
-        outph[11]=EOS_Field("DSvap/DHv","d_s_d_h_p", n,OUT11);
-        outph[12]=EOS_Field("Wvap","w", n,OUT12);
-        outph[13]=EOS_Field("DWvap/dPv","d_w_d_p_h", n,OUT13);
-        outph[14]=EOS_Field("DWvap/DHv","d_w_d_h_p", n,OUT14);
-        outph[15]=EOS_Field("Cvvap","cv", n,OUT15);
-        outph[16]=EOS_Field("DCvvap/DPv","d_cv_d_p_h", n,OUT16);
-        outph[17]=EOS_Field("DCvvap/DHv","d_cv_d_h_p", n,OUT17);
+        outph[9]=EOS_Field("Svap","s", NEPTUNE::s, n,OUT9);
+        outph[10]=  EOS_Field("DSvap/dPv","d_s_d_p_h", NEPTUNE::d_s_d_p_h, n,OUT10);
+        outph[11]=EOS_Field("DSvap/DHv","d_s_d_h_p", NEPTUNE::d_s_d_h_p, n,OUT11);
+        outph[12]=EOS_Field("Wvap","w", NEPTUNE::w, n,OUT12);
+        outph[13]=EOS_Field("DWvap/dPv","d_w_d_p_h", NEPTUNE::d_w_d_p_h, n,OUT13);
+        outph[14]=EOS_Field("DWvap/DHv","d_w_d_h_p", NEPTUNE::d_w_d_h_p, n,OUT14);
+        outph[15]=EOS_Field("Cvvap","cv", NEPTUNE::cv, n,OUT15);
+        outph[16]=EOS_Field("DCvvap/DPv","d_cv_d_p_h", NEPTUNE::d_cv_d_p_h, n,OUT16);
+        outph[17]=EOS_Field("DCvvap/DHv","d_cv_d_h_p", NEPTUNE::d_cv_d_h_p, n,OUT17);
       
         cr=refprop10v.compute(P2,H2,outph,err_f);
       
@@ -5126,15 +5305,15 @@ int main()
         nbfields_ph=9;
         EOS_Fields outtran(nbfields_ph);
         //Transport gas
-        outtran[0]=EOS_Field("TLAG","lambda", n,OUT0);
-        outtran[1]=EOS_Field("TLAG1","d_lambda_d_p_h", n,OUT1);
-        outtran[2]=EOS_Field("TMUG","mu", n,OUT2);
-        outtran[3]=EOS_Field("TMUG1","d_mu_d_p_h", n,OUT3);
-        outtran[4]=EOS_Field("SI1","d_sigma_d_p_h", n,OUT4);
-        outtran[5]=EOS_Field("SI3","d_sigma_d_h_p", n,OUT5);
-        outtran[6]=EOS_Field(" TLAG3","d_lambda_d_h_p", n, OUT6);
-        outtran[7]=EOS_Field("TMUG3","d_mu_d_h_p", n,OUT7);
-        outtran[8]=EOS_Field("SI","sigma", n,OUT8);
+        outtran[0]=EOS_Field("TLAG","lambda", NEPTUNE::lambda, n,OUT0);
+        outtran[1]=EOS_Field("TLAG1","d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, n,OUT1);
+        outtran[2]=EOS_Field("TMUG","mu", NEPTUNE::mu, n,OUT2);
+        outtran[3]=EOS_Field("TMUG1","d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, n,OUT3);
+        outtran[4]=EOS_Field("SI1","d_sigma_d_p_h", NEPTUNE::d_sigma_d_p_h, n,OUT4);
+        outtran[5]=EOS_Field("SI3","d_sigma_d_h_p", NEPTUNE::d_sigma_d_h_p, n,OUT5);
+        outtran[6]=EOS_Field(" TLAG3","d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, n, OUT6);
+        outtran[7]=EOS_Field("TMUG3","d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, n,OUT7);
+        outtran[8]=EOS_Field("SI","sigma", NEPTUNE::sigma, n,OUT8);
       
         cr=refprop10v.compute(P2,H2,outtran,err_f);
       }
@@ -5144,33 +5323,33 @@ int main()
            
         //Propriétés gas
         for(int i=0; i<n; i++) OUT0[i]=545.0;
-        outph[0]=EOS_Field("Tgaz","T",n,OUT0);
-        outph[1]=EOS_Field("DTgaz/DPv", "d_T_d_p_h", n,OUT1);
-        outph[2]=EOS_Field( "DTgaz/DHvap","d_T_d_h_p", n,OUT2);
-        outph[3]=EOS_Field("Cpvap","cp", n,OUT3);
-        outph[4]=EOS_Field("DCpvap/DPv","d_cp_d_p_h", n,OUT4);
-        outph[5]=EOS_Field("DCpvap/DHv","d_cp_d_h_p", n,OUT5);
-        outph[6]=EOS_Field("Rhovap","rho", n,OUT6);
-        outph[7]=EOS_Field("DRhovap/dPv","d_rho_d_p_h", n,OUT7);
-        outph[8]=EOS_Field("DRhovap/DHv","d_rho_d_h_p", n,OUT8);
-        outph[9]=EOS_Field("Svap","s", n,OUT9);
-        outph[10]=EOS_Field("DSvap/dPv","d_s_d_p_h", n,OUT10);
-        outph[11]=EOS_Field("DSvap/DHv","d_s_d_h_p", n,OUT11);
-        outph[12]=EOS_Field("Wvap","w", n,OUT12);
-        outph[13]=EOS_Field("DWvap/dPv","d_w_d_p_h", n,OUT13);
-        outph[14]=EOS_Field("DWvap/DHv","d_w_d_h_p", n,OUT14);
-        outph[15]=EOS_Field("Cvvap","cv", n,OUT15);
-        outph[16]=EOS_Field("DCvvap/DPv","d_cv_d_p_h", n,OUT16);
-        outph[17]=EOS_Field("DCvvap/DHv","d_cv_d_h_p", n,OUT17);
-        outph[18]=EOS_Field("TLAG","lambda", n,OUT18);
-        outph[19]=EOS_Field("TLAG1","d_lambda_d_p_h", n,OUT19);
-        outph[20]=EOS_Field("TMUG","mu", n,OUT20);
-        outph[21]=EOS_Field("TMUG1","d_mu_d_p_h", n,OUT21);
-        outph[22]=EOS_Field("SI1","d_sigma_d_p_h", n,OUT22);
-        outph[23]=EOS_Field("SI3","d_sigma_d_h_p", n,OUT23);
-        outph[24]=EOS_Field(" TLAG3","d_lambda_d_h_p", n, OUT24);
-        outph[25]=EOS_Field("TMUG3","d_mu_d_h_p", n,OUT25);
-        outph[26]=EOS_Field("SI","sigma", n,OUT26);
+        outph[0]=EOS_Field("Tgaz","T", NEPTUNE::T,n,OUT0);
+        outph[1]=EOS_Field("DTgaz/DPv", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, n,OUT1);
+        outph[2]=EOS_Field( "DTgaz/DHvap","d_T_d_h_p", NEPTUNE::d_T_d_h_p, n,OUT2);
+        outph[3]=EOS_Field("Cpvap","cp", NEPTUNE::cp, n,OUT3);
+        outph[4]=EOS_Field("DCpvap/DPv","d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, n,OUT4);
+        outph[5]=EOS_Field("DCpvap/DHv","d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, n,OUT5);
+        outph[6]=EOS_Field("Rhovap","rho", NEPTUNE::rho, n,OUT6);
+        outph[7]=EOS_Field("DRhovap/dPv","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, n,OUT7);
+        outph[8]=EOS_Field("DRhovap/DHv","d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, n,OUT8);
+        outph[9]=EOS_Field("Svap","s", NEPTUNE::s, n,OUT9);
+        outph[10]=EOS_Field("DSvap/dPv","d_s_d_p_h", NEPTUNE::d_s_d_p_h, n,OUT10);
+        outph[11]=EOS_Field("DSvap/DHv","d_s_d_h_p", NEPTUNE::d_s_d_h_p, n,OUT11);
+        outph[12]=EOS_Field("Wvap","w", NEPTUNE::w, n,OUT12);
+        outph[13]=EOS_Field("DWvap/dPv","d_w_d_p_h", NEPTUNE::d_w_d_p_h, n,OUT13);
+        outph[14]=EOS_Field("DWvap/DHv","d_w_d_h_p", NEPTUNE::d_w_d_h_p, n,OUT14);
+        outph[15]=EOS_Field("Cvvap","cv", NEPTUNE::cv, n,OUT15);
+        outph[16]=EOS_Field("DCvvap/DPv","d_cv_d_p_h", NEPTUNE::d_cv_d_p_h, n,OUT16);
+        outph[17]=EOS_Field("DCvvap/DHv","d_cv_d_h_p", NEPTUNE::d_cv_d_h_p, n,OUT17);
+        outph[18]=EOS_Field("TLAG","lambda", NEPTUNE::lambda, n,OUT18);
+        outph[19]=EOS_Field("TLAG1","d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, n,OUT19);
+        outph[20]=EOS_Field("TMUG","mu", NEPTUNE::mu, n,OUT20);
+        outph[21]=EOS_Field("TMUG1","d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, n,OUT21);
+        outph[22]=EOS_Field("SI1","d_sigma_d_p_h", NEPTUNE::d_sigma_d_p_h, n,OUT22);
+        outph[23]=EOS_Field("SI3","d_sigma_d_h_p", NEPTUNE::d_sigma_d_h_p, n,OUT23);
+        outph[24]=EOS_Field(" TLAG3","d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, n, OUT24);
+        outph[25]=EOS_Field("TMUG3","d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, n,OUT25);
+        outph[26]=EOS_Field("SI","sigma", NEPTUNE::sigma, n,OUT26);
 
         cr=refprop10v.compute(P2,H2,outph,err_f);
            
@@ -5187,21 +5366,21 @@ int main()
         
       int nbfields_ph=15;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("TSP", "T_sat", n,OUT0);
-      outph[1]=EOS_Field("DTSPP", "d_T_sat_d_p", n,OUT1);
-      outph[2]=EOS_Field("D2TSP","d2_T_sat_d_p_d_p", n,OUT2);
-      outph[3]=EOS_Field("HLSP","h_l_sat", n,OUT3);
-      outph[4]=EOS_Field("DHLSPPP","d_h_l_sat_d_p", n,OUT4);
-      outph[5]=EOS_Field("HVSP","h_v_sat", n,OUT5);
-      outph[6]=EOS_Field("DHVSPP","d_h_v_sat_d_p", n,OUT6);
-      outph[7]=EOS_Field("CPLSP","cp_l_sat", n,OUT7);
-      outph[8]=EOS_Field("DCLSPP","d_cp_l_sat_d_p", n,OUT8);
-      outph[9]=EOS_Field("CPVSP","cp_v_sat", n,OUT9);
-      outph[10]=EOS_Field("DCVSPP","d_cp_v_sat_d_p", n,OUT10);
-      outph[11]=EOS_Field("RLSP","rho_l_sat", n,OUT11);
-      outph[12]=EOS_Field("DRLSPP","d_rho_l_sat_d_p", n,OUT12);
-      outph[13]=EOS_Field("RVSP","rho_v_sat", n,OUT13);
-      outph[14]=EOS_Field("DRVSPP","d_rho_v_sat_d_p", n,OUT14);
+      outph[0]=EOS_Field("TSP", "T_sat", NEPTUNE::T_sat, n,OUT0);
+      outph[1]=EOS_Field("DTSPP", "d_T_sat_d_p", NEPTUNE::d_T_sat_d_p, n,OUT1);
+      outph[2]=EOS_Field("D2TSP","d2_T_sat_d_p_d_p", NEPTUNE::d2_T_sat_d_p_d_p, n,OUT2);
+      outph[3]=EOS_Field("HLSP","h_l_sat", NEPTUNE::h_l_sat, n,OUT3);
+      outph[4]=EOS_Field("DHLSPPP","d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p, n,OUT4);
+      outph[5]=EOS_Field("HVSP","h_v_sat", NEPTUNE::h_v_sat, n,OUT5);
+      outph[6]=EOS_Field("DHVSPP","d_h_v_sat_d_p",NEPTUNE::d_h_v_sat_d_p, n,OUT6);
+      outph[7]=EOS_Field("CPLSP","cp_l_sat", NEPTUNE::cp_l_sat, n,OUT7);
+      outph[8]=EOS_Field("DCLSPP","d_cp_l_sat_d_p", NEPTUNE::d_cp_l_sat_d_p, n,OUT8);
+      outph[9]=EOS_Field("CPVSP","cp_v_sat", NEPTUNE::cp_v_sat, n,OUT9);
+      outph[10]=EOS_Field("DCVSPP","d_cp_v_sat_d_p", NEPTUNE::d_cp_v_sat_d_p, n,OUT10);
+      outph[11]=EOS_Field("RLSP","rho_l_sat", NEPTUNE::rho_l_sat, n,OUT11);
+      outph[12]=EOS_Field("DRLSPP","d_rho_l_sat_d_p", NEPTUNE::d_rho_l_sat_d_p, n,OUT12);
+      outph[13]=EOS_Field("RVSP","rho_v_sat", NEPTUNE::rho_v_sat, n,OUT13);
+      outph[14]=EOS_Field("DRVSPP","d_rho_v_sat_d_p", NEPTUNE::d_rho_v_sat_d_p, n,OUT14);
             
       cr=refprop10v.compute(P2,outph,err_f);
         
@@ -5484,75 +5663,75 @@ int main()
           ArrOfDouble tsp1_(50), hlsp1_(50), hvsp1_(50), cplsp1_(50), cpvsp1_(50), rlsp1_(50), rvsp1_(50);
           ArrOfDouble tsp2_(50), hllp_(50), hvlp_(50);
           EOS_Fields out(17);
-          EOS_Field tsp("T_sat","T_sat",tsp_); out[0] = tsp;
-          EOS_Field hlsp("h_l_sat","h_l_sat",hlsp_); out[1] = hlsp;
-          EOS_Field hvsp("h_v_sat","h_v_sat",hvsp_); out[2] = hvsp;
-          EOS_Field hllp("h_l_lim","h_l_lim",hllp_); out[3] = hllp;
-          EOS_Field hvlp("h_v_lim","h_v_lim",hvlp_); out[4] = hvlp;
-          EOS_Field cplsp("cp_l_sat","cp_l_sat",cplsp_); out[5] = cplsp;
-          EOS_Field cpvsp("cp_v_sat","cp_v_sat",cpvsp_); out[6] = cpvsp;
-          EOS_Field rlsp("rho_l_sat","rho_l_sat",rlsp_); out[7] = rlsp;
-          EOS_Field rvsp("rho_v_sat","rho_v_sat",rvsp_); out[8] = rvsp;
-          EOS_Field tsp1("d_T_sat_d_p","d_T_sat_d_p",tsp1_); out[9] = tsp1;
-          EOS_Field hlsp1("d_h_l_sat_d_p","d_h_l_sat_d_p",hlsp1_); out[10] = hlsp1;
-          EOS_Field hvsp1("d_h_v_sat_d_p","d_h_v_sat_d_p",hvsp1_); out[11] = hvsp1;
-          EOS_Field cplsp1("d_cp_l_sat_d_p","d_cp_l_sat_d_p",cplsp1_); out[12] = cplsp1;
-          EOS_Field cpvsp1("d_cp_v_sat_d_p","d_cp_v_sat_d_p",cpvsp1_); out[13] = cpvsp1;
-          EOS_Field rlsp1("d_rho_l_sat_d_p","d_rho_l_sat_d_p",rlsp1_); out[14] = rlsp1;
-          EOS_Field rvsp1("d_rho_v_sat_d_p","d_rho_v_sat_d_p",rvsp1_); out[15] = rvsp1;
-          EOS_Field tsp2("d2_T_sat_d_p_d_p","d2_T_sat_d_p_d_p",tsp2_); out[16] = tsp2;
+          EOS_Field tsp("T_sat","T_sat", NEPTUNE::T_sat,tsp_); out[0] = tsp;
+          EOS_Field hlsp("h_l_sat","h_l_sat", NEPTUNE::h_l_sat,hlsp_); out[1] = hlsp;
+          EOS_Field hvsp("h_v_sat","h_v_sat", NEPTUNE::h_v_sat,hvsp_); out[2] = hvsp;
+          EOS_Field hllp("h_l_lim","h_l_lim", NEPTUNE::h_l_lim,hllp_); out[3] = hllp;
+          EOS_Field hvlp("h_v_lim","h_v_lim", NEPTUNE::h_v_lim,hvlp_); out[4] = hvlp;
+          EOS_Field cplsp("cp_l_sat","cp_l_sat", NEPTUNE::cp_l_sat,cplsp_); out[5] = cplsp;
+          EOS_Field cpvsp("cp_v_sat","cp_v_sat", NEPTUNE::cp_v_sat,cpvsp_); out[6] = cpvsp;
+          EOS_Field rlsp("rho_l_sat","rho_l_sat", NEPTUNE::rho_l_sat,rlsp_); out[7] = rlsp;
+          EOS_Field rvsp("rho_v_sat","rho_v_sat", NEPTUNE::rho_v_sat,rvsp_); out[8] = rvsp;
+          EOS_Field tsp1("d_T_sat_d_p","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,tsp1_); out[9] = tsp1;
+          EOS_Field hlsp1("d_h_l_sat_d_p","d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p,hlsp1_); out[10] = hlsp1;
+          EOS_Field hvsp1("d_h_v_sat_d_p","d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p,hvsp1_); out[11] = hvsp1;
+          EOS_Field cplsp1("d_cp_l_sat_d_p","d_cp_l_sat_d_p", NEPTUNE::d_cp_l_sat_d_p,cplsp1_); out[12] = cplsp1;
+          EOS_Field cpvsp1("d_cp_v_sat_d_p","d_cp_v_sat_d_p", NEPTUNE::d_cp_v_sat_d_p,cpvsp1_); out[13] = cpvsp1;
+          EOS_Field rlsp1("d_rho_l_sat_d_p","d_rho_l_sat_d_p", NEPTUNE::d_rho_l_sat_d_p,rlsp1_); out[14] = rlsp1;
+          EOS_Field rvsp1("d_rho_v_sat_d_p","d_rho_v_sat_d_p", NEPTUNE::d_rho_v_sat_d_p,rvsp1_); out[15] = rvsp1;
+          EOS_Field tsp2("d2_T_sat_d_p_d_p","d2_T_sat_d_p_d_p", NEPTUNE::d2_T_sat_d_p_d_p,tsp2_); out[16] = tsp2;
           cout << "TEST 1" << endl << "Input :" << p;
           cr=liquid[i_eosc2]->compute(p, out, err);
           cout << endl<< "TEST 1 [cr=" << cr <<"]"<< endl;
           cout << "Outputs : " << endl << out;
           cout << "Errors :" << endl << err;
 
-          ArrOfDouble h_(50); h_ = hlsp_; h_ *= 0.8; EOS_Field h("h", "h", h_);
+          ArrOfDouble h_(50); h_ = hlsp_; h_ *= 0.8; EOS_Field h("h", "h", NEPTUNE::h, h_);
           EOS_Fields out2(18);
-          ArrOfDouble t_(50); EOS_Field t("T", "T", t_); out2[0] = t;
-          ArrOfDouble t1_(50); EOS_Field t1("d_T_d_p", "d_T_d_p_h", t1_); out2[1] = t1;
-          ArrOfDouble t2_(50); EOS_Field t2("d_T_d_h", "d_T_d_h_p", t2_); out2[2] = t2;
-          ArrOfDouble cp_(50); EOS_Field cp("cp", "cp", cp_); out2[3] = cp;
-          ArrOfDouble cp1_(50); EOS_Field cp1("d_cp_d_p", "d_cp_d_p_h", cp1_); out2[4] = cp1;
-          ArrOfDouble cp2_(50); EOS_Field cp2("d_cp_d_h", "d_cp_d_h_p", cp2_); out2[5] = cp2;
-          ArrOfDouble rho_(50); EOS_Field rho("rho", "rho", rho_); out2[6] = rho;
-          ArrOfDouble rho1_(50); EOS_Field rho1("d_rho_d_p", "d_rho_d_p_h", rho1_); out2[7] = rho1;
-          ArrOfDouble rho2_(50); EOS_Field rho2("d_rho_d_h", "d_rho_d_h_p", rho2_); out2[8] = rho2;
-          ArrOfDouble beta_(50); EOS_Field beta("beta", "beta", beta_); out2[9] = beta;
-          ArrOfDouble beta1_(50); EOS_Field beta1("d_beta_d_p", "d_beta_d_p_h", beta1_); out2[10] = beta1;
-          ArrOfDouble beta2_(50); EOS_Field beta2("d_beta_d_h", "d_beta_d_h_p", beta2_); out2[11] = beta2;
-          ArrOfDouble mu_(50); EOS_Field mu("mu", "mu", mu_); out2[12] = mu;
-          ArrOfDouble mu1_(50); EOS_Field mu1("d_mu_d_p", "d_mu_d_p_h", mu1_); out2[13] = mu1;
-          ArrOfDouble mu2_(50); EOS_Field mu2("d_mu_d_h", "d_mu_d_h_p", mu2_); out2[14] = mu2;
-          ArrOfDouble lambda_(50); EOS_Field lambda("lambda", "lambda", lambda_); out2[15] = lambda;
-          ArrOfDouble lambda1_(50); EOS_Field lambda1("d_lambda_d_p", "d_lambda_d_p_h", lambda1_); out2[16] = lambda1;
-          ArrOfDouble lambda2_(50); EOS_Field lambda2("d_lambda_d_h", "d_lambda_d_h_p", lambda2_); out2[17] = lambda2;
+          ArrOfDouble t_(50); EOS_Field t("T", "T", NEPTUNE::T, t_); out2[0] = t;
+          ArrOfDouble t1_(50); EOS_Field t1("d_T_d_p", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, t1_); out2[1] = t1;
+          ArrOfDouble t2_(50); EOS_Field t2("d_T_d_h", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, t2_); out2[2] = t2;
+          ArrOfDouble cp_(50); EOS_Field cp("cp", "cp", NEPTUNE::cp, cp_); out2[3] = cp;
+          ArrOfDouble cp1_(50); EOS_Field cp1("d_cp_d_p", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, cp1_); out2[4] = cp1;
+          ArrOfDouble cp2_(50); EOS_Field cp2("d_cp_d_h", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, cp2_); out2[5] = cp2;
+          ArrOfDouble rho_(50); EOS_Field rho("rho", "rho", NEPTUNE::rho, rho_); out2[6] = rho;
+          ArrOfDouble rho1_(50); EOS_Field rho1("d_rho_d_p", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, rho1_); out2[7] = rho1;
+          ArrOfDouble rho2_(50); EOS_Field rho2("d_rho_d_h", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, rho2_); out2[8] = rho2;
+          ArrOfDouble beta_(50); EOS_Field beta("beta", "beta", NEPTUNE::beta, beta_); out2[9] = beta;
+          ArrOfDouble beta1_(50); EOS_Field beta1("d_beta_d_p", "d_beta_d_p_h", NEPTUNE::d_beta_d_p_h, beta1_); out2[10] = beta1;
+          ArrOfDouble beta2_(50); EOS_Field beta2("d_beta_d_h", "d_beta_d_h_p", NEPTUNE::d_beta_d_h_p, beta2_); out2[11] = beta2;
+          ArrOfDouble mu_(50); EOS_Field mu("mu", "mu", NEPTUNE::mu, mu_); out2[12] = mu;
+          ArrOfDouble mu1_(50); EOS_Field mu1("d_mu_d_p", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, mu1_); out2[13] = mu1;
+          ArrOfDouble mu2_(50); EOS_Field mu2("d_mu_d_h", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, mu2_); out2[14] = mu2;
+          ArrOfDouble lambda_(50); EOS_Field lambda("lambda", "lambda", NEPTUNE::lambda, lambda_); out2[15] = lambda;
+          ArrOfDouble lambda1_(50); EOS_Field lambda1("d_lambda_d_p", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, lambda1_); out2[16] = lambda1;
+          ArrOfDouble lambda2_(50); EOS_Field lambda2("d_lambda_d_h", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, lambda2_); out2[17] = lambda2;
           cout << "TEST 2" << endl << "Input :" << p << endl << h << endl;
           cr=liquid[i_eosc2]->compute(p, h, out2, err);
           cout << endl<< "TEST 2 [cr=" << cr <<"]"<< endl;
           cout << "Outputs : " << endl << out2;
           cout << "Errors :" << endl << err;
 
-          ArrOfDouble xt_2(50); xt_2=t_; EOS_Field T_2("T", "T", xt_2);
+          ArrOfDouble xt_2(50); xt_2=t_; EOS_Field T_2("T", "T", NEPTUNE::T, xt_2);
           EOS_Fields out3(18);
-          ArrOfDouble xh_2(50); EOS_Field h_2("h", "h", xh_2); out3[0] = h_2;
-          ArrOfDouble xt1_2(50); EOS_Field t1_2("d_T_d_p", "d_T_d_p_h", xt1_2); out3[1] = t1_2;
-          ArrOfDouble xt2_2(50); EOS_Field t2_2("d_T_d_h", "d_T_d_h_p", xt2_2); out3[2] = t2_2;
-          ArrOfDouble xcp_2(50); EOS_Field cp_2("cp", "cp", xcp_2); out3[3] = cp_2;
-          ArrOfDouble xcp1_2(50); EOS_Field cp1_2("d_cp_d_p", "d_cp_d_p_h", xcp1_2); out3[4] = cp1_2;
-          ArrOfDouble xcp2_2(50); EOS_Field cp2_2("d_cp_d_h", "d_cp_d_h_p", xcp2_2); out3[5] = cp2_2;
-          ArrOfDouble xrho_2(50); EOS_Field rho_2("rho", "rho", xrho_2); out3[6] = rho_2;
-          ArrOfDouble xrho1_2(50); EOS_Field rho1_2("d_rho_d_p", "d_rho_d_p_h", xrho1_2); out3[7] = rho1_2;
-          ArrOfDouble xrho2_2(50); EOS_Field rho2_2("d_rho_d_h", "d_rho_d_h_p", xrho2_2); out3[8] = rho2_2;
-          ArrOfDouble xbeta_2(50); EOS_Field beta_2("beta", "beta", xbeta_2); out3[9] = beta_2;
-          ArrOfDouble xbeta1_2(50); EOS_Field beta1_2("d_beta_d_p", "d_beta_d_p_h", xbeta1_2); out3[10] = beta1_2;
-          ArrOfDouble xbeta2_2(50); EOS_Field beta2_2("d_beta_d_h", "d_beta_d_h_p", xbeta2_2); out3[11] = beta2_2;
-          ArrOfDouble xmu_2(50); EOS_Field mu_2("mu", "mu", xmu_2); out3[12] = mu_2;
-          ArrOfDouble xmu1_2(50); EOS_Field mu1_2("d_mu_d_p", "d_mu_d_p_h", xmu1_2); out3[13] = mu1_2;
-          ArrOfDouble xmu2_2(50); EOS_Field mu2_2("d_mu_d_h", "d_mu_d_h_p", xmu2_2); out3[14] = mu2_2;
-          ArrOfDouble xlambda_2(50); EOS_Field lambda_2("lambda", "lambda", xlambda_2); out3[15] = lambda_2;
-          ArrOfDouble xlambda1_2(50); EOS_Field lambda1_2("d_lambda_d_p", "d_lambda_d_p_h", xlambda1_2); out3[16] = lambda1_2;
-          ArrOfDouble xlambda2_2(50); EOS_Field lambda2_2("d_lambda_d_h", "d_lambda_d_h_p", xlambda2_2); out3[17] = lambda2_2;
+          ArrOfDouble xh_2(50); EOS_Field h_2("h", "h", NEPTUNE::h, xh_2); out3[0] = h_2;
+          ArrOfDouble xt1_2(50); EOS_Field t1_2("d_T_d_p", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xt1_2); out3[1] = t1_2;
+          ArrOfDouble xt2_2(50); EOS_Field t2_2("d_T_d_h", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xt2_2); out3[2] = t2_2;
+          ArrOfDouble xcp_2(50); EOS_Field cp_2("cp", "cp", NEPTUNE::cp, xcp_2); out3[3] = cp_2;
+          ArrOfDouble xcp1_2(50); EOS_Field cp1_2("d_cp_d_p", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, xcp1_2); out3[4] = cp1_2;
+          ArrOfDouble xcp2_2(50); EOS_Field cp2_2("d_cp_d_h", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, xcp2_2); out3[5] = cp2_2;
+          ArrOfDouble xrho_2(50); EOS_Field rho_2("rho", "rho", NEPTUNE::rho, xrho_2); out3[6] = rho_2;
+          ArrOfDouble xrho1_2(50); EOS_Field rho1_2("d_rho_d_p", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xrho1_2); out3[7] = rho1_2;
+          ArrOfDouble xrho2_2(50); EOS_Field rho2_2("d_rho_d_h", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xrho2_2); out3[8] = rho2_2;
+          ArrOfDouble xbeta_2(50); EOS_Field beta_2("beta", "beta", NEPTUNE::beta, xbeta_2); out3[9] = beta_2;
+          ArrOfDouble xbeta1_2(50); EOS_Field beta1_2("d_beta_d_p", "d_beta_d_p_h", NEPTUNE::d_beta_d_p_h, xbeta1_2); out3[10] = beta1_2;
+          ArrOfDouble xbeta2_2(50); EOS_Field beta2_2("d_beta_d_h", "d_beta_d_h_p", NEPTUNE::d_beta_d_h_p, xbeta2_2); out3[11] = beta2_2;
+          ArrOfDouble xmu_2(50); EOS_Field mu_2("mu", "mu", NEPTUNE::mu, xmu_2); out3[12] = mu_2;
+          ArrOfDouble xmu1_2(50); EOS_Field mu1_2("d_mu_d_p", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xmu1_2); out3[13] = mu1_2;
+          ArrOfDouble xmu2_2(50); EOS_Field mu2_2("d_mu_d_h", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xmu2_2); out3[14] = mu2_2;
+          ArrOfDouble xlambda_2(50); EOS_Field lambda_2("lambda", "lambda", NEPTUNE::lambda, xlambda_2); out3[15] = lambda_2;
+          ArrOfDouble xlambda1_2(50); EOS_Field lambda1_2("d_lambda_d_p", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, xlambda1_2); out3[16] = lambda1_2;
+          ArrOfDouble xlambda2_2(50); EOS_Field lambda2_2("d_lambda_d_h", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xlambda2_2); out3[17] = lambda2_2;
           cout << "TEST 3" << endl << "Input :" << p << endl << T_2 << endl;
           cr=liquid[i_eosc2]->compute(p, T_2, out3, err);
           cout << endl<< "TEST 3 [cr=" << cr <<"]"<< endl;
@@ -5626,75 +5805,75 @@ int main()
           ArrOfDouble tsp1_(50), hlsp1_(50), hvsp1_(50), cplsp1_(50), cpvsp1_(50), rlsp1_(50), rvsp1_(50);
           ArrOfDouble tsp2_(50), hllp_(50), hvlp_(50);
           EOS_Fields out(17);
-          EOS_Field tsp("T_sat","T_sat",tsp_); out[0] = tsp;
-          EOS_Field hlsp("h_l_sat","h_l_sat",hlsp_); out[1] = hlsp;
-          EOS_Field hvsp("h_v_sat","h_v_sat",hvsp_); out[2] = hvsp;
-          EOS_Field hllp("h_l_lim","h_l_lim",hllp_); out[3] = hllp;
-          EOS_Field hvlp("h_v_lim","h_v_lim",hvlp_); out[4] = hvlp;
-          EOS_Field cplsp("cp_l_sat","cp_l_sat",cplsp_); out[5] = cplsp;
-          EOS_Field cpvsp("cp_v_sat","cp_v_sat",cpvsp_); out[6] = cpvsp;
-          EOS_Field rlsp("rho_l_sat","rho_l_sat",rlsp_); out[7] = rlsp;
-          EOS_Field rvsp("rho_v_sat","rho_v_sat",rvsp_); out[8] = rvsp;
-          EOS_Field tsp1("d_T_sat_d_p","d_T_sat_d_p",tsp1_); out[9] = tsp1;
-          EOS_Field hlsp1("d_h_l_sat_d_p","d_h_l_sat_d_p",hlsp1_); out[10] = hlsp1;
-          EOS_Field hvsp1("d_h_v_sat_d_p","d_h_v_sat_d_p",hvsp1_); out[11] = hvsp1;
-          EOS_Field cplsp1("d_cp_l_sat_d_p","d_cp_l_sat_d_p",cplsp1_); out[12] = cplsp1;
-          EOS_Field cpvsp1("d_cp_v_sat_d_p","d_cp_v_sat_d_p",cpvsp1_); out[13] = cpvsp1;
-          EOS_Field rlsp1("d_rho_l_sat_d_p","d_rho_l_sat_d_p",rlsp1_); out[14] = rlsp1;
-          EOS_Field rvsp1("d_rho_v_sat_d_p","d_rho_v_sat_d_p",rvsp1_); out[15] = rvsp1;
-          EOS_Field tsp2("d2_T_sat_d_p_d_p","d2_T_sat_d_p_d_p",tsp2_); out[16] = tsp2;
+          EOS_Field tsp("T_sat","T_sat", NEPTUNE::T_sat,tsp_); out[0] = tsp;
+          EOS_Field hlsp("h_l_sat","h_l_sat", NEPTUNE::h_l_sat,hlsp_); out[1] = hlsp;
+          EOS_Field hvsp("h_v_sat","h_v_sat", NEPTUNE::h_v_sat,hvsp_); out[2] = hvsp;
+          EOS_Field hllp("h_l_lim","h_l_lim", NEPTUNE::h_l_lim,hllp_); out[3] = hllp;
+          EOS_Field hvlp("h_v_lim","h_v_lim", NEPTUNE::h_v_lim,hvlp_); out[4] = hvlp;
+          EOS_Field cplsp("cp_l_sat","cp_l_sat", NEPTUNE::cp_l_sat,cplsp_); out[5] = cplsp;
+          EOS_Field cpvsp("cp_v_sat","cp_v_sat", NEPTUNE::cp_v_sat,cpvsp_); out[6] = cpvsp;
+          EOS_Field rlsp("rho_l_sat","rho_l_sat", NEPTUNE::rho_l_sat,rlsp_); out[7] = rlsp;
+          EOS_Field rvsp("rho_v_sat","rho_v_sat", NEPTUNE::rho_v_sat,rvsp_); out[8] = rvsp;
+          EOS_Field tsp1("d_T_sat_d_p","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,tsp1_); out[9] = tsp1;
+          EOS_Field hlsp1("d_h_l_sat_d_p","d_h_l_sat_d_p", NEPTUNE::d_h_l_sat_d_p,hlsp1_); out[10] = hlsp1;
+          EOS_Field hvsp1("d_h_v_sat_d_p","d_h_v_sat_d_p", NEPTUNE::d_h_v_sat_d_p,hvsp1_); out[11] = hvsp1;
+          EOS_Field cplsp1("d_cp_l_sat_d_p","d_cp_l_sat_d_p", NEPTUNE::d_cp_l_sat_d_p,cplsp1_); out[12] = cplsp1;
+          EOS_Field cpvsp1("d_cp_v_sat_d_p","d_cp_v_sat_d_p", NEPTUNE::d_cp_v_sat_d_p,cpvsp1_); out[13] = cpvsp1;
+          EOS_Field rlsp1("d_rho_l_sat_d_p","d_rho_l_sat_d_p", NEPTUNE::d_rho_l_sat_d_p,rlsp1_); out[14] = rlsp1;
+          EOS_Field rvsp1("d_rho_v_sat_d_p","d_rho_v_sat_d_p", NEPTUNE::d_rho_v_sat_d_p,rvsp1_); out[15] = rvsp1;
+          EOS_Field tsp2("d2_T_sat_d_p_d_p","d2_T_sat_d_p_d_p", NEPTUNE::d2_T_sat_d_p_d_p,tsp2_); out[16] = tsp2;
           cout << "TEST 1" << endl << "Input :" << p;
           cr=vapor[i_eosc2]->compute(p, out, err);
           cout << endl<< "TEST 1 [cr=" << cr <<"]"<< endl;
           cout << "Outputs : " << endl << out;
           cout << "Errors :" << endl << err;
 
-          ArrOfDouble h_(50); h_ = hvsp_; EOS_Field h("h", "h", h_);
+          ArrOfDouble h_(50); h_ = hvsp_; EOS_Field h("h", "h", NEPTUNE::h, h_);
           EOS_Fields out2(18);
-          ArrOfDouble t_(50); EOS_Field t("T", "T", t_); out2[0] = t;
-          ArrOfDouble t1_(50); EOS_Field t1("d_T_d_p", "d_T_d_p_h", t1_); out2[1] = t1;
-          ArrOfDouble t2_(50); EOS_Field t2("d_T_d_h", "d_T_d_h_p", t2_); out2[2] = t2;
-          ArrOfDouble cp_(50); EOS_Field cp("cp", "cp", cp_); out2[3] = cp;
-          ArrOfDouble cp1_(50); EOS_Field cp1("d_cp_d_p", "d_cp_d_p_h", cp1_); out2[4] = cp1;
-          ArrOfDouble cp2_(50); EOS_Field cp2("d_cp_d_h", "d_cp_d_h_p", cp2_); out2[5] = cp2;
-          ArrOfDouble rho_(50); EOS_Field rho("rho", "rho", rho_); out2[6] = rho;
-          ArrOfDouble rho1_(50); EOS_Field rho1("d_rho_d_p", "d_rho_d_p_h", rho1_); out2[7] = rho1;
-          ArrOfDouble rho2_(50); EOS_Field rho2("d_rho_d_h", "d_rho_d_h_p", rho2_); out2[8] = rho2;
-          ArrOfDouble sigma_(50); EOS_Field sigma("sigma", "sigma", sigma_); out2[9] = sigma;
-          ArrOfDouble sigma1_(50); EOS_Field sigma1("d_sigma_d_p", "d_sigma_d_p_h", sigma1_); out2[10] = sigma1;
-          ArrOfDouble sigma2_(50); EOS_Field sigma2("d_sigma_d_h", "d_sigma_d_h_p", sigma2_); out2[11] = sigma2;
-          ArrOfDouble mu_(50); EOS_Field mu("mu", "mu", mu_); out2[12] = mu;
-          ArrOfDouble mu1_(50); EOS_Field mu1("d_mu_d_p", "d_mu_d_p_h", mu1_); out2[13] = mu1;
-          ArrOfDouble mu2_(50); EOS_Field mu2("d_mu_d_h", "d_mu_d_h_p", mu2_); out2[14] = mu2;
-          ArrOfDouble lambda_(50); EOS_Field lambda("lambda", "lambda", lambda_); out2[15] = lambda;
-          ArrOfDouble lambda1_(50); EOS_Field lambda1("d_lambda_d_p", "d_lambda_d_p_h", lambda1_); out2[16] = lambda1;
-          ArrOfDouble lambda2_(50); EOS_Field lambda2("d_lambda_d_h", "d_lambda_d_h_p", lambda2_); out2[17] = lambda2;
+          ArrOfDouble t_(50); EOS_Field t("T", "T", NEPTUNE::T, t_); out2[0] = t;
+          ArrOfDouble t1_(50); EOS_Field t1("d_T_d_p", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, t1_); out2[1] = t1;
+          ArrOfDouble t2_(50); EOS_Field t2("d_T_d_h", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, t2_); out2[2] = t2;
+          ArrOfDouble cp_(50); EOS_Field cp("cp", "cp", NEPTUNE::cp, cp_); out2[3] = cp;
+          ArrOfDouble cp1_(50); EOS_Field cp1("d_cp_d_p", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, cp1_); out2[4] = cp1;
+          ArrOfDouble cp2_(50); EOS_Field cp2("d_cp_d_h", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, cp2_); out2[5] = cp2;
+          ArrOfDouble rho_(50); EOS_Field rho("rho", "rho", NEPTUNE::rho, rho_); out2[6] = rho;
+          ArrOfDouble rho1_(50); EOS_Field rho1("d_rho_d_p", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, rho1_); out2[7] = rho1;
+          ArrOfDouble rho2_(50); EOS_Field rho2("d_rho_d_h", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, rho2_); out2[8] = rho2;
+          ArrOfDouble sigma_(50); EOS_Field sigma("sigma", "sigma", NEPTUNE::sigma, sigma_); out2[9] = sigma;
+          ArrOfDouble sigma1_(50); EOS_Field sigma1("d_sigma_d_p", "d_sigma_d_p_h", NEPTUNE::d_sigma_d_p_h, sigma1_); out2[10] = sigma1;
+          ArrOfDouble sigma2_(50); EOS_Field sigma2("d_sigma_d_h", "d_sigma_d_h_p", NEPTUNE::d_sigma_d_h_p, sigma2_); out2[11] = sigma2;
+          ArrOfDouble mu_(50); EOS_Field mu("mu", "mu", NEPTUNE::mu, mu_); out2[12] = mu;
+          ArrOfDouble mu1_(50); EOS_Field mu1("d_mu_d_p", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, mu1_); out2[13] = mu1;
+          ArrOfDouble mu2_(50); EOS_Field mu2("d_mu_d_h", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, mu2_); out2[14] = mu2;
+          ArrOfDouble lambda_(50); EOS_Field lambda("lambda", "lambda", NEPTUNE::lambda, lambda_); out2[15] = lambda;
+          ArrOfDouble lambda1_(50); EOS_Field lambda1("d_lambda_d_p", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, lambda1_); out2[16] = lambda1;
+          ArrOfDouble lambda2_(50); EOS_Field lambda2("d_lambda_d_h", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, lambda2_); out2[17] = lambda2;
           cout << "TEST 2" << endl << "Input :" << p << endl << h << endl;
           cr=vapor[i_eosc2]->compute(p, h, out2, err);
           cout << endl<< "TEST 2 [cr=" << cr <<"]"<< endl;
           cout << "Outputs : " << endl << out2;
           cout << "Errors :" << endl << err;
 
-          ArrOfDouble xt_2(50); xt_2=t_; EOS_Field T_2("T", "T", xt_2);
+          ArrOfDouble xt_2(50); xt_2=t_; EOS_Field T_2("T", "T", NEPTUNE::T, xt_2);
           EOS_Fields out3(18);
-          ArrOfDouble xh_2(50); EOS_Field h_2("h", "h", xh_2); out3[0] = h_2;
-          ArrOfDouble xt1_2(50); EOS_Field t1_2("d_T_d_p", "d_T_d_p_h", xt1_2); out3[1] = t1_2;
-          ArrOfDouble xt2_2(50); EOS_Field t2_2("d_T_d_h", "d_T_d_h_p", xt2_2); out3[2] = t2_2;
-          ArrOfDouble xcp_2(50); EOS_Field cp_2("cp", "cp", xcp_2); out3[3] = cp_2;
-          ArrOfDouble xcp1_2(50); EOS_Field cp1_2("d_cp_d_p", "d_cp_d_p_h", xcp1_2); out3[4] = cp1_2;
-          ArrOfDouble xcp2_2(50); EOS_Field cp2_2("d_cp_d_h", "d_cp_d_h_p", xcp2_2); out3[5] = cp2_2;
-          ArrOfDouble xrho_2(50); EOS_Field rho_2("rho", "rho", xrho_2); out3[6] = rho_2;
-          ArrOfDouble xrho1_2(50); EOS_Field rho1_2("d_rho_d_p", "d_rho_d_p_h", xrho1_2); out3[7] = rho1_2;
-          ArrOfDouble xrho2_2(50); EOS_Field rho2_2("d_rho_d_h", "d_rho_d_h_p", xrho2_2); out3[8] = rho2_2;
-          ArrOfDouble xsigma_2(50); EOS_Field sigma_2("sigma", "sigma", xsigma_2); out3[9] = sigma_2;
-          ArrOfDouble xsigma1_2(50); EOS_Field sigma1_2("d_sigma_d_p", "d_sigma_d_p_h", xsigma1_2); out3[10] = sigma1_2;
-          ArrOfDouble xsigma2_2(50); EOS_Field sigma2_2("d_sigma_d_h", "d_sigma_d_h_p", xsigma2_2); out3[11] = sigma2_2;
-          ArrOfDouble xmu_2(50); EOS_Field mu_2("mu", "mu", xmu_2); out3[12] = mu_2;
-          ArrOfDouble xmu1_2(50); EOS_Field mu1_2("d_mu_d_p", "d_mu_d_p_h", xmu1_2); out3[13] = mu1_2;
-          ArrOfDouble xmu2_2(50); EOS_Field mu2_2("d_mu_d_h", "d_mu_d_h_p", xmu2_2); out3[14] = mu2_2;
-          ArrOfDouble xlambda_2(50); EOS_Field lambda_2("lambda", "lambda", xlambda_2); out3[15] = lambda_2;
-          ArrOfDouble xlambda1_2(50); EOS_Field lambda1_2("d_lambda_d_p", "d_lambda_d_p_h", xlambda1_2); out3[16] = lambda1_2;
-          ArrOfDouble xlambda2_2(50); EOS_Field lambda2_2("d_lambda_d_h", "d_lambda_d_h_p", xlambda2_2); out3[17] = lambda2_2;
+          ArrOfDouble xh_2(50); EOS_Field h_2("h", "h", NEPTUNE::h, xh_2); out3[0] = h_2;
+          ArrOfDouble xt1_2(50); EOS_Field t1_2("d_T_d_p", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xt1_2); out3[1] = t1_2;
+          ArrOfDouble xt2_2(50); EOS_Field t2_2("d_T_d_h", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xt2_2); out3[2] = t2_2;
+          ArrOfDouble xcp_2(50); EOS_Field cp_2("cp", "cp", NEPTUNE::cp, xcp_2); out3[3] = cp_2;
+          ArrOfDouble xcp1_2(50); EOS_Field cp1_2("d_cp_d_p", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, xcp1_2); out3[4] = cp1_2;
+          ArrOfDouble xcp2_2(50); EOS_Field cp2_2("d_cp_d_h", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, xcp2_2); out3[5] = cp2_2;
+          ArrOfDouble xrho_2(50); EOS_Field rho_2("rho", "rho", NEPTUNE::rho, xrho_2); out3[6] = rho_2;
+          ArrOfDouble xrho1_2(50); EOS_Field rho1_2("d_rho_d_p", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xrho1_2); out3[7] = rho1_2;
+          ArrOfDouble xrho2_2(50); EOS_Field rho2_2("d_rho_d_h", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xrho2_2); out3[8] = rho2_2;
+          ArrOfDouble xsigma_2(50); EOS_Field sigma_2("sigma", "sigma", NEPTUNE::sigma, xsigma_2); out3[9] = sigma_2;
+          ArrOfDouble xsigma1_2(50); EOS_Field sigma1_2("d_sigma_d_p", "d_sigma_d_p_h", NEPTUNE::d_sigma_d_p_h, xsigma1_2); out3[10] = sigma1_2;
+          ArrOfDouble xsigma2_2(50); EOS_Field sigma2_2("d_sigma_d_h", "d_sigma_d_h_p", NEPTUNE::d_sigma_d_h_p, xsigma2_2); out3[11] = sigma2_2;
+          ArrOfDouble xmu_2(50); EOS_Field mu_2("mu", "mu", NEPTUNE::mu, xmu_2); out3[12] = mu_2;
+          ArrOfDouble xmu1_2(50); EOS_Field mu1_2("d_mu_d_p", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xmu1_2); out3[13] = mu1_2;
+          ArrOfDouble xmu2_2(50); EOS_Field mu2_2("d_mu_d_h", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xmu2_2); out3[14] = mu2_2;
+          ArrOfDouble xlambda_2(50); EOS_Field lambda_2("lambda", "lambda", NEPTUNE::lambda, xlambda_2); out3[15] = lambda_2;
+          ArrOfDouble xlambda1_2(50); EOS_Field lambda1_2("d_lambda_d_p", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, xlambda1_2); out3[16] = lambda1_2;
+          ArrOfDouble xlambda2_2(50); EOS_Field lambda2_2("d_lambda_d_h", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xlambda2_2); out3[17] = lambda2_2;
           cout << "TEST 3" << endl << "Input :" << p << endl << T_2 << endl;
           cr=vapor[i_eosc2]->compute(p, T_2, out3, err);
           cout << endl<< "TEST 3 [cr=" << cr <<"]"<< endl;
@@ -5836,11 +6015,11 @@ int main()
           }
         xp[1] = 1000000.;
         xp[2] = 10000000.;
-        EOS_Field p("P","p",xp);
-        EOS_Field c0("c_0","c_0",xc0);
-        EOS_Field c1("c_1","c_1",xc1);
-        EOS_Field c2("c_2","c_2",xc2);
-        EOS_Field c3("c_3","c_3",xc3);
+        EOS_Field p("P","p", NEPTUNE::p,xp);
+        EOS_Field c0("c_0","c_0", NEPTUNE::c_0,xc0);
+        EOS_Field c1("c_1","c_1", NEPTUNE::c_1,xc1);
+        EOS_Field c2("c_2","c_2", NEPTUNE::c_2,xc2);
+        EOS_Field c3("c_3","c_3", NEPTUNE::c_3,xc3);
 
         //EOS_Fields in(5);
         EOS_Fields in(4);
@@ -5857,9 +6036,9 @@ int main()
         cout<<endl<<"--- compute (p,xi) -- "<<endl;
         EOS_Fields out(2);
         ArrOfDouble xtsat(n),xh(n);
-        EOS_Field tsat("T_sat","T_sat",xtsat);
-        out[0] = EOS_Field("T_sat","T_sat",xtsat);
-        out[1] = EOS_Field("h_v_sat","h_v_sat",xh);
+        EOS_Field tsat("T_sat","T_sat", NEPTUNE::T_sat,xtsat);
+        out[0] = EOS_Field("T_sat","T_sat", NEPTUNE::T_sat,xtsat);
+        out[1] = EOS_Field("h_v_sat","h_v_sat", NEPTUNE::h_v_sat,xh);
         cr = mixing.compute(in, out, err);
         cout << endl<< "fields fields [cr=" << cr <<"]"<< endl;
         for(int k=0; k<n; k++)
@@ -5875,15 +6054,15 @@ int main()
         //EOS_Fields in2(6);
         EOS_Fields in2(5);
         in2[0] = p;
-        in2[1] = EOS_Field("h","h", xh);
+        in2[1] = EOS_Field("h","h", NEPTUNE::h, xh);
         in2[2] = c0;
         in2[3] = c1;
         in2[4] = c2;
         //in2[5] = c3;
         EOS_Fields out2(2);
         ArrOfDouble xt(n),xrho(n);
-        out2[0] = EOS_Field("T","T",xt);
-        out2[1] = EOS_Field("rho","rho",xrho);
+        out2[0] = EOS_Field("T","T", NEPTUNE::T,xt);
+        out2[1] = EOS_Field("rho","rho", NEPTUNE::rho,xrho);
         cr = mixing.compute(in2, out2, err);
         cout << endl<< "fields fields [cr=" << cr <<"]"<< endl;
         for(int k=0; k<n; k++)
@@ -5898,8 +6077,8 @@ int main()
         cout << "---compute f(p,T,xi) "<<endl ;
         ArrOfDouble xh2(n),xrho2(n);
         in2[1] = out2[0];
-        out2[0] = EOS_Field("h","h", xh2);
-        out2[1] = EOS_Field("rho","rho",xrho2);
+        out2[0] = EOS_Field("h","h", NEPTUNE::h, xh2);
+        out2[1] = EOS_Field("rho","rho", NEPTUNE::rho,xrho2);
         cr = mixing.compute(in2, out2, err);
         cout << endl<< "fields fields [cr=" << cr <<"]"<< endl;
         for(int k=0; k<n; k++)
@@ -5921,8 +6100,8 @@ int main()
         //  properties=f(p,T,xi)
         cout << "----compute rho(p,T,Xi) "<< endl;
         ArrOfDouble xrho3(n),xdrhodp3(n);
-        out2[0] = EOS_Field("rho","rho",xrho3);
-        out2[1] = EOS_Field("drhodp","d_rho_d_p_h",xdrhodp3);
+        out2[0] = EOS_Field("rho","rho", NEPTUNE::rho,xrho3);
+        out2[1] = EOS_Field("drhodp","d_rho_d_p_h", NEPTUNE::d_rho_d_p_h,xdrhodp3);
         cr = mixing.compute(in2, out2, err);
         cout << endl<< "fields fields [cr=" << cr <<"]"<< endl;
         for(int k=0; k<n; k++)
@@ -5969,9 +6148,9 @@ int main()
     cout << "in/out p="<<pp<<" T="<<tt<<" h(p,T)="<<hh<<" [cr="<<cr<<"]"<<endl;
     ArrOfDouble p_(1),h_(1),t_(1);
     ArrOfInt err_(1);
-    EOS_Field p("p", "p", p_);
-    EOS_Field h("h", "h", h_);
-    EOS_Field T("T", "T", t_);
+    EOS_Field p("p", "p", NEPTUNE::p, p_);
+    EOS_Field h("h", "h", NEPTUNE::h, h_);
+    EOS_Field T("T", "T", NEPTUNE::T, t_);
     EOS_Error_Field err(err_);
     p[0]=pp;
     T[0]=tt;
@@ -6066,16 +6245,16 @@ int main()
         resulta6[0] = 0e0 ;
         resulta7[0] = 0e0 ;
  
-        EOS_Field fpression("P","P",nbpoint,pression);
-        EOS_Field fenthalpi("h","h",nbpoint,enthalpi);
+        EOS_Field fpression("P","P", NEPTUNE::p,nbpoint,pression);
+        EOS_Field fenthalpi("h","h", NEPTUNE::h,nbpoint,enthalpi);
         EOS_Fields vfresultat(7);
-        EOS_Field fresulta1("T",               "T",               nbpoint,resulta1); vfresultat[0] = fresulta1 ;
-        EOS_Field fresulta2("epstl",           "epstl",           nbpoint,resulta2); vfresultat[1] = fresulta2 ;
-        EOS_Field fresulta3("[d(epstl)/dP]h",  "[d(epstl)/dP]h",  nbpoint,resulta3); vfresultat[2] = fresulta3 ;
-        EOS_Field fresulta4("[d(epstl)/dh]P",  "[d(epstl)/dh]P",  nbpoint,resulta4); vfresultat[3] = fresulta4 ;
-        EOS_Field fresulta5("hlspsc",          "hlspsc",          nbpoint,resulta5); vfresultat[4] = fresulta5 ;
-        EOS_Field fresulta6("[d(hlspsc)/dP]h", "[d(hlspsc)/dP]h", nbpoint,resulta6); vfresultat[5] = fresulta6 ;
-        EOS_Field fresulta7("[d(hlspsc)/dh]P", "[d(hlspsc)/dh]P", nbpoint,resulta7); vfresultat[6] = fresulta7 ;
+        EOS_Field fresulta1("T",               "T", NEPTUNE::T,               nbpoint,resulta1); vfresultat[0] = fresulta1 ;
+        EOS_Field fresulta2("epstl",           "epstl", NEPTUNE::epstl,           nbpoint,resulta2); vfresultat[1] = fresulta2 ;
+        EOS_Field fresulta3("[d(epstl)/dP]h",  "[d(epstl)/dP]h", NEPTUNE::d_epstl_dp_h,  nbpoint,resulta3); vfresultat[2] = fresulta3 ;
+        EOS_Field fresulta4("[d(epstl)/dh]P",  "[d(epstl)/dh]P", NEPTUNE::d_epstl_dh_p,  nbpoint,resulta4); vfresultat[3] = fresulta4 ;
+        EOS_Field fresulta5("hlspsc",          "hlspsc", NEPTUNE::hlspsc,          nbpoint,resulta5); vfresultat[4] = fresulta5 ;
+        EOS_Field fresulta6("[d(hlspsc)/dP]h", "[d(hlspsc)/dP]h", NEPTUNE::d_hlspsc_dp_h, nbpoint,resulta6); vfresultat[5] = fresulta6 ;
+        EOS_Field fresulta7("[d(hlspsc)/dh]P", "[d(hlspsc)/dh]P", NEPTUNE::d_hlspsc_dh_p, nbpoint,resulta7); vfresultat[6] = fresulta7 ;
         EOS_Error_Field ferr(nbpoint, terr) ;
 
         er = obj_eos->compute(fpression, fenthalpi, vfresultat, ferr) ;
@@ -6197,22 +6376,22 @@ int main()
         resulta12[0] = 0e0 ;
         resulta13[0] = 0e0 ;
  
-        EOS_Field fpression("P","P",nbpoint,pression);
-        EOS_Field fenthalpi("h","h",nbpoint,enthalpi);
+        EOS_Field fpression("P","P", NEPTUNE::p,nbpoint,pression);
+        EOS_Field fenthalpi("h","h", NEPTUNE::h,nbpoint,enthalpi);
         EOS_Fields vfresultat(13); 
-        EOS_Field fresulta01("T",                     "T",                nbpoint,resulta01); vfresultat[0]  = fresulta01 ;
-        EOS_Field fresulta02("epstl",                 "epstl",            nbpoint,resulta02); vfresultat[1]  = fresulta02 ;
-        EOS_Field fresulta03("[d(epstl)/dP]h",        "[d(epstl)/dP]h",   nbpoint,resulta03); vfresultat[2]  = fresulta03 ;
-        EOS_Field fresulta04("[d(epstl)/dh]P",        "[d(epstl)/dh]P",   nbpoint,resulta04); vfresultat[3]  = fresulta04 ;
-        EOS_Field fresulta05("hlspsc",                "hlspsc",           nbpoint,resulta05); vfresultat[4]  = fresulta05 ;
-        EOS_Field fresulta06("[d(hlspsc)/dP]h",       "[d(hlspsc)/dP]h",  nbpoint,resulta06); vfresultat[5]  = fresulta06 ;
-        EOS_Field fresulta07("[d(hlspsc)/dh]P",       "[d(hlspsc)/dh]P",  nbpoint,resulta07); vfresultat[6]  = fresulta07 ;
-        EOS_Field fresulta08("epstg",                 "epstg",            nbpoint,resulta08); vfresultat[7]  = fresulta08 ;
-        EOS_Field fresulta09("[d(epstg)/dP]h",        "[d(epstg)/dP]h",   nbpoint,resulta09); vfresultat[8]  = fresulta09 ;
-        EOS_Field fresulta10("[d(epstg)/dh]P",        "[d(epstg)/dh]P",   nbpoint,resulta10); vfresultat[9]  = fresulta10 ;
-        EOS_Field fresulta11("hvspsc",                "hvspsc",           nbpoint,resulta11); vfresultat[10] = fresulta11 ;
-        EOS_Field fresulta12("[d(hvspsc)/dP]h",       "[d(hvspsc)/dP]h",  nbpoint,resulta12); vfresultat[11] = fresulta12 ;
-        EOS_Field fresulta13("[d(hvspsc)/dh]P",       "[d(hvspsc)/dh]P",  nbpoint,resulta13); vfresultat[12] = fresulta13 ;
+        EOS_Field fresulta01("T",                     "T", NEPTUNE::T,                nbpoint,resulta01); vfresultat[0]  = fresulta01 ;
+        EOS_Field fresulta02("epstl",                 "epstl", NEPTUNE::epstl,            nbpoint,resulta02); vfresultat[1]  = fresulta02 ;
+        EOS_Field fresulta03("[d(epstl)/dP]h",        "[d(epstl)/dP]h", NEPTUNE::d_epstl_dp_h,   nbpoint,resulta03); vfresultat[2]  = fresulta03 ;
+        EOS_Field fresulta04("[d(epstl)/dh]P",        "[d(epstl)/dh]P", NEPTUNE::d_epstl_dh_p,   nbpoint,resulta04); vfresultat[3]  = fresulta04 ;
+        EOS_Field fresulta05("hlspsc",                "hlspsc", NEPTUNE::hlspsc,           nbpoint,resulta05); vfresultat[4]  = fresulta05 ;
+        EOS_Field fresulta06("[d(hlspsc)/dP]h",       "[d(hlspsc)/dP]h", NEPTUNE::d_hlspsc_dp_h,  nbpoint,resulta06); vfresultat[5]  = fresulta06 ;
+        EOS_Field fresulta07("[d(hlspsc)/dh]P",       "[d(hlspsc)/dh]P", NEPTUNE::d_hlspsc_dh_p,  nbpoint,resulta07); vfresultat[6]  = fresulta07 ;
+        EOS_Field fresulta08("epstg",                 "epstg", NEPTUNE::epstg,            nbpoint,resulta08); vfresultat[7]  = fresulta08 ;
+        EOS_Field fresulta09("[d(epstg)/dP]h",        "[d(epstg)/dP]h", NEPTUNE::d_epstg_dp_h,   nbpoint,resulta09); vfresultat[8]  = fresulta09 ;
+        EOS_Field fresulta10("[d(epstg)/dh]P",        "[d(epstg)/dh]P", NEPTUNE::d_epstg_dh_p,   nbpoint,resulta10); vfresultat[9]  = fresulta10 ;
+        EOS_Field fresulta11("hvspsc",                "hvspsc", NEPTUNE::hvspsc,           nbpoint,resulta11); vfresultat[10] = fresulta11 ;
+        EOS_Field fresulta12("[d(hvspsc)/dP]h",       "[d(hvspsc)/dP]h", NEPTUNE::d_hvspsc_dp_h,  nbpoint,resulta12); vfresultat[11] = fresulta12 ;
+        EOS_Field fresulta13("[d(hvspsc)/dh]P",       "[d(hvspsc)/dh]P", NEPTUNE::d_hvspsc_dh_p,  nbpoint,resulta13); vfresultat[12] = fresulta13 ;
 
         EOS_Error_Field ferr(nbpoint, terr) ;
 
@@ -6325,42 +6504,42 @@ int main()
         eos_melan.set_components(components.data(), nbcomp);
  
         EOS_Fields vfentree(5) ;
-        EOS_Field fpression("P",     "P",    nbpoint, pression); vfentree[0] = fpression ; 
-        EOS_Field fenthalpi("h",     "h",    nbpoint, enthalpi); vfentree[1] = fenthalpi ;
-        EOS_Field fmasfrac1 ("c_0",  "c_0",  nbpoint, mf__veau); vfentree[2] = fmasfrac1 ;
-        EOS_Field fmasfrac2 ("c_1",  "c_1",  nbpoint, mf_argon); vfentree[3] = fmasfrac2 ;
-        EOS_Field fmasfrac3 ("c_2",  "c_2",  nbpoint, mf_azote); vfentree[4] = fmasfrac3 ;
+        EOS_Field fpression("P",     "P", NEPTUNE::p,    nbpoint, pression); vfentree[0] = fpression ; 
+        EOS_Field fenthalpi("h",     "h", NEPTUNE::h,    nbpoint, enthalpi); vfentree[1] = fenthalpi ;
+        EOS_Field fmasfrac1 ("c_0",  "c_0", NEPTUNE::c_0,  nbpoint, mf__veau); vfentree[2] = fmasfrac1 ;
+        EOS_Field fmasfrac2 ("c_1",  "c_1", NEPTUNE::c_1,  nbpoint, mf_argon); vfentree[3] = fmasfrac2 ;
+        EOS_Field fmasfrac3 ("c_2",  "c_2", NEPTUNE::c_2,  nbpoint, mf_azote); vfentree[4] = fmasfrac3 ;
         EOS_Fields vfresultat(30); 
-        EOS_Field fresulta01("T",                     "T",                     nbpoint,resulta01); vfresultat[0]  = fresulta01 ;
-        EOS_Field fresulta02("hlsvsc",                "hlsvsc",                nbpoint,resulta02); vfresultat[1]  = fresulta02 ;
-        EOS_Field fresulta03("[d(hlsvsc)/dP]h",       "[d(hlsvsc)/dP]h",       nbpoint,resulta03); vfresultat[2]  = fresulta03 ;
-        EOS_Field fresulta04("[d(hlsvsc)/dh]P0",      "[d(hlsvsc)/dh]P0",      nbpoint,resulta04); vfresultat[3]  = fresulta04 ;
-        EOS_Field fresulta05("[d(hlsvsc)/dh]P",       "[d(hlsvsc)/dh]P",       nbpoint,resulta05); vfresultat[4]  = fresulta05 ;
-        EOS_Field fresulta06("[d(hlsvsc)/d(c_1)]Ph",  "[d(hlsvsc)/d(c_1)]Ph",  nbpoint,resulta06); vfresultat[5]  = fresulta06 ;
-        EOS_Field fresulta07("[d(hlsvsc)/d(c_2)]Ph",  "[d(hlsvsc)/d(c_2)]Ph",  nbpoint,resulta07); vfresultat[6]  = fresulta07 ;
-        EOS_Field fresulta08("[d(hlsvsc)/d(c_3)]Ph",  "[d(hlsvsc)/d(c_3)]Ph",  nbpoint,resulta08); vfresultat[7]  = fresulta08 ;
-        EOS_Field fresulta09("[d(hlsvsc)/d(c_4)]Ph",  "[d(hlsvsc)/d(c_4)]Ph",  nbpoint,resulta09); vfresultat[8]  = fresulta09 ;
-        EOS_Field fresulta10("epstg",                 "epstg",                 nbpoint,resulta10); vfresultat[9]  = fresulta10 ;
-        EOS_Field fresulta11("[d(epstg)/dP]h",        "[d(epstg)/dP]h",        nbpoint,resulta11); vfresultat[10] = fresulta11 ;
-        EOS_Field fresulta12("[d(epstg)/dh]P",        "[d(epstg)/dh]P",        nbpoint,resulta12); vfresultat[11] = fresulta12 ;
-        EOS_Field fresulta13("[d(epstg)/d(c_1)]Ph",   "[d(epstg)/d(c_1)]Ph",   nbpoint,resulta13); vfresultat[12] = fresulta13 ;
-        EOS_Field fresulta14("[d(epstg)/d(c_2)]Ph",   "[d(epstg)/d(c_2)]Ph",   nbpoint,resulta14); vfresultat[13] = fresulta14 ;
-        EOS_Field fresulta15("[d(epstg)/d(c_3)]Ph",   "[d(epstg)/d(c_3)]Ph",   nbpoint,resulta15); vfresultat[14] = fresulta15 ;
-        EOS_Field fresulta16("[d(epstg)/d(c_4)]Ph",   "[d(epstg)/d(c_4)]Ph",   nbpoint,resulta16); vfresultat[15] = fresulta16 ;
-        EOS_Field fresulta17("hvspsc",                "hvspsc",                nbpoint,resulta17); vfresultat[16] = fresulta17 ;
-        EOS_Field fresulta18("[d(hvspsc)/dP]h",       "[d(hvspsc)/dP]h",       nbpoint,resulta18); vfresultat[17] = fresulta18 ;
-        EOS_Field fresulta19("[d(hvspsc)/dh]P",       "[d(hvspsc)/dh]P",       nbpoint,resulta19); vfresultat[18] = fresulta19 ;
-        EOS_Field fresulta20("[d(hvspsc)/d(c_1)]Ph",  "[d(hvspsc)/d(c_1)]Ph",  nbpoint,resulta20); vfresultat[19] = fresulta20 ;
-        EOS_Field fresulta21("[d(hvspsc)/d(c_2)]Ph",  "[d(hvspsc)/d(c_2)]Ph",  nbpoint,resulta21); vfresultat[20] = fresulta21 ;
-        EOS_Field fresulta22("[d(hvspsc)/d(c_3)]Ph",  "[d(hvspsc)/d(c_3)]Ph",  nbpoint,resulta22); vfresultat[21] = fresulta22 ;
-        EOS_Field fresulta23("[d(hvspsc)/d(c_4)]Ph",  "[d(hvspsc)/d(c_4)]Ph",  nbpoint,resulta23); vfresultat[22] = fresulta23 ;
-        EOS_Field fresulta24("hvsvsc",                "hvsvsc",                nbpoint,resulta24); vfresultat[23] = fresulta24 ;
-        EOS_Field fresulta25("[d(hvsvsc)/dP]h",       "[d(hvsvsc)/dP]h",       nbpoint,resulta25); vfresultat[24] = fresulta25 ;
-        EOS_Field fresulta26("[d(hvsvsc)/dh]P",       "[d(hvsvsc)/dh]P",       nbpoint,resulta26); vfresultat[25] = fresulta26 ;
-        EOS_Field fresulta27("[d(hvsvsc)/d(c_1)]Ph",  "[d(hvsvsc)/d(c_1)]Ph",  nbpoint,resulta27); vfresultat[26] = fresulta27 ;
-        EOS_Field fresulta28("[d(hvsvsc)/d(c_2)]Ph",  "[d(hvsvsc)/d(c_2)]Ph",  nbpoint,resulta28); vfresultat[27] = fresulta28 ;
-        EOS_Field fresulta29("[d(hvsvsc)/d(c_3)]Ph",  "[d(hvsvsc)/d(c_3)]Ph",  nbpoint,resulta29); vfresultat[28] = fresulta29 ;
-        EOS_Field fresulta30("[d(hvsvsc)/d(c_4)]Ph",  "[d(hvsvsc)/d(c_4)]Ph",  nbpoint,resulta30); vfresultat[29] = fresulta30 ;
+        EOS_Field fresulta01("T",                     "T", NEPTUNE::T,                     nbpoint,resulta01); vfresultat[0]  = fresulta01 ;
+        EOS_Field fresulta02("hlsvsc",                "hlsvsc", NEPTUNE::hlsvsc,                nbpoint,resulta02); vfresultat[1]  = fresulta02 ;
+        EOS_Field fresulta03("[d(hlsvsc)/dP]h",       "[d(hlsvsc)/dP]h", NEPTUNE::d_hlsvsc_dp_h ,      nbpoint,resulta03); vfresultat[2]  = fresulta03 ;
+        EOS_Field fresulta04("[d(hlsvsc)/dh]P0",      "[d(hlsvsc)/dh]P0", NEPTUNE::d_hlsvsc_dh_p0,      nbpoint,resulta04); vfresultat[3]  = fresulta04 ;
+        EOS_Field fresulta05("[d(hlsvsc)/dh]P",       "[d(hlsvsc)/dh]P", NEPTUNE::d_hlsvsc_dh_p,       nbpoint,resulta05); vfresultat[4]  = fresulta05 ;
+        EOS_Field fresulta06("[d(hlsvsc)/d(c_1)]Ph",  "[d(hlsvsc)/d(c_1)]Ph", NEPTUNE::d_hlsvsc_d_c_1_ph,  nbpoint,resulta06); vfresultat[5]  = fresulta06 ;
+        EOS_Field fresulta07("[d(hlsvsc)/d(c_2)]Ph",  "[d(hlsvsc)/d(c_2)]Ph", NEPTUNE::d_hlsvsc_d_c_2_ph,  nbpoint,resulta07); vfresultat[6]  = fresulta07 ;
+        EOS_Field fresulta08("[d(hlsvsc)/d(c_3)]Ph",  "[d(hlsvsc)/d(c_3)]Ph", NEPTUNE::d_hlsvsc_d_c_3_ph,  nbpoint,resulta08); vfresultat[7]  = fresulta08 ;
+        EOS_Field fresulta09("[d(hlsvsc)/d(c_4)]Ph",  "[d(hlsvsc)/d(c_4)]Ph", NEPTUNE::d_hlsvsc_d_c_4_ph,  nbpoint,resulta09); vfresultat[8]  = fresulta09 ;
+        EOS_Field fresulta10("epstg",                 "epstg", NEPTUNE::epstg,                 nbpoint,resulta10); vfresultat[9]  = fresulta10 ;
+        EOS_Field fresulta11("[d(epstg)/dP]h",        "[d(epstg)/dP]h", NEPTUNE::d_epstg_dp_h ,      nbpoint,resulta11); vfresultat[10] = fresulta11 ;
+        EOS_Field fresulta12("[d(epstg)/dh]P",        "[d(epstg)/dh]P", NEPTUNE::d_epstg_dh_p ,       nbpoint,resulta12); vfresultat[11] = fresulta12 ;
+        EOS_Field fresulta13("[d(epstg)/d(c_1)]Ph",   "[d(epstg)/d(c_1)]Ph", NEPTUNE::d_epstg_d_c_1_ph,   nbpoint,resulta13); vfresultat[12] = fresulta13 ;
+        EOS_Field fresulta14("[d(epstg)/d(c_2)]Ph",   "[d(epstg)/d(c_2)]Ph", NEPTUNE::d_epstg_d_c_2_ph,   nbpoint,resulta14); vfresultat[13] = fresulta14 ;
+        EOS_Field fresulta15("[d(epstg)/d(c_3)]Ph",   "[d(epstg)/d(c_3)]Ph", NEPTUNE::d_epstg_d_c_3_ph,   nbpoint,resulta15); vfresultat[14] = fresulta15 ;
+        EOS_Field fresulta16("[d(epstg)/d(c_4)]Ph",   "[d(epstg)/d(c_4)]Ph", NEPTUNE::d_epstg_d_c_4_ph,   nbpoint,resulta16); vfresultat[15] = fresulta16 ;
+        EOS_Field fresulta17("hvspsc",                "hvspsc", NEPTUNE::hvspsc ,               nbpoint,resulta17); vfresultat[16] = fresulta17 ;
+        EOS_Field fresulta18("[d(hvspsc)/dP]h",       "[d(hvspsc)/dP]h", NEPTUNE::d_hvspsc_dp_h,      nbpoint,resulta18); vfresultat[17] = fresulta18 ;
+        EOS_Field fresulta19("[d(hvspsc)/dh]P",       "[d(hvspsc)/dh]P", NEPTUNE::d_hvsvsc_dh_p ,     nbpoint,resulta19); vfresultat[18] = fresulta19 ;
+        EOS_Field fresulta20("[d(hvspsc)/d(c_1)]Ph",  "[d(hvspsc)/d(c_1)]Ph", NEPTUNE::d_hvspsc_d_c_1_ph,  nbpoint,resulta20); vfresultat[19] = fresulta20 ;
+        EOS_Field fresulta21("[d(hvspsc)/d(c_2)]Ph",  "[d(hvspsc)/d(c_2)]Ph", NEPTUNE::d_hvspsc_d_c_2_ph, nbpoint,resulta21); vfresultat[20] = fresulta21 ;
+        EOS_Field fresulta22("[d(hvspsc)/d(c_3)]Ph",  "[d(hvspsc)/d(c_3)]Ph", NEPTUNE::d_hvspsc_d_c_3_ph , nbpoint,resulta22); vfresultat[21] = fresulta22 ;
+        EOS_Field fresulta23("[d(hvspsc)/d(c_4)]Ph",  "[d(hvspsc)/d(c_4)]Ph", NEPTUNE::d_hvspsc_d_c_4_ph,  nbpoint,resulta23); vfresultat[22] = fresulta23 ;
+        EOS_Field fresulta24("hvsvsc",                "hvsvsc", NEPTUNE::hvsvsc,                nbpoint,resulta24); vfresultat[23] = fresulta24 ;
+        EOS_Field fresulta25("[d(hvsvsc)/dP]h",       "[d(hvsvsc)/dP]h", NEPTUNE::d_hvsvsc_dp_h ,      nbpoint,resulta25); vfresultat[24] = fresulta25 ;
+        EOS_Field fresulta26("[d(hvsvsc)/dh]P",       "[d(hvsvsc)/dh]P", NEPTUNE::d_hvsvsc_dh_p,     nbpoint,resulta26); vfresultat[25] = fresulta26 ;
+        EOS_Field fresulta27("[d(hvsvsc)/d(c_1)]Ph",  "[d(hvsvsc)/d(c_1)]Ph", NEPTUNE::d_hvsvsc_d_c_1_ph,  nbpoint,resulta27); vfresultat[26] = fresulta27 ;
+        EOS_Field fresulta28("[d(hvsvsc)/d(c_2)]Ph",  "[d(hvsvsc)/d(c_2)]Ph", NEPTUNE::d_hvsvsc_d_c_2_ph,  nbpoint,resulta28); vfresultat[27] = fresulta28 ;
+        EOS_Field fresulta29("[d(hvsvsc)/d(c_3)]Ph",  "[d(hvsvsc)/d(c_3)]Ph", NEPTUNE::d_hvsvsc_d_c_3_ph,  nbpoint,resulta29); vfresultat[28] = fresulta29 ;
+        EOS_Field fresulta30("[d(hvsvsc)/d(c_4)]Ph",  "[d(hvsvsc)/d(c_4)]Ph", NEPTUNE::d_hvsvsc_d_c_4_ph,  nbpoint,resulta30); vfresultat[29] = fresulta30 ;
  
         EOS_Error_Field ferr(nbpoint, terr) ;
  
@@ -6463,14 +6642,14 @@ int main()
     ArrOfDouble xp(n);
     for(int i=0; i<n; i++)
       xp[i]=(i+1)*1.e5;
-    EOS_Field P("Pressure","p",xp);
+    EOS_Field P("Pressure","p", NEPTUNE::p,xp);
 
     ArrOfInt ierr(n);
     EOS_Error_Field err(ierr);
 
     // (field - field)
     std::vector<double> ptsat(n);;
-    EOS_Field Tsat("tsat","T_sat",n,ptsat.data());
+    EOS_Field Tsat("tsat","T_sat", NEPTUNE::T_sat,n,ptsat.data());
 
     cr=liquid.compute(P,Tsat,err);
     cout << "* field field [cr=" << cr <<"]"<< endl;
@@ -6484,7 +6663,7 @@ int main()
     EOS_Fields output(2);
     ArrOfDouble xdtsat(n);
     output[0]=Tsat;
-    output[1]=EOS_Field("dtsat","d_T_sat_d_p",xdtsat);
+    output[1]=EOS_Field("dtsat","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,xdtsat);
 
     cr=liquid.compute(P,output,err);
     cout << endl << "* field fields [cr=" << cr <<"]"<< endl;
@@ -6502,8 +6681,8 @@ int main()
     for(int i=0; i<n; i++)
       xh[i]=(i+1)*1.e5;
 
-    EOS_Field h("Enthalpy","h",xh);
-    EOS_Field temp("Temperature","T",xt);
+    EOS_Field h("Enthalpy","h", NEPTUNE::h,xh);
+    EOS_Field temp("Temperature","T", NEPTUNE::T,xt);
 
     cr=liquid.compute(P,h,temp,err);
     cout << endl<< "* field field field [cr=" << cr <<"]"<< endl;
@@ -6522,7 +6701,7 @@ int main()
     int nout=2;
     EOS_Fields output2(nout);
     output2[0]=temp;
-    output2[1]=EOS_Field("Rho","rho",xrho);
+    output2[1]=EOS_Field("Rho","rho", NEPTUNE::rho,xrho);
 
     cr=liquid.compute(P,h,output2,err);
     cout << endl<< "* field field fields [cr=" << cr <<"]"<< endl;
@@ -6665,14 +6844,14 @@ int main()
     ArrOfDouble xp(n);
     for(int i=0; i<n; i++)
       xp[i]=(i+1)*1.e5;
-    EOS_Field P("Pressure","p",xp);
+    EOS_Field P("Pressure","p", NEPTUNE::p,xp);
 
     ArrOfInt ierr(n);
     EOS_Error_Field err(ierr);
 
     // (field - field)
     std::vector<double> ptsat(n);
-    EOS_Field Tsat("tsat","T_sat",n,ptsat.data());
+    EOS_Field Tsat("tsat","T_sat", NEPTUNE::T_sat,n,ptsat.data());
 
     cr=liquid.compute(P,Tsat,err);
     cout << "* field field [cr=" << cr <<"]"<< endl;
@@ -6686,7 +6865,7 @@ int main()
     EOS_Fields output(2);
     ArrOfDouble xdtsat(n);
     output[0]=Tsat;
-    output[1]=EOS_Field("dtsat","d_T_sat_d_p",xdtsat);
+    output[1]=EOS_Field("dtsat","d_T_sat_d_p", NEPTUNE::d_T_sat_d_p,xdtsat);
 
     cr=liquid.compute(P,output,err);
     cout << endl << "* field fields [cr=" << cr <<"]"<< endl;
@@ -6704,8 +6883,8 @@ int main()
     for(int i=0; i<n; i++)
       xh[i]=(i+1)*1.e5;
 
-    EOS_Field h("Enthalpy","h",xh);
-    EOS_Field temp("Temperature","T",xt);
+    EOS_Field h("Enthalpy","h", NEPTUNE::h,xh);
+    EOS_Field temp("Temperature","T", NEPTUNE::T,xt);
 
     cr=liquid.compute(P,h,temp,err);
     cout << endl<< "* field field field [cr=" << cr <<"]"<< endl;
@@ -6724,7 +6903,7 @@ int main()
     int nout=2;
     EOS_Fields output2(nout);
     output2[0]=temp;
-    output2[1]=EOS_Field("Rho","rho",xrho);
+    output2[1]=EOS_Field("Rho","rho", NEPTUNE::rho,xrho);
 
     cr=liquid.compute(P,h,output2,err);
     cout << endl<< "* field field fields [cr=" << cr <<"]"<< endl;

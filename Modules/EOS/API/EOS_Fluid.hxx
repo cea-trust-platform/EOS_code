@@ -124,16 +124,39 @@ namespace NEPTUNE
                                double p, 
                                double h, 
                                double& x) const;
+
     EOS_Internal_Error compute(const char* const property_name,
+                               const int property_number,
+                            double p, 
+                            double h, 
+                            double& x) const;
+
+    EOS_Internal_Error compute(const char* const property_name,
+                               double p, double& x) const;
+                               
+    EOS_Internal_Error compute(const char* const property_name,
+                               const int property_number,
                                double p, double& x) const;
 
     EOS_Internal_Error compute_Ph(const char* const property_name,
                               double in1, double in2, double& out) const;
+    EOS_Internal_Error compute_Ph(const char* const property_name,
+                                  const int property_number,
+                              double in1, double in2, double& out) const;
     EOS_Internal_Error compute_PT(const char* const property_name, 
+                              double in1, double in2, double& out) const;
+    EOS_Internal_Error compute_PT(const char* const property_name, 
+                                  const int property_number,
                               double in1, double in2, double& out) const;
     EOS_Internal_Error compute_Psat(const char* const property_name,
                               double in, double& out) const;
+    EOS_Internal_Error compute_Psat(const char* const property_name,
+                                    const int property_number,
+                              double in, double& out) const;
     EOS_Internal_Error compute_Tsat(const char* const property_name,
+                              double in, double& out) const;
+    EOS_Internal_Error compute_Tsat(const char* const property_name,
+                                    const int property_number,
                               double in, double& out) const;
 
     virtual EOS_Error init_model(const std::string& model_name, const std::string& fluid_name,bool switch_comp_sat,bool swch_calc_deriv_fld);

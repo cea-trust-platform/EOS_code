@@ -11,6 +11,29 @@ Legend:
 + addition or improvement
 ! modification in the next release
 
+============================
+ EOS-2.2.0       :: 15-11-2024
+============================
+Features :
+ +Added COOLPROP plugin (15/11/2024)
+ +Added python API (04/11/2025)
+
+EOS Structure:
+
++ Added new EOS functions to improve performance when handling EOS_fields (26/11/2024)
++ New EOS_Field constructor to optimize performance (10/03/2025)
+- Fixed OpenMP tests (11/03/2025)
+- Modified Python Refprop patch to ensure compatibility with macOS (26/11/2024)
+- Fixed enthalpy calculation in the interpolator (11/03/2025)
+- Optimized saturation regime traversal in the interpolator (28/03/2025)
+- Fixed pre_configure.sh script regarding Fortran CALL routine calls
+- Fixed internal EOS structure to avoid string comparisons (10/03/2025)
+- Fixed use of 4 non-condensable gases (10/10/2025)
+- Fixed memory bug in CATHARE2 tables (14/10/2025)
+- Fixed warnings (14/10/2025)
+
+Thermodynamic Models (T.M.) :
+
 
 ============================
  EOS-2.1.0       :: 15-11-2024

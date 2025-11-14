@@ -30,5 +30,5 @@ if(INSTALL_TIRPC)
    add_dependencies(${NLIB_TM} libtirpc)
 endif()
 
-target_link_libraries(${NLIB_TM} ${RPC_LIB})
+target_link_libraries(${NLIB_TM} ${LIBCOOLPROP_SHAREDLIB} ${RPC_LIB})
 

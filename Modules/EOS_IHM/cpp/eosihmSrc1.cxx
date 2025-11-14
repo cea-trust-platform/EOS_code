@@ -207,13 +207,13 @@ void EosIhm::computeValue(char *meth, char *ref, char *var, char *qty, char *par
   for(int i=0; i<n; i++)
     xp[i] = value[i] ;
   // que faire avec la premiere chaine ? ce qu'on veut !
-  EOS_Field f1("A_name",var,xp) ;
+  EOS_Field f1("A_name",var,xp) ; 
   
   ArrOfInt ierr(n) ;
   EOS_Error_Field err(ierr) ;
   
   ArrOfDouble yp(n) ;
-  EOS_Field f2("A_name",qty,yp) ;    
+  EOS_Field f2("A_name",qty,yp) ;
 
   if (AString(par2) == AString("saturation") || AString(par2) == AString("limit"))
      { //std::cout<<"---appel compute cas saturation ou limit---"<<std::endl;
@@ -236,7 +236,7 @@ void EosIhm::computeValue(char *meth, char *ref, char *var, char *qty, char *par
      { ArrOfDouble zp(n) ;
        for(int i=0; i<n; i++)
          zp[i] = val2 ;
-       EOS_Field f3("A_name",par2,zp) ;    
+       EOS_Field f3("A_name",par2,zp) ; 
        //std::cout<<"<><><>appel compute cas general---"<<std::endl;
        indice_erreur = 0 ;
        try { myphase->compute(f1, f3, f2, err) ;

@@ -94,7 +94,7 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Mixing::set_compute_mode() {
-    if (    ((*the_fluids[0]).table_name()    == AString("Cathare")) 
+    if (    ((*the_fluids[0]).table_name()    == AString("Cathare"))
          && ((*the_fluids[0]).equation_name() == AString("WaterVapor")) ) {
         compute_mode = MixingType::Cathare;
     } else {
@@ -107,7 +107,7 @@ namespace NEPTUNE_EOS
         }
         if (are_perfectgas) {
             compute_mode = MixingType::WithPerfectGas;
-        } else if (    (*the_fluids[0]).table_name() == AString("Cathare2") 
+        } else if (    (*the_fluids[0]).table_name() == AString("Cathare2")
                 && (*the_fluids[0]).phase_name() == AString("Vapor") ) {
             compute_mode = MixingType::Cathare2;
         } else {
@@ -116,7 +116,7 @@ namespace NEPTUNE_EOS
     }
   }
 
-  void EOS_Mixing::set_mixing_reference_state() 
+  void EOS_Mixing::set_mixing_reference_state()
   { if ((compute_mode == MixingType::WithPerfectGas) && ((*the_fluids[0]).table_name() == AString("Cathare2")))
     {
         EOS_Internal_Error err;
@@ -124,7 +124,7 @@ namespace NEPTUNE_EOS
         err = (*the_fluids[0]).fluid().get_h_ref(href);
         err = (*the_fluids[0]).fluid().get_T_ref(Tref);
         err = (*the_fluids[0]).fluid().get_p_ref(pref);
-        
+
         for (int i=1; i<nb_fluids; i++)
         {
             (*the_fluids[i]).fluid().set_reference_state(href,0.e0,Tref,pref);
@@ -174,7 +174,7 @@ namespace NEPTUNE_EOS
   { return alpha[i] ;
   }
 
-  EOS_Error EOS_Mixing::compute(const EOS_Fields& input, 
+  EOS_Error EOS_Mixing::compute(const EOS_Fields& input,
                                 EOS_Field& r,
                                 EOS_Error_Field& errfield) const
   { // warning : must be changed to avoid copy
@@ -183,7 +183,7 @@ namespace NEPTUNE_EOS
     return compute(input, output, errfield) ;
   }
 
-  EOS_Error EOS_Mixing::compute(const EOS_Fields& input, 
+  EOS_Error EOS_Mixing::compute(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
   {
@@ -224,8 +224,8 @@ namespace NEPTUNE_EOS
      ArrOfDouble tprxm1 (nb_fluids - 1) ;
      ArrOfDouble tprxm2 (nb_fluids - 1) ;
      ArrOfDouble tprxdv (nb_fluids - 1) ;
-     for (int i=1; i<nb_fluids; i++) 
-        {  if ((*the_fluids[i]).table_name() != AString("CathareIncondensableGas")) 
+     for (int i=1; i<nb_fluids; i++)
+        {  if ((*the_fluids[i]).table_name() != AString("CathareIncondensableGas"))
               { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
                 return EOS_Error::error ;
               }
@@ -281,7 +281,7 @@ namespace NEPTUNE_EOS
           ArrOfDouble tprxm0(nincx) ;
           ArrOfDouble tprxm1(nincx) ;
           ArrOfDouble tprxm2(nincx) ;
-          for (int i=1; i<nb_fluids; i++) 
+          for (int i=1; i<nb_fluids; i++)
              { tprxr(i-1)  = (*the_fluids[i]).get_prxr()  ;
                tprxcp(i-1) = (*the_fluids[i]).get_prxcp() ;
                tprxl0(i-1) = (*the_fluids[i]).get_prxl0() ;
@@ -296,7 +296,7 @@ namespace NEPTUNE_EOS
                              tprxl2, tprxm0, tprxm1, tprxm2) ;
           return cr ;
         }
-     else 
+     else
         { errfield = EOS_Internal_Error::NOT_IMPLEMENTED ;
           return EOS_Error::error ;
         }
@@ -316,7 +316,7 @@ namespace NEPTUNE_EOS
     int nb_outfields = r.size() ;         // number of output fields
     int nsca  = errfield.size() ;                 // number of points
     errfield = EOS_Internal_Error::OK ; // initialization of error index
-    
+
     // Test unicity of number of points by field : nsca
     for (int i_in=0; i_in<nb_infields; i_in++)
        { if (nsca != input[i_in].size())
@@ -330,7 +330,7 @@ namespace NEPTUNE_EOS
             return EOS_Error::error ;
           }
        }
-    
+
     // Test existence of input main thermodynamic variables (P, T, h)
     int id_P  = 0 ;
     int id_T  = 0 ;
@@ -396,10 +396,10 @@ namespace NEPTUNE_EOS
                  break ;
             }
        }
-       
+
     if (   (idim < 1) || (2 < idim)
         || (1 < id_P) || (1 < id_T) || (1 < id_h)
-        || (id_c == 0) || (4 < id_c) || (id_c != nb_fluids)
+        || (id_c == 0) || (5 < id_c) || (id_c != nb_fluids)
         || (idim == 1 && id_P == 0 && id_T == 0)
         || (idim == 2 && 0 < id_T && 0 < id_h) )
        { errfield = EOS_Internal_Error::INPUT_PROPERTY ;
@@ -417,33 +417,33 @@ namespace NEPTUNE_EOS
       //
       // algorithme complet c2
       //
-      
+
       // calcul Pv, hv = f(P, h)
       ArrOfDouble xc0(nsca,0.e0);
       ArrOfDouble xc1(nsca,0.e0);
       ArrOfDouble xc2(nsca,0.e0);
       ArrOfDouble xc3(nsca,0.e0);
       ArrOfDouble xc4(nsca,0.e0);
-      EOS_Field C0("c_0","c_0",xc0);
-      EOS_Field C1("c_1","c_1",xc1);
-      EOS_Field C2("c_2","c_2",xc2);
-      EOS_Field C3("c_3","c_3",xc3);
-      EOS_Field C4("c_4","c_4",xc4);
-      
+      EOS_Field C0("c_0","c_0",NEPTUNE::c_0,xc0);
+      EOS_Field C1("c_1","c_1",NEPTUNE::c_1,xc1);
+      EOS_Field C2("c_2","c_2",NEPTUNE::c_2,xc2);
+      EOS_Field C3("c_3","c_3",NEPTUNE::c_3,xc3);
+      EOS_Field C4("c_4","c_4",NEPTUNE::c_4,xc4);
+
       if (ic[0] != -1) C0 = input[ic[0]];
       if (ic[1] != -1) C1 = input[ic[1]];
       if (ic[2] != -1) C2 = input[ic[2]];
       if (ic[3] != -1) C3 = input[ic[3]];
       if (ic[4] != -1) C4 = input[ic[4]];
-      
+
       ArrOfDouble xPv(nsca);
-      EOS_Field Pv("Pv","p",xPv);
+      EOS_Field Pv("Pv","p",NEPTUNE::p,xPv);
       ArrOfDouble xhv(nsca);
-      EOS_Field hv("hv","h",xhv);
-      
+      EOS_Field hv("hv","h",NEPTUNE::h,xhv);
+
       for (int i=0; i<nsca; i++)
       {
-        this->compute_pv_hv_ph(input[iP][i], input[ih][i], Pv[i], hv[i], C0[i], C1[i], C2[i], C3[i], C4[i]); 
+        this->compute_pv_hv_ph(input[iP][i], input[ih][i], Pv[i], hv[i], C0[i], C1[i], C2[i], C3[i], C4[i]);
       }
       //
       // Calcul de toutes les proprietes standards, apres convergence calcul Pv, Hv
@@ -458,21 +458,21 @@ namespace NEPTUNE_EOS
       ArrOfDouble xdtsatdp(nsca), xdhlsatdp(nsca), xdhvsatdp(nsca), xdrholsatdp(nsca);
       ArrOfDouble xdrhovsatdp(nsca), xdcplsatdp(nsca), xdcpvsatdp(nsca), xd2tsatdp(nsca);
       EOS_Fields fsout_satp (15);
-      EOS_Field tsatp ("out_satp1", "T_sat", xtsatp);
-      EOS_Field hlsatp ("out_satp2", "h_l_sat", xhlsatp);
-      EOS_Field hvsatp ("out_satp3", "h_v_sat", xhvsatp);
-      EOS_Field rholsatp ("out_satp4", "rho_l_sat", xrholsatp);
-      EOS_Field rhovsatp ("out_satp5", "rho_v_sat", xrhovsatp);
-      EOS_Field cplsatp ("out_satp6", "cp_l_sat", xcplsatp);
-      EOS_Field cpvsatp ("out_satp7", "cp_v_sat", xcpvsatp);
-      EOS_Field dtsatdp ("out_satp8", "d_T_sat_d_p", xdtsatdp);
-      EOS_Field dhlsatdp ("out_satp9", "d_h_l_sat_d_p", xdhlsatdp);
-      EOS_Field dhvsatdp ("out_satp10", "d_h_v_sat_d_p", xdhvsatdp);
-      EOS_Field drholsatdp ("out_satp11", "d_rho_l_sat_d_p", xdrholsatdp);
-      EOS_Field drhovsatdp ("out_satp12", "d_rho_v_sat_d_p", xdrhovsatdp);
-      EOS_Field dcplsatdp ("out_satp13", "d_cp_l_sat_d_p", xdcplsatdp);
-      EOS_Field dcpvsatdp ("out_satp14", "d_cp_v_sat_d_p", xdcpvsatdp);
-      EOS_Field d2tsatdp ("out_satp15", "d2_T_sat_d_p_d_p", xd2tsatdp);
+      EOS_Field tsatp ("out_satp1", "T_sat",NEPTUNE::T_sat, xtsatp);
+      EOS_Field hlsatp ("out_satp2", "h_l_sat",NEPTUNE::h_l_sat, xhlsatp);
+      EOS_Field hvsatp ("out_satp3", "h_v_sat",NEPTUNE::h_v_sat, xhvsatp);
+      EOS_Field rholsatp ("out_satp4", "rho_l_sat",NEPTUNE::rho_l_sat, xrholsatp);
+      EOS_Field rhovsatp ("out_satp5", "rho_v_sat",NEPTUNE::rho_v_sat, xrhovsatp);
+      EOS_Field cplsatp ("out_satp6", "cp_l_sat",NEPTUNE::cp_l_sat, xcplsatp);
+      EOS_Field cpvsatp ("out_satp7", "cp_v_sat",NEPTUNE::cp_v_sat, xcpvsatp);
+      EOS_Field dtsatdp ("out_satp8", "d_T_sat_d_p",NEPTUNE::d_T_sat_d_p, xdtsatdp);
+      EOS_Field dhlsatdp ("out_satp9", "d_h_l_sat_d_p",NEPTUNE::d_h_l_sat_d_p, xdhlsatdp);
+      EOS_Field dhvsatdp ("out_satp10", "d_h_v_sat_d_p",NEPTUNE::d_h_v_sat_d_p,xdhvsatdp);
+      EOS_Field drholsatdp ("out_satp11", "d_rho_l_sat_d_p",NEPTUNE::d_rho_l_sat_d_p, xdrholsatdp);
+      EOS_Field drhovsatdp ("out_satp12", "d_rho_v_sat_d_p",NEPTUNE::d_rho_v_sat_d_p, xdrhovsatdp);
+      EOS_Field dcplsatdp ("out_satp13", "d_cp_l_sat_d_p",NEPTUNE::d_cp_l_sat_d_p ,xdcplsatdp);
+      EOS_Field dcpvsatdp ("out_satp14", "d_cp_v_sat_d_p",NEPTUNE::d_cp_v_sat_d_p ,xdcpvsatdp);
+      EOS_Field d2tsatdp ("out_satp15", "d2_T_sat_d_p_d_p",NEPTUNE::d2_T_sat_d_p_d_p, xd2tsatdp);
       fsout_satp[0] = tsatp;
       fsout_satp[1] = hlsatp;
       fsout_satp[2] = hvsatp;
@@ -488,7 +488,7 @@ namespace NEPTUNE_EOS
       fsout_satp[12] = dcplsatdp;
       fsout_satp[13] = dcpvsatdp;
       fsout_satp[14] = d2tsatdp;
-  
+
       (*this)[0].fluid().compute(input[0],fsout_satp,errfield);
 
       // calcul saturation Tsatpv, Hsatpv = f(Pv)
@@ -497,21 +497,21 @@ namespace NEPTUNE_EOS
       ArrOfDouble xdtsatdpv(nsca), xdhlsatdpv(nsca), xdhvsatdpv(nsca), xdrholsatdpv(nsca);
       ArrOfDouble xdrhovsatdpv(nsca), xdcplsatdpv(nsca), xdcpvsatdpv(nsca), xd2tsatdpv(nsca);
       EOS_Fields fsout_satpv (15);
-      EOS_Field tsatpv ("out_satpv1", "T_sat", xtsatpv);
-      EOS_Field hlsatpv ("out_satpv2", "h_l_sat", xhlsatpv);
-      EOS_Field hvsatpv ("out_satpv3", "h_v_sat", xhvsatpv);
-      EOS_Field rholsatpv ("out_satpv4", "rho_l_sat", xrholsatpv);
-      EOS_Field rhovsatpv ("out_satpv5", "rho_v_sat", xrhovsatpv);
-      EOS_Field cplsatpv ("out_satpv6", "cp_l_sat", xcplsatpv);
-      EOS_Field cpvsatpv ("out_satpv7", "cp_v_sat", xcpvsatpv);
-      EOS_Field dtsatdpv ("out_satpv8", "d_T_sat_d_p", xdtsatdpv);
-      EOS_Field dhlsatdpv ("out_satpv9", "d_h_l_sat_d_p", xdhlsatdpv);
-      EOS_Field dhvsatdpv ("out_satpv10", "d_h_v_sat_d_p", xdhvsatdpv);
-      EOS_Field drholsatdpv ("out_satpv11", "d_rho_l_sat_d_p", xdrholsatdpv);
-      EOS_Field drhovsatdpv ("out_satpv12", "d_rho_v_sat_d_p", xdrhovsatdpv);
-      EOS_Field dcplsatdpv ("out_satpv13", "d_cp_l_sat_d_p", xdcplsatdpv);
-      EOS_Field dcpvsatdpv ("out_satpv14", "d_cp_v_sat_d_p", xdcpvsatdpv);
-      EOS_Field d2tsatdpv ("out_satpv15", "d2_T_sat_d_p_d_p", xd2tsatdpv);
+      EOS_Field tsatpv ("out_satpv1", "T_sat",NEPTUNE::T_sat ,xtsatpv);
+      EOS_Field hlsatpv ("out_satpv2", "h_l_sat",NEPTUNE::h_l_sat ,xhlsatpv);
+      EOS_Field hvsatpv ("out_satpv3", "h_v_sat",NEPTUNE::h_v_sat ,xhvsatpv);
+      EOS_Field rholsatpv ("out_satpv4", "rho_l_sat",NEPTUNE::rho_l_sat ,xrholsatpv);
+      EOS_Field rhovsatpv ("out_satpv5", "rho_v_sat",NEPTUNE::rho_v_sat ,xrhovsatpv);
+      EOS_Field cplsatpv ("out_satpv6", "cp_l_sat",NEPTUNE::cp_l_sat ,xcplsatpv);
+      EOS_Field cpvsatpv ("out_satpv7", "cp_v_sat",NEPTUNE::cp_v_sat ,xcpvsatpv);
+      EOS_Field dtsatdpv ("out_satpv8", "d_T_sat_d_p",NEPTUNE::d_T_sat_d_p ,xdtsatdpv);
+      EOS_Field dhlsatdpv ("out_satpv9", "d_h_l_sat_d_p",NEPTUNE::d_h_l_sat_d_p ,xdhlsatdpv);
+      EOS_Field dhvsatdpv ("out_satpv10", "d_h_v_sat_d_p",NEPTUNE::d_h_v_sat_d_p ,xdhvsatdpv);
+      EOS_Field drholsatdpv ("out_satpv11", "d_rho_l_sat_d_p",NEPTUNE::d_rho_l_sat_d_p ,xdrholsatdpv);
+      EOS_Field drhovsatdpv ("out_satpv12", "d_rho_v_sat_d_p",NEPTUNE::d_rho_v_sat_d_p ,xdrhovsatdpv);
+      EOS_Field dcplsatdpv ("out_satpv13", "d_cp_l_sat_d_p",NEPTUNE::d_cp_l_sat_d_p ,xdcplsatdpv);
+      EOS_Field dcpvsatdpv ("out_satpv14", "d_cp_v_sat_d_p",NEPTUNE::d_cp_v_sat_d_p ,xdcpvsatdpv);
+      EOS_Field d2tsatdpv ("out_satpv15", "d2_T_sat_d_p_d_p",NEPTUNE::d2_T_sat_d_p_d_p, xd2tsatdpv);
       fsout_satpv[0] = tsatpv;
       fsout_satpv[1] = hlsatpv;
       fsout_satpv[2] = hvsatpv;
@@ -527,7 +527,7 @@ namespace NEPTUNE_EOS
       fsout_satpv[12] = dcplsatdpv;
       fsout_satpv[13] = dcpvsatdpv;
       fsout_satpv[14] = d2tsatdpv;
-      
+
       (*this)[0].fluid().compute(fsin_vap[0],fsout_satpv,errfield);
 
       // calcul des proprietes vapeur
@@ -536,23 +536,23 @@ namespace NEPTUNE_EOS
       ArrOfDouble xlambdav(nsca), xdlambdavpv(nsca), xdlambdavhv(nsca);
       ArrOfDouble xmuv(nsca), xdmuvpv(nsca), xdmuvhv(nsca), xsigma(nsca), xdsigmapv(nsca);
       EOS_Fields fsout_vap (17);
-      EOS_Field tg ("out_vap1", "T", xtg);
-      EOS_Field dtgpv ("out_vap2", "d_T_d_p_h", xdtgpv);
-      EOS_Field dtghv ("out_vap3", "d_T_d_h_p", xdtghv);
-      EOS_Field rv ("out_vap4", "rho", xrv);
-      EOS_Field drvpv ("out_vap5", "d_rho_d_p_h", xdrvpv);
-      EOS_Field drvhv ("out_vap6", "d_rho_d_h_p", xdrvhv);
-      EOS_Field cpv ("out_vap7", "cp", xcpv);
-      EOS_Field dcpvpv ("out_vap8", "d_cp_d_p_h", xdcpvpv);
-      EOS_Field dcpvhv ("out_vap9", "d_cp_d_h_p", xdcpvhv);
-      EOS_Field lambdav ("out_vap10", "lambda", xlambdav);
-      EOS_Field dlambdavpv ("out_vap11", "d_lambda_d_p_h", xdlambdavpv);
-      EOS_Field dlambdavhv ("out_vap12", "d_lambda_d_h_p", xdlambdavhv);
-      EOS_Field muv ("out_vap13", "mu", xmuv);
-      EOS_Field dmuvpv ("out_vap14", "d_mu_d_p_h", xdmuvpv);
-      EOS_Field dmuvhv ("out_vap15", "d_mu_d_h_p", xdmuvhv);
-      EOS_Field sigma ("out_vap16", "sigma", xsigma);
-      EOS_Field dsigmapv ("out_vap17", "d_sigma_d_p_h", xdsigmapv);
+      EOS_Field tg ("out_vap1", "T",NEPTUNE::T, xtg);
+      EOS_Field dtgpv ("out_vap2", "d_T_d_p_h",NEPTUNE::d_T_d_p_h, xdtgpv);
+      EOS_Field dtghv ("out_vap3", "d_T_d_h_p",NEPTUNE::d_T_d_h_p, xdtghv);
+      EOS_Field rv ("out_vap4", "rho",NEPTUNE::rho, xrv);
+      EOS_Field drvpv ("out_vap5", "d_rho_d_p_h",NEPTUNE::d_rho_d_p_h, xdrvpv);
+      EOS_Field drvhv ("out_vap6", "d_rho_d_h_p",NEPTUNE::d_rho_d_h_p, xdrvhv);
+      EOS_Field cpv ("out_vap7", "cp",NEPTUNE::cp, xcpv);
+      EOS_Field dcpvpv ("out_vap8", "d_cp_d_p_h",NEPTUNE::d_cp_d_p_h, xdcpvpv);
+      EOS_Field dcpvhv ("out_vap9", "d_cp_d_h_p",NEPTUNE::d_cp_d_h_p, xdcpvhv);
+      EOS_Field lambdav ("out_vap10", "lambda",NEPTUNE::lambda, xlambdav);
+      EOS_Field dlambdavpv ("out_vap11", "d_lambda_d_p_h",NEPTUNE::d_lambda_d_p_h, xdlambdavpv);
+      EOS_Field dlambdavhv ("out_vap12", "d_lambda_d_h_p",NEPTUNE::d_lambda_d_h_p, xdlambdavhv);
+      EOS_Field muv ("out_vap13", "mu",NEPTUNE::mu, xmuv);
+      EOS_Field dmuvpv ("out_vap14", "d_mu_d_p_h",NEPTUNE::d_mu_d_p_h, xdmuvpv);
+      EOS_Field dmuvhv ("out_vap15", "d_mu_d_h_p",NEPTUNE::d_mu_d_h_p, xdmuvhv);
+      EOS_Field sigma ("out_vap16", "sigma",NEPTUNE::sigma, xsigma);
+      EOS_Field dsigmapv ("out_vap17", "d_sigma_d_p_h",NEPTUNE::d_sigma_d_p_h, xdsigmapv);
       fsout_vap[0] = tg;
       fsout_vap[1] = dtgpv;
       fsout_vap[2] = dtghv;
@@ -571,7 +571,9 @@ namespace NEPTUNE_EOS
       fsout_vap[15] = sigma;
       fsout_vap[16] = dsigmapv;
       // calcul proprietes vapeur
+
       (*this)[0].fluid().compute(fsin_vap,fsout_vap,errfield);
+
       //
       // Calcul des proprietes de melange
       //
@@ -596,91 +598,91 @@ namespace NEPTUNE_EOS
       ArrOfDouble ddncvdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
       ArrOfDouble drncdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
       ArrOfDouble dmncdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      EOS_Field dpv1("dpvdp", "d_p_0_d_p_h", xdpvdp);
-      EOS_Field dpv3("dpvdh", "d_p_0_d_h_p", xdpvdh);
-      EOS_Field dhv1("dhvdp", "d_h_0_d_p_h", xdhvdp);
-      EOS_Field dhv3("dhvdh", "d_h_0_d_h_p", xdhvdh);
-      EOS_Field dtg1("dTdp", "d_T_d_p_h", xdtgdp);
-      EOS_Field dtg3("dTdh", "d_T_d_h_p", xdtgdh);
-      EOS_Field rg("rho", "rho", xrg);
-      EOS_Field drg1("drhodp", "d_rho_d_p_h", xdrgdp);
-      EOS_Field drg3("drhodh", "d_rho_d_h_p", xdrgdh);
-      EOS_Field drv1("drhovdp", "d_rho_0_d_p_h", xdrvdp);
-      EOS_Field drv3("drhovdh", "d_rho_0_d_h_p", xdrvdh);
-      EOS_Field cpg("cpg", "cp", xcpg);
-      EOS_Field dcpg1("dcpdp", "d_cp_d_p_h", xdcpdp);
-      EOS_Field dcpg3("dcpdh", "d_cp_d_h_p", xdcpdh);
-      EOS_Field lambdag("lambdag", "lambda", xlambdag);
-      EOS_Field dlambdag1("dlambdadp", "d_lambda_d_p_h", xdlambdagdp);
-      EOS_Field dlambdag3("dlambdadh", "d_lambda_d_h_p", xdlambdagdh);
-      EOS_Field mug("mug", "mu", xmug);
-      EOS_Field dmug1("dmudp", "d_mu_d_p_h", xdmudp);
-      EOS_Field dmug3("dmudh", "d_mu_d_h_p", xdmudh);
-      EOS_Field prgr("prgr", "prgr", xprgr);
-      EOS_Field xnc("xnc", "xnc", xxnc);
-      EOS_Field mnc("mnc", "mnc", xmnc);
-      EOS_Field rnc("rnc", "rnc", xrnc);
-      EOS_Field dncv("dncv", "dncv", xdncv);
-      EOS_Field ddncv1("ddncv1", "d_dncv_d_p_h", xddncv1);
-      EOS_Field ddncv3("ddncv3", "d_dncv_d_h_p", xddncv3);
-      EOS_Field dsigma1("dsigma1", "d_sigma_d_p_h", xdsigmadp);
-      EOS_Field dsigma3("dsigma3", "d_sigma_d_h_p", xdsigmadh);
-      EOS_Field p1("p1", "p_1", px[0]);
-      EOS_Field p2("p2", "p_2", px[1]);
-      EOS_Field p3("p3", "p_3", px[2]);
-      EOS_Field p4("p4", "p_4", px[3]);
-      EOS_Field h1("h1", "h_1", hx[0]);
-      EOS_Field h2("h2", "h_2", hx[1]);
-      EOS_Field h3("h3", "h_3", hx[2]);
-      EOS_Field h4("h4", "h_4", hx[3]);
-      EOS_Field dpvdx1("dpvdx1", "d_p_0_d_c_1_ph", dpvdx[0]);
-      EOS_Field dpvdx2("dpvdx2", "d_p_0_d_c_2_ph", dpvdx[1]);
-      EOS_Field dpvdx3("dpvdx3", "d_p_0_d_c_3_ph", dpvdx[2]);
-      EOS_Field dpvdx4("dpvdx4", "d_p_0_d_c_4_ph", dpvdx[3]);
-      EOS_Field dhvdx1("dhvdx1", "d_h_0_d_c_1_ph", dhvdx[0]);
-      EOS_Field dhvdx2("dhvdx2", "d_h_0_d_c_2_ph", dhvdx[1]);
-      EOS_Field dhvdx3("dhvdx3", "d_h_0_d_c_3_ph", dhvdx[2]);
-      EOS_Field dhvdx4("dhvdx4", "d_h_0_d_c_4_ph", dhvdx[3]);
-      EOS_Field dtgdx1("dtgdx1", "d_T_d_c_1_ph", dtgdx[0]);
-      EOS_Field dtgdx2("dtgdx2", "d_T_d_c_2_ph", dtgdx[1]);
-      EOS_Field dtgdx3("dtgdx3", "d_T_d_c_3_ph", dtgdx[2]);
-      EOS_Field dtgdx4("dtgdx4", "d_T_d_c_4_ph", dtgdx[3]);
-      EOS_Field drgdx1("drgdx1", "d_rho_d_c_1_ph", drgdx[0]);
-      EOS_Field drgdx2("drgdx2", "d_rho_d_c_2_ph", drgdx[1]);
-      EOS_Field drgdx3("drgdx3", "d_rho_d_c_3_ph", drgdx[2]);
-      EOS_Field drgdx4("drgdx4", "d_rho_d_c_4_ph", drgdx[3]);
-      EOS_Field drvdx1("drvdx1", "d_rho_0_d_c_1_ph", drvdx[0]);
-      EOS_Field drvdx2("drvdx2", "d_rho_0_d_c_2_ph", drvdx[1]);
-      EOS_Field drvdx3("drvdx3", "d_rho_0_d_c_3_ph", drvdx[2]);
-      EOS_Field drvdx4("drvdx4", "d_rho_0_d_c_4_ph", drvdx[3]);
-      EOS_Field dcpdx1("dcpdx1", "d_cp_d_c_1_ph", dcpdx[0]);
-      EOS_Field dcpdx2("dcpdx2", "d_cp_d_c_2_ph", dcpdx[1]);
-      EOS_Field dcpdx3("dcpdx3", "d_cp_d_c_3_ph", dcpdx[2]);
-      EOS_Field dcpdx4("dcpdx4", "d_cp_d_c_4_ph", dcpdx[3]);
-      EOS_Field dlambdadx1("dlambdadx1", "d_lambda_d_c_1_ph", dlambdadx[0]);
-      EOS_Field dlambdadx2("dlambdadx2", "d_lambda_d_c_2_ph", dlambdadx[1]);
-      EOS_Field dlambdadx3("dlambdadx3", "d_lambda_d_c_3_ph", dlambdadx[2]);
-      EOS_Field dlambdadx4("dlambdadx4", "d_lambda_d_c_4_ph", dlambdadx[3]);
-      EOS_Field dmudx1("dmudx1", "d_mu_d_c_1_ph", dmudx[0]);
-      EOS_Field dmudx2("dmudx2", "d_mu_d_c_2_ph", dmudx[1]);
-      EOS_Field dmudx3("dmudx3", "d_mu_d_c_3_ph", dmudx[2]);
-      EOS_Field dmudx4("dmudx4", "d_mu_d_c_4_ph", dmudx[3]);
-      EOS_Field dsigmadx1("dsigmadx1", "d_sigma_d_c_1_ph", dsigmadx[0]);
-      EOS_Field dsigmadx2("dsigmadx2", "d_sigma_d_c_2_ph", dsigmadx[1]);
-      EOS_Field dsigmadx3("dsigmadx3", "d_sigma_d_c_3_ph", dsigmadx[2]);
-      EOS_Field dsigmadx4("dsigmadx4", "d_sigma_d_c_4_ph", dsigmadx[3]);
-      EOS_Field ddncvdx1("ddncvdx1", "d_dncv_d_c_1_ph", ddncvdx[0]);
-      EOS_Field ddncvdx2("ddncvdx2", "d_dncv_d_c_2_ph", ddncvdx[1]);
-      EOS_Field ddncvdx3("ddncvdx3", "d_dncv_d_c_3_ph", ddncvdx[2]);
-      EOS_Field ddncvdx4("ddncvdx4", "d_dncv_d_c_4_ph", ddncvdx[3]);
-      EOS_Field drncdx1("drncdx1", "d_rnc_d_c_1_ph", drncdx[0]);
-      EOS_Field drncdx2("drncdx2", "d_rnc_d_c_2_ph", drncdx[1]);
-      EOS_Field drncdx3("drncdx3", "d_rnc_d_c_3_ph", drncdx[2]);
-      EOS_Field drncdx4("drncdx4", "d_rnc_d_c_4_ph", drncdx[3]);
-      EOS_Field dmncdx1("dmncdx1", "d_mnc_d_c_1_ph", dmncdx[0]);
-      EOS_Field dmncdx2("dmncdx2", "d_mnc_d_c_2_ph", dmncdx[1]);
-      EOS_Field dmncdx3("dmncdx3", "d_mnc_d_c_3_ph", dmncdx[2]);
-      EOS_Field dmncdx4("dmncdx4", "d_mnc_d_c_4_ph", dmncdx[3]);
+      EOS_Field dpv1("dpvdp", "d_p_0_d_p_h", NEPTUNE::d_p_0_d_p_h, xdpvdp);
+      EOS_Field dpv3("dpvdh", "d_p_0_d_h_p", NEPTUNE::d_p_0_d_h_p, xdpvdh);
+      EOS_Field dhv1("dhvdp", "d_h_0_d_p_h", NEPTUNE::d_h_0_d_p_h, xdhvdp);
+      EOS_Field dhv3("dhvdh", "d_h_0_d_h_p", NEPTUNE::d_h_0_d_h_p, xdhvdh);
+      EOS_Field dtg1("dTdp", "d_T_d_p_h", NEPTUNE::d_T_d_p_h, xdtgdp);
+      EOS_Field dtg3("dTdh", "d_T_d_h_p", NEPTUNE::d_T_d_h_p, xdtgdh);
+      EOS_Field rg("rho", "rho", NEPTUNE::rho, xrg);
+      EOS_Field drg1("drhodp", "d_rho_d_p_h", NEPTUNE::d_rho_d_p_h, xdrgdp);
+      EOS_Field drg3("drhodh", "d_rho_d_h_p", NEPTUNE::d_rho_d_h_p, xdrgdh);
+      EOS_Field drv1("drhovdp", "d_rho_0_d_p_h", NEPTUNE::d_rho_0_d_p_h, xdrvdp);
+      EOS_Field drv3("drhovdh", "d_rho_0_d_h_p", NEPTUNE::d_rho_0_d_h_p, xdrvdh);
+      EOS_Field cpg("cpg", "cp", NEPTUNE::cp, xcpg);
+      EOS_Field dcpg1("dcpdp", "d_cp_d_p_h", NEPTUNE::d_cp_d_p_h, xdcpdp);
+      EOS_Field dcpg3("dcpdh", "d_cp_d_h_p", NEPTUNE::d_cp_d_h_p, xdcpdh);
+      EOS_Field lambdag("lambdag", "lambda", NEPTUNE::lambda, xlambdag);
+      EOS_Field dlambdag1("dlambdadp", "d_lambda_d_p_h", NEPTUNE::d_lambda_d_p_h, xdlambdagdp);
+      EOS_Field dlambdag3("dlambdadh", "d_lambda_d_h_p", NEPTUNE::d_lambda_d_h_p, xdlambdagdh);
+      EOS_Field mug("mug", "mu", NEPTUNE::mu, xmug);
+      EOS_Field dmug1("dmudp", "d_mu_d_p_h", NEPTUNE::d_mu_d_p_h, xdmudp);
+      EOS_Field dmug3("dmudh", "d_mu_d_h_p", NEPTUNE::d_mu_d_h_p, xdmudh);
+      EOS_Field prgr("prgr", "prgr", NEPTUNE::prgr, xprgr);
+      EOS_Field xnc("xnc", "xnc", NEPTUNE::xnc, xxnc);
+      EOS_Field mnc("mnc", "mnc", NEPTUNE::mnc, xmnc);
+      EOS_Field rnc("rnc", "rnc", NEPTUNE::rnc, xrnc);
+      EOS_Field dncv("dncv", "dncv", NEPTUNE::dncv, xdncv);
+      EOS_Field ddncv1("ddncv1", "d_dncv_d_p_h", NEPTUNE::d_dncv_d_p_h, xddncv1);
+      EOS_Field ddncv3("ddncv3", "d_dncv_d_h_p", NEPTUNE::d_dncv_d_h_p, xddncv3);
+      EOS_Field dsigma1("dsigma1", "d_sigma_d_p_h", NEPTUNE::d_sigma_d_p_h, xdsigmadp);
+      EOS_Field dsigma3("dsigma3", "d_sigma_d_h_p", NEPTUNE::d_sigma_d_h_p, xdsigmadh);
+      EOS_Field p1("p1", "p_1", NEPTUNE::p_1, px[0]);
+      EOS_Field p2("p2", "p_2", NEPTUNE::p_2, px[1]);
+      EOS_Field p3("p3", "p_3", NEPTUNE::p_3, px[2]);
+      EOS_Field p4("p4", "p_4", NEPTUNE::p_4, px[3]);
+      EOS_Field h1("h1", "h_1", NEPTUNE::h_1, hx[0]);
+      EOS_Field h2("h2", "h_2", NEPTUNE::h_2, hx[1]);
+      EOS_Field h3("h3", "h_3", NEPTUNE::h_3, hx[2]);
+      EOS_Field h4("h4", "h_4", NEPTUNE::h_4, hx[3]);
+      EOS_Field dpvdx1("dpvdx1", "d_p_0_d_c_1_ph", NEPTUNE::d_p_0_d_c_1_ph, dpvdx[0]);
+      EOS_Field dpvdx2("dpvdx2", "d_p_0_d_c_2_ph", NEPTUNE::d_p_0_d_c_2_ph, dpvdx[1]);
+      EOS_Field dpvdx3("dpvdx3", "d_p_0_d_c_3_ph", NEPTUNE::d_p_0_d_c_3_ph, dpvdx[2]);
+      EOS_Field dpvdx4("dpvdx4", "d_p_0_d_c_4_ph", NEPTUNE::d_p_0_d_c_4_ph, dpvdx[3]);
+      EOS_Field dhvdx1("dhvdx1", "d_h_0_d_c_1_ph", NEPTUNE::d_h_0_d_c_1_ph, dhvdx[0]);
+      EOS_Field dhvdx2("dhvdx2", "d_h_0_d_c_2_ph", NEPTUNE::d_h_0_d_c_2_ph, dhvdx[1]);
+      EOS_Field dhvdx3("dhvdx3", "d_h_0_d_c_3_ph", NEPTUNE::d_h_0_d_c_3_ph, dhvdx[2]);
+      EOS_Field dhvdx4("dhvdx4", "d_h_0_d_c_4_ph", NEPTUNE::d_h_0_d_c_4_ph, dhvdx[3]);
+      EOS_Field dtgdx1("dtgdx1", "d_T_d_c_1_ph", NEPTUNE::d_T_d_c_1_ph, dtgdx[0]);
+      EOS_Field dtgdx2("dtgdx2", "d_T_d_c_2_ph", NEPTUNE::d_T_d_c_2_ph, dtgdx[1]);
+      EOS_Field dtgdx3("dtgdx3", "d_T_d_c_3_ph", NEPTUNE::d_T_d_c_3_ph, dtgdx[2]);
+      EOS_Field dtgdx4("dtgdx4", "d_T_d_c_4_ph", NEPTUNE::d_T_d_c_4_ph, dtgdx[3]);
+      EOS_Field drgdx1("drgdx1", "d_rho_d_c_1_ph", NEPTUNE::d_rho_d_c_1_ph, drgdx[0]);
+      EOS_Field drgdx2("drgdx2", "d_rho_d_c_2_ph", NEPTUNE::d_rho_d_c_2_ph, drgdx[1]);
+      EOS_Field drgdx3("drgdx3", "d_rho_d_c_3_ph", NEPTUNE::d_rho_d_c_3_ph, drgdx[2]);
+      EOS_Field drgdx4("drgdx4", "d_rho_d_c_4_ph", NEPTUNE::d_rho_d_c_4_ph, drgdx[3]);
+      EOS_Field drvdx1("drvdx1", "d_rho_0_d_c_1_ph", NEPTUNE::d_rho_0_d_c_1_ph, drvdx[0]);
+      EOS_Field drvdx2("drvdx2", "d_rho_0_d_c_2_ph", NEPTUNE::d_rho_0_d_c_2_ph, drvdx[1]);
+      EOS_Field drvdx3("drvdx3", "d_rho_0_d_c_3_ph", NEPTUNE::d_rho_0_d_c_3_ph, drvdx[2]);
+      EOS_Field drvdx4("drvdx4", "d_rho_0_d_c_4_ph", NEPTUNE::d_rho_0_d_c_4_ph, drvdx[3]);
+      EOS_Field dcpdx1("dcpdx1", "d_cp_d_c_1_ph", NEPTUNE::d_cp_d_c_1_ph, dcpdx[0]);
+      EOS_Field dcpdx2("dcpdx2", "d_cp_d_c_2_ph", NEPTUNE::d_cp_d_c_2_ph, dcpdx[1]);
+      EOS_Field dcpdx3("dcpdx3", "d_cp_d_c_3_ph", NEPTUNE::d_cp_d_c_3_ph, dcpdx[2]);
+      EOS_Field dcpdx4("dcpdx4", "d_cp_d_c_4_ph", NEPTUNE::d_cp_d_c_4_ph, dcpdx[3]);
+      EOS_Field dlambdadx1("dlambdadx1", "d_lambda_d_c_1_ph", NEPTUNE::d_lambda_d_c_1_ph, dlambdadx[0]);
+      EOS_Field dlambdadx2("dlambdadx2", "d_lambda_d_c_2_ph", NEPTUNE::d_lambda_d_c_2_ph, dlambdadx[1]);
+      EOS_Field dlambdadx3("dlambdadx3", "d_lambda_d_c_3_ph", NEPTUNE::d_lambda_d_c_3_ph, dlambdadx[2]);
+      EOS_Field dlambdadx4("dlambdadx4", "d_lambda_d_c_4_ph", NEPTUNE::d_lambda_d_c_4_ph, dlambdadx[3]);
+      EOS_Field dmudx1("dmudx1", "d_mu_d_c_1_ph", NEPTUNE::d_mu_d_c_1_ph, dmudx[0]);
+      EOS_Field dmudx2("dmudx2", "d_mu_d_c_2_ph", NEPTUNE::d_mu_d_c_2_ph, dmudx[1]);
+      EOS_Field dmudx3("dmudx3", "d_mu_d_c_3_ph", NEPTUNE::d_mu_d_c_3_ph, dmudx[2]);
+      EOS_Field dmudx4("dmudx4", "d_mu_d_c_4_ph", NEPTUNE::d_mu_d_c_4_ph, dmudx[3]);
+      EOS_Field dsigmadx1("dsigmadx1", "d_sigma_d_c_1_ph", NEPTUNE::d_sigma_d_c_1_ph, dsigmadx[0]);
+      EOS_Field dsigmadx2("dsigmadx2", "d_sigma_d_c_2_ph", NEPTUNE::d_sigma_d_c_2_ph, dsigmadx[1]);
+      EOS_Field dsigmadx3("dsigmadx3", "d_sigma_d_c_3_ph", NEPTUNE::d_sigma_d_c_3_ph, dsigmadx[2]);
+      EOS_Field dsigmadx4("dsigmadx4", "d_sigma_d_c_4_ph", NEPTUNE::d_sigma_d_c_4_ph, dsigmadx[3]);
+      EOS_Field ddncvdx1("ddncvdx1", "d_dncv_d_c_1_ph", NEPTUNE::d_dncv_d_c_1_ph, ddncvdx[0]);
+      EOS_Field ddncvdx2("ddncvdx2", "d_dncv_d_c_2_ph", NEPTUNE::d_dncv_d_c_2_ph, ddncvdx[1]);
+      EOS_Field ddncvdx3("ddncvdx3", "d_dncv_d_c_3_ph", NEPTUNE::d_dncv_d_c_3_ph, ddncvdx[2]);
+      EOS_Field ddncvdx4("ddncvdx4", "d_dncv_d_c_4_ph", NEPTUNE::d_dncv_d_c_4_ph, ddncvdx[3]);
+      EOS_Field drncdx1("drncdx1", "d_rnc_d_c_1_ph", NEPTUNE::d_rnc_d_c_1_ph, drncdx[0]);
+      EOS_Field drncdx2("drncdx2", "d_rnc_d_c_2_ph", NEPTUNE::d_rnc_d_c_2_ph, drncdx[1]);
+      EOS_Field drncdx3("drncdx3", "d_rnc_d_c_3_ph", NEPTUNE::d_rnc_d_c_3_ph, drncdx[2]);
+      EOS_Field drncdx4("drncdx4", "d_rnc_d_c_4_ph", NEPTUNE::d_rnc_d_c_4_ph, drncdx[3]);
+      EOS_Field dmncdx1("dmncdx1", "d_mnc_d_c_1_ph", NEPTUNE::d_mnc_d_c_1_ph, dmncdx[0]);
+      EOS_Field dmncdx2("dmncdx2", "d_mnc_d_c_2_ph", NEPTUNE::d_mnc_d_c_2_ph, dmncdx[1]);
+      EOS_Field dmncdx3("dmncdx3", "d_mnc_d_c_3_ph", NEPTUNE::d_mnc_d_c_3_ph, dmncdx[2]);
+      EOS_Field dmncdx4("dmncdx4", "d_mnc_d_c_4_ph", NEPTUNE::d_mnc_d_c_4_ph, dmncdx[3]);
       // variables intermediaires
       double dfdpv, dfdhv, dgdpv, dgdhv, dcpgtg, cpj, lambdaj, dlambdaj, muj, dmuj;
       double mm0;
@@ -705,7 +707,7 @@ namespace NEPTUNE_EOS
         mnc[i]=0.e0;
         dncv[i]=0.e0;
         for(int j=1; j<nb_fluids; j++)
-        { 
+        {
           xnc[i] += c[j] + 1.e-99;
           err = (*this)[j].fluid().compute_cp_pT(input[iP][i],tg[i],cpj);
           err = (*this)[j].fluid().get_mm(mmj);
@@ -1234,7 +1236,7 @@ namespace NEPTUNE_EOS
           }
         }
       }
-      
+
     }
     else if (idim == 2 && id_P == 1 && id_T == 1)
     {
@@ -1245,20 +1247,20 @@ namespace NEPTUNE_EOS
       ArrOfDouble xc2(nsca,0.e0);
       ArrOfDouble xc3(nsca,0.e0);
       ArrOfDouble xc4(nsca,0.e0);
-      EOS_Field C0("c_0","c_0",xc0);
-      EOS_Field C1("c_1","c_1",xc1);
-      EOS_Field C2("c_2","c_2",xc2);
-      EOS_Field C3("c_3","c_3",xc3);
-      EOS_Field C4("c_4","c_4",xc4);
-      
+      EOS_Field C0("c_0","c_0",NEPTUNE::c_0,xc0);
+      EOS_Field C1("c_1","c_1",NEPTUNE::c_1,xc1);
+      EOS_Field C2("c_2","c_2",NEPTUNE::c_2,xc2);
+      EOS_Field C3("c_3","c_3",NEPTUNE::c_3,xc3);
+      EOS_Field C4("c_4","c_4",NEPTUNE::c_4,xc4);
+
       if (ic[0] != -1) C0 = input[ic[0]];
       if (ic[1] != -1) C1 = input[ic[1]];
       if (ic[2] != -1) C2 = input[ic[2]];
       if (ic[3] != -1) C3 = input[ic[3]];
       if (ic[4] != -1) C4 = input[ic[4]];
-      
+
       ArrOfDouble xhg(nsca,0.e0);
-      EOS_Field hg("hg","h",xhg);
+      EOS_Field hg("hg","h",NEPTUNE::h,xhg);
 
       EOS_Fields fsin_ph (nb_infields);
       fsin_ph[0] = input[iP];
@@ -1267,16 +1269,16 @@ namespace NEPTUNE_EOS
       {
         fsin_ph[i] = input[i];
       }
-      
+
       // calcul saturation Tsatp,hvsatp = f(P)
       ArrOfDouble xtsatp(nsca),xhvsatp(nsca);
-      EOS_Field tsatp("tsatp","T_sat",xtsatp);
-      EOS_Field hvsatp("hvsatp","h_v_sat",xhvsatp);
+      EOS_Field tsatp("tsatp","T_sat",NEPTUNE::T_sat,xtsatp);
+      EOS_Field hvsatp("hvsatp","h_v_sat",NEPTUNE::h_v_sat,xhvsatp);
 
       EOS_Fields fsout_sat (2);
       fsout_sat[0] = tsatp;
       fsout_sat[1] = hvsatp;
-    
+
       (*this)[0].fluid().compute(input[iP],fsout_sat,errfield);
 
       // initialisation hg
@@ -1288,21 +1290,21 @@ namespace NEPTUNE_EOS
         double hjsum=0.e0;
         double hj=0.e0;
         for(int j=1; j<nb_fluids; j++)
-        { 
+        {
           err = (*this)[j].fluid().compute_h_pT(input[iP][i],input[iT][i],hj);
           hjsum += c[j]*hj;
         }
         hg[i] = (hvsatp[i]+(input[iT][i]-tsatp[i])*2.e3)*C0[i] + hjsum; // Attention valeur de "CPCST" specifique a l'eau
       }
-      
+
       double hmax;
       //double hmin;
       err =(*this)[0].fluid().get_h_max(hmax);
       //err =(*this)[0].fluid().get_h_min(hmin);
 
       ArrOfDouble xtg(nsca),xdtg3(nsca);
-      EOS_Field tg("tg","T",xtg);
-      EOS_Field dtg3("dtg3","d_T_d_h_p",xdtg3);
+      EOS_Field tg("tg","T",NEPTUNE::T,xtg);
+      EOS_Field dtg3("dtg3","d_T_d_h_p",NEPTUNE::d_T_d_h_p,xdtg3);
 
       EOS_Fields fsout_tmp (2);
       fsout_tmp[0] = tg;
@@ -1317,7 +1319,7 @@ namespace NEPTUNE_EOS
       {
         // calcul plan (p,H)
         this->compute_perfect_gas(fsin_ph,fsout_tmp,errfield);
-        
+
         // verification convergence
         for(int i=0; i<nsca; i++)
         {
@@ -1328,7 +1330,7 @@ namespace NEPTUNE_EOS
             hg[i] = std::min(hg[i],hmax) ;
             //hg[i] = std::max(hg[i],hmin) ;
             if (fabs(tdif) <= epsn)  indic[i] = 0 ;
-            if ((fabs(tdif) > epsn) && (k >= nb_iter_max)) 
+            if ((fabs(tdif) > epsn) && (k >= nb_iter_max))
             {
               cout << "EOS_Mixing solver : No convergence in hg computation" << endl;
               return EOS_Error::error ;
@@ -1339,7 +1341,7 @@ namespace NEPTUNE_EOS
         for(int i=0; i<nsca; i++) tindic += indic[i] ;
         if (tindic == 0) break ;
       }
-      
+
       // calcul final en fonction de p et H
       this->compute_perfect_gas(fsin_ph,r,errfield);
 
@@ -1356,7 +1358,7 @@ namespace NEPTUNE_EOS
         }
       }
 
-    }    
+    }
     else
     {
       cout << "EOS_Mixing : input field must be (p,h,X) or (p,T,X) and not :" << input[0].get_property_name() << " and " << input[1].get_property_name() << endl;
@@ -1365,7 +1367,7 @@ namespace NEPTUNE_EOS
     }
 
     return EOS_Error::good ;
-   
+
   }
 
   // provisional for EOS_Mixing
@@ -1418,7 +1420,7 @@ namespace NEPTUNE_EOS
     err = (*this)[0].fluid().get_T_crit(tcrit);
     double Tinit=tcrit;
     for(int i=1; i<nb_fluids; i++)
-      { 
+      {
         err = (*this)[i].fluid().compute_cp_pT(P,Tinit,cpi); //TODO modify this function as independant of P&T
         err = (*this)[i].fluid().compute_h_pT(P,Tinit,hi);
         cpsum += c[i]*cpi;
@@ -1426,18 +1428,18 @@ namespace NEPTUNE_EOS
         hi7sum += c[i]*hi - c[i]*cpi*(Tinit-273.15); // pour coller au hi7sum de c2
         valp = std::min(valp, epspp*c[i]);
       }
-    
+
     //
     // init Pv
     //
-    
+
     Pv = c[0]*P;
     Pv = std::max(Pv,1.e-10);
-    
+
     //
     // init hv
     //
-    
+
     // calcul saturation Tsatpv, Hsatpv = f(Pv)
     double Tsatpv, hvsatpv;
     int n=1;
@@ -1445,17 +1447,17 @@ namespace NEPTUNE_EOS
     ArrOfDouble xhv(n),xtg(n),xdtgpv(n),xdtghv(n),xrv(n),xdrvpv(n),xdrvhv(n);
     ArrOfInt xerr(n);
     xpv[0]=Pv;
-    EOS_Field fin_sat ("in_sat1", "p", xpv);
-    EOS_Field fout_sat1 ("out_sat1", "T_sat", xtsatpv);
-    EOS_Field fout_sat2 ("out_sat2", "h_v_sat", xhvsatpv);
+    EOS_Field fin_sat ("in_sat1", "p",NEPTUNE::p, xpv);
+    EOS_Field fout_sat1 ("out_sat1", "T_sat",NEPTUNE::T_sat, xtsatpv);
+    EOS_Field fout_sat2 ("out_sat2", "h_v_sat",NEPTUNE::h_v_sat, xhvsatpv);
     EOS_Error_Field ferr_sat(xerr);
-    
+
     EOS_Fields fsin_sat (1);
     fsin_sat[0] = fin_sat;
     EOS_Fields fsout_sat (2);
     fsout_sat[0] = fout_sat1;
     fsout_sat[1] = fout_sat2;
-    
+
     (*this)[0].fluid().compute(fsin_sat,fsout_sat,ferr_sat);
     Tsatpv = xtsatpv[0];
     hvsatpv = xhvsatpv[0];
@@ -1470,12 +1472,12 @@ namespace NEPTUNE_EOS
     double atv = (h - zerhvs*c[0] - hi7sum) / zdeno;
     hv = acpv*atv + zerhvs;
     xhv[0]=hv;
-    
+
     //
     // Newton method
     // Resolution of F(Pv, hv)=0 and G(Pv,hv)=0
     //
-    
+
     double fff, ggg, croipv, croihv, dfdpv, dfdhv, dgdpv, dgdhv, usden; // variables intermediaires
     double dpvr = 2*valp;
     double dhvr = 2*valh;
@@ -1485,16 +1487,16 @@ namespace NEPTUNE_EOS
     int nb_iter_max = 50 ;
     for(k = 0; (k < nb_iter_max) && ((fabs(dpvr) > valp) || (fabs(dhvr) > valh)); k++) // Tests convergence
     {
-      EOS_Field fin_tmp1 ("in_tmp1", "p", xpv);
-      EOS_Field fin_tmp2 ("in_tmp2", "h", xhv);
-      EOS_Field fout_tmp1 ("out_tmp1", "T", xtg);
-      EOS_Field fout_tmp2 ("out_tmp2", "d_T_d_p_h", xdtgpv);
-      EOS_Field fout_tmp3 ("out_tmp3", "d_T_d_h_p", xdtghv);
-      EOS_Field fout_tmp4 ("out_tmp4", "rho", xrv);
-      EOS_Field fout_tmp5 ("out_tmp5", "d_rho_d_p_h", xdrvpv);
-      EOS_Field fout_tmp6 ("out_tmp6", "d_rho_d_h_p", xdrvhv);
+      EOS_Field fin_tmp1 ("in_tmp1", "p",NEPTUNE::p, xpv);
+      EOS_Field fin_tmp2 ("in_tmp2", "h",NEPTUNE::h, xhv);
+      EOS_Field fout_tmp1 ("out_tmp1", "T",NEPTUNE::T, xtg);
+      EOS_Field fout_tmp2 ("out_tmp2", "d_T_d_p_h",NEPTUNE::d_T_d_p_h, xdtgpv);
+      EOS_Field fout_tmp3 ("out_tmp3", "d_T_d_h_p",NEPTUNE::d_T_d_h_p, xdtghv);
+      EOS_Field fout_tmp4 ("out_tmp4", "rho",NEPTUNE::rho, xrv);
+      EOS_Field fout_tmp5 ("out_tmp5", "d_rho_d_p_h",NEPTUNE::d_rho_d_p_h, xdrvpv);
+      EOS_Field fout_tmp6 ("out_tmp6", "d_rho_d_h_p",NEPTUNE::d_rho_d_h_p, xdrvhv);
       EOS_Error_Field ferr_tmp(xerr);
-      
+
       EOS_Fields fsin_tmp (2);
       fsin_tmp[0] = fin_tmp1;
       fsin_tmp[1] = fin_tmp2;
@@ -1505,7 +1507,7 @@ namespace NEPTUNE_EOS
       fsout_tmp[3] = fout_tmp4;
       fsout_tmp[4] = fout_tmp5;
       fsout_tmp[5] = fout_tmp6;
-      
+
       (*this)[0].fluid().compute(fsin_tmp,fsout_tmp,ferr_tmp);
       Tg = xtg[0];
       dtgpv = xdtgpv[0];
@@ -1513,16 +1515,16 @@ namespace NEPTUNE_EOS
       rv = xrv[0];
       drvpv = xdrvpv[0];
       drvhv = xdrvhv[0]; //TODO : pas beau...
-      
+
       // calcul hi7sum
       hi7sum=0.e0;
       for(int i=1; i<nb_fluids; i++)
-      { 
+      {
         err = (*this)[i].fluid().compute_h_pT(P,Tg,hi);
         hi7sum += c[i]*hi;// attention c'est different du hi7sum de c2: hi7sum = hi7sum(c2) + cpsum*Tg
       }
-      
-      // resolution du systeme 
+
+      // resolution du systeme
       fff = hi7sum + c[0]*hv - h; // cpsum*Tg inclut dans hi7sum
       ggg = xrsum*Tg*rv + c[0]*(Pv - P);
       croipv = Tg*drvpv + rv*dtgpv;

@@ -118,6 +118,8 @@ int main(int argc, char* argv[])
 
     while(file)
        { file >> tmp_read ;
+          cout << "DEBUG: tmp_read='" << tmp_read << "' at file position " << file.tellg() << endl;
+
          if (tmp_read == "EOS")
             { if (file) file >> typwrd ;
               if (typwrd == "" ) 
@@ -166,8 +168,10 @@ int main(int argc, char* argv[])
                            }
                       }
                    else
-                      { cout << "Unvalid keyword : " << tmp_read << endl ;
-                        return 1 ;
+                      {     cerr << "Ignoring unknown line: " << tmp_read << endl;
+                            std::string tmp_line;
+                            getline(file, tmp_line); // ignore le reste de la ligne
+                            continue;
                       }
                  }
               if (iref == 0)
@@ -456,7 +460,7 @@ int main(int argc, char* argv[])
        { for (int i=0; i<noutputs_C2+1; i++) 
             { cans[i] = -1 ;
               ArrOfDouble xtmp(steps) ;
-              testvals[0]=EOS_Field("prop",outputs_C2[i].get_property_name().aschar(),xtmp) ;
+              testvals[0]=EOS_Field("prop",outputs_C2[i].get_property_name().aschar(),outputs_C2[i].get_property(),xtmp) ;
               crs=fluid[0]->compute(incals,testvals,errs) ;
               if (crs != NEPTUNE::error)
                  { noutputs_EOSb++ ;
@@ -576,7 +580,7 @@ int main(int argc, char* argv[])
        { for (int i=0; i< noutput_C2+1; i++) 
             { can[i] = -1 ;
               ArrOfDouble xtmp(steps);
-              testval[0] = EOS_Field("prop",output_C2[i].get_property_name().aschar(),xtmp) ;
+              testval[0] = EOS_Field("prop",output_C2[i].get_property_name().aschar(),output_C2[i].get_property(),xtmp) ;
               crs = fluid[0]->compute(incald,testval,errs) ;
                   
               if (crs != NEPTUNE::error)

@@ -66,10 +66,10 @@ namespace NEPTUNE_EOS_IGEN
 
     set_nodes(pmin, hmin) ;
     
-    EOS_Field p("Pressure", "p", node_p) ;
-    EOS_Field h("Enthalpy", "h", node_h) ;
-    EOS_Field p_continuity("Pressure", "p", node_p_continuity) ;
-    EOS_Field h_continuity("Enthalpy", "h", node_h_continuity) ;
+    EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
+    EOS_Field h("Enthalpy", "h", NEPTUNE::h, node_h) ;
+    EOS_Field p_continuity("Pressure", "p", NEPTUNE::p, node_p_continuity) ;
+    EOS_Field h_continuity("Enthalpy", "h", NEPTUNE::h, node_h_continuity) ;
 
     domain.resize(2) ;
     set_domain_ph(p, h) ;
@@ -95,7 +95,7 @@ namespace NEPTUNE_EOS_IGEN
 
     set_nodes(pmin) ;
 
-    EOS_Field p("Pressure", "p", node_p) ;
+    EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
 
     domain.resize(1) ;
     set_domain_p(p)  ;
@@ -147,8 +147,8 @@ namespace NEPTUNE_EOS_IGEN
     exist = true ;
     set_nodes(pmin, hmin) ;
     
-    EOS_Field p("Pressure", "p", node_p) ;
-    EOS_Field h("Enthalpy", "h", node_h) ;
+    EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
+    EOS_Field h("Enthalpy", "h", NEPTUNE::h, node_h) ;
     
     domain.resize(2) ;
     set_domain_ph(p, h) ;
@@ -165,7 +165,7 @@ namespace NEPTUNE_EOS_IGEN
     
     set_nodes(pmin) ;
     
-    EOS_Field p("Pressure", "p", node_p) ;
+    EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
 
     domain.resize(1) ;
     set_domain_p(p)  ;
@@ -194,11 +194,11 @@ namespace NEPTUNE_EOS_IGEN
          
          set_nodes(pmin, hmin) ;
          
-         EOS_Field p("Pressure", "p", node_p) ;
-         EOS_Field h("Enthalpy", "h", node_h) ;
+         EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
+         EOS_Field h("Enthalpy", "h", NEPTUNE::h, node_h) ;
          
-         EOS_Field p_continuity("Pressure", "p", node_p_continuity) ;
-         EOS_Field h_continuity("Enthalpy", "h", node_h_continuity) ;
+         EOS_Field p_continuity("Pressure", "p", NEPTUNE::p, node_p_continuity) ;
+         EOS_Field h_continuity("Enthalpy", "h", NEPTUNE::h, node_h_continuity) ;
          
          set_domain_ph(p, h) ;
          set_domain_continuity_ph(p, h) ;
@@ -238,7 +238,7 @@ namespace NEPTUNE_EOS_IGEN
          node_p.resize(nb_p) ;
          set_nodes(pmin) ;
          
-         EOS_Field p("Pressure", "p", node_p) ;
+         EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
          
          set_domain_p(p) ;
          test_qualities_nodes.resize(nb_p-1) ;
@@ -595,8 +595,8 @@ namespace NEPTUNE_EOS_IGEN
             }
          
          
-         EOS_Field p("Pressure", "p", node_p) ;
-         EOS_Field h("Enthalpy", "h", node_h) ;
+         EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
+         EOS_Field h("Enthalpy", "h", NEPTUNE::h, node_h) ;
          set_domain_ph(p, h) ;
          
          
@@ -628,7 +628,7 @@ namespace NEPTUNE_EOS_IGEN
               node_p[i+k] = node_p_tmp[i+1];
             }
          nb_mesh += k-1 ;
-         EOS_Field p("Pressure", "p", node_p) ;
+         EOS_Field p("Pressure", "p", NEPTUNE::p, node_p) ;
          set_domain_p(p) ;
          test_qualities_nodes.resize(nb_mesh) ;
          test_qualities_nodes = 1 ;
@@ -995,8 +995,8 @@ namespace NEPTUNE_EOS_IGEN
          else
             continuity_node[i] = 0 ;
        }
-    EOS_Field p("Pressure", "p", node_p_continuity) ;
-    EOS_Field h("Enthalpy", "h", node_h_continuity) ;
+    EOS_Field p("Pressure", "p", NEPTUNE::p, node_p_continuity) ;
+    EOS_Field h("Enthalpy", "h", NEPTUNE::h, node_h_continuity) ;
     set_domain_continuity_ph(p, h) ;
 
   }

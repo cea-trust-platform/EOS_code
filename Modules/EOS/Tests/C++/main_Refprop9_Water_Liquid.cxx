@@ -133,7 +133,87 @@ const char *list_prop2[] = {
                                       t_saturprop_r + sizeof(t_saturprop_r) / sizeof(string) ) ;
 #endif
 
+static EOS_Property n_list_prop1[] = {
+    NEPTUNE::p};
+static EOS_Property n_list_prop2[] = {
+    NEPTUNE::h,
+    NEPTUNE::T};
 
+static vector<EOS_Property> n_thermprop_r =
+    {NEPTUNE::T,
+     NEPTUNE::rho,
+     NEPTUNE::u,
+     NEPTUNE::s,
+     NEPTUNE::mu,
+     NEPTUNE::lambda,
+     NEPTUNE::cp,
+     NEPTUNE::sigma,
+     NEPTUNE::w,
+     NEPTUNE::g,
+     NEPTUNE::f,
+     NEPTUNE::pr,
+     NEPTUNE::beta,
+     NEPTUNE::gamma,
+     NEPTUNE::d_T_d_p_h,
+     NEPTUNE::d_T_d_h_p,
+     NEPTUNE::d_rho_d_p_h,
+     NEPTUNE::d_rho_d_h_p,
+     NEPTUNE::d_u_d_p_h,
+     NEPTUNE::d_u_d_h_p,
+     NEPTUNE::d_s_d_p_h,
+     NEPTUNE::d_s_d_h_p,
+     NEPTUNE::d_mu_d_p_h,
+     NEPTUNE::d_mu_d_h_p,
+     NEPTUNE::d_lambda_d_p_h,
+     NEPTUNE::d_lambda_d_h_p,
+     NEPTUNE::d_cp_d_p_h,
+     NEPTUNE::d_cp_d_h_p,
+     NEPTUNE::d_sigma_d_p_h,
+     NEPTUNE::d_sigma_d_h_p,
+     NEPTUNE::d_w_d_p_h,
+     NEPTUNE::d_w_d_h_p,
+     NEPTUNE::d_g_d_p_h,
+     NEPTUNE::d_g_d_h_p,
+     NEPTUNE::d_f_d_p_h,
+     NEPTUNE::d_f_d_h_p,
+     NEPTUNE::d_pr_d_p_h,
+     NEPTUNE::d_pr_d_h_p,
+     NEPTUNE::d_beta_d_p_h,
+     NEPTUNE::d_beta_d_h_p,
+     NEPTUNE::d_gamma_d_p_h,
+     NEPTUNE::d_gamma_d_h_p,
+     NEPTUNE::d_rho_d_T_p,
+     NEPTUNE::d_u_d_T_p,
+     NEPTUNE::d_s_d_T_p,
+     NEPTUNE::d_mu_d_T_p,
+     NEPTUNE::d_lambda_d_T_p,
+     NEPTUNE::d_cp_d_T_p,
+     NEPTUNE::d_sigma_d_T_p,
+     NEPTUNE::d_w_d_T_p,
+     NEPTUNE::d_g_d_T_p,
+     NEPTUNE::d_f_d_T_p,
+     NEPTUNE::d_pr_d_T_p,
+     NEPTUNE::d_beta_d_T_p,
+     NEPTUNE::d_gamma_d_T_p,
+     NEPTUNE::d_h_d_T_p,
+     NEPTUNE::d_h_d_p_T};
+
+static vector<EOS_Property> n_saturprop_r =
+    {NEPTUNE::rho_l_sat,
+     NEPTUNE::rho_v_sat,
+     NEPTUNE::h_l_sat,
+     NEPTUNE::h_v_sat,
+     NEPTUNE::cp_l_sat,
+     NEPTUNE::cp_v_sat,
+     NEPTUNE::T_sat,
+     NEPTUNE::d_rho_l_sat_d_p,
+     NEPTUNE::d_rho_v_sat_d_p,
+     NEPTUNE::d_h_l_sat_d_p,
+     NEPTUNE::d_h_v_sat_d_p,
+     NEPTUNE::d_cp_l_sat_d_p,
+     NEPTUNE::d_cp_v_sat_d_p,
+     NEPTUNE::d_T_sat_d_p,
+     NEPTUNE::d2_T_sat_d_p_d_p};
 
 
 // Call to compute(field1, result) and compute(field1, field2, result)
@@ -186,13 +266,15 @@ void test_features(EOS & eos)
   // Test with one parameter:
   {
     const char *ptr_satp ;
+    int n_satp;
     int stz = saturprop_r.size() ;
     const char ** ptr1 = list_prop1;
     while (**ptr1 != 0) 
        { for (int i=0; i<stz; i++)
-            { ptr_satp = saturprop_r[i].c_str() ; 
-              EOS_Field field1(*ptr1, *ptr1, array1);
-              EOS_Field field3(ptr_satp, ptr_satp, result);
+            { ptr_satp = saturprop_r[i].c_str() ;
+              n_satp=n_saturprop_r[i];
+              EOS_Field field1(*ptr1, *ptr1, n_list_prop1[0], array1); 
+              EOS_Field field3(ptr_satp, ptr_satp, n_satp, result); 
 
               array1[0] = 1e5 ;
               // Test field function
@@ -206,15 +288,17 @@ void test_features(EOS & eos)
   cout << "Testing field methods with 2 parameters" << endl;
   {
     const char *ptr_thep ;
+    int n_thep=0;
     int stz = thermprop_r.size() ;
     const char ** ptr1 = list_prop1 ;
     while (**ptr1 != 0) 
-       { const char ** ptr2 = list_prop2 ;
+       { n_thep=0;
+         const char ** ptr2 = list_prop2 ;
          while (**ptr2 != 0) 
             { for (int i=0; i<stz; i++)
                 { ptr_thep = thermprop_r[i].c_str() ; 
-                  EOS_Field field1(*ptr1, *ptr1, array1) ;
-                  EOS_Field field2(*ptr2, *ptr2, array2) ;
+                  EOS_Field field1(*ptr1, *ptr1, n_list_prop1[0], array1) ;
+                  EOS_Field field2(*ptr2, *ptr2,n_list_prop2[n_thep], array2) ;
                   EOS_Field field3(ptr_thep, ptr_thep, result) ;
 
                   array1[0] = 1.5e5 ;
@@ -223,6 +307,7 @@ void test_features(EOS & eos)
                   features_status(eos, err_field[0], *ptr1, *ptr2, ptr_thep);
                 }
               ptr2++ ;
+              n_thep++;
             }
          ptr1++ ;
        }
@@ -321,8 +406,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
             
       ArrOfDouble xrholsat(n);
@@ -394,12 +479,12 @@ int main()
       //compute by field
       int nbfields=6;
       EOS_Fields outsat(nbfields);
-      outsat[0]=EOS_Field("rholsat", "rho_l_sat",xrholsat);
-      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",xrhovsat);
-      outsat[2]=EOS_Field("hlsat","h_l_sat",xhlsat);
-      outsat[3]=EOS_Field("hvsat","h_v_sat",xhvsat);
-      outsat[4]=EOS_Field("tsat","T_sat",xtsat);
-      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",xdtsatdp);
+      outsat[0]=EOS_Field("rholsat", "rho_l_sat",NEPTUNE::rho_l_sat,xrholsat);
+      outsat[1]=EOS_Field("rhovsat", "rho_v_sat",NEPTUNE::rho_v_sat,xrhovsat);
+      outsat[2]=EOS_Field("hlsat","h_l_sat",NEPTUNE::h_l_sat,xhlsat);
+      outsat[3]=EOS_Field("hvsat","h_v_sat",NEPTUNE::h_v_sat,xhvsat);
+      outsat[4]=EOS_Field("tsat","T_sat",NEPTUNE::T_sat,xtsat);
+      outsat[5]=EOS_Field("dtsatdp","d_T_sat_d_p",NEPTUNE::d_T_sat_d_p,xdtsatdp);
 
       for(int i=0; i<n; i++)
         xp[i]=p;
@@ -466,9 +551,9 @@ int main()
       // -- properties=f(pT)
       int nbfields_pT=1;
       EOS_Fields outpt(nbfields_pT);
-      outpt[0]=EOS_Field("enthalpie","h",xh);
+      outpt[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xh);
 
-      EOS_Field T("Temperature","T",xt);
+      EOS_Field T("Temperature","T",NEPTUNE::T,xt);
       for(int i=0; i<n; i++)
         xt[i]=t;
       xt[0]=t;
@@ -532,26 +617,26 @@ int main()
       xhin[1]=h+100000.;
       xhin[2]=h+200000.;
 
-      EOS_Field hin("enthalpie","h",xhin);
+      EOS_Field hin("enthalpie","h",NEPTUNE::h,xhin);
 
       int nbfields_ph=16;
       EOS_Fields outph(nbfields_ph);
-      outph[0]=EOS_Field("temperature","T",xtout);
-      outph[1]=EOS_Field("rho","rho",xrho);
-      outph[2]=EOS_Field("w","w",xw);
-      outph[3]=EOS_Field("u","u",xu);
-      outph[4]=EOS_Field("cp","cp",xcp);
-      outph[5]=EOS_Field("mu","mu",xmu);
-      outph[6]=EOS_Field("lambda","lambda",xlambda);
-      outph[7]=EOS_Field("sigma","sigma",xsigma);
-      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",xdrhodp);
-      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",xdrhodh);
-      outph[10]=EOS_Field("dtdh","d_T_d_h_p",xdtdh);
-      outph[11]=EOS_Field("g","g",xg);
-      outph[12]=EOS_Field("f","f",xf);
-      outph[13]=EOS_Field("pr","pr",xpr);
-      outph[14]=EOS_Field("cv","cv",xcv);
-      outph[15]=EOS_Field("beta","beta",xbeta);
+      outph[0]=EOS_Field("temperature","T",NEPTUNE::T,xtout);
+      outph[1]=EOS_Field("rho","rho",NEPTUNE::rho,xrho);
+      outph[2]=EOS_Field("w","w",NEPTUNE::w,xw);
+      outph[3]=EOS_Field("u","u",NEPTUNE::u,xu);
+      outph[4]=EOS_Field("cp","cp",NEPTUNE::cp,xcp);
+      outph[5]=EOS_Field("mu","mu",NEPTUNE::mu,xmu);
+      outph[6]=EOS_Field("lambda","lambda",NEPTUNE::lambda,xlambda);
+      outph[7]=EOS_Field("sigma","sigma",NEPTUNE::sigma,xsigma);
+      outph[8]=EOS_Field("drhodp","d_rho_d_p_h",NEPTUNE::d_rho_d_p_h,xdrhodp);
+      outph[9]=EOS_Field("drhodh","d_rho_d_h_p",NEPTUNE::d_rho_d_h_p,xdrhodh);
+      outph[10]=EOS_Field("dtdh","d_T_d_h_p",NEPTUNE::d_T_d_h_p,xdtdh);
+      outph[11]=EOS_Field("g","g",NEPTUNE::g,xg);
+      outph[12]=EOS_Field("f","f",NEPTUNE::f,xf);
+      outph[13]=EOS_Field("pr","pr",NEPTUNE::pr,xpr);
+      outph[14]=EOS_Field("cv","cv",NEPTUNE::cv,xcv);
+      outph[15]=EOS_Field("beta","beta",NEPTUNE::beta,xbeta);
 
       cr=refprop9l.compute(P,hin,outph,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -583,11 +668,11 @@ int main()
       xsin[1]=s+100.;
       xsin[2]=s+200.;
 
-      EOS_Field sin("entropie","s",xsin);
+      EOS_Field sin("entropie","s",NEPTUNE::s,xsin);
 
       int nbfields_ps=1;
       EOS_Fields outps(nbfields_ps);
-      outps[0]=EOS_Field("enthalpie","h",xhout);
+      outps[0]=EOS_Field("enthalpie","h",NEPTUNE::h,xhout);
           
       cr=refprop9l.compute(P,sin,outps,err_f);
       cout << endl<< "field field fields [cr=" << cr <<"]"<< endl;
@@ -617,8 +702,8 @@ int main()
       ArrOfDouble xp(n);
       ArrOfDouble xh(n);
       ArrOfInt ierr(n);
-      EOS_Field P("Pressure","p",xp);
-      EOS_Field h_f("Enthalpy","h",xh);
+      EOS_Field P("Pressure","p",NEPTUNE::p,xp);
+      EOS_Field h_f("Enthalpy","h",NEPTUNE::h,xh);
       EOS_Error_Field err_f(ierr);
 
       ArrOfDouble xrholsat(n);
