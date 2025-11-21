@@ -373,40 +373,6 @@ namespace NEPTUNE
 
     return EOS_Error::good;
   }
-
-EOS_Error EOS_Med::add_Scalar_Int(AString &sf_name, int &value)
-{
-    char scalar_name[MED_NAME_SIZE + 1];
-    char desc[MED_COMMENT_SIZE + 1] = "";
-    med_int val = value;
-
-    strcpy(scalar_name, sf_name.aschar());
-
-    // création du paramètre scalaire
-    if (MEDparameterCr(fid,
-                       scalar_name,
-                       MED_INT32,   // <== type MED pour un entier
-                       desc,
-                       MED_SNAME_BLANK) < 0)
-    {
-        cerr << "Error creating scalar int variable: " << scalar_name << endl;
-        return EOS_Error::error;
-    }
-
-    // écriture de la valeur du scalaire
-    if (MEDparameterValueWr(fid,
-                            scalar_name,
-                            MED_NO_DT,
-                            MED_NO_IT,
-                            0.0,
-                            (unsigned char *)&val) < 0)
-    {
-        cerr << "Error writing scalar int variable: " << scalar_name << endl;
-        return EOS_Error::error;
-    }
-
-    return EOS_Error::good;
-}
   /* EOS_Med::add_Connectivity_1D :
    *              Add connectivity for segments
    *              EOS_Fields node must be sort
