@@ -512,7 +512,7 @@ namespace NEPTUNE_EOS
       if (dim[i] == 1) // sat or spinodal
       {
         n_p_satlim.resize(nb_nodes);
-        EOS_Field pf("P", "p", n_p_satlim);
+        EOS_Field pf("P", "p",NEPTUNE::p, n_p_satlim);
 
         if (names[i] == "sat_domain") // saturation
         {
@@ -560,8 +560,8 @@ namespace NEPTUNE_EOS
         n_p_ph.resize(nb_nodes);
         n_h_ph.resize(nb_nodes);
 
-        EOS_Field pf("P", "p", n_p_ph);
-        EOS_Field hf("h", "h", n_h_ph);
+        EOS_Field pf("P", "p",NEPTUNE::p, n_p_ph);
+        EOS_Field hf("h", "h",NEPTUNE::h, n_h_ph);
 
         nodes_ph[0] = pf;
         nodes_ph[1] = hf;
@@ -629,7 +629,7 @@ namespace NEPTUNE_EOS
       {
         ArrOfDouble xval(nbcomp);
         all_prop_val[nprop_all] = xval;
-        EOS_Field res(name.aschar(), name.aschar(), all_prop_val[nprop_all]);
+        EOS_Field res(name.aschar(), name.aschar(),gen_property_number(name.aschar()), all_prop_val[nprop_all]);
         errM = med.get_Champ_Noeud(name, res);
         if (errM != EOS_Error::good)
         {
@@ -695,20 +695,27 @@ namespace NEPTUNE_EOS
     for (int n_prop = 0; n_prop < val_prop_ph.size(); n_prop++)
     {
       name_prop = val_prop_ph[n_prop].get_property_name();
+      EOS_Property property = gen_property_number(name_prop.aschar());
       Ipp_Prop_ph[name_prop] = n_prop;
+      Ipp_Prop_ph_property[property]= n_prop;
     }
     // domaine sat
     for (int n_prop = 0; n_prop < val_prop_sat.size(); n_prop++)
     {
       name_prop = val_prop_sat[n_prop].get_property_name();
+       EOS_Property property = gen_property_number(name_prop.aschar());
       Ipp_Prop_sat[name_prop] = n_prop;
+      Ipp_Prop_sat_property[property]= n_prop;
     }
 
     // domaine lim
     for (int n_prop = 0; n_prop < val_prop_lim.size(); n_prop++)
     {
       name_prop = val_prop_lim[n_prop].get_property_name();
+       EOS_Property property = gen_property_number(name_prop.aschar());
       Ipp_Prop_lim[name_prop] = n_prop;
+      Ipp_Prop_lim_property[property]= n_prop;
+      
     }
 
     /*for (auto toto : Ipp_Prop_sat)
@@ -768,7 +775,7 @@ namespace NEPTUNE_EOS
         {
           ArrOfDouble xval(nbcomp);
           all_prop_val.push_back(xval);
-          EOS_Field res(namecov, namecov, all_prop_val[all_prop_val.size() - 1]);
+          EOS_Field res(namecov, namecov,gen_property_number(namecov), all_prop_val[all_prop_val.size() - 1]);
 
           med.get_Champ_Noeud(name, res);
           if (m_ass == "ph_domain")
@@ -1344,12 +1351,8 @@ namespace NEPTUNE_EOS
 
   // recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille réelle
   //  idx = indice dans le maillage med = fnodes2phnodes[indice_h + Nb_pts_h * indice_p]
-  EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, std::map<AString, int>::const_iterator n_prop, EOS_Fields &cell_val) const
+  EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, std::map<EOS_Property, int>::const_iterator n_prop, EOS_Fields &cell_val) const
   {
-    //AString property = n_prop->first; // name of the property
-    //char propcov[PROPNAME_MSIZE];
-    //eostp_strcov(property.aschar(), propcov); // propcov : base alphanumérical property
-    //EOS_thermprop enum_property = nam2num_thermprop(propcov);
 
     unsigned int nb_properties = val_prop_ph.size();
     unsigned int i_property = n_prop->second;
@@ -1367,11 +1370,10 @@ namespace NEPTUNE_EOS
     return err_cell_ph[i_property][idx].get_code();
   }
 
-  EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, std::map<AString, int>::const_iterator n_prop, int sat_lim, EOS_Fields &segm_val) const
+  EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, std::map<EOS_Property, int>::const_iterator n_prop, int sat_lim, EOS_Fields &segm_val) const
   {
-    unsigned int i_prop = n_prop->second;
-    AString name_prop = n_prop->first;
-    unsigned int nb_properties;
+    int i_prop = n_prop->second;
+    int nb_properties;
     if (sat_lim == 0)
     {
       nb_properties = val_prop_sat.size();
@@ -1427,7 +1429,7 @@ namespace NEPTUNE_EOS
     return err_segm_sat[i_prop][idx].get_code();
   }
 
-  EOS_Internal_Error EOS_Ipp::compute_Ipp_error(double &error_tot, double *&error_cells, AString prop)
+  EOS_Internal_Error EOS_Ipp::compute_Ipp_error(double &error_tot, double *&error_cells, EOS_Property prop)
   {
 
     if (switch_model == false)
@@ -1435,13 +1437,13 @@ namespace NEPTUNE_EOS
 
       return MODEL_NOT_INIT;
     }
-    std::map<AString, int>::const_iterator n_prop;
-    if (find_in_Ipp_Prop_ph(n_prop, prop) == EOS_Error::bad)
+    std::map<EOS_Property, int>::const_iterator n_prop;
+    if (find_in_Ipp_Prop_ph_property(n_prop, prop) == EOS_Error::bad)
     {
       std::cout << "The property wasn't in the database";
       return PROP_NOT_IN_DB;
     }
-    char *propchar = prop.aschar();
+
     unsigned int nb_cell = index_conn_ph.size() - 1;
     error_cells = new double[nb_cell];
     EOS_Fields values(3);
@@ -1456,15 +1458,16 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(4);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     ArrOfDouble ap_bary(1);
     ArrOfDouble ah_bary(1);
-    EOS_Field p_bary("P", "p", ap_bary);
-    EOS_Field h_bary("h", "h", ah_bary);
-    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
+    EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
+    EOS_Field h_bary("h", "h",NEPTUNE::h, ah_bary);
+    AString prop_string = val_prop_ph[prop].get_property_name();
+    EOS_Field rf_fluid_bary(prop_string.aschar(), prop_string.aschar(),prop, ar_fluid_bary);
 
-    EOS_Field rf(propchar, propchar, ar);
+    EOS_Field rf(prop_string.aschar(), prop_string.aschar(),prop, ar);
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1515,7 +1518,7 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
-  EOS_Internal_Error EOS_Ipp::compute_Ipp_sat_error(double &error_tot, double *&error_cells, AString prop)
+  EOS_Internal_Error EOS_Ipp::compute_Ipp_sat_error(double &error_tot, double *&error_cells, EOS_Property prop)
   {
 
     if (switch_model == false)
@@ -1524,13 +1527,14 @@ namespace NEPTUNE_EOS
       return MODEL_NOT_INIT;
     }
 
-    std::map<AString, int>::const_iterator n_prop;
-    if (find_in_Ipp_Prop_sat(n_prop, prop) == EOS_Error::bad)
+    std::map<EOS_Property, int>::const_iterator n_prop;
+    if (find_in_Ipp_Prop_sat_property(n_prop, prop) == EOS_Error::bad)
     {
       std::cout << "The property is not in the database.";
       return PROP_NOT_IN_DB; // "Erreur: Nom de propriété non-trouvé dans le plan ph"
     }
-    char *propchar = prop.aschar();
+    int property_index = Ipp_Prop_sat_property[prop];
+    AString propname = val_prop_sat[property_index].get_property_name();
     int nb_seg = nodes_sat[0].size();
 
     error_cells = new double[nb_seg];
@@ -1548,11 +1552,11 @@ namespace NEPTUNE_EOS
     ArrOfDouble ar(2);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p", ap);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
     ArrOfDouble ap_bary(1);
-    EOS_Field p_bary("P", "p", ap_bary);
-    EOS_Field rf_fluid_bary(propchar, propchar, ar_fluid_bary);
-    EOS_Field rf(propchar, propchar, ar);
+    EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
+    EOS_Field rf_fluid_bary(propname.aschar(), propname.aschar(),prop, ar_fluid_bary);
+    EOS_Field rf(propname.aschar(), propname.aschar(),prop, ar);
     values[0] = pf;
     values[1] = rf;
     std::cout << "Le nombre de noeuds est " << nodes_sat[0].size() << endl;
@@ -1653,16 +1657,17 @@ namespace NEPTUNE_EOS
     pcal = hcal = h = 0.e0;
 
     EOS_Fields values(3);
-    AString prop = "T";
-    std::map<AString, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph);
+    AString propname = "T";
+    EOS_Property prop = NEPTUNE::T;
+    std::map<EOS_Property, int>::const_iterator n_prop;
+    find(n_prop, prop, Ipp_Prop_ph_property);
 
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
-    EOS_Field rf(prop.aschar(), prop.aschar(), ar);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
+    EOS_Field rf(propname.aschar(), propname.aschar(),prop, ar);
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1718,15 +1723,16 @@ namespace NEPTUNE_EOS
 
     EOS_Fields values(3);
     AString prop = "T";
-    std::map<AString, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph);
+    EOS_Property prop_enum = NEPTUNE::T;
+    std::map<EOS_Property, int>::const_iterator n_prop;
+    find(n_prop,  prop_enum, Ipp_Prop_ph_property);
 
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
-    EOS_Field pf("P", "p", ap);
-    EOS_Field hf("h", "h", ah);
-    EOS_Field rf(prop.aschar(), prop.aschar(), ar);
+    EOS_Field pf("P", "p",NEPTUNE::p, ap);
+    EOS_Field hf("h", "h",NEPTUNE::h, ah);
+    EOS_Field rf(prop.aschar(), prop.aschar(),prop_enum, ar);
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
@@ -1768,7 +1774,7 @@ namespace NEPTUNE_EOS
     return EOS_Ipp::INVERT_h_pT;
   }
 
-  EOS_Internal_Error EOS_Ipp::compute_prop_ph(const std::map<AString, int>::const_iterator
+  EOS_Internal_Error EOS_Ipp::compute_prop_ph(const std::map<EOS_Property, int>::const_iterator
                                                   n_prop,
                                               double p, double h, double &res) const
   {
@@ -1776,15 +1782,15 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error ierr;
     EOS_Fields values(3);
 
-    //int i_prop = n_prop->second;
-    AString name_prop = n_prop->first;
-
+    int prop = n_prop->second;     
+    AString name_prop_string= val_prop_ph[prop].get_property_name();
+     
     ArrOfDouble ap(4);
     ArrOfDouble ah(4);
     ArrOfDouble ar(4);
     EOS_Field pf("P", "p",NEPTUNE::p, ap);
     EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
+    EOS_Field rf(name_prop_string.aschar(), name_prop_string.aschar(),prop, ar); // transformer prop.
     // EOS_Field rf(prop,prop,ar)
     values[0] = pf;
     values[1] = hf;
@@ -1805,7 +1811,7 @@ namespace NEPTUNE_EOS
   }
 
   // tag = 0 pour sat et tag = 1 pour lim
-  EOS_Internal_Error EOS_Ipp::compute_prop_p(std::map<AString, int>::const_iterator
+  EOS_Internal_Error EOS_Ipp::compute_prop_p(std::map<EOS_Property, int>::const_iterator
                                                  n_prop,
                                              double p, int sat_lim, double &res) const
   {
@@ -1815,8 +1821,10 @@ namespace NEPTUNE_EOS
     ArrOfDouble ap(2);
     ArrOfDouble ar(2);
     EOS_Field pf("P", "p", NEPTUNE::p, ap);
-    AString name_prop = n_prop->first;
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(), ar); // transformer prop.
+    EOS_Property prop = n_prop->first;
+    int i_prop = n_prop->second;
+    AString name_prop= val_prop_ph[i_prop].get_property_name();
+    EOS_Field rf(name_prop.aschar(), name_prop.aschar(),prop, ar); // transformer prop.
 
     values[0] = pf;
     values[1] = rf;
@@ -1845,6 +1853,16 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
+  EOS_Error EOS_Ipp::find_in_Ipp_Prop_ph_property(std::map<EOS_Property, int>::const_iterator &it,const EOS_Property &prop) const
+{
+    it = Ipp_Prop_ph_property.find(prop);
+
+    if (it == Ipp_Prop_ph_property.end())
+        return EOS_Error::bad;
+
+    return EOS_Error::good;
+}
+
   EOS_Error EOS_Ipp::find_in_Ipp_Prop_sat(std::map<AString, int>::const_iterator &it, const AString &prop) const
   {
     char propconv[PROPNAME_MSIZE];
@@ -1857,11 +1875,21 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
-  EOS_Error EOS_Ipp::find(std::map<AString, int>::const_iterator &it, const AString &prop, const std::map<AString, int> &map) const
+  EOS_Error EOS_Ipp::find_in_Ipp_Prop_sat_property(std::map<EOS_Property, int>::const_iterator &it,const EOS_Property &prop) const
   {
-    char propconv[PROPNAME_MSIZE];
-    eostp_strcov(prop.aschar(), propconv);
-    it = map.find(propconv);
+
+    it = Ipp_Prop_sat_property.find(prop);
+    if (it == Ipp_Prop_sat_property.end())
+    {
+      return EOS_Error::bad;
+    }
+    return EOS_Error::good;
+  }
+
+
+  EOS_Error EOS_Ipp::find(std::map<EOS_Property, int>::const_iterator &it, const EOS_Property &prop, const std::map<EOS_Property, int> &map) const
+  {
+    it = map.find(prop);
     if (it == map.end())
     {
       return EOS_Error::bad;

@@ -464,7 +464,7 @@ namespace NEPTUNE_EOS_IGEN
               if (err != EOS_Error::good)   return err ;
               for (int i=0; i<nb_sp; i++)
                  { const char *pprop = str_properties[i].c_str() ;
-                   EOS_Field field(pprop, pprop, x) ;//TODO: eos_strcp 
+                   EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
 
                    fluid->compute(mesh_ph->get_domain_continuity()[1], 
                                   mesh_ph->get_domain_continuity()[0], field, err_field) ;
@@ -480,7 +480,7 @@ namespace NEPTUNE_EOS_IGEN
               if (err != EOS_Error::good)   return err ;
               for (int i=0; i<nb_sp; i++)
                  { const char *pprop = str_properties[i].c_str() ;
-                   EOS_Field field(pprop, pprop, x) ;//TODO: eos_strcp 
+                   EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
 
                    err = compute_properties(field, err_field) ;
                    err = med.add_Champ_Noeud(mesh_name,field) ;
@@ -528,7 +528,7 @@ namespace NEPTUNE_EOS_IGEN
            int nb_sps = str_properties_sat.size() ;
            for (int i=0; i<nb_sps; i++)
               { const char *pprop = str_properties_sat[i].c_str() ;
-                EOS_Field field(pprop, pprop, x) ;//TODO: eos_strcp 
+                EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
 
                 fluid->compute(mesh_p->get_domain()[0], field, err_field) ;
                 err = med.add_Champ_Noeud(mesh_name,field) ;
@@ -571,7 +571,7 @@ namespace NEPTUNE_EOS_IGEN
            int nb_spl = str_properties_lim.size() ;
            for (int i=0; i<nb_spl; i++)
               { const char *pprop = str_properties_lim[i].c_str() ;
-                EOS_Field field(pprop, pprop, x) ; //TODO: eos_strcp 
+                EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
 
                 fluid->compute(mesh_p->get_domain()[0], field, err_field) ;
                 err = med.add_Champ_Noeud(mesh_name,field) ;
