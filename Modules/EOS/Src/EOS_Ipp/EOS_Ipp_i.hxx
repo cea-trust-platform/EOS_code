@@ -100,33 +100,29 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error EOS_Ipp::compute_T_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::T;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_T_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_T_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_T_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_T_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_rho_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::rho;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_rho_pT(double p, double T, double &res) const
@@ -142,25 +138,22 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error EOS_Ipp::compute_d_rho_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_rho_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_rho_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_rho_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_u_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::u;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_u_pT(double p, double T, double &res) const
@@ -176,25 +169,22 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error EOS_Ipp::compute_d_u_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_u_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_u_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_u_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_s_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::s;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_s_pT(double p, double T, double &res) const
@@ -210,25 +200,22 @@ namespace NEPTUNE_EOS
   inline EOS_Internal_Error EOS_Ipp::compute_d_s_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_s_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_s_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_s_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_mu_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::mu;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
   inline EOS_Internal_Error EOS_Ipp::compute_mu_pT(double p, double T, double &res) const
   {
@@ -249,9 +236,8 @@ namespace NEPTUNE_EOS
         return EOS_Internal_Error::OK;
     }
     EOS_Property prop= NEPTUNE::d_mu_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
   inline EOS_Internal_Error EOS_Ipp::compute_d_mu_d_h_p_ph(double p, double h, double &res) const
   {
@@ -262,17 +248,15 @@ namespace NEPTUNE_EOS
         return EOS_Internal_Error::OK;
     }
     EOS_Property prop= NEPTUNE::d_mu_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_lambda_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::lambda;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_lambda_pT(double p, double T, double &res) const
@@ -294,9 +278,8 @@ namespace NEPTUNE_EOS
         if (err==EOS_Error::good)
           return EOS_Internal_Error::OK;
     }
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
 
@@ -341,23 +324,20 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   inline EOS_Internal_Error EOS_Ipp::compute_d_lambda_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_lambda_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
     if ( swch_calc_deriv_fld_==true)
     {
       EOS_Error err = obj_fluid->compute_d_lambda_d_h_p_ph(p,h,res);
       if (err==EOS_Error::good)
         return EOS_Internal_Error::OK;
     }
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_cp_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::cp;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_cp_pT(double p, double T, double &res) const
@@ -379,9 +359,8 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
         return EOS_Internal_Error::OK;
     }
 
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_cp_d_h_p_ph(double p, double h, double &res) const
@@ -393,17 +372,15 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
         return EOS_Internal_Error::OK;
     }
 
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_sigma_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::sigma;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_sigma_pT(double p, double T, double &res) const
@@ -425,9 +402,8 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
       if (err==EOS_Error::good)
         return EOS_Internal_Error::OK;
     }*/
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_sigma_d_h_p_ph(double p, double h, double &res) const
@@ -439,17 +415,15 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
       if (err==EOS_Error::good)
         return EOS_Internal_Error::OK;
     }*/
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_w_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::w;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_w_pT(double p, double T, double &res) const
@@ -465,25 +439,22 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   inline EOS_Internal_Error EOS_Ipp::compute_d_w_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_w_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_w_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_w_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_g_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::g;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_g_pT(double p, double T, double &res) const
@@ -499,25 +470,22 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   inline EOS_Internal_Error EOS_Ipp::compute_d_g_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_g_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_g_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_g_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_f_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::f;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_f_pT(double p, double T, double &res) const
@@ -533,25 +501,22 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   inline EOS_Internal_Error EOS_Ipp::compute_d_f_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_f_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_f_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_f_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_pr_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::pr;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_pr_pT(double p, double T, double &res) const
@@ -567,24 +532,21 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   inline EOS_Internal_Error EOS_Ipp::compute_d_pr_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_pr_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_pr_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_pr_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
   inline EOS_Internal_Error EOS_Ipp::compute_beta_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::beta;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_beta_pT(double p, double T, double &res) const
@@ -606,25 +568,22 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
         return EOS_Internal_Error::OK;
     }
     EOS_Property prop= NEPTUNE::d_beta_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_beta_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_beta_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_gamma_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::gamma;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_gamma_pT(double p, double T, double &res) const
@@ -640,25 +599,22 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   inline EOS_Internal_Error EOS_Ipp::compute_d_gamma_d_p_h_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_gamma_d_p_h;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_gamma_d_h_p_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_gamma_d_h_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_ph_property);
-    return compute_prop_ph(n_prop, p, h, res);
+
+    return compute_prop_ph(prop, p, h, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_T_sat_p(double p, double &res) const
   {
     EOS_Property prop= NEPTUNE::T_sat;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_sat_property);
-    return compute_prop_p(n_prop, p, 0, res);
+
+    return compute_prop_p(prop, p, 0, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_rho_l_sat_p(double p, double &res) const
@@ -666,9 +622,8 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
      if(switch_comp_sat_) 
      {
       EOS_Property prop= NEPTUNE::rho_l_sat;
-      std::map<EOS_Property, int>::const_iterator n_prop;
-      find(n_prop, prop, Ipp_Prop_sat_property);
-      return compute_prop_p(n_prop, p, 0, res);
+
+      return compute_prop_p(prop, p, 0, res);
      }
      else
      {
@@ -684,9 +639,8 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
     if(switch_comp_sat_) 
      {
       EOS_Property prop= NEPTUNE::rho_v_sat;
-      std::map<EOS_Property, int>::const_iterator n_prop;
-      find(n_prop, prop, Ipp_Prop_sat_property);
-      return compute_prop_p(n_prop, p, 0, res);
+
+      return compute_prop_p(prop, p, 0, res);
      }
      else
      {
@@ -702,9 +656,8 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
     if(switch_comp_sat_) 
      {
       EOS_Property prop= NEPTUNE::cp_l_sat;
-      std::map<EOS_Property, int>::const_iterator n_prop;
-      find(n_prop, prop, Ipp_Prop_sat_property);
-      return compute_prop_p(n_prop, p, 0, res);
+
+      return compute_prop_p(prop, p, 0, res);
      }
      else
      {
@@ -720,9 +673,8 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
     if(switch_comp_sat_) 
      {
       EOS_Property prop= NEPTUNE::cp_v_sat;
-      std::map<EOS_Property, int>::const_iterator n_prop;
-      find(n_prop, prop, Ipp_Prop_sat_property);
-      return compute_prop_p(n_prop, p, 0, res);
+
+      return compute_prop_p(prop, p, 0, res);
      }
      else
      {
@@ -738,9 +690,7 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
     if(switch_comp_sat_) 
      {
       EOS_Property prop= NEPTUNE::h_l_sat;
-      std::map<EOS_Property, int>::const_iterator n_prop;
-      find(n_prop, prop, Ipp_Prop_sat_property);
-      return compute_prop_p(n_prop, p, 0, res);
+      return compute_prop_p(prop, p, 0, res);
      }
      else
      {
@@ -759,9 +709,7 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
         if(switch_comp_sat_) 
      {
        EOS_Property prop= NEPTUNE::h_v_sat;
-       std::map<EOS_Property, int>::const_iterator n_prop;
-       find(n_prop, prop, Ipp_Prop_sat_property);
-       return compute_prop_p(n_prop, p, 0, res);
+       return compute_prop_p(prop, p, 0, res);
      }
      else
      {
@@ -780,16 +728,12 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
         if(switch_comp_sat_) 
      {
       EOS_Property prop= NEPTUNE::d_rho_l_sat_d_p;
-      std::map<EOS_Property, int>::const_iterator n_prop;
-      find(n_prop, prop, Ipp_Prop_sat_property);
-      return compute_prop_p(n_prop, p, 0, res);
+      return compute_prop_p(prop, p, 0, res);
      }
      else
      {
       EOS_Property prop= NEPTUNE::d_rho_l_sat_d_p ;
-      std::map<EOS_Property, int>::const_iterator   n_prop;
-      find(n_prop,prop,Ipp_Prop_sat_property);;
-      return compute_prop_p(n_prop,p,0,res) ;
+      return compute_prop_p(prop,p,0,res) ;
      }
     
   }
@@ -797,65 +741,57 @@ inline EOS_Internal_Error EOS_Ipp:: compute_d_h_d_T_p_pT(double p, double T, dou
   inline EOS_Internal_Error EOS_Ipp::compute_d_rho_v_sat_d_p_p(double p, double &res) const
   { 
     EOS_Property prop= NEPTUNE::d_rho_v_sat_d_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_sat_property);
-    return compute_prop_p(n_prop, p, 0, res);
+
+    return compute_prop_p(prop, p, 0, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_h_l_sat_d_p_p(double p, double &res) const
   { 
     EOS_Property prop= NEPTUNE::d_h_l_sat_d_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_sat_property);
-    return compute_prop_p(n_prop, p, 0, res);
+
+    return compute_prop_p(prop, p, 0, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_h_v_sat_d_p_p(double p, double &res) const
   { 
     EOS_Property prop= NEPTUNE::d_h_v_sat_d_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_sat_property);
-    return compute_prop_p(n_prop, p, 0, res);
+
+    return compute_prop_p(prop, p, 0, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_cp_l_sat_d_p_p(double p, double &res) const
   { 
     EOS_Property prop= NEPTUNE::d_cp_l_sat_d_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_sat_property);
-    return compute_prop_p(n_prop, p, 0, res);
+
+    return compute_prop_p(prop, p, 0, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_cp_v_sat_d_p_p(double p, double &res) const
   {
     EOS_Property prop= NEPTUNE::d_cp_v_sat_d_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_sat_property);
-    return compute_prop_p(n_prop, p, 0, res);
+
+    return compute_prop_p(prop, p, 0, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_d_T_sat_d_p_p(double p, double &res) const
   { 
     EOS_Property prop= NEPTUNE::d_T_sat_d_p;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_sat_property);
-    return compute_prop_p(n_prop, p, 0, res);
+
+    return compute_prop_p(prop, p, 0, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_h_l_lim_p(double p, double &res) const
   { 
     EOS_Property prop= NEPTUNE::h_l_lim;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_lim_property);
-    return compute_prop_p(n_prop, p, 1, res);
+
+    return compute_prop_p(prop, p, 1, res);
   }
 
   inline EOS_Internal_Error EOS_Ipp::compute_h_v_lim_p(double p, double &res) const
   { 
     EOS_Property prop= NEPTUNE::h_v_lim;
-    std::map<EOS_Property, int>::const_iterator n_prop;
-    find(n_prop, prop, Ipp_Prop_lim_property);
-    return compute_prop_p(n_prop, p, 1, res);
+
+    return compute_prop_p(prop, p, 1, res);
   }
 
 }
