@@ -86,9 +86,10 @@ namespace NEPTUNE_EOS
                                      , double C_2=0
                                      , double C_3=0
                                      , double C_4=0
+                                     , double C_5=0
                                      ) const ;
       virtual int compute_pv_hv_ph(double P, double h, double &Pv, double &hv,
-                 double c_0, double c_1, double c_2, double c_3, double c_4) const;
+                 double c_0, double c_1, double c_2, double c_3, double c_4, double c_5) const;
 
 //! use for surcharged operator<<
       void fluid_description(std::ostream& flux) const

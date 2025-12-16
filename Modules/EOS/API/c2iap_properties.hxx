@@ -52,24 +52,28 @@ namespace NEPTUNE
       "[d(hlsvsc)/d(c_2)]Ph"      ,   //  [d(hlsvsc)/d(c_2)]Ph
       "[d(hlsvsc)/d(c_3)]Ph"      ,   //  [d(hlsvsc)/d(c_3)]Ph
       "[d(hlsvsc)/d(c_4)]Ph"      ,   //  [d(hlsvsc)/d(c_4)]Ph
+      "[d(hlsvsc)/d(c_5)]Ph"      ,   //  [d(hlsvsc)/d(c_5)]Ph
       "[d(epstg)/dP]h"            ,   //  [d(epstg)/dP]h      
       "[d(epstg)/dh]P"            ,   //  [d(epstg)/dh]P      
       "[d(epstg)/d(c_1)]Ph"       ,   //  [d(epstg)/d(c_1)]Ph 
       "[d(epstg)/d(c_2)]Ph"       ,   //  [d(epstg)/d(c_2)]Ph 
       "[d(epstg)/d(c_3)]Ph"       ,   //  [d(epstg)/d(c_3)]Ph
       "[d(epstg)/d(c_4)]Ph"       ,   //  [d(epstg)/d(c_4)]Ph
+      "[d(epstg)/d(c_5)]Ph"       ,   //  [d(epstg)/d(c_5)]Ph
       "[d(hvspsc)/dP]h"           ,   //  [d(hvspsc)/dP]h
       "[d(hvspsc)/dh]P"           ,   //  [d(hvspsc)/dh]P
       "[d(hvspsc)/df(c_1)]Ph"     ,   //  [d(hvspsc)/df(c_1)]Ph
       "[d(hvspsc)/df(c_2)]Ph"     ,   //  [d(hvspsc)/df(c_2)]Ph
       "[d(hvspsc)/df(c_3)]Ph"     ,   //  [d(hvspsc)/df(c_3)]Ph
       "[d(hvspsc)/df(c_4)]Ph"     ,   //  [d(hvspsc)/df(c_4)]Ph
+      "[d(hvspsc)/df(c_5)]Ph"     ,   //  [d(hvspsc)/df(c_5)]Ph
       "[d(hvsvsc)/dP]h"           ,   //  [d(hvsvsc)/dP]h            
       "[d(hvsvsc)/dh]P"           ,   //  [d(hvsvsc)/dh]P            
       "[d(hvsvsc)/d(c_1)]Ph"      ,   //  [d(hvsvsc)/d(c_1)]Ph
       "[d(hvsvsc)/d(c_2)]Ph"      ,   //  [d(hvsvsc)/d(c_2)]Ph
       "[d(hvsvsc)/d(c_3)]Ph"      ,   //  [d(hvsvsc)/d(c_3)]Ph
       "[d(hvsvsc)/d(c_4)]Ph"          //  [d(hvsvsc)/d(c_4)]Ph
+      "[d(hvsvsc)/d(c_5)]Ph"          //  [d(hvsvsc)/d(c_5)]Ph
     };
 #if  __cplusplus <  201103L
  static std::vector<string> c2iapprop(t_c2iapprop, 
@@ -98,25 +102,29 @@ namespace NEPTUNE
       d_hlsvsc_d_c_2_ph  ,
       d_hlsvsc_d_c_3_ph  ,
       d_hlsvsc_d_c_4_ph  ,
+      d_hlsvsc_d_c_5_ph  ,
       d_epstg_dp_h       ,
       d_epstg_dh_p       ,
       d_epstg_d_c_1_ph   ,
       d_epstg_d_c_2_ph   ,
       d_epstg_d_c_3_ph   ,
       d_epstg_d_c_4_ph   ,
+      d_epstg_d_c_5_ph   ,
       d_hvspsc_dp_h      ,
       d_hvspsc_dh_p      ,
       d_hvspsc_d_c_1_ph  ,
       d_hvspsc_d_c_2_ph  ,
       d_hvspsc_d_c_3_ph  ,
       d_hvspsc_d_c_4_ph  ,
+      d_hvspsc_d_c_5_ph  ,
       d_hvsvsc_dp_h      ,     
       d_hvsvsc_dh_p      ,     
       d_hvsvsc_d_c_1_ph  ,
       d_hvsvsc_d_c_2_ph  ,
       d_hvsvsc_d_c_3_ph  ,
       d_hvsvsc_d_c_4_ph  ,
-      lastC2iapProperty = d_hvsvsc_d_c_4_ph
+      d_hvsvsc_d_c_5_ph  ,
+      lastC2iapProperty = d_hvsvsc_d_c_5_ph
     };
   enum EOS_limc2iapprop
     { EOS_TCIAPROP     =  epstl ,
