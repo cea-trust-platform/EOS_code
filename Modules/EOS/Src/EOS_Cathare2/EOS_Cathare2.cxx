@@ -188,7 +188,7 @@ namespace NEPTUNE_EOS
          err.set_worst_error(err_tmp) ;
          return err.find_worst_error().generic_error() ;
        }
-    else if (property_number == NEPTUNE::T_sat)
+    else if ((property_number == NEPTUNE::T_sat) || (property_number == NEPTUNE::T) )
        { ArrOfInt err_array(in.size()) ;
          EOS_Error_Field err_tmp(err_array) ;
          local_pilot->verify(in, err, phase) ;
