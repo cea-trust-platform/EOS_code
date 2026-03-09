@@ -4,9 +4,11 @@
 #include <vector>
 #include <string>
 #include "EOS/API/EOS.hxx"
+#include <sstream>
 
 class EOS_py {
 public:
+    EOS_py(const std::string& meth);
     EOS_py(const std::string& meth, const std::string& ref);
     ~EOS_py();
 
@@ -25,7 +27,30 @@ public:
     );
 
 private:
-    NEPTUNE::EOS* liquid;
+    NEPTUNE::EOS* eos_;
 };
+
+class EOS_Mixing_py {
+public:
+    EOS_Mixing_py(
+        std::vector<std::string> methods,
+        std::vector<std::string> refs
+    );
+
+    ~EOS_Mixing_py();
+
+    std::vector<std::vector<double>> compute(
+        std::vector<std::string> input_names,
+        std::vector<std::vector<double>> input_values,
+        std::vector<std::string> output_names
+    );
+    std::string describe() const;
+
+private:
+    NEPTUNE::EOS* mixing_;
+    std::vector<NEPTUNE::EOS*> components_;
+};
+
+
 
 #endif
