@@ -668,7 +668,7 @@ namespace NEPTUNE_EOS
       (tmax, dmax, arr_molfrac, h_tmp);
     hmax = refprop_nrj_2_eos(h_tmp);
     pmin = 1; // patch to get pmin and hmin -> not given by REFPROP
-    hmin = -42.2097;//get with compute_h_pt (p=1, T=273.15)
+    hmin = -94524.8;//get with compute_h_pt (p=1, Tmin=251.165)
   }
 
 
