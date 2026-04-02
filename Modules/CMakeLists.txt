@@ -12,6 +12,8 @@ if (WITH_IPP)
   add_subdirectory(EOS_IGen)
 endif (WITH_IPP)
 
+add_subdirectory(Tracy)
+
 add_subdirectory(Common)
 add_subdirectory(Functions)
 add_subdirectory(Language)

@@ -16,6 +16,7 @@
 
 
 #include "Cathare2.hxx"
+#include "tracy/Tracy.hpp"
 
 extern "C" 
 { void F77NAME(c2_erpile)(char* format) 
@@ -1129,7 +1130,7 @@ namespace CATHARE2
   int CATHARE2::unmap_eos_field(const EOS_Field& f, domain mode)
   { assert(f.size() == nsca) ;
     //ArrOfDouble ltmp ;
-
+    ZoneScoped;
     switch(f.get_property_number()) 
        {
          case NEPTUNE::p :
@@ -2011,7 +2012,9 @@ namespace CATHARE2
   }
 
   EOS_Error CATHARE2::calc2_ph(const EOS_Field &p, const EOS_Field &h, EOS_Fields &out, EOS_Error_Field &ferr)
-  { typ_ths = TH_space::Ph ;
+  { 
+    ZoneScoped;
+    typ_ths = TH_space::Ph ;
     ferr = EOS_Internal_Error::OK ;
     nsca = p.size() ;
     assert (nsca > 0) ;
