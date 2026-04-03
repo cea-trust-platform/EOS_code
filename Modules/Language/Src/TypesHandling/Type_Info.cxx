@@ -25,7 +25,9 @@ namespace TYPESHANDLING
                         RegisteredClass& (*f) (void), unsigned int size, 
                         const NEPTUNE::AString& mother)
     : type_id(-1), sz(size)
-  { set_name(name)      ;
+  { ZoneScopedNS("Type_Info::Type_Info", 5);
+    ZoneText("with mother", sizeof("with mother"));
+    set_name(name)      ;
     set_comment(com)    ;
     set_mother(mother)  ;
     create_instance = f ;
@@ -35,7 +37,9 @@ namespace TYPESHANDLING
   Type_Info::Type_Info (const NEPTUNE::AString &name, const NEPTUNE::AString &com, 
                         RegisteredClass& (*f) (void), unsigned int size)
     : type_id(-1), sz(size)
-  { set_name(name)      ;
+  { ZoneScopedNS("Type_Info::Type_Info", 5);
+    ZoneText("without mother", sizeof("without mother"));
+    set_name(name)      ;
     set_comment(com)    ;
     set_mother("")      ;
     create_instance = f ;

@@ -16,6 +16,7 @@
 
 
 #include "EOS_Cathare2Vapor.hxx"
+#include "tracy/Tracy.hpp"
 
 using namespace NEPTUNE ;
 
@@ -24,7 +25,8 @@ namespace NEPTUNE_EOS
   const AString EOS_Cathare2Vapor::phasename("Vapor") ;
 
   static RegisteredClass& Cathare2Vapor_create()
-  { return *(new EOS_Cathare2Vapor()) ;
+  { ZoneScopedNS("Cathare2Vapor_create",3);
+    return *(new EOS_Cathare2Vapor()) ;
   }
 
   EOS_Cathare2Vapor::EOS_Cathare2Vapor() : EOS_Cathare2(CATHARE2::vapor)
@@ -42,7 +44,8 @@ namespace NEPTUNE_EOS
                                                   Cathare2Vapor_create)) ;
 
   const Type_Info& EOS_Cathare2Vapor::get_Type_Info () const
-  { return (Types_Info::instance())[type_Id];
+  { ZoneScopedNS("EOS_Cathare2Vapor::get_Type_Info", 5);
+    return (Types_Info::instance())[type_Id];
   }
 
   const AString& EOS_Cathare2Vapor::phase_name() const
@@ -51,7 +54,7 @@ namespace NEPTUNE_EOS
 
   EOS_Error EOS_Cathare2Vapor::calc2_mixing(const int n, const EOS_Fields& in, EOS_Fields& out, EOS_Error_Field& ferr)
   { // set_mixing_properties has already been done for (r,cp0,cp1,...)
-    
+    ZoneScopedNS("EOS_Cathare2Vapor::calc2_mixing", 5);
     CATHARE2::CATHARE2 *local_pilot;
 
     #ifdef _OPENMP

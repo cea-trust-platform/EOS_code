@@ -78,7 +78,7 @@ if (WITH_GUI)
     message(FATAL_ERROR " ! Problem SWIG. perhaps you may choose the option --without-gui")
   endif  (${RES_VAR})
   add_library(${NLIB_IHM} SHARED ${SRCS} ${LSO})
-  target_link_libraries(${NLIB_IHM} PUBLIC ${GLOBALEXT_LIB} ${Python_LIBRARIES})
+  target_link_libraries(${NLIB_IHM} PUBLIC ${GLOBALEXT_LIB} ${Python_LIBRARIES} tracy)
   target_include_directories(${NLIB_IHM} PUBLIC ${CMAKE_BINARY_DIR}/Modules/EOS/API ${CMAKE_BINARY_DIR}/Modules ${CMAKE_CURRENT_SOURCE_DIR})
 
 else (WITH_GUI)

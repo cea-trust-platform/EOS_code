@@ -17,6 +17,7 @@
 
 #ifndef EOS_Refprop10_i_H
 #define EOS_Refprop10_i_H
+#include "tracy/Tracy.hpp"
 
 namespace NEPTUNE_EOS
 {
@@ -34,31 +35,38 @@ namespace NEPTUNE_EOS
    *
    */
   inline double EOS_Refprop10::kpa2pa(double p) const
-  { return 1.e3*p ;
+  { ZoneScopedNS("EOS_Refprop10::kpa2pa", 3);
+    return 1.e3*p ;
   }
 
   inline double EOS_Refprop10::pa2kpa(double p) const
-  { return 1.e-3*p ;
+  { ZoneScopedNS("EOS_Refprop10::pa2kpa", 3);
+    return 1.e-3*p ;
   }
 
   inline double EOS_Refprop10::mol2kg(double mol) const
-  { return (1e-3*mol*wmm) ;  //wmm in refprop : g/mol
+  { ZoneScopedNS("EOS_Refprop10::mol2kg", 3);
+    return (1e-3*mol*wmm) ;  //wmm in refprop : g/mol
   }
 
   inline double EOS_Refprop10::kg2mol(double kg) const
-  { return ((1e3*kg)/wmm) ; //wmm in refprop : g/mol
+  { ZoneScopedNS("EOS_Refprop10::kg2mol", 3);
+    return ((1e3*kg)/wmm) ; //wmm in refprop : g/mol
 
   }
   inline double EOS_Refprop10::micropa2pa(double p) const
-  { return 1e-6*p ;
+  { ZoneScopedNS("EOS_Refprop10::micropa2pa", 3);
+    return 1e-6*p ;
   }
 
   inline double EOS_Refprop10::pa2micropa(double p) const
-  { return 1e6*p ;
+  { ZoneScopedNS("EOS_Refprop10::pa2micropa", 3);
+    return 1e6*p ;
   }
 
   inline double EOS_Refprop10::eos_rho_2_refprop(double rho) const
   { //kg/m3 ---> mol/l
+    ZoneScopedNS("EOS_Refprop10::eos_rho_2_refprop", 3);
     double rho_mol ;
     rho_mol = kg2mol(rho) ;
     return 1.e-3*rho_mol  ;
@@ -66,22 +74,26 @@ namespace NEPTUNE_EOS
   }
   inline double EOS_Refprop10::refprop_rho_2_eos(double rho) const
   { //mol/l ---> kg/m3
+    ZoneScopedNS("EOS_Refprop10::refprop_rho_2_eos", 3);
     double rho_kg ;
     rho_kg = mol2kg(rho) ;
     return 1.e3*rho_kg   ;
   }
 
   inline double EOS_Refprop10::eos_nrj_2_refprop(double nrj) const
-  { return (nrj/kg2mol(1.e0)) ;  //J/Kg ---> J/mol
+  { ZoneScopedNS("EOS_Refprop10::eos_nrf_2_refprop", 3);
+    return (nrj/kg2mol(1.e0)) ;  //J/Kg ---> J/mol
   }
 
   inline double EOS_Refprop10::refprop_nrj_2_eos(double nrj) const
-  { return (nrj/mol2kg(1.e0)) ;  //J/mol ---> J/Kg
+  { ZoneScopedNS("EOS_Refprop10::refprop_nrf_2_eos", 3);
+    return (nrj/mol2kg(1.e0)) ;  //J/mol ---> J/Kg
   }
 
   //SATURATION FONCTIONS
   inline EOS_Internal_Error EOS_Refprop10::compute_rho_l_sat_p(double p, double& rho_l_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_rho_l_sat_p", 3);
+    EOS_Internal_Error err ;
     double t = 0, rhov, xliq, xvapint ;
     int i=1 ;
     rho_l_sat = 0.e0 ;
@@ -106,7 +118,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_rho_v_sat_p(double p, double& rho_v_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_rho_v_sat_p", 3);
+    EOS_Internal_Error err ;
     double t = 0, rhol, xliq, xvapint;
     int i=1;
     rho_v_sat = 0.e0 ;
@@ -131,7 +144,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_T_sat_p(double p, double& t_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_T_sat_p", 3);
+    EOS_Internal_Error err ;
     double rhol, rhov, xliq, xvapint;
     int i=1;
     t_sat = 0.e0 ;
@@ -153,7 +167,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_l_sat_p(double p, double& h_l_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_l_sat_p", 3);
+    EOS_Internal_Error err ;
     double t = 0, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
     int i=1;
@@ -179,7 +194,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_v_sat_p(double p, double& h_v_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_v_sat_p", 3);
+    EOS_Internal_Error err ;
     double t = 0, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
     int i=1;
@@ -205,7 +221,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_cp_l_sat_p(double p, double& cp_l_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_cp_l_sat_p", 3);
+    EOS_Internal_Error err ;
     double t = 0, rhol, rhov, xliq, xvapint, cp, cv;
     int i=1;
     cp_l_sat = 0.e0 ;
@@ -230,7 +247,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_cp_v_sat_p(double p, double& cp_v_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_cp_v_sat_p", 3);
+    EOS_Internal_Error err ;
     double t = 0, rhol, rhov, xliq, xvapint, cp, cv;
     int i=2;
     cp_v_sat = 0.e0 ;
@@ -255,7 +273,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_l_sat_T(double T, double& h_lsat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_l_sat_T", 3);
+    EOS_Internal_Error err ;
     double p_sat, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
     int i = 1;
@@ -279,7 +298,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_v_sat_T(double T, double& h_vsat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_v_sat_T", 3);
+    EOS_Internal_Error err ;
     double p_sat, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
     int i = 1;
@@ -304,7 +324,8 @@ namespace NEPTUNE_EOS
 
 
   inline EOS_Internal_Error EOS_Refprop10::compute_p_sat_T(double T, double& p_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_p_sat_T", 3);
+    EOS_Internal_Error err ;
     double rhol, rhov, xliq, xvapint;
     double p_refprop = 0.e0 ;
     int i = 1;
@@ -327,7 +348,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_d_T_sat_d_p_p(double p, double& dt_sat) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_d_T_sat_d_p_p", 3);
+    EOS_Internal_Error err ;
     dt_sat = 0.e0 ;
 
     //reset fluid with setup
@@ -366,12 +388,13 @@ namespace NEPTUNE_EOS
 
   //! h(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_h_pT(double p, double T, double& h) const
-  { return call_tpflsh(EOS_thermprop::h, p, T, h) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_pT", 3);
+    return call_tpflsh(EOS_thermprop::h, p, T, h) ;
   }
 
   //! dh/dT  (p constante)
   inline EOS_Internal_Error EOS_Refprop10::compute_d_h_d_T_p_pT(double p, double T, double& h) const
-  {
+  { ZoneScopedNS("EOS_Refprop10::compute_d_h_d_T_p_pT", 3);
     EOS_Internal_Error err;
     double rho, dhdt_d, dhdd_t, dhdd_p, dhdp_t,dhdp_d;
 
@@ -390,12 +413,14 @@ namespace NEPTUNE_EOS
 
   //! h(p,s)
   inline EOS_Internal_Error EOS_Refprop10::compute_h_ps(double p, double s, double& h) const
-  { return call_psflsh(EOS_thermprop::h, p, s, h) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_ps", 3);
+    return call_psflsh(EOS_thermprop::h, p, s, h) ;
   }
 
   //! rho(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_rho_pT(double p, double T, double& rho) const
-  { EOS_Internal_Error err, err2 ;
+  { ZoneScopedNS("EOS_Refprop10::compute_rho_pT", 3);
+    EOS_Internal_Error err, err2 ;
     int kph ;
 
     err = calrp_kph_pT(p,T,kph);
@@ -410,17 +435,20 @@ namespace NEPTUNE_EOS
 
   //! u(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_u_pT(double p, double T, double& u) const
-  { return call_tpflsh(EOS_thermprop::u, p, T, u) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_u_pT", 3);
+    return call_tpflsh(EOS_thermprop::u, p, T, u) ;
   }
 
   //! s(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_s_pT(double p, double T, double& s) const
-  { return call_tpflsh(EOS_thermprop::s, p, T, s) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_s_pT", 3);
+    return call_tpflsh(EOS_thermprop::s, p, T, s) ;
   }
 
   //! mu(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_mu_pT(double p, double T, double& mu) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_mu_pT", 3);
+    EOS_Internal_Error err ;
     double rho, tcx ;
     mu = 0.e0 ;
 
@@ -442,7 +470,8 @@ namespace NEPTUNE_EOS
 
   //! lambda(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_lambda_pT(double p, double T, double& lambda) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_lambda_pT", 3);
+    EOS_Internal_Error err ;
     double rho, eta;
     lambda = 0.e0 ;
 
@@ -462,12 +491,14 @@ namespace NEPTUNE_EOS
 
   //! cp(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_cp_pT(double p, double T, double& cp) const
-  { return call_tpflsh(EOS_thermprop::cp, p, T, cp);
+  { ZoneScopedNS("EOS_Refprop10::compute_cp_pT", 3);
+    return call_tpflsh(EOS_thermprop::cp, p, T, cp);
   }
 
   //! sigma(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_sigma_pT(double p, double T, double& sigma) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_sigma_pT", 3);
+    EOS_Internal_Error err ;
     double rho = 0.0, rhol, rhov, q, e, h, s, cv, cp, w;
     std::vector<double> xl(nbcomp), xv(nbcomp);
 
@@ -493,12 +524,14 @@ namespace NEPTUNE_EOS
 
   //! w(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_w_pT(double p, double T, double& w) const
-  { return call_tpflsh(EOS_thermprop::w, p, T, w);
+  { ZoneScopedNS("EOS_Refprop10::compute_w_pT", 3);
+    return call_tpflsh(EOS_thermprop::w, p, T, w);
   }
 
   //! T(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_T_ph(double p, double h, double& T) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_T_ph", 3);
+    EOS_Internal_Error err ;
     int kph ;
 
     err = calrp_kph(p,h,kph);
@@ -510,7 +543,8 @@ namespace NEPTUNE_EOS
 
   //! rho(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_rho_ph(double p, double h, double& rho) const
-  { EOS_Internal_Error err, err2, err3 ;
+  { ZoneScopedNS("EOS_Refprop10::compute_rho_ph", 3);
+    EOS_Internal_Error err, err2, err3 ;
     int kph ;
 
     err = calrp_kph(p,h,kph);
@@ -525,7 +559,8 @@ namespace NEPTUNE_EOS
 
   //! u(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_u_ph(double p, double h, double& u) const
-  { return call_phflsh(EOS_thermprop::u, p, h, u) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_u_ph", 3);
+    return call_phflsh(EOS_thermprop::u, p, h, u) ;
   }
 
   //! cp(p,h)
@@ -535,7 +570,8 @@ namespace NEPTUNE_EOS
 
   //! s(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_s_ph(double p, double h, double& s) const
-  { return call_phflsh(EOS_thermprop::s, p, h, s) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_s_ph", 3);
+    return call_phflsh(EOS_thermprop::s, p, h, s) ;
   }
 
   //! w(p,h)
@@ -545,12 +581,14 @@ namespace NEPTUNE_EOS
 
   //! cv(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_cv_ph(double p, double h, double& cv) const
-  { return call_phflsh(EOS_thermprop::cv, p, h, cv) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_cv_ph", 3);
+    return call_phflsh(EOS_thermprop::cv, p, h, cv) ;
   }
 
   //! lambda(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_lambda_ph(double p, double h, double& lambda) const
-  { EOS_Internal_Error err;
+  { ZoneScopedNS("EOS_Refprop10::compute_lambda_ph", 3);
+    EOS_Internal_Error err;
     double rho, t, eta;
 
     lambda = 0.e0 ;
@@ -574,7 +612,8 @@ namespace NEPTUNE_EOS
 
   //! beta(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_beta_ph(double p, double h, double& beta) const
-  { double rho, t, pi, e, s, cv, cp, w, Z ;
+  { ZoneScopedNS("EOS_Refprop10::compute_beta_ph", 3);
+    double rho, t, pi, e, s, cv, cp, w, Z ;
         double hjt,A, G, xkappa,dPdrho,d2PdD2,dPT,drhodT,drhodP,spare1,spare2,spare3, spare4;
     EOS_Internal_Error err ;
 
@@ -598,7 +637,8 @@ namespace NEPTUNE_EOS
 
   //! mu(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_mu_ph(double p, double h, double& mu) const
-  { double rho, t, tcx;
+  { ZoneScopedNS("EOS_Refprop10::compute_mu_ph", 3);
+    double rho, t, tcx;
     EOS_Internal_Error err ;
     mu = 0.e0 ;
 
@@ -622,7 +662,8 @@ namespace NEPTUNE_EOS
   //! sigma(p,h)
   inline EOS_Internal_Error
   EOS_Refprop10::compute_sigma_ph(double p, double h, double& sigma) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::compute_sigma_ph", 3);
+    EOS_Internal_Error err ;
     double t = 0, rho, rhol, rhov, q, e, s, cv, cp, w;
     std::vector<double> xl(nbcomp), xv(nbcomp);
 
@@ -648,7 +689,8 @@ namespace NEPTUNE_EOS
 
   //! d(rho)/dp    at constant specific enthalpy
   inline EOS_Internal_Error EOS_Refprop10::compute_d_rho_d_p_h_ph(double p, double h, double& drhodp_h) const
-  { double t = 0, rho, drhodp_t, drhodt_p, dtdp_h;
+  { ZoneScopedNS("EOS_Refprop10::compute_d_rho_d_p_h_ph", 3);
+    double t = 0, rho, drhodp_t, drhodt_p, dtdp_h;
     EOS_Internal_Error err ;
 
     err = compute_rho_ph(p,h, rho) ;
@@ -675,7 +717,8 @@ namespace NEPTUNE_EOS
 
   //! d(rho)/dh      at constant pressure
   inline EOS_Internal_Error EOS_Refprop10::compute_d_rho_d_h_p_ph(double p, double h, double& drhodh_p) const
-  { double t = 0, rho, drhodt_p, dtdh_p;
+  { ZoneScopedNS("EOS_Refprop10::compute_d_rho_d_h_p_ph", 3);
+    double t = 0, rho, drhodt_p, dtdh_p;
     EOS_Internal_Error err ;
 
     err = compute_rho_ph(p,h, rho) ;
@@ -702,17 +745,20 @@ namespace NEPTUNE_EOS
 
   //! d(T)/dp      at constant specific enthalpy
   inline EOS_Internal_Error EOS_Refprop10::compute_d_T_d_p_h_ph(double p, double h, double& dtdp) const
-  { return call_dhd1(EOS_thermprop::d_T_d_p_h, p, h, dtdp) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_d_T_d_p_h_ph", 3);
+    return call_dhd1(EOS_thermprop::d_T_d_p_h, p, h, dtdp) ;
   }
 
   //! d(T)/dh      at constant pressure
   inline EOS_Internal_Error EOS_Refprop10::compute_d_T_d_h_p_ph(double p, double h, double& dtdh) const
-  { return call_dhd1(EOS_thermprop::d_T_d_h_p, p, h, dtdh) ;
+  { ZoneScopedNS("EOS_Refprop10::compute_d_T_d_h_p_ph", 3);
+    return call_dhd1(EOS_thermprop::d_T_d_h_p, p, h, dtdh) ;
   }
 
   //! g(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_g_pT(double p, double T, double& g) const
-  { double rho ;
+  { ZoneScopedNS("EOS_Refprop10::compute_g_pT", 3);
+    double rho ;
     EOS_Internal_Error err ;
 
     err = compute_rho_pT(p,T,rho) ;
@@ -723,7 +769,8 @@ namespace NEPTUNE_EOS
 
   //! g(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_g_ph(double p, double h, double& g) const
-  { double rho,T ;
+  { ZoneScopedNS("EOS_Refprop10::compute_g_ph", 3);
+    double rho,T ;
     EOS_Internal_Error err ;
 
     err = compute_rho_ph(p,h,rho) ;
@@ -737,7 +784,8 @@ namespace NEPTUNE_EOS
 
   //! f(p,T)
   inline EOS_Internal_Error EOS_Refprop10::compute_f_pT(double p, double T, double& f) const
-  { double rho ;
+  { ZoneScopedNS("EOS_Refprop10::compute_f_pT", 3);
+    double rho ;
     EOS_Internal_Error err ;
 
     err = compute_rho_pT(p,T,rho) ;
@@ -748,7 +796,8 @@ namespace NEPTUNE_EOS
 
   //! f(p,h)
   inline EOS_Internal_Error EOS_Refprop10::compute_f_ph(double p, double h, double& f) const
-  { double rho,T ;
+  { ZoneScopedNS("EOS_Refprop10::compute_f_ph", 3);
+    double rho,T ;
     EOS_Internal_Error err ;
 
     err = compute_rho_ph(p,h,rho) ;
@@ -762,73 +811,84 @@ namespace NEPTUNE_EOS
 
   //! tcrit
   inline EOS_Internal_Error EOS_Refprop10::get_T_crit(double& T_crit) const
-  { T_crit = tcrit ;
+  { ZoneScopedNS("EOS_Refprop10::get_T_crit", 3);
+    T_crit = tcrit ;
     return EOS_Internal_Error::OK ;
   }
 
   //! pcrit
   inline EOS_Internal_Error EOS_Refprop10::get_p_crit(double& p_crit) const
-  { p_crit = pcrit ;
+  { ZoneScopedNS("EOS_Refprop10::get_p_crit", 3);
+    p_crit = pcrit ;
     return EOS_Internal_Error::OK ;
   }
 
   //! rhocrit
   inline EOS_Internal_Error EOS_Refprop10::get_rho_crit(double& rho_crit) const
-  { rho_crit = rhocrit;
+  { ZoneScopedNS("EOS_Refprop10::get_rho_crit", 3);
+    rho_crit = rhocrit;
     return EOS_Internal_Error::OK ;
   }
 
   //! hcrit
   inline EOS_Internal_Error EOS_Refprop10::get_h_crit(double& h_crit) const
-  { h_crit = hcrit ;
+  { ZoneScopedNS("EOS_Refprop10::get_h_crit", 3);
+    h_crit = hcrit ;
     return EOS_Internal_Error::OK ;
   }
 
   //! limits values
   inline EOS_Internal_Error EOS_Refprop10::get_T_min(double& T_min) const
-  { T_min = tmin ;
+  { ZoneScopedNS("EOS_Refprop10::get_T_min", 3);
+    T_min = tmin ;
     return EOS_Internal_Error::OK ;
   }
 
   inline EOS_Internal_Error EOS_Refprop10::get_T_max(double& T_max) const
-  { T_max = tmax ;
+  { ZoneScopedNS("EOS_Refprop10::get_T_max", 3);
+    T_max = tmax ;
     return EOS_Internal_Error::OK ;
   }
    inline EOS_Internal_Error
    EOS_Refprop10::get_p_min(double& p_min) const
-   {
+   { ZoneScopedNS("EOS_Refprop10::get_p_min", 3);
      p_min = pmin;
      return EOS_Internal_Error::OK ;
    }
 
   inline EOS_Internal_Error EOS_Refprop10::get_p_max(double& p_max) const
-  { p_max = pmax ;
+  { ZoneScopedNS("EOS_Refprop10::get_p_max", 3);
+    p_max = pmax ;
     return EOS_Internal_Error::OK ;
   }
 
   inline EOS_Internal_Error EOS_Refprop10::get_rho_max(double& rho_max) const
-  { rho_max = rhomax ;
+  { ZoneScopedNS("EOS_Refprop10::get_rho_max", 3);
+    rho_max = rhomax ;
     return EOS_Internal_Error::OK ;
   }
    inline EOS_Internal_Error
    EOS_Refprop10::get_h_min(double& h_min) const
-   {
+   { ZoneScopedNS("EOS_Refprop10::get_h_min", 3);
      h_min = hmin;
      return EOS_Internal_Error::OK ;
    }
 
   inline EOS_Internal_Error EOS_Refprop10::get_h_max(double& h_max) const
-  { h_max = hmax ;
+  { ZoneScopedNS("EOS_Refprop10::get_h_max", 3);
+    h_max = hmax ;
     return EOS_Internal_Error::OK ;
   }
   //! Molar mass (kg/mol)
   inline EOS_Internal_Error EOS_Refprop10::get_mm(double& mm) const
-  { mm = 1.e-3*wmm ;
+  { ZoneScopedNS("EOS_Refprop10::get_mm", 3);
+    mm = 1.e-3*wmm ;
     return EOS_Internal_Error::OK ;
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_l_lim_p(double p, double& h_l) const
-  { double temp_sat=0.0, rhol_sat=0.0 ;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_l_lim_p", 3);
+    double temp_sat=0.0, rhol_sat=0.0 ;
     double bid0=0.0, bid1=0.0, bid2=0.0 ;
     int iph = 1 ;
 
@@ -856,7 +916,8 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10::compute_h_v_lim_p(double p, double& h_v) const
-  { double temp_sat=0.0, rhov_sat =0.0;
+  { ZoneScopedNS("EOS_Refprop10::compute_h_v_lim_p", 3);
+    double temp_sat=0.0, rhov_sat =0.0;
     double bid0=0.0, bid1=0.0, bid2=0.0 ;
     int iph = 1 ;
     EOS_Internal_Error err ;
@@ -884,7 +945,7 @@ namespace NEPTUNE_EOS
 
   //! Compute REFPROP phase flag (1=liquid ; 2=vapor)
   inline EOS_Internal_Error EOS_Refprop10::calrp_kph(double p, double h, int& kph) const
-  {
+  { ZoneScopedNS("EOS_Refprop10::calrp_kph", 3);
     EOS_Internal_Error err ;
     if (p >= pcrit)
       { kph=1;
@@ -909,7 +970,8 @@ namespace NEPTUNE_EOS
 
   //! Compute REFPROP phase flag (1=liquid ; 2=vapor) in (p,T)
   inline EOS_Internal_Error EOS_Refprop10::calrp_kph_pT(double p, double T, int& kph) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::calrp_kph_pT", 3);
+    EOS_Internal_Error err ;
 
     if (p >= pcrit)
       { kph=1 ;
@@ -928,7 +990,8 @@ namespace NEPTUNE_EOS
 
   //! rho(p,T,kph) with REFPROP phase flag (1=liquid ; 2=vapor)
   inline EOS_Internal_Error EOS_Refprop10::calrp_rho_pT_kph(double p, double T, int kph, double& rho) const
-  { double rho_refprop = 0.e0 ;
+  { ZoneScopedNS("EOS_Refprop10::calrp_rho_pT_kph", 3);
+    double rho_refprop = 0.e0 ;
     EOS_Internal_Error err = call_tprho_kph(p,T,kph,rho_refprop);
     rho = refprop_rho_2_eos(rho_refprop);
     return err ;
@@ -936,7 +999,8 @@ namespace NEPTUNE_EOS
 
   //! call_phfl1  : T(p,h) with the phase flag kph (1=liquid ; 2=vapor)
   inline EOS_Internal_Error EOS_Refprop10::call_phfl1(double p, double h, int kph, double& T) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::call_phfl1", 3);
+    EOS_Internal_Error err ;
     double p_refprop = pa2kpa(p);
     double h_refprop = eos_nrj_2_refprop(h);
     double rho_refprop = 0.e0 ;
@@ -958,7 +1022,8 @@ namespace NEPTUNE_EOS
 
   //! call_tprho : rho(p,T) with the phase flag kph (1=liquid ; 2=vapor) - rho return with refprop unit
   inline EOS_Internal_Error EOS_Refprop10::call_tprho_kph(double p, double T, int kph, double& rho_refprop) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10::call_tprho_kph", 3);
+    EOS_Internal_Error err ;
     //reset fluid with setup
     err = callSetup() ;
     if (err.generic_error() != EOS_Error::good)  return err ;

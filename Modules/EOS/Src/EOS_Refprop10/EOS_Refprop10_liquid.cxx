@@ -33,7 +33,8 @@ namespace NEPTUNE_EOS
   }
   
   static RegisteredClass& EOS_Refprop10_liquid_create()
-  { return *(new EOS_Refprop10_liquid());
+  {ZoneScopedNS("EOS_Refprop10_liquid_create", 3); 
+   return *(new EOS_Refprop10_liquid());
   }
 
   int EOS_Refprop10_liquid::type_Id = (RegisterType("EOS_Refprop10_liquid", "EOS_Fluid",
@@ -43,13 +44,15 @@ namespace NEPTUNE_EOS
 
 
   int EOS_Refprop10_liquid::init(const Strings& strings)
-  { int iret ;
+  { ZoneScopedNS("EOS_Refprop10_liquid::init", 3);
+    int iret ;
     iret = EOS_Refprop10::init(strings) ;
     return iret ;
   }
 
   EOS_Internal_Error EOS_Refprop10_liquid::call_therm(EOS_thermprop prop, double T, double rho, double& value) const
-  { EOS_Internal_Error err ;
+  { ZoneScopedNS("EOS_Refprop10_liquid::call_therm", 3);
+    EOS_Internal_Error err ;
     double e, h, p,s, cv, cp, w, hjt ;
 
     //reset fluid with setup

@@ -16,6 +16,7 @@
 
 
 #include "EOS_Cathare2.hxx"
+#include "tracy/Tracy.hpp"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -53,7 +54,8 @@ namespace NEPTUNE_EOS
   }
 
   static RegisteredClass& Cathare2_create()
-  { return *(new EOS_Cathare2()) ;
+  { ZoneScopedNS("Cathare2_create", 3);
+    return *(new EOS_Cathare2()) ;
   }
 
   EOS_Cathare2::EOS_Cathare2(CATHARE2::domain the_phase) :
@@ -71,7 +73,8 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Cathare2::~EOS_Cathare2()
-  { if (pilot) delete pilot;
+  { ZoneScopedNS("EOS_Cathare2::~EOS_Cathare2", 3);
+    if (pilot) delete pilot;
     pilot = NULL;
   }
 
@@ -84,11 +87,14 @@ namespace NEPTUNE_EOS
   ));
 
   const Type_Info& EOS_Cathare2::get_Type_Info () const
-  { return (Types_Info::instance())[type_Id] ;
+  { ZoneScopedNS("EOS_Cathare2::get_Type_Info", 5);
+    return (Types_Info::instance())[type_Id] ;
   }
 
   int EOS_Cathare2::init(const Strings& args) 
-  { int i = 0 ;
+  { ZoneScopedNS("EOS_Cathare2::init", 5);
+    ZoneText("With one args argument", sizeof("With one args argument"));
+    int i = 0 ;
     if (pilot == NULL) {
 
       bool err = false;
@@ -159,7 +165,9 @@ namespace NEPTUNE_EOS
   }
 
   int EOS_Cathare2::init(const Strings& args, const Strings& other_args) 
-  { int iret ;
+  { ZoneScopedNS("EOS_Cathare2::init", 5);
+    ZoneText("With two args arguments", sizeof("With two args arguments"));
+    int iret ;
     iret = init(args) ;
     if (iret == (int)EOS_Error::good)  iret = init(other_args) ;
     return iret ;
@@ -167,7 +175,8 @@ namespace NEPTUNE_EOS
 
   EOS_Error EOS_Cathare2::compute (const EOS_Field& in, EOS_Fields& out, 
                                    EOS_Error_Field& err) const 
-  { 
+  { ZoneScopedNS("EOS_Cathare2::compute", 5);
+    ZoneText("EOS_Field in into EOS_Fields out", sizeof("EOS_Field in into EOS_Fields out"));
     CATHARE2::CATHARE2 * local_pilot;
 
     #ifdef _OPENMP
@@ -237,7 +246,9 @@ namespace NEPTUNE_EOS
 
   EOS_Error EOS_Cathare2::compute (const EOS_Field& in1, const EOS_Field& in2, 
                                    EOS_Fields& out, EOS_Error_Field& err) const 
-  { CATHARE2::CATHARE2 * local_pilot;
+  { ZoneScopedNS("EOS_Cathare2::compute", 5);
+    ZoneText("EOS_Field in1 and in2 into EOS_Fields out", sizeof("EOS_Field in1 and in2 into EOS_Fields out"));
+    CATHARE2::CATHARE2 * local_pilot;
 
     #ifdef _OPENMP
     local_pilot = pilot[omp_get_thread_num()];
@@ -294,19 +305,25 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Error EOS_Cathare2::compute (const EOS_Field& p, const EOS_Field& h, EOS_Field& out, EOS_Error_Field& err) const 
-  { EOS_Fields fields(1) ;
+  { ZoneScopedNS("EOS_Cathare2::compute", 5);
+    ZoneText("EOS_Field p and h into EOS_Field out", sizeof("EOS_Field p and h into EOS_Field out"));
+    EOS_Fields fields(1) ;
     fields[0] = out ;
     return compute(p,h,fields,err) ;
   }
 
   EOS_Error EOS_Cathare2::compute (const EOS_Field& p, EOS_Field& out, EOS_Error_Field& err) const 
-  { EOS_Fields fields(1) ;
+  { ZoneScopedNS("EOS_Cathare2::compute", 5);
+    ZoneText("saturation EOS_Field p into EOS_Field out", sizeof("saturation EOS_Field p into EOS_Field out"));
+    EOS_Fields fields(1) ;
     fields[0] = out ;
     return compute(p,fields,err) ;
   }
 
   EOS_Error EOS_Cathare2::compute (const EOS_Fields& in, EOS_Fields& out, EOS_Error_Field& err) const 
-  { int nbi=in.size() ;
+  { ZoneScopedNS("EOS_Cathare2::compute", 5);
+    ZoneText("EOS_Fields in into EOS_Fields out", sizeof("EOS_Fields in into EOS_Fields out"));
+    int nbi=in.size() ;
     if (nbi == 1)
        return compute(in[0],out,err) ;
     else if (nbi == 2)
@@ -316,14 +333,17 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Error EOS_Cathare2::compute_Ph(const char* const property_name, double in1, double in2, double& out) const
-  { 
+  { ZoneScopedNS("EOS_Cathare2::compute_Ph", 5);
+    ZoneText("by name", sizeof("by name"));
     const int property_number = gen_property_number(property_name);
 
     return compute_Ph(property_name,property_number,in1,in2,out);
   }
 
     EOS_Error EOS_Cathare2::compute_Ph(const char* const property_name, const int property_number, double in1, double in2, double& out) const
-  { int ierr ;
+  { ZoneScopedNS("EOS_Cathare2::compute_Ph", 5);
+    ZoneText("with property number", sizeof("with property number"));
+    int ierr ;
     EOS_Error er ;
 
     EOS_Field fin1("P", "P",NEPTUNE::p, 1, &in1) ;
@@ -336,14 +356,17 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Error EOS_Cathare2::compute_PT(const char* const property_name, double in1, double in2, double& out) const
-  { 
+  { ZoneScopedNS("EOS_Cathare2::compute_PT", 5);
+    ZoneText("by name", sizeof("by name"));
     const int property_number = gen_property_number(property_name);
 
     return compute_PT(property_name,property_number,in1,in2,out);
   }
 
-    EOS_Error EOS_Cathare2::compute_PT(const char* const property_name, const int property_number, double in1, double in2, double& out) const
-  { int ierr ;
+  EOS_Error EOS_Cathare2::compute_PT(const char* const property_name, const int property_number, double in1, double in2, double& out) const
+  { ZoneScopedNS("EOS_Cathare2::compute_PT", 5);
+    ZoneText("with property number", sizeof("with property number"));
+    int ierr ;
     EOS_Error er ;
 
     EOS_Field fin1("P", "P",NEPTUNE::p, 1, &in1) ;
@@ -356,14 +379,17 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Error EOS_Cathare2::compute_Psat(const char* const property_name, double in, double& out) const
-  { 
+  { ZoneScopedNS("EOS_Cathare2::compute_Psat", 5);
+    ZoneText("by name", sizeof("by name"));
     const int property_number = gen_property_number(property_name);
 
     return EOS_Cathare2::compute_Psat(property_name,property_number,in,out) ;
   }
 
   EOS_Error EOS_Cathare2::compute_Psat(const char* const property_name,const int property_number, double in, double& out) const
-  { int ierr ;
+  { ZoneScopedNS("EOS_Cathare2::compute_Psat", 5);
+    ZoneText("with property number", sizeof("with property number"));
+    int ierr ;
     EOS_Error er ;
 
     EOS_Field fin("Psat", "Psat",NEPTUNE::p_sat, 1, &in) ;
@@ -375,14 +401,17 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Error EOS_Cathare2::compute_Tsat(const char* const property_name, double in, double& out) const
-  { 
+  { ZoneScopedNS("EOS_Cathare2::compute_Tsat", 5);
+    ZoneText("by name", sizeof("by name"));
     const int property_number = gen_property_number(property_name);
 
     return compute_Tsat(property_name,property_number,in,out);
   }
 
   EOS_Error EOS_Cathare2::compute_Tsat(const char* const property_name,const int property_number, double in, double& out) const
-  { int ierr ;
+  { ZoneScopedNS("EOS_Cathare2::compute_Tsat", 5);
+    ZoneText("with property number", sizeof("with property number"));
+    int ierr ;
     EOS_Error er ;
 
     EOS_Field fin("Tsat", "Tsat",NEPTUNE::T_sat, 1, &in) ;

@@ -16,6 +16,7 @@
 
 
 #include "Common/func.hxx"
+#include "tracy/Tracy.hpp"
 // 
 // Comparison of two strings
 // -------------------------
@@ -27,7 +28,7 @@
 //             0 : positive comparison
 //             1 : negative comparison
 int eostp_strcmp(const char* str1, const char* str2)
-{
+{ ZoneScopedNS("eostp_strcmp", 3);
   short istr1 ;
   while (*str1)
      { istr1 = (short) *str1 ;
@@ -62,8 +63,8 @@ int eostp_strcmp(const char* str1, const char* str2)
 // output : strr 
 //
 void eostp_strcov(const char* strd, char* strr)
-{ short istrd ;
- 
+{ ZoneScopedNS("eostp_strcov", 3);
+  short istrd ;
   while (*strd)
      { istrd = (short) *strd ;
        if      ((po1_almaj <= istrd) && (istrd <= po2_almaj))

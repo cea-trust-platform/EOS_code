@@ -1,13 +1,14 @@
 #include "EOS_Utils.hxx"
 
 #include <cstring>
+#include "tracy/Tracy.hpp"
 
 using NEPTUNE::Strings ;
 
 namespace NEPTUNE
 {
     char * packStrings(const NEPTUNE::Strings & s, int lString, long & size)
-    {
+    {   ZoneScopedNS("Strings::packStrings", 3);
         assert(lString > 0);
 
         int iS, nS = s.size();

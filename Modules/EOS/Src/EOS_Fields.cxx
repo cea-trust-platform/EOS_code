@@ -23,7 +23,8 @@
 namespace NEPTUNE
 {
   static RegisteredClass& EOS_Fields_create()
-  { return *(new EOS_Fields()) ;
+  { ZoneScopedNS("EOS_Fields_create", 3);
+    return *(new EOS_Fields()) ;
   }
   int EOS_Fields::type_Id=(RegisterType("EOS_Fields", 
                            "Some Fields for EOS",
@@ -47,11 +48,13 @@ namespace NEPTUNE
 
   EOS_Fields::EOS_Fields(int sz) :
     n(sz)
-  { the_fields = new EOS_Field[sz] ;
+  { ZoneScopedNS("EOS_Fields::EOS_Fields", 3);
+    the_fields = new EOS_Field[sz] ;
   }
   
   EOS_Fields::~EOS_Fields()
-  { if (the_fields)  delete[] the_fields;
+  { ZoneScopedNS("EOS_Fields::~EOS_Fields", 3);
+    if (the_fields)  delete[] the_fields;
   }
 
   EOS_Field& EOS_Fields::operator[](const int index) const
@@ -65,7 +68,8 @@ namespace NEPTUNE
   }
 
   int EOS_Fields::resize(int newsz)
-  { EOS_Field* old = the_fields;
+  { ZoneScopedNS("EOS_Fields::resize", 3);
+    EOS_Field* old = the_fields;
     the_fields = new EOS_Field[newsz];
 
     int i=0;

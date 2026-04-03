@@ -17,6 +17,7 @@
 
 #include "Language/API/Language.hxx"
 #include "Language/Src/TypesHandling/Type_Info.hxx"
+#include "tracy/Tracy.hpp"
 
 namespace LANGUAGE_KERNEL
 {
@@ -55,7 +56,8 @@ namespace LANGUAGE_KERNEL
   }
 
   const NEPTUNE::AString& UObject::get_type () const
-  { return (get_Type_Info().get_name()) ;
+  { ZoneScopedNS("UObject::get_type", 5);
+    return (get_Type_Info().get_name()) ;
   }
 
 }

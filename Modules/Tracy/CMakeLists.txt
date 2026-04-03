@@ -1,7 +1,3 @@
-
-
-
-
 option(TRACY_ENABLE "Enable Tracy profiling" ON)
 
 add_library(tracy STATIC public/TracyClient.cpp)

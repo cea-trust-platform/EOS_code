@@ -14,7 +14,7 @@
 *****************************************************************************/
 
 
-
+#include "tracy/Tracy.hpp"
 
 // Parameterized Class DynamicArray 
 
@@ -87,6 +87,7 @@ namespace LANGUAGE_KERNEL
   template <class T>
   inline DynamicArray<T> & DynamicArray<T>::operator=(const DynamicArray<T> &right)
   {
+    ZoneScopedNS("DynamicArray<T>::operator=", 5);
     if(objs)
       delete[] objs;
     objs=new T(right.nb_objs);
@@ -101,6 +102,7 @@ namespace LANGUAGE_KERNEL
   template <class T>
   inline int DynamicArray<T>::operator==(const DynamicArray<T> &right) const
   {
+    ZoneScopedNS("DynamicArray<T>::operator==", 5);
     if(nb_objs!=right.nb_objs)
       return False;
 
@@ -113,6 +115,7 @@ namespace LANGUAGE_KERNEL
   template <class T>
   inline int DynamicArray<T>::operator!=(const DynamicArray<T> &right) const
   {
+    ZoneScopedNS("DynamicArray<T>::operator!=", 5);
     return !( (*this)==(right));
   }
 
@@ -137,7 +140,7 @@ namespace LANGUAGE_KERNEL
 
   template <class T>
   inline int DynamicArray<T>::add_value (const T& to_add)
-  {
+  { ZoneScopedNS("DynamicArray<T>::add_value", 5);
     if(nb_objs==nb_objs_max)
       {
 	int i;
@@ -158,7 +161,7 @@ namespace LANGUAGE_KERNEL
 
   template <class T>
   inline NEPTUNE::Boolean DynamicArray<T>::delete_value (const T& to_suppr)
-  {
+  { ZoneScopedNS("DynamicArray<T>::delete_value", 5);
     int i;
     int index=-1;
     for(i=0; i<nb_objs; i++)

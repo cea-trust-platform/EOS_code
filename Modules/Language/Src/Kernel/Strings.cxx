@@ -17,6 +17,7 @@
 
 #include "Language/API/Language.hxx"
 #include "Language/API/Types_Info.hxx"
+#include "tracy/Tracy.hpp"
 
 static RegisteredClass& Strings_create()
 { return *(new NEPTUNE::Strings()) ;
@@ -52,7 +53,8 @@ namespace NEPTUNE
 
 
   Strings & Strings::operator=(const Strings &right)
-  { if (data)  delete [] data ;
+  { ZoneScopedNS("Strings::operator=", 5);
+    if (data)  delete [] data ;
     sz = right.sz ;
     data = new AString[sz] ;
     for(int i=0; i<sz; i++)
@@ -61,7 +63,8 @@ namespace NEPTUNE
   }
 
   int Strings::operator==(const Strings &right) const
-  { int ok = 1 ;
+  { ZoneScopedNS("Strings::operator==", 5);
+    int ok = 1 ;
     for(int i=0; (ok && i<sz); i++)
       ok *= (data[i]==right.data[i]) ;
     return ok ;
@@ -73,14 +76,16 @@ namespace NEPTUNE
 
 
   ostream & operator<<(ostream &stream,const Strings &right)
-  {  stream << right.sz << endl ;
+  { ZoneScopedNS("operator<<", 5);
+    stream << right.sz << endl ;
     for(int i=0; i<right.sz; i++)
       stream << right.data[i] << " " ;
     return stream<<endl ;
   }
 
   istream & operator>>(istream &stream,Strings &object)
-  { int sz ;
+  { ZoneScopedNS("Strings::operator>>", 5);
+    int sz ;
     stream >> sz;
     object.resize(sz);
     for(int i=0; i<object.sz; i++)
@@ -89,7 +94,8 @@ namespace NEPTUNE
   }
 
   const Type_Info& Strings::get_Type_Info () const
-  { return (Types_Info::instance())[type_Id] ;
+  { ZoneScopedNS("Strings::get_Type_Info", 5);
+    return (Types_Info::instance())[type_Id] ;
   }
 
   ostream& Strings::print_On (ostream& stream) const
@@ -101,7 +107,8 @@ namespace NEPTUNE
   }
 
   int Strings::resize(int newsz)
-  { AString* old=data ;
+  { ZoneScopedNS("Strings::resize", 5);
+    AString* old=data ;
     data = new AString[newsz] ;
     int i = 0 ;
     if (newsz >= sz)
@@ -120,7 +127,8 @@ namespace NEPTUNE
   }
 
   int Strings::search(const char* const str) const
-  { int i = 0 ;
+  { ZoneScopedNS("Strings::search", 5);
+    int i = 0 ;
     while(i<size())
       { if (data[i] == str)  return i ;
         ++i ;

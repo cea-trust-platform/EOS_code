@@ -18,6 +18,7 @@
 
 #include "Language/API/Language.hxx"
 #include "Language/API/Types_Info.hxx"
+#include "tracy/Tracy.hpp"
 
 #include <string>
 #include <math.h>
@@ -36,7 +37,8 @@ static RegisteredClass& AString_create()
 namespace NEPTUNE
 {
   AString::AString(const char* const a_str)
-  { int sz = strlen(a_str) ;
+  { ZoneScopedNS("Astring::Astring", 5);
+    int sz = strlen(a_str) ;
     str = new char[sz+1] ;
     strcpy(str, a_str) ;
     str[sz] = '\0' ;
@@ -56,7 +58,8 @@ namespace NEPTUNE
 
   AString::AString(const AString &right)
     : UObject(), str(0)
-  { str = new char[strlen(right.str)+1] ;
+  { ZoneScopedNS("Astring::Astring::", 5);
+    str = new char[strlen(right.str)+1] ;
     strcpy(str, right.str) ;
   }
 
@@ -114,11 +117,14 @@ namespace NEPTUNE
   }
 
   const Type_Info& AString::get_Type_Info () const
-  { return (Types_Info::instance())[type_Id];
+  { ZoneScopedNS("Astring::get_Type_Info", 5);
+    return (Types_Info::instance())[type_Id];
   }
 
   AString::AString(int data)
-  { int j=1, k, l=10, m=0 ;
+  { ZoneScopedNS("Astring::Astring", 5);
+    ZoneText("from an int", sizeof("from an int"));
+    int j=1, k, l=10, m=0 ;
     while( (data/l) != 0)
        { j++ ;
          l *= 10 ;
@@ -134,7 +140,9 @@ namespace NEPTUNE
   }
 
   AString::AString(double data)
-  { AString minus("-") ;
+  { ZoneScopedNS("Astring::Astring", 5);
+    ZoneText("from a double", sizeof("from a double"));
+    AString minus("-") ;
     AString signe ;
     if (data >= 0)
        { signe = minus ;
@@ -181,7 +189,8 @@ namespace NEPTUNE
   }
 
   AString& AString::operator += (const AString& x)
-  { char* newstr = new char[strlen(str)+strlen(x.str)+1] ;
+  { ZoneScopedNS("Astring::operator+=", 5);
+    char* newstr = new char[strlen(str)+strlen(x.str)+1] ;
     strcpy(newstr, str)   ;
     strcat(newstr, x.str) ;
     delete[] str;
@@ -190,7 +199,8 @@ namespace NEPTUNE
   }
 
   AString& AString::operator=(const AString &right) 
-  { if (str)  delete[] str ;
+  { ZoneScopedNS("Astring::operator=", 5);
+    if (str)  delete[] str ;
     str = new char[strlen(right.str)+1] ;
     strcpy(str, right.str) ;
     return *this ;
@@ -205,7 +215,8 @@ namespace NEPTUNE
   }
 
   void AString::insert(char c, int index)
-  { int n = strlen(str) ;
+  { ZoneScopedNS("Astring::insert", 5);
+    int n = strlen(str) ;
     char *old = str ;
     str=new char[n+2] ;
     int i = 0 ;
@@ -219,7 +230,8 @@ namespace NEPTUNE
   }
 
   void AString::remove(int index)
-  { int n = strlen(str) ;
+  { ZoneScopedNS("Astring::remove", 5);
+    int n = strlen(str) ;
     char *old = str ;
     str = new char[n];
     int i = 0 ;

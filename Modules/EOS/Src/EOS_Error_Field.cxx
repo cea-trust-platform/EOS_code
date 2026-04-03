@@ -17,12 +17,14 @@
 
 #include "system/arch.h"
 #include "Language/API/Types_Info.hxx"
+#include "tracy/Tracy.hpp"
 #include "EOS/API/EOS_Error_Field.hxx"
 
 namespace NEPTUNE
 {
   static RegisteredClass& EOS_Error_Field_create()
-  { return *(new EOS_Error_Field()) ;
+  { ZoneScopedNS("EOS_Error_Field_create", 3);
+    return *(new EOS_Error_Field()) ;
   }
   
   int EOS_Error_Field::type_Id = (RegisterType("EOS_Error_Field", 
