@@ -92,7 +92,7 @@ namespace NEPTUNE_EOS
     }
     set_compute_mode();
     set_mixing_reference_state();
-   return 1 ;
+   return 1 ; // TODO : return error code (EOS_Error) instead of int (here 1 for success, 0 for failure ... )
   }
 
   void EOS_Mixing::set_compute_mode() {
