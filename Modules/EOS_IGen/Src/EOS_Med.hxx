@@ -69,6 +69,7 @@ class EOS_Med
      EOS_Error add_ErrChamp_Noeud(AString& m_name, AString& e_name, EOS_Error_Field& err);
      EOS_Error add_Scalar_Float(AString& sf_name, double& value);
 
+
      EOS_Error add_Nodes(AString& m_name, int dim, const EOS_Fields& nodes);
      EOS_Error add_Nodes2Fam(AString& name, const ArrOfInt& nodes);
 

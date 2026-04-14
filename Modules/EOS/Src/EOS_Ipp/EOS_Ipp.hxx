@@ -24,7 +24,6 @@
 #include "EOS_IGen/Src/EOS_Med.hxx"
 #include <vector>
 #include <string>
-#include <map>
 using std::vector;
 
 using namespace NEPTUNE;
@@ -92,8 +91,8 @@ namespace NEPTUNE_EOS
               virtual const Type_Info &get_Type_Info() const;
 
               // Compute interpolation error
-              virtual EOS_Internal_Error compute_Ipp_error(double &error_tot, double *&error_cells, AString prop);
-              virtual EOS_Internal_Error compute_Ipp_sat_error(double &error_tot, double *&error_cells, AString prop);
+              virtual EOS_Internal_Error compute_Ipp_error(double &error_tot, double *&error_cells, EOS_Property prop);
+              virtual EOS_Internal_Error compute_Ipp_sat_error(double &error_tot, double *&error_cells, EOS_Property prop);
               //! h(p,T)
               virtual EOS_Internal_Error compute_h_pT(double p, double T, double &h) const;
               // virtual EOS_Internal_Error compute_d_h_d_T_pT(double p, double T, double& h) const;
@@ -282,9 +281,7 @@ namespace NEPTUNE_EOS
               EOS_Fields nodes_ph;
               EOS_Fields nodes_sat;
               EOS_Fields nodes_lim;
-              EOS_Fields val_prop_ph;
-              EOS_Fields val_prop_sat;
-              EOS_Fields val_prop_lim;
+              EOS_Fields val_prop_properties;
               ArrOfInt connect_ph;
               ArrOfInt index_conn_ph;
               ArrOfInt connect_sat;
@@ -296,32 +293,27 @@ namespace NEPTUNE_EOS
               vector<ArrOfDouble> all_prop_val;
               vector<ArrOfInt> all_err_val;
 
-              std::map<AString, int> Ipp_Prop_ph;  // dictionnaire des proprietes dans le plan ph
-              std::map<AString, int> Ipp_Prop_sat; // dictionnaire des proprietes dans le plan sat
-              std::map<AString, int> Ipp_Prop_lim; // dictionnaire des proprietes dans le plan lim
               // pre-traitement
               // EOS_Fields fm_ph;
-              vector<EOS_Error_Field> err_cell_ph;
-              vector<EOS_Error_Field> err_segm_sat;
-              vector<EOS_Error_Field> err_segm_lim;
+              vector<EOS_Error_Field*> err_cell_ph;
+              vector<EOS_Error_Field*> err_segm_sat;
+              vector<EOS_Error_Field*> err_segm_lim;
 
               // void make_f_mesh();
               void f_mesh2r_mesh();
               void f_mesh1r_mesh();
-              void node_err2mesh_err(EOS_Error_Field &val_nodes_ph);
-              void node_err2segm_err(EOS_Error_Field &val_nodes_p, int satlim);
+              void node_err2mesh_err(EOS_Property prop, EOS_Error_Field &val_nodes_ph);
+              void node_err2segm_err(EOS_Property prop, EOS_Error_Field &val_nodes_p, int satlim);
 
-              EOS_Internal_Error compute_prop_ph(std::map<AString, int>::const_iterator
-                                                     n_prop,
+              EOS_Internal_Error compute_prop_ph(EOS_Property prop,
                                                  double p, double h, double &res) const;
-              EOS_Internal_Error compute_prop_p(std::map<AString, int>::const_iterator
-                                                    n_prop,
+              EOS_Internal_Error compute_prop_p(EOS_Property prop,
                                                 double p, int tag, double &res) const;
 
               // Retrieve the values of a cell for a given field as well as the associated ph values at the vertices.
-              EOS_Internal_Error get_cell_values(int idx, std::map<AString, int>::const_iterator n_prop, EOS_Fields &cell_val) const;
+              EOS_Internal_Error get_cell_values(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const;
 
-              EOS_Internal_Error get_segm_values(int idx, std::map<AString, int>::const_iterator n_prop, int tag, EOS_Fields &segm_val) const;
+              EOS_Internal_Error get_segm_values(int idx, EOS_Property i_prop, int tag, EOS_Fields &segm_val) const;
 
               EOS_Internal_Error compute_h_l_pT(double p, double T, double &res) const;
               EOS_Internal_Error compute_h_v_pT(double p, double T, double &res) const;
@@ -363,9 +355,6 @@ namespace NEPTUNE_EOS
               //void bilinear_interpolator(double p, double h, double &res) const;
               double bilinear_interpolator(double p, double h, EOS_Fields &cellval) const;
 
-              EOS_Error find_in_Ipp_Prop_ph(std::map<AString, int>::const_iterator &it, const AString &prop) const;                     // permet de recuperer un iterateur dans la map correspondant a la bonne propriete
-              EOS_Error find_in_Ipp_Prop_sat(std::map<AString, int>::const_iterator &it, const AString &prop) const;                    // permet de recuperer un iterateur dans la map correspondant a la bonne propriete
-              EOS_Error find(std::map<AString, int>::const_iterator &it, const AString &prop, const std::map<AString, int> &map) const; // permet de recuperer un iterateur dans la map correspondant a la bonne propriete
               EOS_Internal_Error check_ph_bounds(double p, double h) const;
               EOS_Internal_Error check_p_bounds_satlim(double p) const;
        };

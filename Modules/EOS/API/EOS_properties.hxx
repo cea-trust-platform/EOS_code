@@ -24,7 +24,7 @@
 using std::string;
 #include <vector>
 using std::vector;
-
+#include <map>
 class typrop { public:
                  string name ;
                  string definition ; 
@@ -40,7 +40,7 @@ namespace NEPTUNE
 {
 
   typedef int EOS_Property;
-
+  extern std::map<EOS_Property, AString> property_name_map;
   inline EOS_Property gen_property_number(const char* namep) 
   {
     EOS_thermprop tprop = nam2num_thermprop(namep) ;
@@ -58,6 +58,22 @@ namespace NEPTUNE
     EOS_c2iapprop _c2iapprop = nam2num_c2iapprop(namep) ;
     return static_cast<EOS_Property>(_c2iapprop) ;
   }
+  
+    inline void register_property(EOS_Property prop, const AString& name)
+  {
+      property_name_map[prop] = name;
+  }
+
+  inline AString get_property_name(EOS_Property prop)
+  {
+
+    std::map<EOS_Property, AString>::iterator it = property_name_map.find(prop);
+    if (it != property_name_map.end())
+        return it->second;
+
+    return "unknown";
+  }
+  
 }
 
 

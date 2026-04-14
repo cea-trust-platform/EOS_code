@@ -224,7 +224,6 @@ namespace NEPTUNE
     char champ_name[MED_NAME_SIZE + 1];
     char mesh_name[MED_NAME_SIZE + 1];
     char champ_comp_nom[MED_SNAME_SIZE + 1] = MED_SNAME_BLANK;
-
     strcpy(champ_name, champ.get_propname_int().aschar());
     strcpy(mesh_name, m_name.aschar());
     strncpy(champ_comp_nom, champ_name, (MED_SNAME_SIZE)); // pour avoir la bonne taille du char
@@ -374,7 +373,6 @@ namespace NEPTUNE
 
     return EOS_Error::good;
   }
-
   /* EOS_Med::add_Connectivity_1D :
    *              Add connectivity for segments
    *              EOS_Fields node must be sort
