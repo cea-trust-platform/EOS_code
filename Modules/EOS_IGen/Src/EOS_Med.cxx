@@ -848,8 +848,7 @@ namespace NEPTUNE
    */
   EOS_Error EOS_Med::get_Scalar_Float(AString &sf_name, double &res)
   {
-    double valr[1];
-
+    double valr[1]; 
     if (MEDparameterValueRd(fid,
                             sf_name.aschar(),
                             MED_NO_DT,
@@ -857,10 +856,27 @@ namespace NEPTUNE
                             (unsigned char *)valr) < 0)
     {
       cerr << "Erreur reading float value " << sf_name.aschar() << endl;
-      return EOS_Error::error;
+      return EOS_Error::error; 
     }
+    /* Cette section permet que si p_crit n'est pas défini on le mette par défaut à pmax pour éviter tout soucis technique dans EOS*/
+    if(sf_name == "pcrit" ){ 
+      double pmax[1];
+         if (MEDparameterValueRd(fid,
+                            "pmax",
+                            MED_NO_DT,
+                            MED_NO_IT,
+                            (unsigned char *)pmax) < 0)
+      { cerr << "Erreur reading float value " << " pmax " << endl;
+        return EOS_Error::error; 
+      }
+     
+      if(valr[0] == -1)
+        valr[0] = pmax[0];
+    }
+
     res = valr[0];
     return EOS_Error::good;
   }
+
 
 }

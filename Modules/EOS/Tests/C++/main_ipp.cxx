@@ -93,6 +93,38 @@ using namespace NEPTUNE_EOS_IGEN;
                                       t_thermprop_r + sizeof(t_thermprop_r) / sizeof(string) ) ;
 #endif
 
+// In diagram 2D, Vector thermprop_r
+#if  __cplusplus >= 201103L
+  static vector<string> thermprop_r_sat =
+#else
+  static string t_thermprop_r_sat[] =
+#endif
+    { "T_sat",
+      "rho_lsat",
+      "h_lsat",
+      "cp_lsat",
+      "d(T_sat)/dP",
+      "d(rho_lsat)/dP",
+      "d(h_lsat)/dP",
+      "(cp_lsat)/dP",
+      "d2(T_sat)/dPdP", 
+    };
+#if  __cplusplus <  201103L
+ static std::vector<string> thermprop_r_sat(t_thermprop_r_sat, 
+                                      t_thermprop_r_sat + sizeof(t_thermprop_r_sat) / sizeof(string) ) ;
+#endif
+
+
+static const double REL_TOL = 0.01;   // ±1 %
+
+// vérifie si val est dans [ (1-tol)*ref ; (1+tol)*ref ]
+bool in_relative_range(double val, double ref, double tol)
+{
+    if (ref == 0.0) return (val == 0.0);  // cas particulier
+    double diff = std::fabs(val - ref);
+    return diff <= tol * std::fabs(ref);
+}
+
 
 int main()
 {
@@ -154,6 +186,10 @@ int main()
       ArrOfDouble cp_ipp_n(n);
       ArrOfDouble cp_eos(n);
       
+      ArrOfDouble Tsat_ipp(n,5);
+      ArrOfDouble Tsat_ipp_r(n,5);
+      ArrOfDouble Tsat_i_n(n,5);
+      ArrOfDouble Tsat_eos(n,5);
 //       h_i[0]=hmin;
 //       for (int i=1; i<n ; i++)
 // 	h_i[i]=h_i[i-1]+del_h;
@@ -168,35 +204,106 @@ int main()
       EOS_Field cp_f_ipp_r("cp","cp",NEPTUNE::cp,cp_ipp_r);
       EOS_Field cp_f_ipp_n("cp","cp",NEPTUNE::cp,cp_ipp_n);
       EOS_Field cp_f_eos("cp","cp",NEPTUNE::cp,cp_eos);
-      
+
+      //Sat field
+      EOS_Field tsat_f_ipp("T_sat","T_sat",NEPTUNE::T_sat,Tsat_ipp);
+      EOS_Field tsat_f_ipp_r("T_sat","T_sat",NEPTUNE::T_sat,Tsat_ipp_r);
+      EOS_Field tsat_f_ipp_n("T_sat","T_sat",NEPTUNE::T_sat,Tsat_i_n);
+      EOS_Field tsat_f_eos("T_sat","T_sat",NEPTUNE::T_sat,Tsat_eos);
+
       AString med_file = "sans_raffinement_";
       med_file+=methodes[m];
       EOS obj_ipp_r("EOS_Ipp",med_file.aschar());
-      for (int i=0 ; i<n ; i++)
-	  obj_ipp_r.compute_cp_ph(p_f[i], h_f[i], cp_f_ipp_r[i]);
-      
+      for (int i=0 ; i<n ; i++){
+        obj_ipp_r.compute_cp_ph(p_f[i], h_f[i], cp_f_ipp_r[i]);
+        obj_ipp_r.compute_T_sat_p(p_f[i], tsat_f_ipp_r[i]);
+      }
       med_file = "raffinement_local_";
       med_file+=methodes[m];
       EOS obj_ipp("EOS_Ipp",med_file.aschar());
-      for (int i=0 ; i<n ; i++)
-	  obj_ipp.compute_cp_ph(p_f[i], h_f[i], cp_f_ipp[i]);
-      
+      for (int i=0 ; i<n ; i++){
+        obj_ipp.compute_cp_ph(p_f[i], h_f[i], cp_f_ipp[i]);
+        obj_ipp.compute_T_sat_p(p_f[i], tsat_f_ipp[i]);
+        
+        }
+
       med_file = "raffinement_local_non_continu_";
       med_file+=methodes[m];
       EOS obj_ipp_n("EOS_Ipp",med_file.aschar());
-      for (int i=0 ; i<n ; i++)
-	  obj_ipp_n.compute_cp_ph(p_f[i], h_f[i], cp_f_ipp_n[i]);
-
+      for (int i=0 ; i<n ; i++){
+	      obj_ipp_n.compute_cp_ph(p_f[i], h_f[i], cp_f_ipp_n[i]);
+        obj_ipp_n.compute_T_sat_p(p_f[i], tsat_f_ipp_n[i]);
+      }
       
       EOS obj_eos(methodes[m].aschar(),"WaterLiquid");
-      for (int i=0 ; i<n ; i++)
-	  obj_eos.compute_cp_ph(p_f[i], h_f[i], cp_f_eos[i]);
-
+      for (int i=0 ; i<n ; i++){
+	      obj_eos.compute_cp_ph(p_f[i], h_f[i], cp_f_eos[i]);
+        obj_eos.compute_T_sat_p(p_f[i], tsat_f_eos[i]);
+      }
       cout<<"p ; h ; cp ipp continu ; cp "<<methodes[m]<<" ; cp non continu ; cp sans raffinement"<<endl;
       for (int i=0 ; i<n ; i++)
-	cout<<p_f[i]<<" ; "<<h_f[i]<<" ; "<<cp_f_ipp[i]<<" ; "<< cp_f_eos[i]<<"  ; "<<cp_f_ipp_n[i]<<
-	" ; "<<cp_f_ipp_r[i] <<endl;
-      cout<<endl;
+      {
+        cout<<p_f[i]<<" ; "<<h_f[i]<<" ; "<<cp_f_ipp[i]<<" ; "<< cp_f_eos[i]<<"  ; "<<cp_f_ipp_n[i]<<
+        " ; "<<cp_f_ipp_r[i] <<endl;
+        cout<<endl;
+      }
+
+       cout<<"p ; tsat ipp continu ; tsat "<<methodes[m]<<" ; tsat non continu ; tsat sans raffinement"<< endl;
+      for (int i=0 ; i<n ; i++)
+      {
+        cout <<p_f[i]<<" ; "<<tsat_f_ipp[i]<<" ; "<< tsat_f_eos[i]<<"  ; "<<tsat_f_ipp_n[i]<<
+        " ; "<<tsat_f_ipp_r[i] <<endl;
+        cout<<endl;
+      }
+
+        bool test_failed = false;
+
+
+          // ===== Vérification CP =====
+      for (int i = 0 ; i < n ; i++)
+      {
+          double ref = cp_f_eos[i];
+
+          if (!in_relative_range(cp_f_ipp[i],   ref, REL_TOL) ||
+              !in_relative_range(cp_f_ipp_n[i], ref, REL_TOL) ||
+              !in_relative_range(cp_f_ipp_r[i], ref, REL_TOL))
+          {
+              std::cerr << "ECHEC CP : dépassement de la tolérance ("
+                        << REL_TOL*100 << "%) au point " << i << "\n"
+                        << "ref = " << ref << "\n"
+                        << "cp_IPP   = " << cp_f_ipp[i]   << "\n"
+                        << "cp_IPP_N = " << cp_f_ipp_n[i] << "\n"
+                        << "cp_IPP_R = " << cp_f_ipp_r[i] << "\n";
+              test_failed = true;
+              break;
+          }
+      }
+
+      // ===== Vérification TSAT =====
+      for (int i = 0 ; i < n ; i++)
+      {
+          double ref = tsat_f_eos[i];
+
+          if (!in_relative_range(tsat_f_ipp[i],   ref, REL_TOL) ||
+              !in_relative_range(tsat_f_ipp_n[i], ref, REL_TOL) ||
+              !in_relative_range(tsat_f_ipp_r[i], ref, REL_TOL))
+          {
+              std::cerr << "ECHEC TSAT : dépassement de la tolérance ("
+                        << REL_TOL*100 << "%) au point " << i << "\n"
+                        << "ref = " << ref << "\n"
+                        << "tsat_IPP   = " << tsat_f_ipp[i]   << "\n"
+                        << "tsat_IPP_N = " << tsat_f_ipp_n[i] << "\n"
+                        << "tsat_IPP_R = " << tsat_f_ipp_r[i] << "\n";
+              test_failed = true;
+              break;
+          }
+      }
+
+      // Si un seul groupe échoue → CTest renvoie FAILURE
+      if (test_failed)
+      {
+          return EXIT_FAILURE;
+      }
     }
     
     cout<<endl<<"Test retour d'erreur"<<endl<<endl;
