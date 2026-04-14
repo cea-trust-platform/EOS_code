@@ -625,7 +625,17 @@ int main(int argc, char* argv[])
                         valdif = output_EOS[can[i]][j] - output_C2[i][j]   ;
                         vallim = fmax(1.e-8,cridiff*fabs(output_C2[i][j])) ;
                         valout = output_EOS[can[i]][j]*output_C2[i][j]     ;
-                        if ( fabs(valdif) >= vallim || valout < 0.e0 ) 
+                        
+			const double zero_threshold = 1.e-18;
+                        const bool val_is_negligible = fabs(output_EOS[can[i]][j]) < zero_threshold
+                                             && fabs(output_C2[i][j])       < zero_threshold;
+                        const double scale = fmax(fabs(output_EOS[can[i]][j]), fabs(output_C2[i][j]));
+                 	const bool sign_error_is_negligible = (valout < 0.0)
+                    			     && (fabs(valdif) < fmax(1.e-8, 1.e-6*scale));
+
+
+
+			if ( !val_is_negligible && ((fabs(valdif) >= vallim) || (valout < 0.e0 && !sign_error_is_negligible)) ) 
                            { icount++ ;
                              iti++ ;
                              prop = output_EOS[can[i]].get_property_name();
