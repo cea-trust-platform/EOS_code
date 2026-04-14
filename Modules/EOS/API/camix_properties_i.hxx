@@ -27,16 +27,19 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"c2")                     == 0)  return c_2                    ;
     if (eostp_strcmp(name,"c3")                     == 0)  return c_3                    ;
     if (eostp_strcmp(name,"c4")                     == 0)  return c_4                    ;
+    if (eostp_strcmp(name,"c5")                     == 0)  return c_5                    ;
     if (eostp_strcmp(name,"p0")                     == 0)  return p_0                    ;
     if (eostp_strcmp(name,"p1")                     == 0)  return p_1                    ;
     if (eostp_strcmp(name,"p2")                     == 0)  return p_2                    ;
     if (eostp_strcmp(name,"p3")                     == 0)  return p_3                    ;
     if (eostp_strcmp(name,"p4")                     == 0)  return p_4                    ;
+    if (eostp_strcmp(name,"p5")                     == 0)  return p_5                    ;
     if (eostp_strcmp(name,"h0")                     == 0)  return h_0                    ;
     if (eostp_strcmp(name,"h1")                     == 0)  return h_1                    ;
     if (eostp_strcmp(name,"h2")                     == 0)  return h_2                    ;
     if (eostp_strcmp(name,"h3")                     == 0)  return h_3                    ;
     if (eostp_strcmp(name,"h4")                     == 0)  return h_4                    ;
+    if (eostp_strcmp(name,"h5")                     == 0)  return h_5                    ;
     if (eostp_strcmp(name,"t0")                     == 0)  return T_0                    ;
     if (eostp_strcmp(name,"rho0")                   == 0)  return rho_0                  ;
     if (eostp_strcmp(name,"u0")                     == 0)  return u_0                    ;
@@ -69,7 +72,8 @@ namespace NEPTUNE
   }
 
   inline EOS_camixprop nam2num_dcamixprop(const char* const name)
-  { if (eostp_strcmp(name,"dtdc0ph")            == 0)  return d_T_d_c_0_ph           ;
+  { 
+    if (eostp_strcmp(name,"dtdc0ph")            == 0)  return d_T_d_c_0_ph           ;
     if (eostp_strcmp(name,"dt0dc0ph")           == 0)  return d_T_0_d_c_0_ph         ;
     if (eostp_strcmp(name,"dtdc1ph")            == 0)  return d_T_d_c_1_ph           ;
     if (eostp_strcmp(name,"dt0dc1ph")           == 0)  return d_T_0_d_c_1_ph         ;
@@ -79,12 +83,16 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dt0dc3ph")           == 0)  return d_T_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dtdc4ph")            == 0)  return d_T_d_c_4_ph           ;
     if (eostp_strcmp(name,"dt0dc4ph")           == 0)  return d_T_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dtdc5ph")            == 0)  return d_T_d_c_5_ph           ;
+    if (eostp_strcmp(name,"dt0dc5ph")           == 0)  return d_T_0_d_c_5_ph         ;
+
     if (eostp_strcmp(name,"dtdp0h")             == 0)  return d_T_d_p_0_h            ;
     if (eostp_strcmp(name,"dtdh0p")             == 0)  return d_T_d_h_0_p            ;
     if (eostp_strcmp(name,"dt0dph")             == 0)  return d_T_0_d_p_h            ;
     if (eostp_strcmp(name,"dt0dhp")             == 0)  return d_T_0_d_h_p            ;
     if (eostp_strcmp(name,"dt0dp0h")            == 0)  return d_T_0_d_p_0_h          ;
     if (eostp_strcmp(name,"dt0dh0p")            == 0)  return d_T_0_d_h_0_p          ;
+
     if (eostp_strcmp(name,"drhodc0ph")          == 0)  return d_rho_d_c_0_ph         ;
     if (eostp_strcmp(name,"drho0dc0ph")         == 0)  return d_rho_0_d_c_0_ph       ;
     if (eostp_strcmp(name,"drhodc1ph")          == 0)  return d_rho_d_c_1_ph         ;
@@ -95,6 +103,9 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"drho0dc3ph")         == 0)  return d_rho_0_d_c_3_ph       ;
     if (eostp_strcmp(name,"drhodc4ph")          == 0)  return d_rho_d_c_4_ph         ;
     if (eostp_strcmp(name,"drho0dc4ph")         == 0)  return d_rho_0_d_c_4_ph       ;
+    if (eostp_strcmp(name,"drhodc5ph")          == 0)  return d_rho_d_c_5_ph         ;
+    if (eostp_strcmp(name,"drho0dc5ph")         == 0)  return d_rho_0_d_c_5_ph       ;
+  
     if (eostp_strcmp(name,"drhodp0h")           == 0)  return d_rho_d_p_0_h          ;
     if (eostp_strcmp(name,"drhodh0p")           == 0)  return d_rho_d_h_0_p          ;
     if (eostp_strcmp(name,"drho0dph")           == 0)  return d_rho_0_d_p_h          ;
@@ -111,6 +122,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"du0dc3ph")           == 0)  return d_u_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dudc4ph")            == 0)  return d_u_d_c_4_ph           ;
     if (eostp_strcmp(name,"du0dc4ph")           == 0)  return d_u_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dudc5ph")            == 0)  return d_u_d_c_5_ph           ;
+    if (eostp_strcmp(name,"du0dc5ph")           == 0)  return d_u_0_d_c_5_ph         ;
     if (eostp_strcmp(name,"dudp0h")             == 0)  return d_u_d_p_0_h            ;
     if (eostp_strcmp(name,"dudh0p")             == 0)  return d_u_d_h_0_p            ;
     if (eostp_strcmp(name,"du0dph")             == 0)  return d_u_0_d_p_h            ;
@@ -127,6 +140,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"ds0dc3ph")           == 0)  return d_s_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dsdc4ph")            == 0)  return d_s_d_c_4_ph           ;
     if (eostp_strcmp(name,"ds0dc4ph")           == 0)  return d_s_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dsdc5ph")            == 0)  return d_s_d_c_5_ph           ;
+    if (eostp_strcmp(name,"ds0dc5ph")           == 0)  return d_s_0_d_c_5_ph         ;
     if (eostp_strcmp(name,"dsdp0h")             == 0)  return d_s_d_p_0_h            ;
     if (eostp_strcmp(name,"dsdh0p")             == 0)  return d_s_d_h_0_p            ;
     if (eostp_strcmp(name,"ds0dph")             == 0)  return d_s_0_d_p_h            ;
@@ -143,6 +158,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dmu0dc3ph")          == 0)  return d_mu_0_d_c_3_ph        ;
     if (eostp_strcmp(name,"dmudc4ph")           == 0)  return d_mu_d_c_4_ph          ;
     if (eostp_strcmp(name,"dmu0dc4ph")          == 0)  return d_mu_0_d_c_4_ph        ;
+    if (eostp_strcmp(name,"dmudc5ph")           == 0)  return d_mu_d_c_5_ph          ;
+    if (eostp_strcmp(name,"dmu0dc5ph")          == 0)  return d_mu_0_d_c_5_ph        ;
     if (eostp_strcmp(name,"dmudp0h")            == 0)  return d_mu_d_p_0_h           ;
     if (eostp_strcmp(name,"dmudh0p")            == 0)  return d_mu_d_h_0_p           ;
     if (eostp_strcmp(name,"dmu0dph")            == 0)  return d_mu_0_d_p_h           ;
@@ -159,6 +176,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dlambda0dc3ph")      == 0)  return d_lambda_0_d_c_3_ph    ;
     if (eostp_strcmp(name,"dlambdadc4ph")       == 0)  return d_lambda_d_c_4_ph      ;
     if (eostp_strcmp(name,"dlambda0dc4ph")      == 0)  return d_lambda_0_d_c_4_ph    ;
+    if (eostp_strcmp(name,"dlambdadc5ph")       == 0)  return d_lambda_d_c_5_ph      ;
+    if (eostp_strcmp(name,"dlambda0dc5ph")      == 0)  return d_lambda_0_d_c_5_ph    ;
     if (eostp_strcmp(name,"dlambdadp0h")        == 0)  return d_lambda_d_p_0_h       ;
     if (eostp_strcmp(name,"dlambdadh0p")        == 0)  return d_lambda_d_h_0_p       ;
     if (eostp_strcmp(name,"dlambda0dph")        == 0)  return d_lambda_0_d_p_h       ;
@@ -175,6 +194,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dcp0dc3ph")          == 0)  return d_cp_0_d_c_3_ph        ;
     if (eostp_strcmp(name,"dcpdc4ph")           == 0)  return d_cp_d_c_4_ph          ;
     if (eostp_strcmp(name,"dcp0dc4ph")          == 0)  return d_cp_0_d_c_4_ph        ;
+    if (eostp_strcmp(name,"dcpdc5ph")           == 0)  return d_cp_d_c_5_ph          ;
+    if (eostp_strcmp(name,"dcp0dc5ph")          == 0)  return d_cp_0_d_c_5_ph        ;
     if (eostp_strcmp(name,"dcpdp0h")            == 0)  return d_cp_d_p_0_h           ;
     if (eostp_strcmp(name,"dcpdh0p")            == 0)  return d_cp_d_h_0_p           ;
     if (eostp_strcmp(name,"dcp0dph")            == 0)  return d_cp_0_d_p_h           ;
@@ -191,6 +212,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dsigma0dc3ph")       == 0)  return d_sigma_0_d_c_3_ph     ;
     if (eostp_strcmp(name,"dsigmadc4ph")        == 0)  return d_sigma_d_c_4_ph       ;
     if (eostp_strcmp(name,"dsigma0dc4ph")       == 0)  return d_sigma_0_d_c_4_ph     ;
+    if (eostp_strcmp(name,"dsigmadc5ph")        == 0)  return d_sigma_d_c_5_ph       ;
+    if (eostp_strcmp(name,"dsigma0dc5ph")       == 0)  return d_sigma_0_d_c_5_ph     ;
     if (eostp_strcmp(name,"dsigmadp0h")         == 0)  return d_sigma_d_p_0_h        ;
     if (eostp_strcmp(name,"dsigmadh0p")         == 0)  return d_sigma_d_h_0_p        ;
     if (eostp_strcmp(name,"dsigma0dph")         == 0)  return d_sigma_0_d_p_h        ;
@@ -207,6 +230,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dw0dc3ph")           == 0)  return d_w_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dwdc4ph")            == 0)  return d_w_d_c_4_ph           ;
     if (eostp_strcmp(name,"dw0dc4ph")           == 0)  return d_w_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dwdc5ph")            == 0)  return d_w_d_c_5_ph           ;
+    if (eostp_strcmp(name,"dw0dc5ph")           == 0)  return d_w_0_d_c_5_ph         ;
     if (eostp_strcmp(name,"dwdp0h")             == 0)  return d_w_d_p_0_h            ;
     if (eostp_strcmp(name,"dwdh0p")             == 0)  return d_w_d_h_0_p            ;
     if (eostp_strcmp(name,"dw0dph")             == 0)  return d_w_0_d_p_h            ;
@@ -223,6 +248,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dg0dc3ph")           == 0)  return d_g_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dgdc4ph")            == 0)  return d_g_d_c_4_ph           ;
     if (eostp_strcmp(name,"dg0dc4ph")           == 0)  return d_g_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dgdc5ph")            == 0)  return d_g_d_c_5_ph           ;
+    if (eostp_strcmp(name,"dg0dc5ph")           == 0)  return d_g_0_d_c_5_ph         ;
     if (eostp_strcmp(name,"dgdp0h")             == 0)  return d_g_d_p_0_h            ;
     if (eostp_strcmp(name,"dgdh0p")             == 0)  return d_g_d_h_0_p            ;
     if (eostp_strcmp(name,"dg0dph")             == 0)  return d_g_0_d_p_h            ;
@@ -239,6 +266,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"df0dc3ph")           == 0)  return d_f_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dfdc4ph")            == 0)  return d_f_d_c_4_ph           ;
     if (eostp_strcmp(name,"df0dc4ph")           == 0)  return d_f_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dfdc5ph")            == 0)  return d_f_d_c_5_ph           ;
+    if (eostp_strcmp(name,"df0dc5ph")           == 0)  return d_f_0_d_c_5_ph         ;
     if (eostp_strcmp(name,"dfdp0h")             == 0)  return d_f_d_p_0_h            ;
     if (eostp_strcmp(name,"dfdh0p")             == 0)  return d_f_d_h_0_p            ;
     if (eostp_strcmp(name,"df0dph")             == 0)  return d_f_0_d_p_h            ;
@@ -255,6 +284,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dpr0dc3ph")          == 0)  return d_pr_0_d_c_3_ph        ;
     if (eostp_strcmp(name,"dprdc4ph")           == 0)  return d_pr_d_c_4_ph          ;
     if (eostp_strcmp(name,"dpr0dc4ph")          == 0)  return d_pr_0_d_c_4_ph        ;
+    if (eostp_strcmp(name,"dprdc5ph")           == 0)  return d_pr_d_c_5_ph          ;
+    if (eostp_strcmp(name,"dpr0dc5ph")          == 0)  return d_pr_0_d_c_5_ph        ;
     if (eostp_strcmp(name,"dprdp0h")            == 0)  return d_pr_d_p_0_h           ;
     if (eostp_strcmp(name,"dprdh0p")            == 0)  return d_pr_d_h_0_p           ;
     if (eostp_strcmp(name,"dpr0dph")            == 0)  return d_pr_0_d_p_h           ;
@@ -271,6 +302,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dbeta0dc3ph")        == 0)  return d_beta_0_d_c_3_ph      ;
     if (eostp_strcmp(name,"dbetadc4ph")         == 0)  return d_beta_d_c_4_ph        ;
     if (eostp_strcmp(name,"dbeta0dc4ph")        == 0)  return d_beta_0_d_c_4_ph      ;
+    if (eostp_strcmp(name,"dbetadc5ph")         == 0)  return d_beta_d_c_5_ph        ;
+    if (eostp_strcmp(name,"dbeta0dc5ph")        == 0)  return d_beta_0_d_c_5_ph      ;
     if (eostp_strcmp(name,"dbetadp0h")          == 0)  return d_beta_d_p_0_h         ;
     if (eostp_strcmp(name,"dbetadh0p")          == 0)  return d_beta_d_h_0_p         ;
     if (eostp_strcmp(name,"dbeta0dph")          == 0)  return d_beta_0_d_p_h         ;
@@ -287,6 +320,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dgamma0dc3ph")       == 0)  return d_gamma_0_d_c_3_ph     ;
     if (eostp_strcmp(name,"dgammadc4ph")        == 0)  return d_gamma_d_c_4_ph       ;
     if (eostp_strcmp(name,"dgamma0dc4ph")       == 0)  return d_gamma_0_d_c_4_ph     ;
+    if (eostp_strcmp(name,"dgammadc5ph")        == 0)  return d_gamma_d_c_5_ph       ;
+    if (eostp_strcmp(name,"dgamma0dc5ph")       == 0)  return d_gamma_0_d_c_5_ph     ;
     if (eostp_strcmp(name,"dgammadp0h")         == 0)  return d_gamma_d_p_0_h        ;
     if (eostp_strcmp(name,"dgammadh0p")         == 0)  return d_gamma_d_h_0_p        ;
     if (eostp_strcmp(name,"dgamma0dph")         == 0)  return d_gamma_0_d_p_h        ;
@@ -303,6 +338,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"drholsat0dc3ph")     == 0)  return d_rho_l_sat_0_d_c_3_ph ;
     if (eostp_strcmp(name,"drholsatdc4ph")      == 0)  return d_rho_l_sat_d_c_4_ph   ;
     if (eostp_strcmp(name,"drholsat0dc4ph")     == 0)  return d_rho_l_sat_0_d_c_4_ph ;
+    if (eostp_strcmp(name,"drholsatdc5ph")      == 0)  return d_rho_l_sat_d_c_5_ph   ;
+    if (eostp_strcmp(name,"drholsat0dc5ph")     == 0)  return d_rho_l_sat_0_d_c_5_ph ;
     if (eostp_strcmp(name,"drholsatdp0h")       == 0)  return d_rho_l_sat_d_p_0_h    ;
     if (eostp_strcmp(name,"drholsatdh0p")       == 0)  return d_rho_l_sat_d_h_0_p    ;
     if (eostp_strcmp(name,"drholsat0dph")       == 0)  return d_rho_l_sat_0_d_p_h    ;
@@ -319,6 +356,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"drhovsat0dc3ph")     == 0)  return d_rho_v_sat_0_d_c_3_ph ;
     if (eostp_strcmp(name,"drhovsatdc4ph")      == 0)  return d_rho_v_sat_d_c_4_ph   ;
     if (eostp_strcmp(name,"drhovsat0dc4ph")     == 0)  return d_rho_v_sat_0_d_c_4_ph ;
+    if (eostp_strcmp(name,"drhovsatdc5ph")      == 0)  return d_rho_v_sat_d_c_5_ph   ;
+    if (eostp_strcmp(name,"drhovsat0dc5ph")     == 0)  return d_rho_v_sat_0_d_c_5_ph ;
     if (eostp_strcmp(name,"drhovsatdp0h")       == 0)  return d_rho_v_sat_d_p_0_h    ;
     if (eostp_strcmp(name,"drhovsatdh0p")       == 0)  return d_rho_v_sat_d_h_0_p    ;
     if (eostp_strcmp(name,"drhovsat0dph")       == 0)  return d_rho_v_sat_0_d_p_h    ;
@@ -335,6 +374,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dhlsat0dc3ph")       == 0)  return d_h_l_sat_0_d_c_3_ph   ;
     if (eostp_strcmp(name,"dhlsatdc4ph")        == 0)  return d_h_l_sat_d_c_4_ph     ;
     if (eostp_strcmp(name,"dhlsat0dc4ph")       == 0)  return d_h_l_sat_0_d_c_4_ph   ;
+    if (eostp_strcmp(name,"dhlsatdc5ph")        == 0)  return d_h_l_sat_d_c_5_ph     ;
+    if (eostp_strcmp(name,"dhlsat0dc5ph")       == 0)  return d_h_l_sat_0_d_c_5_ph   ;
     if (eostp_strcmp(name,"dhlsatdp0h")         == 0)  return d_h_l_sat_d_p_0_h      ;
     if (eostp_strcmp(name,"dhlsatdh0p")         == 0)  return d_h_l_sat_d_h_0_p      ;
     if (eostp_strcmp(name,"dhlsat0dph")         == 0)  return d_h_l_sat_0_d_p_h      ;
@@ -351,6 +392,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dhvsat0dc3ph")       == 0)  return d_h_v_sat_0_d_c_3_ph   ;
     if (eostp_strcmp(name,"dhvsatdc4ph")        == 0)  return d_h_v_sat_d_c_4_ph     ;
     if (eostp_strcmp(name,"dhvsat0dc4ph")       == 0)  return d_h_v_sat_0_d_c_4_ph   ;
+    if (eostp_strcmp(name,"dhvsatdc5ph")        == 0)  return d_h_v_sat_d_c_5_ph     ;
+    if (eostp_strcmp(name,"dhvsat0dc5ph")       == 0)  return d_h_v_sat_0_d_c_5_ph   ;
     if (eostp_strcmp(name,"dhvsatdp0h")         == 0)  return d_h_v_sat_d_p_0_h      ;
     if (eostp_strcmp(name,"dhvsatdh0p")         == 0)  return d_h_v_sat_d_h_0_p      ;
     if (eostp_strcmp(name,"dhvsat0dph")         == 0)  return d_h_v_sat_0_d_p_h      ;
@@ -367,6 +410,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dcplsat0dc3ph")      == 0)  return d_cp_l_sat_0_d_c_3_ph  ;
     if (eostp_strcmp(name,"dcplsatdc4ph")       == 0)  return d_cp_l_sat_d_c_4_ph    ;
     if (eostp_strcmp(name,"dcplsat0dc4ph")      == 0)  return d_cp_l_sat_0_d_c_4_ph  ;
+    if (eostp_strcmp(name,"dcplsatdc5ph")       == 0)  return d_cp_l_sat_d_c_5_ph    ;
+    if (eostp_strcmp(name,"dcplsat0dc5ph")      == 0)  return d_cp_l_sat_0_d_c_5_ph  ;
     if (eostp_strcmp(name,"dcplsatdp0h")        == 0)  return d_cp_l_sat_d_p_0_h     ;
     if (eostp_strcmp(name,"dcplsatdh0p")        == 0)  return d_cp_l_sat_d_h_0_p     ;
     if (eostp_strcmp(name,"dcplsat0dph")        == 0)  return d_cp_l_sat_0_d_p_h     ;
@@ -383,6 +428,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dcpvsat0dc3ph")      == 0)  return d_cp_v_sat_0_d_c_3_ph  ;
     if (eostp_strcmp(name,"dcpvsatdc4ph")       == 0)  return d_cp_v_sat_d_c_4_ph    ;
     if (eostp_strcmp(name,"dcpvsat0dc4ph")      == 0)  return d_cp_v_sat_0_d_c_4_ph  ;
+    if (eostp_strcmp(name,"dcpvsatdc5ph")       == 0)  return d_cp_v_sat_d_c_5_ph    ;
+    if (eostp_strcmp(name,"dcpvsat0dc5ph")      == 0)  return d_cp_v_sat_0_d_c_5_ph  ;
     if (eostp_strcmp(name,"dcpvsatdp0h")        == 0)  return d_cp_v_sat_d_p_0_h     ;
     if (eostp_strcmp(name,"dcpvsatdh0p")        == 0)  return d_cp_v_sat_d_h_0_p     ;
     if (eostp_strcmp(name,"dcpvsat0dph")        == 0)  return d_cp_v_sat_0_d_p_h     ;
@@ -399,6 +446,8 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dtsat0dc3ph")        == 0)  return d_T_sat_0_d_c_3_ph     ;
     if (eostp_strcmp(name,"dtsatdc4ph")         == 0)  return d_T_sat_d_c_4_ph       ;
     if (eostp_strcmp(name,"dtsat0dc4ph")        == 0)  return d_T_sat_0_d_c_4_ph     ;
+    if (eostp_strcmp(name,"dtsatdc5ph")         == 0)  return d_T_sat_d_c_5_ph       ;
+    if (eostp_strcmp(name,"dtsat0dc5ph")        == 0)  return d_T_sat_0_d_c_5_ph     ;
     if (eostp_strcmp(name,"dtsatdp0h")          == 0)  return d_T_sat_d_p_0_h        ;
     if (eostp_strcmp(name,"dtsatdh0p")          == 0)  return d_T_sat_d_h_0_p        ;
     if (eostp_strcmp(name,"dtsat0dph")          == 0)  return d_T_sat_0_d_p_h        ;
@@ -412,6 +461,7 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dp0dc2ph")           == 0)  return d_p_0_d_c_2_ph         ;
     if (eostp_strcmp(name,"dp0dc3ph")           == 0)  return d_p_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dp0dc4ph")           == 0)  return d_p_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dp0dc5ph")           == 0)  return d_p_0_d_c_5_ph         ;
     if (eostp_strcmp(name,"dh0dph")             == 0)  return d_h_0_d_p_h            ;
     if (eostp_strcmp(name,"dh0dhp")             == 0)  return d_h_0_d_h_p            ;
     if (eostp_strcmp(name,"dh0dc0ph")           == 0)  return d_h_0_d_c_0_ph         ;
@@ -419,10 +469,12 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dh0dc2ph")           == 0)  return d_h_0_d_c_2_ph         ;
     if (eostp_strcmp(name,"dh0dc3ph")           == 0)  return d_h_0_d_c_3_ph         ;
     if (eostp_strcmp(name,"dh0dc4ph")           == 0)  return d_h_0_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dh0dc5ph")           == 0)  return d_h_0_d_c_5_ph         ;
     if (eostp_strcmp(name,"dhdc1pt")            == 0)  return d_h_d_c_1_pT           ;
     if (eostp_strcmp(name,"dhdc2pt")            == 0)  return d_h_d_c_2_pT           ;
     if (eostp_strcmp(name,"dhdc3pt")            == 0)  return d_h_d_c_3_pT           ;
     if (eostp_strcmp(name,"dhdc4pt")            == 0)  return d_h_d_c_4_pT           ;
+    if (eostp_strcmp(name,"dhdc5pt")            == 0)  return d_h_d_c_5_pT           ;
     if (eostp_strcmp(name,"ddncvdph")           == 0)  return d_dncv_d_p_h           ;
     if (eostp_strcmp(name,"ddncvdhp")           == 0)  return d_dncv_d_h_p           ;
     if (eostp_strcmp(name,"drncdc0ph")          == 0)  return d_rnc_d_c_0_ph         ;
@@ -430,16 +482,19 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"drncdc2ph")          == 0)  return d_rnc_d_c_2_ph         ;
     if (eostp_strcmp(name,"drncdc3ph")          == 0)  return d_rnc_d_c_3_ph         ;
     if (eostp_strcmp(name,"drncdc4ph")          == 0)  return d_rnc_d_c_4_ph         ;
+    if (eostp_strcmp(name,"drncdc5ph")          == 0)  return d_rnc_d_c_5_ph         ;
     if (eostp_strcmp(name,"dmncdc0ph")          == 0)  return d_mnc_d_c_0_ph         ;
     if (eostp_strcmp(name,"dmncdc1ph")          == 0)  return d_mnc_d_c_1_ph         ;
     if (eostp_strcmp(name,"dmncdc2ph")          == 0)  return d_mnc_d_c_2_ph         ;
     if (eostp_strcmp(name,"dmncdc3ph")          == 0)  return d_mnc_d_c_3_ph         ;
     if (eostp_strcmp(name,"dmncdc4ph")          == 0)  return d_mnc_d_c_4_ph         ;
+    if (eostp_strcmp(name,"dmncdc5ph")          == 0)  return d_mnc_d_c_5_ph         ;
     if (eostp_strcmp(name,"ddncvdc0ph")         == 0)  return d_dncv_d_c_0_ph        ;
     if (eostp_strcmp(name,"ddncvdc1ph")         == 0)  return d_dncv_d_c_1_ph        ;
     if (eostp_strcmp(name,"ddncvdc2ph")         == 0)  return d_dncv_d_c_2_ph        ;
     if (eostp_strcmp(name,"ddncvdc3ph")         == 0)  return d_dncv_d_c_3_ph        ;
     if (eostp_strcmp(name,"ddncvdc4ph")         == 0)  return d_dncv_d_c_4_ph        ;
+    if (eostp_strcmp(name,"ddncvdc5ph")         == 0)  return d_dncv_d_c_5_ph        ;
     if (eostp_strcmp(name,"dmu0dtp")            == 0)  return d_mu_0_d_T_p           ;
     if (eostp_strcmp(name,"dlambda0dtp")        == 0)  return d_lambda_0_d_T_p       ;
 

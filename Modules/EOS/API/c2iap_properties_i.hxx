@@ -44,24 +44,28 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dhlsvscdc2ph") == 0) return d_hlsvsc_d_c_2_ph  ;
     if (eostp_strcmp(name,"dhlsvscdc3ph") == 0) return d_hlsvsc_d_c_3_ph  ;
     if (eostp_strcmp(name,"dhlsvscdc4ph") == 0) return d_hlsvsc_d_c_4_ph  ;
+    if (eostp_strcmp(name,"dhlsvscdc5ph") == 0) return d_hlsvsc_d_c_5_ph  ;
     if (eostp_strcmp(name,"depstgdph")    == 0) return d_epstg_dp_h       ;
     if (eostp_strcmp(name,"depstgdhp")    == 0) return d_epstg_dh_p       ;
     if (eostp_strcmp(name,"depstgdc1ph")  == 0) return d_epstg_d_c_1_ph   ; 
     if (eostp_strcmp(name,"depstgdc2ph")  == 0) return d_epstg_d_c_2_ph   ; 
     if (eostp_strcmp(name,"depstgdc3ph")  == 0) return d_epstg_d_c_3_ph   ; 
     if (eostp_strcmp(name,"depstgdc4ph")  == 0) return d_epstg_d_c_4_ph   ; 
+    if (eostp_strcmp(name,"depstgdc5ph")  == 0) return d_epstg_d_c_5_ph   ; 
     if (eostp_strcmp(name,"dhvspscdph")   == 0) return d_hvspsc_dp_h      ;    
     if (eostp_strcmp(name,"dhvspscdhp")   == 0) return d_hvspsc_dh_p      ;    
     if (eostp_strcmp(name,"dhvspscdc1ph") == 0) return d_hvspsc_d_c_1_ph  ;
     if (eostp_strcmp(name,"dhvspscdc2ph") == 0) return d_hvspsc_d_c_2_ph  ;
     if (eostp_strcmp(name,"dhvspscdc3ph") == 0) return d_hvspsc_d_c_3_ph  ;
     if (eostp_strcmp(name,"dhvspscdc4ph") == 0) return d_hvspsc_d_c_4_ph  ;
+    if (eostp_strcmp(name,"dhvspscdc5ph") == 0) return d_hvspsc_d_c_5_ph  ;
     if (eostp_strcmp(name,"dhvsvscdph")   == 0) return d_hvsvsc_dp_h      ;
     if (eostp_strcmp(name,"dhvsvscdhp")   == 0) return d_hvsvsc_dh_p      ;
     if (eostp_strcmp(name,"dhvsvscdc1ph") == 0) return d_hvsvsc_d_c_1_ph  ;
     if (eostp_strcmp(name,"dhvsvscdc2ph") == 0) return d_hvsvsc_d_c_2_ph  ;
     if (eostp_strcmp(name,"dhvsvscdc3ph") == 0) return d_hvsvsc_d_c_3_ph  ;
     if (eostp_strcmp(name,"dhvsvscdc4ph") == 0) return d_hvsvsc_d_c_4_ph  ;
+    if (eostp_strcmp(name,"dhvsvscdc5ph") == 0) return d_hvsvsc_d_c_5_ph  ;
 
     return NotAC2iapProperty ;
   }

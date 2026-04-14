@@ -31,13 +31,15 @@ static void totab(ArrOfDouble& C
                   , double C_1=0
                   , double C_2=0
                   , double C_3=0
-                  , double C_4=0)
+                  , double C_4=0
+                  , double C_5=0)
 { int n = C.size() ;
   C[0] = C_0 ;
   if(n > 1)  C[1] = C_1 ;
   if(n > 2)  C[2] = C_2 ;
   if(n > 3)  C[3] = C_3 ;
   if(n > 4)  C[4] = C_4 ;
+  if(n > 5)  C[5] = C_5 ;
 }
 
 namespace NEPTUNE_EOS
@@ -339,7 +341,7 @@ namespace NEPTUNE_EOS
     int iP    = 0 ;
     int iT    = 0 ;
     int ih    = 0 ;
-    int ic[5] ; for (int i=0; i<5; i++)  ic[i] = -1 ;
+    int ic[6] ; for (int i=0; i<7; i++)  ic[i] = -1 ;
     int idim  = 0 ;
 
     for (int i_in=0; i_in<nb_infields; i_in++)
@@ -392,6 +394,10 @@ namespace NEPTUNE_EOS
                  id_c++       ;
                  ic[4] = i_in ;
                  break        ;
+              case NEPTUNE::c_5:
+                 id_c++       ;
+                 ic[5] = i_in ;
+                 break        ;
               default:
                  break ;
             }
@@ -399,7 +405,7 @@ namespace NEPTUNE_EOS
 
     if (   (idim < 1) || (2 < idim)
         || (1 < id_P) || (1 < id_T) || (1 < id_h)
-        || (id_c == 0) || (5 < id_c) || (id_c != nb_fluids)
+        || (id_c == 0) || (6 < id_c) || (id_c != nb_fluids)
         || (idim == 1 && id_P == 0 && id_T == 0)
         || (idim == 2 && 0 < id_T && 0 < id_h) )
        { errfield = EOS_Internal_Error::INPUT_PROPERTY ;
@@ -424,17 +430,20 @@ namespace NEPTUNE_EOS
       ArrOfDouble xc2(nsca,0.e0);
       ArrOfDouble xc3(nsca,0.e0);
       ArrOfDouble xc4(nsca,0.e0);
+      ArrOfDouble xc5(nsca,0.e0);
       EOS_Field C0("c_0","c_0",NEPTUNE::c_0,xc0);
       EOS_Field C1("c_1","c_1",NEPTUNE::c_1,xc1);
       EOS_Field C2("c_2","c_2",NEPTUNE::c_2,xc2);
       EOS_Field C3("c_3","c_3",NEPTUNE::c_3,xc3);
       EOS_Field C4("c_4","c_4",NEPTUNE::c_4,xc4);
+      EOS_Field C5("c_5","c_5",NEPTUNE::c_5,xc5);
 
       if (ic[0] != -1) C0 = input[ic[0]];
       if (ic[1] != -1) C1 = input[ic[1]];
       if (ic[2] != -1) C2 = input[ic[2]];
       if (ic[3] != -1) C3 = input[ic[3]];
       if (ic[4] != -1) C4 = input[ic[4]];
+      if (ic[5] != -1) C5 = input[ic[5]];
 
       ArrOfDouble xPv(nsca);
       EOS_Field Pv("Pv","p",NEPTUNE::p,xPv);
@@ -443,7 +452,7 @@ namespace NEPTUNE_EOS
 
       for (int i=0; i<nsca; i++)
       {
-        this->compute_pv_hv_ph(input[iP][i], input[ih][i], Pv[i], hv[i], C0[i], C1[i], C2[i], C3[i], C4[i]);
+        this->compute_pv_hv_ph(input[iP][i], input[ih][i], Pv[i], hv[i], C0[i], C1[i], C2[i], C3[i], C4[i], C5[i]);
       }
       //
       // Calcul de toutes les proprietes standards, apres convergence calcul Pv, Hv
@@ -584,20 +593,20 @@ namespace NEPTUNE_EOS
       ArrOfDouble xmug(nsca), xdmudp(nsca), xdmudh(nsca), xdsigmadp(nsca), xdsigmadh(nsca);
       ArrOfDouble xprgr(nsca), xxnc(nsca), xmnc(nsca), xrnc(nsca), xdncv(nsca), xddncv1(nsca), xddncv3(nsca);
       // proprietes incondensables
-      ArrOfDouble px[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble hx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dpvdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dhvdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dtgdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble drgdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble drvdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dcpdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dlambdadx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dmudx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dsigmadx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble ddncvdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble drncdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
-      ArrOfDouble dmncdx[4] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble px[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble hx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dpvdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dhvdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dtgdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble drgdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble drvdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dcpdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dlambdadx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dmudx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dsigmadx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble ddncvdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble drncdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
+      ArrOfDouble dmncdx[5] = {ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0),ArrOfDouble(nsca,0.e0)};
       EOS_Field dpv1("dpvdp", "d_p_0_d_p_h", NEPTUNE::d_p_0_d_p_h, xdpvdp);
       EOS_Field dpv3("dpvdh", "d_p_0_d_h_p", NEPTUNE::d_p_0_d_h_p, xdpvdh);
       EOS_Field dhv1("dhvdp", "d_h_0_d_p_h", NEPTUNE::d_h_0_d_p_h, xdhvdp);
@@ -631,58 +640,72 @@ namespace NEPTUNE_EOS
       EOS_Field p2("p2", "p_2", NEPTUNE::p_2, px[1]);
       EOS_Field p3("p3", "p_3", NEPTUNE::p_3, px[2]);
       EOS_Field p4("p4", "p_4", NEPTUNE::p_4, px[3]);
+      EOS_Field p5("p5", "p_5", NEPTUNE::p_5, px[4]);
       EOS_Field h1("h1", "h_1", NEPTUNE::h_1, hx[0]);
       EOS_Field h2("h2", "h_2", NEPTUNE::h_2, hx[1]);
       EOS_Field h3("h3", "h_3", NEPTUNE::h_3, hx[2]);
       EOS_Field h4("h4", "h_4", NEPTUNE::h_4, hx[3]);
+      EOS_Field h5("h5", "h_5", NEPTUNE::h_5, hx[4]);
       EOS_Field dpvdx1("dpvdx1", "d_p_0_d_c_1_ph", NEPTUNE::d_p_0_d_c_1_ph, dpvdx[0]);
       EOS_Field dpvdx2("dpvdx2", "d_p_0_d_c_2_ph", NEPTUNE::d_p_0_d_c_2_ph, dpvdx[1]);
       EOS_Field dpvdx3("dpvdx3", "d_p_0_d_c_3_ph", NEPTUNE::d_p_0_d_c_3_ph, dpvdx[2]);
       EOS_Field dpvdx4("dpvdx4", "d_p_0_d_c_4_ph", NEPTUNE::d_p_0_d_c_4_ph, dpvdx[3]);
+      EOS_Field dpvdx5("dpvdx5", "d_p_0_d_c_5_ph", NEPTUNE::d_p_0_d_c_5_ph, dpvdx[4]);
       EOS_Field dhvdx1("dhvdx1", "d_h_0_d_c_1_ph", NEPTUNE::d_h_0_d_c_1_ph, dhvdx[0]);
       EOS_Field dhvdx2("dhvdx2", "d_h_0_d_c_2_ph", NEPTUNE::d_h_0_d_c_2_ph, dhvdx[1]);
       EOS_Field dhvdx3("dhvdx3", "d_h_0_d_c_3_ph", NEPTUNE::d_h_0_d_c_3_ph, dhvdx[2]);
       EOS_Field dhvdx4("dhvdx4", "d_h_0_d_c_4_ph", NEPTUNE::d_h_0_d_c_4_ph, dhvdx[3]);
+      EOS_Field dhvdx5("dhvdx5", "d_h_0_d_c_5_ph", NEPTUNE::d_h_0_d_c_5_ph, dhvdx[4]);
       EOS_Field dtgdx1("dtgdx1", "d_T_d_c_1_ph", NEPTUNE::d_T_d_c_1_ph, dtgdx[0]);
       EOS_Field dtgdx2("dtgdx2", "d_T_d_c_2_ph", NEPTUNE::d_T_d_c_2_ph, dtgdx[1]);
       EOS_Field dtgdx3("dtgdx3", "d_T_d_c_3_ph", NEPTUNE::d_T_d_c_3_ph, dtgdx[2]);
       EOS_Field dtgdx4("dtgdx4", "d_T_d_c_4_ph", NEPTUNE::d_T_d_c_4_ph, dtgdx[3]);
+      EOS_Field dtgdx5("dtgdx5", "d_T_d_c_5_ph", NEPTUNE::d_T_d_c_5_ph, dtgdx[4]);
       EOS_Field drgdx1("drgdx1", "d_rho_d_c_1_ph", NEPTUNE::d_rho_d_c_1_ph, drgdx[0]);
       EOS_Field drgdx2("drgdx2", "d_rho_d_c_2_ph", NEPTUNE::d_rho_d_c_2_ph, drgdx[1]);
       EOS_Field drgdx3("drgdx3", "d_rho_d_c_3_ph", NEPTUNE::d_rho_d_c_3_ph, drgdx[2]);
       EOS_Field drgdx4("drgdx4", "d_rho_d_c_4_ph", NEPTUNE::d_rho_d_c_4_ph, drgdx[3]);
+      EOS_Field drgdx5("drgdx5", "d_rho_d_c_5_ph", NEPTUNE::d_rho_d_c_5_ph, drgdx[4]);
       EOS_Field drvdx1("drvdx1", "d_rho_0_d_c_1_ph", NEPTUNE::d_rho_0_d_c_1_ph, drvdx[0]);
       EOS_Field drvdx2("drvdx2", "d_rho_0_d_c_2_ph", NEPTUNE::d_rho_0_d_c_2_ph, drvdx[1]);
       EOS_Field drvdx3("drvdx3", "d_rho_0_d_c_3_ph", NEPTUNE::d_rho_0_d_c_3_ph, drvdx[2]);
       EOS_Field drvdx4("drvdx4", "d_rho_0_d_c_4_ph", NEPTUNE::d_rho_0_d_c_4_ph, drvdx[3]);
+      EOS_Field drvdx5("drvdx5", "d_rho_0_d_c_5_ph", NEPTUNE::d_rho_0_d_c_5_ph, drvdx[4]);
       EOS_Field dcpdx1("dcpdx1", "d_cp_d_c_1_ph", NEPTUNE::d_cp_d_c_1_ph, dcpdx[0]);
       EOS_Field dcpdx2("dcpdx2", "d_cp_d_c_2_ph", NEPTUNE::d_cp_d_c_2_ph, dcpdx[1]);
       EOS_Field dcpdx3("dcpdx3", "d_cp_d_c_3_ph", NEPTUNE::d_cp_d_c_3_ph, dcpdx[2]);
       EOS_Field dcpdx4("dcpdx4", "d_cp_d_c_4_ph", NEPTUNE::d_cp_d_c_4_ph, dcpdx[3]);
+      EOS_Field dcpdx5("dcpdx5", "d_cp_d_c_5_ph", NEPTUNE::d_cp_d_c_5_ph, dcpdx[4]);
       EOS_Field dlambdadx1("dlambdadx1", "d_lambda_d_c_1_ph", NEPTUNE::d_lambda_d_c_1_ph, dlambdadx[0]);
       EOS_Field dlambdadx2("dlambdadx2", "d_lambda_d_c_2_ph", NEPTUNE::d_lambda_d_c_2_ph, dlambdadx[1]);
       EOS_Field dlambdadx3("dlambdadx3", "d_lambda_d_c_3_ph", NEPTUNE::d_lambda_d_c_3_ph, dlambdadx[2]);
       EOS_Field dlambdadx4("dlambdadx4", "d_lambda_d_c_4_ph", NEPTUNE::d_lambda_d_c_4_ph, dlambdadx[3]);
+      EOS_Field dlambdadx5("dlambdadx5", "d_lambda_d_c_5_ph", NEPTUNE::d_lambda_d_c_5_ph, dlambdadx[4]);
       EOS_Field dmudx1("dmudx1", "d_mu_d_c_1_ph", NEPTUNE::d_mu_d_c_1_ph, dmudx[0]);
       EOS_Field dmudx2("dmudx2", "d_mu_d_c_2_ph", NEPTUNE::d_mu_d_c_2_ph, dmudx[1]);
       EOS_Field dmudx3("dmudx3", "d_mu_d_c_3_ph", NEPTUNE::d_mu_d_c_3_ph, dmudx[2]);
       EOS_Field dmudx4("dmudx4", "d_mu_d_c_4_ph", NEPTUNE::d_mu_d_c_4_ph, dmudx[3]);
+      EOS_Field dmudx5("dmudx5", "d_mu_d_c_5_ph", NEPTUNE::d_mu_d_c_5_ph, dmudx[4]);     
       EOS_Field dsigmadx1("dsigmadx1", "d_sigma_d_c_1_ph", NEPTUNE::d_sigma_d_c_1_ph, dsigmadx[0]);
       EOS_Field dsigmadx2("dsigmadx2", "d_sigma_d_c_2_ph", NEPTUNE::d_sigma_d_c_2_ph, dsigmadx[1]);
       EOS_Field dsigmadx3("dsigmadx3", "d_sigma_d_c_3_ph", NEPTUNE::d_sigma_d_c_3_ph, dsigmadx[2]);
       EOS_Field dsigmadx4("dsigmadx4", "d_sigma_d_c_4_ph", NEPTUNE::d_sigma_d_c_4_ph, dsigmadx[3]);
+      EOS_Field dsigmadx5("dsigmadx5", "d_sigma_d_c_5_ph", NEPTUNE::d_sigma_d_c_5_ph, dsigmadx[4]);
       EOS_Field ddncvdx1("ddncvdx1", "d_dncv_d_c_1_ph", NEPTUNE::d_dncv_d_c_1_ph, ddncvdx[0]);
       EOS_Field ddncvdx2("ddncvdx2", "d_dncv_d_c_2_ph", NEPTUNE::d_dncv_d_c_2_ph, ddncvdx[1]);
       EOS_Field ddncvdx3("ddncvdx3", "d_dncv_d_c_3_ph", NEPTUNE::d_dncv_d_c_3_ph, ddncvdx[2]);
       EOS_Field ddncvdx4("ddncvdx4", "d_dncv_d_c_4_ph", NEPTUNE::d_dncv_d_c_4_ph, ddncvdx[3]);
+      EOS_Field ddncvdx5("ddncvdx5", "d_dncv_d_c_5_ph", NEPTUNE::d_dncv_d_c_5_ph, ddncvdx[4]);
       EOS_Field drncdx1("drncdx1", "d_rnc_d_c_1_ph", NEPTUNE::d_rnc_d_c_1_ph, drncdx[0]);
       EOS_Field drncdx2("drncdx2", "d_rnc_d_c_2_ph", NEPTUNE::d_rnc_d_c_2_ph, drncdx[1]);
       EOS_Field drncdx3("drncdx3", "d_rnc_d_c_3_ph", NEPTUNE::d_rnc_d_c_3_ph, drncdx[2]);
       EOS_Field drncdx4("drncdx4", "d_rnc_d_c_4_ph", NEPTUNE::d_rnc_d_c_4_ph, drncdx[3]);
+      EOS_Field drncdx5("drncdx5", "d_rnc_d_c_5_ph", NEPTUNE::d_rnc_d_c_5_ph, drncdx[4]);
       EOS_Field dmncdx1("dmncdx1", "d_mnc_d_c_1_ph", NEPTUNE::d_mnc_d_c_1_ph, dmncdx[0]);
       EOS_Field dmncdx2("dmncdx2", "d_mnc_d_c_2_ph", NEPTUNE::d_mnc_d_c_2_ph, dmncdx[1]);
       EOS_Field dmncdx3("dmncdx3", "d_mnc_d_c_3_ph", NEPTUNE::d_mnc_d_c_3_ph, dmncdx[2]);
       EOS_Field dmncdx4("dmncdx4", "d_mnc_d_c_4_ph", NEPTUNE::d_mnc_d_c_4_ph, dmncdx[3]);
+      EOS_Field dmncdx5("dmncdx5", "d_mnc_d_c_5_ph", NEPTUNE::d_mnc_d_c_5_ph, dmncdx[4]);
       // variables intermediaires
       double dfdpv, dfdhv, dgdpv, dgdhv, dcpgtg, cpj, lambdaj, dlambdaj, muj, dmuj;
       double mm0;
@@ -694,7 +717,7 @@ namespace NEPTUNE_EOS
       {
         ArrOfDouble dncvj(nb_fluids,0.e0) ;
         ArrOfDouble c(nb_fluids) ;
-        totab(c, C0[i] ,C1[i], C2[i], C3[i], C4[i]) ;
+        totab(c, C0[i] ,C1[i], C2[i], C3[i], C4[i], C5[i]) ;
         //
         double mmj;
         double cpsum=0.e0;
@@ -985,6 +1008,9 @@ namespace NEPTUNE_EOS
              case NEPTUNE::p_4 :
                r[k][i]=p4[i];
                break;
+             case NEPTUNE::p_5 :
+               r[k][i]=p5[i];
+               break; 
              case NEPTUNE::h_1 :
                r[k][i]=h1[i];
                break;
@@ -996,6 +1022,9 @@ namespace NEPTUNE_EOS
                break;
              case NEPTUNE::h_4 :
                r[k][i]=h4[i];
+               break;
+             case NEPTUNE::h_5 :
+               r[k][i]=h5[i];
                break;
              case NEPTUNE::d_p_0_d_c_1_ph : // mixing, derivation incondensable gas
                r[k][i]=dpvdx1[i];
@@ -1009,6 +1038,9 @@ namespace NEPTUNE_EOS
              case NEPTUNE::d_p_0_d_c_4_ph :
                r[k][i]=dpvdx4[i];
                break;
+             case NEPTUNE::d_p_0_d_c_5_ph :
+               r[k][i]=dpvdx5[i];
+               break;
              case NEPTUNE::d_h_0_d_c_1_ph :
                r[k][i]=dhvdx1[i];
                break;
@@ -1020,6 +1052,9 @@ namespace NEPTUNE_EOS
                break;
              case NEPTUNE::d_h_0_d_c_4_ph :
                r[k][i]=dhvdx4[i];
+               break;
+             case NEPTUNE::d_h_0_d_c_5_ph :
+               r[k][i]=dhvdx5[i];
                break;
              case NEPTUNE::d_T_d_c_1_ph :
                r[k][i]=dtgdx1[i];
@@ -1033,6 +1068,9 @@ namespace NEPTUNE_EOS
              case NEPTUNE::d_T_d_c_4_ph :
                r[k][i]=dtgdx4[i];
                break;
+             case NEPTUNE::d_T_d_c_5_ph :
+               r[k][i]=dtgdx5[i];
+               break;
              case NEPTUNE::d_rho_d_c_1_ph :
                r[k][i]=drgdx1[i];
                break;
@@ -1044,6 +1082,9 @@ namespace NEPTUNE_EOS
                break;
              case NEPTUNE::d_rho_d_c_4_ph :
                r[k][i]=drgdx4[i];
+               break;
+             case NEPTUNE::d_rho_d_c_5_ph :
+               r[k][i]=drgdx5[i];
                break;
              case NEPTUNE::d_rho_0_d_c_1_ph :
                r[k][i]=drvdx1[i];
@@ -1057,6 +1098,9 @@ namespace NEPTUNE_EOS
              case NEPTUNE::d_rho_0_d_c_4_ph :
                r[k][i]=drvdx4[i];
                break;
+             case NEPTUNE::d_rho_0_d_c_5_ph :
+               r[k][i]=drvdx5[i];
+               break;
              case NEPTUNE::d_cp_d_c_1_ph :
                r[k][i]=dcpdx1[i];
                break;
@@ -1068,6 +1112,9 @@ namespace NEPTUNE_EOS
                break;
              case NEPTUNE::d_cp_d_c_4_ph :
                r[k][i]=dcpdx4[i];
+               break;
+             case NEPTUNE::d_cp_d_c_5_ph :
+               r[k][i]=dcpdx5[i];
                break;
              case NEPTUNE::d_lambda_d_c_1_ph :
                r[k][i]=dlambdadx1[i];
@@ -1081,6 +1128,9 @@ namespace NEPTUNE_EOS
              case NEPTUNE::d_lambda_d_c_4_ph :
                r[k][i]=dlambdadx4[i];
                break;
+             case NEPTUNE::d_lambda_d_c_5_ph :
+               r[k][i]=dlambdadx5[i];
+               break;
              case NEPTUNE::d_mu_d_c_1_ph :
                r[k][i]=dmudx1[i];
                break;
@@ -1092,6 +1142,9 @@ namespace NEPTUNE_EOS
                break;
              case NEPTUNE::d_mu_d_c_4_ph :
                r[k][i]=dmudx4[i];
+               break;
+             case NEPTUNE::d_mu_d_c_5_ph :
+               r[k][i]=dmudx5[i];
                break;
              case NEPTUNE::d_sigma_d_c_1_ph :
                r[k][i]=dsigmadx1[i];
@@ -1105,6 +1158,9 @@ namespace NEPTUNE_EOS
              case NEPTUNE::d_sigma_d_c_4_ph :
                r[k][i]=dsigmadx4[i];
                break;
+             case NEPTUNE::d_sigma_d_c_5_ph :
+               r[k][i]=dsigmadx5[i];
+               break;
              case NEPTUNE::d_dncv_d_c_1_ph :
                r[k][i]=ddncvdx1[i];
                break;
@@ -1116,6 +1172,9 @@ namespace NEPTUNE_EOS
                break;
              case NEPTUNE::d_dncv_d_c_4_ph :
                r[k][i]=ddncvdx4[i];
+               break;
+             case NEPTUNE::d_dncv_d_c_5_ph :
+               r[k][i]=ddncvdx5[i];
                break;
              case NEPTUNE::d_rnc_d_c_1_ph :
                r[k][i]=drncdx1[i];
@@ -1129,6 +1188,9 @@ namespace NEPTUNE_EOS
              case NEPTUNE::d_rnc_d_c_4_ph :
                r[k][i]=drncdx4[i];
                break;
+             case NEPTUNE::d_rnc_d_c_5_ph :
+               r[k][i]=drncdx5[i];
+               break;
              case NEPTUNE::d_mnc_d_c_1_ph :
                r[k][i]=dmncdx1[i];
                break;
@@ -1140,6 +1202,9 @@ namespace NEPTUNE_EOS
                break;
              case NEPTUNE::d_mnc_d_c_4_ph :
                r[k][i]=dmncdx4[i];
+               break;
+             case NEPTUNE::d_mnc_d_c_5_ph :
+               r[k][i]=dmncdx5[i];
                break;
              case NEPTUNE::T_sat : // saturation w.r.t P
                r[k][i]=tsatp[i];
@@ -1247,17 +1312,20 @@ namespace NEPTUNE_EOS
       ArrOfDouble xc2(nsca,0.e0);
       ArrOfDouble xc3(nsca,0.e0);
       ArrOfDouble xc4(nsca,0.e0);
+      ArrOfDouble xc5(nsca,0.e0);
       EOS_Field C0("c_0","c_0",NEPTUNE::c_0,xc0);
       EOS_Field C1("c_1","c_1",NEPTUNE::c_1,xc1);
       EOS_Field C2("c_2","c_2",NEPTUNE::c_2,xc2);
       EOS_Field C3("c_3","c_3",NEPTUNE::c_3,xc3);
       EOS_Field C4("c_4","c_4",NEPTUNE::c_4,xc4);
+      EOS_Field C5("c_5","c_5",NEPTUNE::c_5,xc5);
 
       if (ic[0] != -1) C0 = input[ic[0]];
       if (ic[1] != -1) C1 = input[ic[1]];
       if (ic[2] != -1) C2 = input[ic[2]];
       if (ic[3] != -1) C3 = input[ic[3]];
       if (ic[4] != -1) C4 = input[ic[4]];
+      if (ic[5] != -1) C5 = input[ic[5]];
 
       ArrOfDouble xhg(nsca,0.e0);
       EOS_Field hg("hg","h",NEPTUNE::h,xhg);
@@ -1286,7 +1354,7 @@ namespace NEPTUNE_EOS
       EOS_Internal_Error err ;
       for (int i=0; (i < nsca); i++)
       {
-        totab(c, C0[i], C1[i], C2[i], C3[i], C4[i]) ;
+        totab(c, C0[i], C1[i], C2[i], C3[i], C4[i], C5[i]) ;
         double hjsum=0.e0;
         double hj=0.e0;
         for(int j=1; j<nb_fluids; j++)
@@ -1377,12 +1445,13 @@ namespace NEPTUNE_EOS
                , double C_2
                , double C_3
                , double C_4
+               , double C_5
                ) const
   { T = 0.e0 ;
     double Ti = 0.e0 ;
     EOS_Internal_Error err = EOS_Internal_Error::OK ;
     ArrOfDouble C(nb_fluids) ;
-    totab(C, C_0 ,C_1, C_2, C_3, C_4) ;
+    totab(C, C_0 ,C_1, C_2, C_3, C_4, C_5) ;
     for(int i=0; i<nb_fluids; i++)
        { EOS_Internal_Error err2 = (*this)[i].fluid().compute_T_ph(p, h, Ti) ;
          err = worst_internal_error(err, err2) ;
@@ -1398,10 +1467,10 @@ namespace NEPTUNE_EOS
 //
   // TODO faire proprement les erreurs (EOS_Internal_Error)
   int EOS_Mixing::compute_pv_hv_ph(double P, double h, double &Pv, double &hv,
-                 double c_0, double c_1, double c_2, double c_3, double c_4) const
+                 double c_0, double c_1, double c_2, double c_3, double c_4, double c_5) const
   {
     ArrOfDouble c(nb_fluids) ;
-    totab(c, c_0 ,c_1, c_2, c_3, c_4) ;
+    totab(c, c_0 ,c_1, c_2, c_3, c_4, c_5) ;
     //
     // compute cpsum=sum(Ci*cpi)
     //
