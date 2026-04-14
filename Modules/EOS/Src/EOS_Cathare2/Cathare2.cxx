@@ -162,6 +162,7 @@ namespace CATHARE2
             if (mode == liquid) ltl.set_ptr(nsca, f.get_data().get_ptr());
             else if (mode == vapor) ltg.set_ptr(nsca, f.get_data().get_ptr());
             else if (mode == unknown) lt.set_ptr(nsca, f.get_data().get_ptr());
+            else if (mode == saturated)   ltsp.set_ptr(nsca, f.get_data().get_ptr());
             else return 0;
             break;
          case NEPTUNE::rho:
