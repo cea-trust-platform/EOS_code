@@ -783,12 +783,12 @@ namespace NEPTUNE_EOS
   { T_max = tmax ;
     return EOS_Internal_Error::OK ;
   }
-//   inline EOS_Internal_Error
-//   EOS_Refprop9::get_p_min(double& p_min) const
-//   {
-//     p_min = pmin;
-//     return EOS_Internal_Error::OK ;
-//   }
+   inline EOS_Internal_Error
+   EOS_Refprop9::get_p_min(double& p_min) const
+   {
+     p_min = pmin;
+     return EOS_Internal_Error::OK ;
+   }
 
   inline EOS_Internal_Error EOS_Refprop9::get_p_max(double& p_max) const
   { p_max = pmax ;
@@ -799,12 +799,12 @@ namespace NEPTUNE_EOS
   { rho_max = rhomax ;
     return EOS_Internal_Error::OK ;
   }
-//   inline EOS_Internal_Error
-//   EOS_Refprop9::get_h_min(double& h_min) const
-//   {
-//     h_min = hmin;
-//     return EOS_Internal_Error::OK ;
-//   }
+   inline EOS_Internal_Error
+   EOS_Refprop9::get_h_min(double& h_min) const
+   {
+     h_min = hmin;
+     return EOS_Internal_Error::OK ;
+  }
 
   inline EOS_Internal_Error EOS_Refprop9::get_h_max(double& h_max) const
   { h_max = hmax ;
