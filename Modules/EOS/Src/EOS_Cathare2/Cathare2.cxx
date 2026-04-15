@@ -134,7 +134,9 @@ namespace CATHARE2
               default:
                  break ;
             }
-         errfield.set(i,convert_eos_error(partial_error)) ;
+                  
+         errfield.set(i, partial_error==ok ? EOS_Internal_Error::OK : EOS_Internal_Error(partial_error, EOS_Error::bad));
+         //errfield.set(i,convert_eos_error(partial_error)) ; //old version
        }
     }
     return errfield.find_worst_error().generic_error() ;
