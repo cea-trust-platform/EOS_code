@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <sstream>
+
 
 EOS_py::EOS_py(const std::string& meth) {
     eos_ = new NEPTUNE::EOS(meth.c_str());
@@ -110,8 +112,97 @@ std::vector<std::vector<double>> EOS_py::compute_sat(
             result[j][i] = outputs[i][j];
         }
     }
+        return result;
+}
 
-    return result;
+std::string EOS_py::describe() const {
+    if (!eos_) {
+        throw std::runtime_error("EOS_py::eos_ not initialized");
+    }
+
+    std::ostringstream oss;
+    oss << (*eos_);  // appelle operator<< qui est surchargé par fluid_description
+
+    return oss.str();
+}
+
+double EOS_py::call_getter(
+    NEPTUNE::EOS_Error (NEPTUNE::EOS::*func)(double&) const,
+    const std::string& name
+) const {
+    if (!eos_) {
+        throw std::runtime_error("EOS_py::eos_ not initialized");
+    }
+
+    double val = 0.0;
+    auto status = (eos_->*func)(val);
+
+    if (status != NEPTUNE::EOS_Error::good) {
+        throw std::runtime_error(
+            "Error in " + name +
+            " : status = " + std::to_string(static_cast<int>(status))
+        );
+    }
+
+    return val;
+}
+
+
+
+double EOS_py::get_p_crit() const {
+    return call_getter(&NEPTUNE::EOS::get_p_crit, "get_p_crit");
+}
+
+double EOS_py::get_h_crit() const {
+    return call_getter(&NEPTUNE::EOS::get_h_crit, "get_h_crit");
+}
+
+double EOS_py::get_T_crit() const {
+    return call_getter(&NEPTUNE::EOS::get_T_crit, "get_T_crit");
+}
+
+double EOS_py::get_rho_crit() const {
+    return call_getter(&NEPTUNE::EOS::get_rho_crit, "get_rho_crit");
+}
+
+double EOS_py::get_p_min() const {
+    return call_getter(&NEPTUNE::EOS::get_p_min, "get_p_min");
+}
+
+double EOS_py::get_p_max() const {
+    return call_getter(&NEPTUNE::EOS::get_p_max, "get_p_max");
+}
+
+double EOS_py::get_h_max() const {
+    return call_getter(&NEPTUNE::EOS::get_h_max, "get_h_max");
+}
+
+double EOS_py::get_h_min() const {
+    return call_getter(&NEPTUNE::EOS::get_h_min, "get_h_min");
+}
+
+double EOS_py::get_T_max() const {
+    return call_getter(&NEPTUNE::EOS::get_T_max, "get_T_max");
+}
+
+double EOS_py::get_T_min() const {
+    return call_getter(&NEPTUNE::EOS::get_T_min, "get_T_min");
+}
+
+double EOS_py::get_rho_max() const {
+    return call_getter(&NEPTUNE::EOS::get_rho_max, "get_rho_max");
+}
+
+double EOS_py::get_rho_min() const {
+    return call_getter(&NEPTUNE::EOS::get_rho_min, "get_rho_min");
+}
+
+double EOS_py::get_mm() const {
+    return call_getter(&NEPTUNE::EOS::get_mm, "get_mm");
+}
+
+double EOS_py::get_p() const {
+    return call_getter(&NEPTUNE::EOS::get_p, "get_p");
 }
 
 EOS_Mixing_py::EOS_Mixing_py(
@@ -228,6 +319,7 @@ std::vector<std::vector<double>> EOS_Mixing_py::compute(
 
     return result;
 }
+
 std::string EOS_Mixing_py::describe() const {
     std::ostringstream os;
 

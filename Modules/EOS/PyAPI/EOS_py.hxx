@@ -25,10 +25,39 @@ public:
         std::vector<double> tab_P,
         std::vector<std::string> str_out
     );
+    std::string describe() const;
+
+
+    double get_p_crit() const;
+    double get_h_crit() const;
+    double get_T_crit() const;
+    double get_rho_crit() const;
+
+    double get_p_min() const;
+    double get_p_max() const;
+
+    double get_h_max() const;
+    double get_h_min() const;
+
+    double get_T_max() const;
+    double get_T_min() const;
+
+    double get_rho_max() const;
+    double get_rho_min() const;
+
+    double get_p() const;
+    double get_mm() const;
 
 private:
     NEPTUNE::EOS* eos_;
+
+    // Helper générique pour éviter duplication
+    double call_getter(
+        NEPTUNE::EOS_Error (NEPTUNE::EOS::*func)(double&) const,
+        const std::string& name
+    ) const;
 };
+
 
 class EOS_Mixing_py {
 public:
