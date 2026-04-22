@@ -19,7 +19,12 @@
 #ifndef ArrOfT_inlines
 #define ArrOfT_inlines 1
 #include <string.h>
+#ifdef TRACY_ENABLE
 #include "tracy/Tracy.hpp"
+#else
+#define ZoneScopedNS(x, y)
+#define ZoneText(x, y)
+#endif
 
 namespace LANGUAGE_KERNEL
 {

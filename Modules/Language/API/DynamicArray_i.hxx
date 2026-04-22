@@ -14,9 +14,13 @@
 *****************************************************************************/
 
 
+#ifdef TRACY_ENABLE
 #include "tracy/Tracy.hpp"
+#else
+#define ZoneScopedNS(x, y)
+#endif
 
-// Parameterized Class DynamicArray 
+// Parameterized Class DynamicArray
 
 namespace LANGUAGE_KERNEL
 {
