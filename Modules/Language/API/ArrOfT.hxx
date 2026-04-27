@@ -32,6 +32,7 @@ namespace LANGUAGE_KERNEL
     int add_one_ref();
     int supr_one_ref();
     int   sz;
+    int capacity;
     T* data;
     int   ref_count;
     int owner;
@@ -55,6 +56,7 @@ namespace LANGUAGE_KERNEL
     const T& operator()(int i) const ;
     
     int size() const;
+    int capacity() const;
     ArrOf<T>& resize(int) ;
     int ref_count() const;
     

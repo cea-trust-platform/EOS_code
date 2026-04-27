@@ -33,6 +33,7 @@ namespace LANGUAGE_KERNEL
   inline Vdata<T>::
   Vdata() : 
     sz(0), 
+    capacity(0),
     data(0), 
     ref_count(1), 
     owner(1)
@@ -42,6 +43,7 @@ namespace LANGUAGE_KERNEL
   inline Vdata<T>::
   Vdata(int s) : 
     sz(s), 
+    capacity(2*s),
     ref_count(1), 
     owner(1)
   { ZoneScopedN("Vdata::Vdata");
@@ -49,9 +51,9 @@ namespace LANGUAGE_KERNEL
       data = 0;
     else
       try {
-        data = new T[s];
+        data = new T[2*s];
         // test
-        for (int i=0;i<s;i++) data[i]=0;
+        // for (int i=0;i<s;i++) data[i]=0; // useless and cost performance
         // test
       }
       catch(...) {
@@ -64,6 +66,7 @@ namespace LANGUAGE_KERNEL
   inline Vdata<T>::
   Vdata(int s, const T* ptr) : 
     sz(s), 
+    capacity(s),
     data((T*) ptr),
     ref_count(1), 
     owner(0)
@@ -206,6 +209,12 @@ namespace LANGUAGE_KERNEL
   {
     return p->sz;
   }
+  template <class T>
+  inline int ArrOf<T>::
+  capacity() const
+  {
+    return p->capacity;
+  }
   template <class T> 
   inline ArrOf<T>& ArrOf<T>::
   resize(int n)
@@ -213,10 +222,23 @@ namespace LANGUAGE_KERNEL
     ZoneScopedN("ArrOf<T>::resize");
     assert(p);
     assert(n>=0);
-    if(size()==n) return *this;
+    int oldsz=size();
+    if(oldsz==n) return *this;
+    // The in-place shortcuts only apply to a buffer this array owns. A view
+    // (set_ptr) aliases memory that belongs to someone else and may already
+    // be gone: resizing it must reallocate, as it always did.
+    if(p->owner && n < oldsz){
+      p->sz = n; 
+      return *this;
+    }
+    if(p->owner && n > oldsz && n <= p->capacity){
+      for (int i=oldsz; i<n; i++) // the room was allocated but never zeroed
+        data[i]=0;
+      p->sz = n;
+      return *this;
+    }
     Vdata<T>* np=new Vdata<T>(n);
     data=np->data;
-    int oldsz=size();
     int m= ((n) < (oldsz) ? (n) : (oldsz));
     memcpy(data,p->data,m*sizeof(T));
     // alternative au memcpy
@@ -225,11 +247,10 @@ namespace LANGUAGE_KERNEL
 	  data[kk]=p->data[kk];
 	  }*/
     // alternative au memcpy
-    if (n>oldsz)
-      {
-	for (int i=oldsz; i<n; i++)
-	  data[i]=0;
-      }
+ 
+    for (int i=oldsz; i<n; i++) // needed because at creation a Vdata does not initialize its array anymore
+      data[i]=0;
+
     detach();
     p=np;
     assert(p);
@@ -360,6 +381,7 @@ inline void Vdata<T>::set_view(int s, const T* ptr)
         delete[] data;
 
     sz = s;
+    capacity = s;    // a view cannot grow in place: the caller owns the buffer
     data = (T*)ptr;
     owner = 0;
 }
@@ -399,13 +421,21 @@ inline void Vdata<T>::set_view(int s, const T* ptr)
   { ZoneScopedN("ArrOf<T>::clear");
     if (p)
     {
-      if (p->owner && p->data)
+      
+      if(!p->owner){       // if i am not the owner, i need to create a new array to modify my data. Else i can just modify my own array
+        p->data = nullptr; 
+        p->capacity = 0;
+      }
+      p->sz = 0;
+      p->ref_count = 1;
+      
+      /*if (p->owner && p->data)
         delete[] p->data;  
 
       p->data = nullptr;
       p->sz = 0;
       p->ref_count = 1; 
-      p->owner = 1;
+      p->owner = 1;*/
     }
   }
 }
