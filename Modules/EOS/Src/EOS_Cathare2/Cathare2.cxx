@@ -18,6 +18,7 @@
 #include "Cathare2.hxx"
 #include "EOS/API/EOS_Error.hxx"
 #include "EOS/API/satur_properties.hxx"
+#include "Language/API/ArrOfDouble.hxx"
 #include "tracy/Tracy.hpp"
 
 extern "C" 
@@ -1549,353 +1550,372 @@ namespace CATHARE2
 
   void CATHARE2::rezise_eos_fields(int sz, domain mode) 
   { ZoneScopedN("CATHARE2::resize_eos_fields");
-    if (ltsp.size() != sz) ltsp.resize(sz);
-    if (ltsp1.size() != sz) ltsp1.resize(sz);
-    if (l2tsp1.size() != sz) l2tsp1.resize(sz);
-    if (lhlsp.size() != sz) lhlsp.resize(sz);
-    if (lhlsp1.size() != sz) lhlsp1.resize(sz);
-    if (lhvsp.size() != sz) lhvsp.resize(sz);
-    if (lhvsp1.size() != sz) lhvsp1.resize(sz);
-    if (lcplsp.size() != sz) lcplsp.resize(sz);
-    if (lclsp1.size() != sz) lclsp1.resize(sz);
-    if (lcpvsp.size() != sz) lcpvsp.resize(sz);
-    if (lcvsp1.size() != sz) lcvsp1.resize(sz);
-    if (lrlsp.size() != sz) lrlsp.resize(sz);
-    if (lrlsp1.size() != sz) lrlsp1.resize(sz);
-    if (lrvsp.size() != sz) lrvsp.resize(sz);
-    if (lrvsp1.size() != sz) lrvsp1.resize(sz);
-    if (lp.size() != sz) lp.resize(sz);
-    if (lhf.size() != sz) lhf.resize(sz);
-    if (lhf1.size() != sz) lhf1.resize(sz);
-    if (ld2tl.size() != sz) ld2tl.resize(sz);
-    if (ld3tl.size() != sz) ld3tl.resize(sz);
-    if (ld2tg.size() != sz) ld2tg.resize(sz);
-    if (ld3tg.size() != sz) ld3tg.resize(sz);
-    if (ltl21.size() != sz) ltl21.resize(sz);
-    if (ltg31.size() != sz) ltl21.resize(sz);
-    if (lptemp.size() != sz) lptemp.resize(sz);
-    if (lro7.size() != sz) lro7.resize(sz);
-    if (lro73.size() != sz) lro73.resize(sz);
-    if (lro72.size() != sz) lro72.resize(sz);
-    if (lro71.size() != sz) lro71.resize(sz);
-    if (lro721.size() != sz) lro721.resize(sz);
-    if (lro731.size() != sz) lro731.resize(sz);
-    if (ltp10.size() != sz) ltp10.resize(sz);
-    if (ltp101.size() != sz) ltp101.resize(sz);
-    if (ltp102.size() != sz) ltp102.resize(sz);
-    if (ltp1021.size() != sz) ltp1021.resize(sz);
-    if (ltp1031.size() != sz) ltp1031.resize(sz);
-    if (ltgh2wrk.size() != sz) ltgh2wrk.resize(sz);
-    if (ldencvx.size() != sz) ldencvx.resize(sz);
-    if (lepstliq.size() != sz) lepstliq.resize(sz);
-    if (lepstliq1.size() != sz) lepstliq1.resize(sz);
-    if (lepstliq2.size() != sz) lepstliq2.resize(sz);
-    if (lepstgas.size() != sz) lepstgas.resize(sz);
-    if (lepstgas1.size() != sz) lepstgas1.resize(sz);
-    if (lepstgas3.size() != sz) lepstgas3.resize(sz);
-    if (lhlspsc.size() != sz) lhlspsc.resize(sz);
-    if (lhlspscv.size() != sz) lhlspscv.resize(sz);
-    if (lhlspsc1.size() != sz) lhlspsc1.resize(sz);
-    if (lhlspsc2.size() != sz) lhlspsc2.resize(sz);
-    if (lhlspsc3.size() != sz) lhlspsc3.resize(sz);
-    if (lhvspsc.size() != sz) lhvspsc.resize(sz);
-    if (lhvspscpv.size() != sz) lhvspscpv.resize(sz);
-    if (lhvspsctg.size() != sz) lhvspsctg.resize(sz);
-    if (lhvspsc1.size() != sz) lhvspsc1.resize(sz);
-    if (lhvspsc2.size() != sz) lhvspsc2.resize(sz);
-    if (lhvspsc3.size() != sz) lhvspsc3.resize(sz);
-    if (lhlsvscv.size() != sz) lhlsvscv.resize(sz);
-    if (lhvsvscpv.size() != sz) lhvsvscpv.resize(sz);
-    if (lhvsvsctg.size() != sz) lhvsvsctg.resize(sz);
-    if (hllim.size() != sz) hllim.resize(sz);
-    if (hvlim.size() != sz) hvlim.resize(sz);
-    if (lbetal.size() != sz) lbetal.resize(sz);
-    if (lbetal1.size() != sz) lbetal1.resize(sz);
-    if (lbetal2.size() != sz) lbetal2.resize(sz);
-    if (ltl.size() != sz) ltl.resize(sz);      // epstl l/v
-    if (ltl1.size() != sz) ltl1.resize(sz);    // epstl l/v
-    if (ltl2.size() != sz) ltl2.resize(sz);    // epstl l/v
-    if (lrl.size() != sz) lrl.resize(sz);      // epstl l/v
-    if (lrl1.size() != sz) lrl1.resize(sz);    // epstl l/v
-    if (lrl2.size() != sz) lrl2.resize(sz);    // epstl l/v
-    if (lcpl.size() != sz) lcpl.resize(sz);    // epstl l/v
-    if (lcpl1.size() != sz) lcpl1.resize(sz);  // epstl l/v
-    if (lcpl2.size() != sz) lcpl2.resize(sz);  // epstl l/v
-    
-    if (mode == unknown) 
-       { if (lt.size() != sz) lt.resize(sz);
-         if (lh.size() != sz) lh.resize(sz);
-         if (lr.size() != sz) lr.resize(sz);
-         if (lcp.size() != sz) lcp.resize(sz);
-         if (lmu.size() != sz) lmu.resize(sz);
-         if (lla.size() != sz) lla.resize(sz);
-         if (lt1.size() != sz) lt1.resize(sz);
-         if (lh1.size() != sz) lh1.resize(sz);
-         if (lr1.size() != sz) lr1.resize(sz);
-         if (lcp1.size() != sz) lcp1.resize(sz);
-         if (lmu1.size() != sz) lmu1.resize(sz);
-         if (lla1.size() != sz) lla1.resize(sz);
-         if (lt2.size() != sz) lt2.resize(sz);
-         if (lh2.size() != sz) lh2.resize(sz);
-         if (lr2.size() != sz) lr2.resize(sz);
-         if (lcp2.size() != sz) lcp2.resize(sz);
-         if (lmu2.size() != sz) lmu2.resize(sz);
-         if (lla2.size() != sz) lla2.resize(sz);
-       }
+   
+    std::vector<ArrOfDouble*> vec; 
+    if (ltsp.size() != sz) vec.push_back(&ltsp);
+    if (ltsp1.size() != sz) vec.push_back(&ltsp1);
+    if (l2tsp1.size() != sz) vec.push_back(&l2tsp1);
+    if (lhlsp.size() != sz) vec.push_back(&lhlsp);
+    if (lhlsp1.size() != sz) vec.push_back(&lhlsp1);
+    if (lhvsp.size() != sz) vec.push_back(&lhvsp);
+    if (lhvsp1.size() != sz) vec.push_back(&lhvsp1);
+    if (lcplsp.size() != sz) vec.push_back(&lcplsp);
+    if (lclsp1.size() != sz) vec.push_back(&lclsp1);
+    if (lcpvsp.size() != sz) vec.push_back(&lcpvsp);
+    if (lcvsp1.size() != sz) vec.push_back(&lcvsp1);
+    if (lrlsp.size() != sz) vec.push_back(&lrlsp);
+    if (lrlsp1.size() != sz) vec.push_back(&lrlsp1);
+    if (lrvsp.size() != sz) vec.push_back(&lrvsp);
+    if (lrvsp1.size() != sz) vec.push_back(&lrvsp1);
+    if (lp.size() != sz) vec.push_back(&lp);
+    if (lhf.size() != sz) vec.push_back(&lhf);
+    if (lhf1.size() != sz) vec.push_back(&lhf1);
+    if (ld2tl.size() != sz) vec.push_back(&ld2tl);
+    if (ld3tl.size() != sz) vec.push_back(&ld3tl);
+    if (ld2tg.size() != sz) vec.push_back(&ld2tg);
+    if (ld3tg.size() != sz) vec.push_back(&ld3tg);
+    if (ltl21.size() != sz) vec.push_back(&ltl21);
+    if (ltg31.size() != sz) vec.push_back(&ltl21);
+    if (lptemp.size() != sz) vec.push_back(&lptemp);
+    if (lro7.size() != sz) vec.push_back(&lro7);
+    if (lro73.size() != sz) vec.push_back(&lro73);
+    if (lro72.size() != sz) vec.push_back(&lro72);
+    if (lro71.size() != sz) vec.push_back(&lro71);
+    if (lro721.size() != sz) vec.push_back(&lro721);
+    if (lro731.size() != sz) vec.push_back(&lro731);
+    if (ltp10.size() != sz) vec.push_back(&ltp10);
+    if (ltp101.size() != sz) vec.push_back(&ltp101);
+    if (ltp102.size() != sz) vec.push_back(&ltp102);
+    if (ltp1021.size() != sz) vec.push_back(&ltp1021);
+    if (ltp1031.size() != sz) vec.push_back(&ltp1031);
+    if (ltgh2wrk.size() != sz) vec.push_back(&ltgh2wrk);
+    if (ldencvx.size() != sz) vec.push_back(&ldencvx);
+    if (lepstliq.size() != sz) vec.push_back(&lepstliq);
+    if (lepstliq1.size() != sz) vec.push_back(&lepstliq1);
+    if (lepstliq2.size() != sz) vec.push_back(&lepstliq2);
+    if (lepstgas.size() != sz) vec.push_back(&lepstgas);
+    if (lepstgas1.size() != sz) vec.push_back(&lepstgas1);
+    if (lepstgas3.size() != sz) vec.push_back(&lepstgas3);
+    if (lhlspsc.size() != sz) vec.push_back(&lhlspsc);
+    if (lhlspscv.size() != sz) vec.push_back(&lhlspscv);
+    if (lhlspsc1.size() != sz) vec.push_back(&lhlspsc1);
+    if (lhlspsc2.size() != sz) vec.push_back(&lhlspsc2);
+    if (lhlspsc3.size() != sz) vec.push_back(&lhlspsc3);
+    if (lhvspsc.size() != sz) vec.push_back(&lhvspsc);
+    if (lhvspscpv.size() != sz) vec.push_back(&lhvspscpv);
+    if (lhvspsctg.size() != sz) vec.push_back(&lhvspsctg);
+    if (lhvspsc1.size() != sz) vec.push_back(&lhvspsc1);
+    if (lhvspsc2.size() != sz) vec.push_back(&lhvspsc2);
+    if (lhvspsc3.size() != sz) vec.push_back(&lhvspsc3);
+    if (lhlsvscv.size() != sz) vec.push_back(&lhlsvscv);
+    if (lhvsvscpv.size() != sz) vec.push_back(&lhvsvscpv);
+    if (lhvsvsctg.size() != sz) vec.push_back(&lhvsvsctg);
+    if (hllim.size() != sz) vec.push_back(&hllim);
+    if (hvlim.size() != sz) vec.push_back(&hvlim);
+    if (lbetal.size() != sz) vec.push_back(&lbetal);
+    if (lbetal1.size() != sz) vec.push_back(&lbetal1);
+    if (lbetal2.size() != sz) vec.push_back(&lbetal2);
+    if (ltl.size() != sz) vec.push_back(&ltl);      // epstl l/v
+    if (ltl1.size() != sz) vec.push_back(&ltl1);    // epstl l/v
+    if (ltl2.size() != sz) vec.push_back(&ltl2);    // epstl l/v
+    if (lrl.size() != sz) vec.push_back(&lrl);      // epstl l/v
+    if (lrl1.size() != sz) vec.push_back(&lrl1);    // epstl l/v
+    if (lrl2.size() != sz) vec.push_back(&lrl2);    // epstl l/v
+    if (lcpl.size() != sz) vec.push_back(&lcpl);    // epstl l/v
+    if (lcpl1.size() != sz) vec.push_back(&lcpl1);  // epstl l/v
+    if (lcpl2.size() != sz) vec.push_back(&lcpl2);  // epstl l/v
 
-    if (mode == saturated)  
-       { // Le pointeur l2tsdpvv est utilise pour d2_T_sat_d_p_d_p que l'on ait
-         // ou non des incondensables (notamment pour H20, pour Na, pas ce pb)
-         //En attente de correction dans cathare : on devrait avoir l2tsp1 dans CATHARe2_Water.cxx
-         l2tsdpvv.set_ptr(sz, l2tsp1.get_ptr());
+    if (mode == unknown) 
+       { ZoneScopedN("resize_eos_fields zone mode unknown");
+         if (lt.size() != sz) vec.push_back(&lt);
+         if (lh.size() != sz) vec.push_back(&lh);
+         if (lr.size() != sz) vec.push_back(&lr);
+         if (lcp.size() != sz) vec.push_back(&lcp);
+         if (lmu.size() != sz) vec.push_back(&lmu);
+         if (lla.size() != sz) vec.push_back(&lla);
+         if (lt1.size() != sz) vec.push_back(&lt1);
+         if (lh1.size() != sz) vec.push_back(&lh1);
+         if (lr1.size() != sz) vec.push_back(&lr1);
+         if (lcp1.size() != sz) vec.push_back(&lcp1);
+         if (lmu1.size() != sz) vec.push_back(&lmu1);
+         if (lla1.size() != sz) vec.push_back(&lla1);
+         if (lt2.size() != sz) vec.push_back(&lt2);
+         if (lh2.size() != sz) vec.push_back(&lh2);
+         if (lr2.size() != sz) vec.push_back(&lr2);
+         if (lcp2.size() != sz) vec.push_back(&lcp2);
+         if (lmu2.size() != sz) vec.push_back(&lmu2);
+         if (lla2.size() != sz) vec.push_back(&lla2);
        }
 
     if ( (mode == liquid) || (mode == unknown) ) 
-       { // Le pointeur l2tsdpvv est utilise pour d2_T_sat_d_p_d_p que l'on ait
-         // ou non des incondensables (notamment pour H20, pour Na, pas ce pb)
-         //En attente de correction dans cathare : on devrait avoir l2tsp1 dans CATHARe2_Water.cxx
-         l2tsdpvv.set_ptr(sz, l2tsp1.get_ptr());
-         if (lhl.size() != sz) lhl.resize(sz);
-         if (lhl1.size() != sz) lhl1.resize(sz);
-         if (lhl2.size() != sz) lhl2.resize(sz);
-         if (ltl.size() != sz) ltl.resize(sz);
-         if (ltl1.size() != sz) ltl1.resize(sz);
-         if (ltl2.size() != sz) ltl2.resize(sz);
-         if (lrl.size() != sz) lrl.resize(sz);
-         if (lrl1.size() != sz) lrl1.resize(sz);
-         if (lrl2.size() != sz) lrl2.resize(sz);
-         if (lrl1pt.size() != sz) lrl1pt.resize(sz);
-         if (lrl2pt.size() != sz) lrl2pt.resize(sz);
-         if (lcpl.size() != sz) lcpl.resize(sz);
-         if (lcpl1.size() != sz) lcpl1.resize(sz);
-         if (lcpl2.size() != sz) lcpl2.resize(sz);
-         if (lcpl1pt.size() != sz) lcpl1pt.resize(sz);
-         if (lcpl2pt.size() != sz) lcpl2pt.resize(sz);
-         if (ltlal.size() != sz) ltlal.resize(sz);
-         if (ltlal1.size() != sz) ltlal1.resize(sz);
-         if (ltlal2.size() != sz) ltlal2.resize(sz);
-         if (ltmul.size() != sz) ltmul.resize(sz);
-         if (ltmul1.size() != sz) ltmul1.resize(sz);
-         if (ltmul2.size() != sz) ltmul2.resize(sz);
-         if (lhlpt.size() != sz) lhlpt.resize(sz);    // M.F.
-         if (lhl1pt.size() != sz) lhl1pt.resize(sz);  // M.F.
-         if (lhl2pt.size() != sz) lhl2pt.resize(sz);  // M.F.
-         if (lcplpt.size() != sz) lcplpt.resize(sz);  // M.F.
-         if (lrlpt.size() != sz) lrlpt.resize(sz);    // M.F.
+       { ZoneScopedN("resize_eos_fields zone mode liquid or unknown");
+         if (lhl.size() != sz) vec.push_back(&lhl);
+         if (lhl1.size() != sz) vec.push_back(&lhl1);
+         if (lhl2.size() != sz) vec.push_back(&lhl2);
+         if (ltl.size() != sz) vec.push_back(&ltl);
+         if (ltl1.size() != sz) vec.push_back(&ltl1);
+         if (ltl2.size() != sz) vec.push_back(&ltl2);
+         if (lrl.size() != sz) vec.push_back(&lrl);
+         if (lrl1.size() != sz) vec.push_back(&lrl1);
+         if (lrl2.size() != sz) vec.push_back(&lrl2);
+         if (lrl1pt.size() != sz) vec.push_back(&lrl1pt);
+         if (lrl2pt.size() != sz) vec.push_back(&lrl2pt);
+         if (lcpl.size() != sz) vec.push_back(&lcpl);
+         if (lcpl1.size() != sz) vec.push_back(&lcpl1);
+         if (lcpl2.size() != sz) vec.push_back(&lcpl2);
+         if (lcpl1pt.size() != sz) vec.push_back(&lcpl1pt);
+         if (lcpl2pt.size() != sz) vec.push_back(&lcpl2pt);
+         if (ltlal.size() != sz) vec.push_back(&ltlal);
+         if (ltlal1.size() != sz) vec.push_back(&ltlal1);
+         if (ltlal2.size() != sz) vec.push_back(&ltlal2);
+         if (ltmul.size() != sz) vec.push_back(&ltmul);
+         if (ltmul1.size() != sz) vec.push_back(&ltmul1);
+         if (ltmul2.size() != sz) vec.push_back(&ltmul2);
+         if (lhlpt.size() != sz) vec.push_back(&lhlpt);    // M.F.
+         if (lhl1pt.size() != sz) vec.push_back(&lhl1pt);  // M.F.
+         if (lhl2pt.size() != sz) vec.push_back(&lhl2pt);  // M.F.
+         if (lcplpt.size() != sz) vec.push_back(&lcplpt);  // M.F.
+         if (lrlpt.size() != sz) vec.push_back(&lrlpt);    // M.F.
        }
 
     if ( (mode == vapor) || (mode == unknown) ) 
-       { // Le pointeur l2tsdpvv est utilise pour calc2_h_pT_mixing que l'on ait
+       { ZoneScopedN("resize_eos_fields zone mode vapor or unknown");
+         // Le pointeur l2tsdpvv est utilise pour calc2_h_pT_mixing que l'on ait
          // ou non des incondensables (notamment pour H20, pour Na, pas ce pb)
          //En attente de correction dans cathare : on devrait avoir l2tsp1 dans CATHARe2_Water.cxx
-      l2tsdpvv.set_ptr(sz, l2tsp1.get_ptr());
 
-      if (lhg.size() != sz) lhg.resize(sz);
-      if (lprgr.size() != sz) lprgr.resize(sz);
-      if (ltg.size() != sz) ltg.resize(sz);
-      if (ltg1.size() != sz) ltg1.resize(sz);
-      if (ltg3.size() != sz) ltg3.resize(sz);
-      if (ltg31.size() != sz) ltg31.resize(sz);
-      if (ltgk.size() != sz) ltgk.resize(sz);
-      if (ltgini.size() != sz) ltgini.resize(sz);
-      if (lhvmhs.size() != sz) lhvmhs.resize(sz);
-      if (lcpg.size() != sz) lcpg.resize(sz);
-      if (lcpg1.size() != sz) lcpg1.resize(sz);
-      if (lcpg3.size() != sz) lcpg3.resize(sz);
-      if (lrg.size() != sz) lrg.resize(sz);
-      if (lrg1.size() != sz) lrg1.resize(sz);
-      if (lhg1.size() != sz) lhg1.resize(sz);
-      if (lrg3.size() != sz) lrg3.resize(sz);
-      if (lrvpv.size() != sz)  lrvpv.resize(sz);        // M.F.
-      if (lrvhv.size() != sz)  lrvhv.resize(sz);        // M.F.
-      if (lcpvpv.size() != sz) lcpvpv.resize(sz);       // M.F.
-      if (lcpvhv.size() != sz) lcpvhv.resize(sz);       // M.F.
-      if (lrv1pt.size() != sz) lrv1pt.resize(sz);       // M.F.
-      if (lrv3pt.size() != sz) lrv3pt.resize(sz);       // M.F.
-      if (lcpvpvpt.size() != sz)  lcpvpvpt.resize(sz);  // M.F.
-      if (lcpgtgpt.size() != sz)  lcpgtgpt.resize(sz);  // M.F.
-      if (lhvpt.size() != sz)  lhvpt.resize(sz);        // M.F.
-      if (lrvpt.size() != sz)  lrvpt.resize(sz);        // M.F.
-      if (lcpvpt.size() != sz) lcpvpt.resize(sz);       // M.F.
-      if (lhv1pt.size() != sz) lhv1pt.resize(sz);       // M.F.
-      if (ltlag.size() != sz) ltlag.resize(sz);
-      if (ltlag1.size() != sz) ltlag1.resize(sz);
-      if (ltlag3.size() != sz) ltlag3.resize(sz);
-      if (llagpv.size() != sz) llagpv.resize(sz);
-      if (llagtg.size() != sz) llagtg.resize(sz);
-      if (ltmug.size() != sz) ltmug.resize(sz);
-      if (ltmug1.size() != sz) ltmug1.resize(sz);
-      if (ltmug3.size() != sz) ltmug3.resize(sz);
-      if (lmugpv.size() != sz) lmugpv.resize(sz);
-      if (lmugtg.size() != sz) lmugtg.resize(sz);
-      if (lsi.size() != sz) lsi.resize(sz);
-      if (lsi1.size() != sz) lsi1.resize(sz);
-      if (lsi3.size() != sz) lsi3.resize(sz);
-      if (ldncv.size() != sz) ldncv.resize(sz);
-      if (ldncv1.size() != sz) ldncv1.resize(sz);
-      if (ldncv3.size() != sz) ldncv3.resize(sz);
-      if (lcpgtg.size() != sz) lcpgtg.resize(sz);
-      if (ltlaga.size() != sz) ltlaga.resize(sz);
-      if (llagapv.size() != sz) llagapv.resize(sz);
-      if (llagatg.size() != sz) llagatg.resize(sz);
-      if (lustlagb.size() != sz) lustlagb.resize(sz);
-      if (luslagbpv.size() != sz) luslagbpv.resize(sz);
-      if (luslagbtg.size() != sz) luslagbtg.resize(sz);
-      if (lcoefqv.size() != sz) lcoefqv.resize(sz);
-      if (lkiseng.size() != sz) lkiseng.resize(sz);
-      if (lprandg.size() != sz) lprandg.resize(sz);
-      if (lhv1.size() != sz) lhv1.resize(sz);
-      if (lhv3.size() != sz) lhv3.resize(sz);
-      if (lxvap.size() != sz) lxvap.resize(sz);
-      if (lrnc.size() != sz) lrnc.resize(sz);
-      if (lmnc.size() != sz) lmnc.resize(sz);
-      if (lxnc.size() != sz) lxnc.resize(sz);
+      if (lhg.size() != sz) vec.push_back(&lhg);
+      if (lprgr.size() != sz) vec.push_back(&lprgr);
+      if (ltg.size() != sz) vec.push_back(&ltg);
+      if (ltg1.size() != sz) vec.push_back(&ltg1);
+      if (ltg3.size() != sz) vec.push_back(&ltg3);
+      if (ltg31.size() != sz) vec.push_back(&ltg31);
+      if (ltgk.size() != sz) vec.push_back(&ltgk);
+      if (ltgini.size() != sz) vec.push_back(&ltgini);
+      if (lhvmhs.size() != sz) vec.push_back(&lhvmhs);
+      if (lcpg.size() != sz) vec.push_back(&lcpg);
+      if (lcpg1.size() != sz) vec.push_back(&lcpg1);
+      if (lcpg3.size() != sz) vec.push_back(&lcpg3);
+      if (lrg.size() != sz) vec.push_back(&lrg);
+      if (lrg1.size() != sz) vec.push_back(&lrg1);
+      if (lhg1.size() != sz) vec.push_back(&lhg1);
+      if (lrg3.size() != sz) vec.push_back(&lrg3);
+      if (lrvpv.size() != sz) vec.push_back(& lrvpv);        // M.F.
+      if (lrvhv.size() != sz) vec.push_back(& lrvhv);        // M.F.
+      if (lcpvpv.size() != sz) vec.push_back(&lcpvpv);       // M.F.
+      if (lcpvhv.size() != sz) vec.push_back(&lcpvhv);       // M.F.
+      if (lrv1pt.size() != sz) vec.push_back(&lrv1pt);       // M.F.
+      if (lrv3pt.size() != sz) vec.push_back(&lrv3pt);       // M.F.
+      if (lcpvpvpt.size() != sz) vec.push_back(& lcpvpvpt);  // M.F.
+      if (lcpgtgpt.size() != sz) vec.push_back(& lcpgtgpt);  // M.F.
+      if (lhvpt.size() != sz) vec.push_back(& lhvpt);        // M.F.
+      if (lrvpt.size() != sz) vec.push_back(& lrvpt);        // M.F.
+      if (lcpvpt.size() != sz) vec.push_back(&lcpvpt);       // M.F.
+      if (lhv1pt.size() != sz) vec.push_back(&lhv1pt);       // M.F.
+      if (ltlag.size() != sz) vec.push_back(&ltlag);
+      if (ltlag1.size() != sz) vec.push_back(&ltlag1);
+      if (ltlag3.size() != sz) vec.push_back(&ltlag3);
+      if (llagpv.size() != sz) vec.push_back(&llagpv);
+      if (llagtg.size() != sz) vec.push_back(&llagtg);
+      if (ltmug.size() != sz) vec.push_back(&ltmug);
+      if (ltmug1.size() != sz) vec.push_back(&ltmug1);
+      if (ltmug3.size() != sz) vec.push_back(&ltmug3);
+      if (lmugpv.size() != sz) vec.push_back(&lmugpv);
+      if (lmugtg.size() != sz) vec.push_back(&lmugtg);
+      if (lsi.size() != sz) vec.push_back(&lsi);
+      if (lsi1.size() != sz) vec.push_back(&lsi1);
+      if (lsi3.size() != sz) vec.push_back(&lsi3);
+      if (ldncv.size() != sz) vec.push_back(&ldncv);
+      if (ldncv1.size() != sz) vec.push_back(&ldncv1);
+      if (ldncv3.size() != sz) vec.push_back(&ldncv3);
+      if (lcpgtg.size() != sz) vec.push_back(&lcpgtg);
+      if (ltlaga.size() != sz) vec.push_back(&ltlaga);
+      if (llagapv.size() != sz) vec.push_back(&llagapv);
+      if (llagatg.size() != sz) vec.push_back(&llagatg);
+      if (lustlagb.size() != sz) vec.push_back(&lustlagb);
+      if (luslagbpv.size() != sz) vec.push_back(&luslagbpv);
+      if (luslagbtg.size() != sz) vec.push_back(&luslagbtg);
+      if (lcoefqv.size() != sz) vec.push_back(&lcoefqv);
+      if (lkiseng.size() != sz) vec.push_back(&lkiseng);
+      if (lprandg.size() != sz) vec.push_back(&lprandg);
+      if (lhv1.size() != sz) vec.push_back(&lhv1);
+      if (lhv3.size() != sz) vec.push_back(&lhv3);
+      if (lxvap.size() != sz) vec.push_back(&lxvap);
+      if (lrnc.size() != sz) vec.push_back(&lrnc);
+      if (lmnc.size() != sz) vec.push_back(&lmnc);
+      if (lxnc.size() != sz) vec.push_back(&lxnc);
       if (nincon == 0) 
-         { ltspv.set_ptr(sz, ltsp.get_ptr());
-           ltspvv.set_ptr(sz, ltsp1.get_ptr());
-           lhlsv.set_ptr(sz, lhlsp.get_ptr());
-           lhlsvv.set_ptr(sz, lhlsp1.get_ptr());
-           lcplsv.set_ptr(sz, lcplsp.get_ptr());
-           lclsvv.set_ptr(sz, lclsp1.get_ptr());
-           lrlsv.set_ptr(sz, lrlsp.get_ptr());
-           lrlsvv.set_ptr(sz, lrlsp1.get_ptr());
-           lhlsvsc.set_ptr(sz, lhlspsc.get_ptr());
-           lhlsvsc1.set_ptr(sz, lhlspsc1.get_ptr());
-           lhlsvsc2.set_ptr(sz, lhlspsc2.get_ptr());
-           lhlsvsc3.set_ptr(sz, lhlspsc3.get_ptr());
-           lhvsv.set_ptr(sz, lhvsp.get_ptr());
-           lhvsvv.set_ptr(sz, lhvsp1.get_ptr());
-           lcpvsv.set_ptr(sz, lcpvsp.get_ptr());
-           lcvsvv.set_ptr(sz, lcvsp1.get_ptr());
-           lrvsv.set_ptr(sz, lrvsp.get_ptr());
-           lrvsvv.set_ptr(sz, lrvsp1.get_ptr());
-           lhvsvsc.set_ptr(sz, lhvspsc.get_ptr());
-           lhvsvsc1.set_ptr(sz, lhvspsc1.get_ptr());
-           lhvsvsc2.set_ptr(sz, lhvspsc2.get_ptr());
-           if (lhvsvsc3.size() != sz) lhvsvsc3.resize(sz);
-           lsipv.set_ptr(sz, lsi1.get_ptr());
-           lpv.set_ptr(sz, lp.get_ptr());
-           lhv.set_ptr(sz, lhg.get_ptr());
-           lrv.set_ptr(sz, lrg.get_ptr());
-           lrv1.set_ptr(sz, lrg1.get_ptr());
-           lrv3.set_ptr(sz, lrg3.get_ptr());
-           ltgpv.set_ptr(sz, ltg1.get_ptr());
-           ltghv.set_ptr(sz, ltg3.get_ptr());
-           // lrvpv.set_ptr(sz, lrg1.get_ptr());
-           // lrvhv.set_ptr(sz, lrg3.get_ptr());
-           lcpv.set_ptr(sz, lcpg.get_ptr());
-           // lcpvpv.set_ptr(sz, lcpg1.get_ptr());
-           // lcpvhv.set_ptr(sz, lcpg3.get_ptr());
-           lhfv.set_ptr(sz, lhf.get_ptr());
-           lhfvv.set_ptr(sz, lhf1.get_ptr());
-           lhvpv.set_ptr(sz, lhg1.get_ptr());
-           ltlav.set_ptr(sz, ltlag.get_ptr());
-           ltmuv.set_ptr(sz, ltmug.get_ptr());
-           llavpv.set_ptr(sz, llagpv.get_ptr());
-           llavtg.set_ptr(sz, llagtg.get_ptr());
-           lmuvpv.set_ptr(sz, lmugpv.get_ptr());
-           lmuvtg.set_ptr(sz, lmugtg.get_ptr());
-         }
+      {
+         if (lhvsvsc3.size() != sz) vec.push_back(&lhvsvsc3);
+      }
       else
-         { if (ltspv.size() != sz) ltspv.resize(sz);
-           if (ltspvv.size() != sz) ltspvv.resize(sz);
-           if (l2tsdpvv.size() != sz) l2tsdpvv.resize(sz);
-           if (lhlsv.size() != sz) lhlsv.resize(sz);
-           if (lhlsvv.size() != sz) lhlsvv.resize(sz);
-           if (lhvsv.size() != sz) lhvsv.resize(sz);
-           if (lhvsvv.size() != sz) lhvsvv.resize(sz);
-           if (lcplsv.size() != sz) lcplsv.resize(sz);
-           if (lclsvv.size() != sz) lclsvv.resize(sz);
-           if (lcpvsv.size() != sz) lcpvsv.resize(sz);
-           if (lcvsvv.size() != sz) lcvsvv.resize(sz);
-           if (lrlsv.size() != sz) lrlsv.resize(sz);
-           if (lrlsvv.size() != sz) lrlsvv.resize(sz);
-           if (lrvsv.size() != sz) lrvsv.resize(sz);
-           if (lrvsvv.size() != sz) lrvsvv.resize(sz);
-           if (lpv.size() != sz) lpv.resize(sz);
-           if (lhv.size() != sz) lhv.resize(sz);
-           if (ltgpv.size() != sz) ltgpv.resize(sz);
-           if (ltghv.size() != sz) ltghv.resize(sz);
-           if (lcpv.size() != sz) lcpv.resize(sz);
-           // if (lcpvpv.size() != sz) lcpvpv.resize(sz);
-           // if (lcpvhv.size() != sz) lcpvhv.resize(sz);
-           if (lrv.size() != sz) lrv.resize(sz);
-           // if (lrvpv.size() != sz) lrvpv.resize(sz);
-           // if (lrvhv.size() != sz) lrvhv.resize(sz);
-           if (ltlav.size() != sz) ltlav.resize(sz);
-           if (llavpv.size() != sz) llavpv.resize(sz);
-           if (llavtg.size() != sz) llavtg.resize(sz);
-           if (ltmuv.size() != sz) ltmuv.resize(sz);
-           if (lmuvpv.size() != sz) lmuvpv.resize(sz);
-           if (lmuvtg.size() != sz) lmuvtg.resize(sz);
-           if (lsipv.size() != sz) lsipv.resize(sz);
-           if (lhfv.size() != sz) lhfv.resize(sz);
-           if (lhfvv.size() != sz) lhfvv.resize(sz);
-           if (lhlsvsc.size() != sz) lhlsvsc.resize(sz);
-           if (lhlsvsc1.size() != sz) lhlsvsc1.resize(sz);
-           if (lhlsvsc2.size() != sz) lhlsvsc2.resize(sz);
-           if (lhlsvsc3.size() != sz) lhlsvsc3.resize(sz);
-           if (lhvsvsc.size() != sz) lhvsvsc.resize(sz);
-           if (lhvsvsc1.size() != sz) lhvsvsc1.resize(sz);
-           if (lhvsvsc2.size() != sz) lhvsvsc2.resize(sz);
-           if (lhvsvsc3.size() != sz) lhvsvsc3.resize(sz);
-           if (lxrsu.size() != sz) lxrsu.resize(sz);
-           if (lxcpsu.size() != sz) lxcpsu.resize(sz);
-           if (lxcpsutg.size() != sz) lxcpsutg.resize(sz);
-           if (lhi7su.size() != sz) lhi7su.resize(sz);
-           if (lvalp.size() != sz) lvalp.resize(sz);
-           if (lpv1.size() != sz) lpv1.resize(sz);
-           if (lpv3.size() != sz) lpv3.resize(sz);
-           if (lrv1.size() != sz) lrv1.resize(sz);
-           if (lrv3.size() != sz) lrv3.resize(sz);
-           if (lhv1.size() != sz) lhv1.resize(sz);
-           if (lhv3.size() != sz) lhv3.resize(sz);
-           if (lfdpv.size() != sz) lfdpv.resize(sz);
-           if (lfdhv.size() != sz) lfdhv.resize(sz);
-           if (lgdpv.size() != sz) lgdpv.resize(sz);
-           if (lgdhv.size() != sz) lgdhv.resize(sz);
-           if (lphivmusu.size() != sz) lphivmusu.resize(sz);
-           if (lphivmusupv.size() != sz) lphivmusupv.resize(sz);
-           if (lphivmusutg.size() != sz) lphivmusutg.resize(sz);
+         { ZoneScopedN("nincond > 0");
+           if (ltspv.size() != sz) vec.push_back(&ltspv);
+           if (ltspvv.size() != sz) vec.push_back(&ltspvv);
+           if (l2tsdpvv.size() != sz) vec.push_back(&l2tsdpvv);
+           if (lhlsv.size() != sz) vec.push_back(&lhlsv);
+           if (lhlsvv.size() != sz) vec.push_back(&lhlsvv);
+           if (lhvsv.size() != sz) vec.push_back(&lhvsv);
+           if (lhvsvv.size() != sz) vec.push_back(&lhvsvv);
+           if (lcplsv.size() != sz) vec.push_back(&lcplsv);
+           if (lclsvv.size() != sz) vec.push_back(&lclsvv);
+           if (lcpvsv.size() != sz) vec.push_back(&lcpvsv);
+           if (lcvsvv.size() != sz) vec.push_back(&lcvsvv);
+           if (lrlsv.size() != sz) vec.push_back(&lrlsv);
+           if (lrlsvv.size() != sz) vec.push_back(&lrlsvv);
+           if (lrvsv.size() != sz) vec.push_back(&lrvsv);
+           if (lrvsvv.size() != sz) vec.push_back(&lrvsvv);
+           if (lpv.size() != sz) vec.push_back(&lpv);
+           if (lhv.size() != sz) vec.push_back(&lhv);
+           if (ltgpv.size() != sz) vec.push_back(&ltgpv);
+           if (ltghv.size() != sz) vec.push_back(&ltghv);
+           if (lcpv.size() != sz) vec.push_back(&lcpv);
+           // if (lcpvpv.size() != sz) vec.push_back(&lcpvpv);
+           // if (lcpvhv.size() != sz) vec.push_back(&lcpvhv);
+           if (lrv.size() != sz) vec.push_back(&lrv);
+           // if (lrvpv.size() != sz) vec.push_back(&lrvpv);
+           // if (lrvhv.size() != sz) vec.push_back(&lrvhv);
+           if (ltlav.size() != sz) vec.push_back(&ltlav);
+           if (llavpv.size() != sz) vec.push_back(&llavpv);
+           if (llavtg.size() != sz) vec.push_back(&llavtg);
+           if (ltmuv.size() != sz) vec.push_back(&ltmuv);
+           if (lmuvpv.size() != sz) vec.push_back(&lmuvpv);
+           if (lmuvtg.size() != sz) vec.push_back(&lmuvtg);
+           if (lsipv.size() != sz) vec.push_back(&lsipv);
+           if (lhfv.size() != sz) vec.push_back(&lhfv);
+           if (lhfvv.size() != sz) vec.push_back(&lhfvv);
+           if (lhlsvsc.size() != sz) vec.push_back(&lhlsvsc);
+           if (lhlsvsc1.size() != sz) vec.push_back(&lhlsvsc1);
+           if (lhlsvsc2.size() != sz) vec.push_back(&lhlsvsc2);
+           if (lhlsvsc3.size() != sz) vec.push_back(&lhlsvsc3);
+           if (lhvsvsc.size() != sz) vec.push_back(&lhvsvsc);
+           if (lhvsvsc1.size() != sz) vec.push_back(&lhvsvsc1);
+           if (lhvsvsc2.size() != sz) vec.push_back(&lhvsvsc2);
+           if (lhvsvsc3.size() != sz) vec.push_back(&lhvsvsc3);
+           if (lxrsu.size() != sz) vec.push_back(&lxrsu);
+           if (lxcpsu.size() != sz) vec.push_back(&lxcpsu);
+           if (lxcpsutg.size() != sz) vec.push_back(&lxcpsutg);
+           if (lhi7su.size() != sz) vec.push_back(&lhi7su);
+           if (lvalp.size() != sz) vec.push_back(&lvalp);
+           if (lpv1.size() != sz) vec.push_back(&lpv1);
+           if (lpv3.size() != sz) vec.push_back(&lpv3);
+           if (lrv1.size() != sz) vec.push_back(&lrv1);
+           if (lrv3.size() != sz) vec.push_back(&lrv3);
+           if (lhv1.size() != sz) vec.push_back(&lhv1);
+           if (lhv3.size() != sz) vec.push_back(&lhv3);
+           if (lfdpv.size() != sz) vec.push_back(&lfdpv);
+           if (lfdhv.size() != sz) vec.push_back(&lfdhv);
+           if (lgdpv.size() != sz) vec.push_back(&lgdpv);
+           if (lgdhv.size() != sz) vec.push_back(&lgdhv);
+           if (lphivmusu.size() != sz) vec.push_back(&lphivmusu);
+           if (lphivmusupv.size() != sz) vec.push_back(&lphivmusupv);
+           if (lphivmusutg.size() != sz) vec.push_back(&lphivmusutg);
+           {ZoneScopedN("incondensable gas for loop");
            for (int i=0; i<nincon; i++) 
-              { if (lx[i].size() != sz) lx[i].resize(sz);
-                if (lpx[i].size() != sz) lpx[i].resize(sz);
-                if (lpvx[i].size() != sz) lpvx[i].resize(sz);
-                if (lhvx[i].size() != sz) lhvx[i].resize(sz);
-                if (lhgx[i].size() != sz) lhgx[i].resize(sz);
-                if (ltgx[i].size() != sz) ltgx[i].resize(sz);
-                if (lrvx[i].size() != sz) lrvx[i].resize(sz);
-                if (lrgx[i].size() != sz) lrgx[i].resize(sz);
-                if (lhx[i].size() != sz) lhx[i].resize(sz);
-                if (lrncx[i].size() != sz) lrncx[i].resize(sz);
-                if (lmncx[i].size() != sz) lmncx[i].resize(sz);
-                if (lprxcp[i].size() != sz) lprxcp[i].resize(sz);
-                if (lprxcptg[i].size() != sz) lprxcptg[i].resize(sz);
-                if (ltlax[i].size() != sz) ltlax[i].resize(sz);
-                if (llaxtg[i].size() != sz) llaxtg[i].resize(sz);
-                if (ltmux[i].size() != sz) ltmux[i].resize(sz);
-                if (lmuxtg[i].size() != sz) lmuxtg[i].resize(sz);
-                if (lphixmusu[i].size() != sz) lphixmusu[i].resize(sz);
-                if (lphixmusupv[i].size() != sz) lphixmusupv[i].resize(sz);
-                if (lphixmusutg[i].size() != sz) lphixmusutg[i].resize(sz);
-                if (ldncvj[i].size() != sz) ldncvj[i].resize(sz);
-                if (lcoefqvx[i].size() != sz) lcoefqvx[i].resize(sz);
-                if (lphivmusux[i].size() != sz) lphivmusux[i].resize(sz);
+              { if (lx[i].size() != sz) vec.push_back(&lx[i]);
+                if (lpx[i].size() != sz) vec.push_back(&lpx[i]);
+                if (lpvx[i].size() != sz) vec.push_back(&lpvx[i]);
+                if (lhvx[i].size() != sz) vec.push_back(&lhvx[i]);
+                if (lhgx[i].size() != sz) vec.push_back(&lhgx[i]);
+                if (ltgx[i].size() != sz) vec.push_back(&ltgx[i]);
+                if (lrvx[i].size() != sz) vec.push_back(&lrvx[i]);
+                if (lrgx[i].size() != sz) vec.push_back(&lrgx[i]);
+                if (lhx[i].size() != sz) vec.push_back(&lhx[i]);
+                if (lrncx[i].size() != sz) vec.push_back(&lrncx[i]);
+                if (lmncx[i].size() != sz) vec.push_back(&lmncx[i]);
+                if (lprxcp[i].size() != sz) vec.push_back(&lprxcp[i]);
+                if (lprxcptg[i].size() != sz) vec.push_back(&lprxcptg[i]);
+                if (ltlax[i].size() != sz) vec.push_back(&ltlax[i]);
+                if (llaxtg[i].size() != sz) vec.push_back(&llaxtg[i]);
+                if (ltmux[i].size() != sz) vec.push_back(&ltmux[i]);
+                if (lmuxtg[i].size() != sz) vec.push_back(&lmuxtg[i]);
+                if (lphixmusu[i].size() != sz) vec.push_back(&lphixmusu[i]);
+                if (lphixmusupv[i].size() != sz) vec.push_back(&lphixmusupv[i]);
+                if (lphixmusutg[i].size() != sz) vec.push_back(&lphixmusutg[i]);
+                if (ldncvj[i].size() != sz) vec.push_back(&ldncvj[i]);
+                if (lcoefqvx[i].size() != sz) vec.push_back(&lcoefqvx[i]);
+                if (lphivmusux[i].size() != sz) vec.push_back(&lphivmusux[i]);
                 for (int j=0; j<nincon; j++)
-                  if (lphixmusux[i][j].size() != sz) lphixmusux[i][j].resize(sz);
-                if (lcpgx[i].size() != sz) lcpgx[i].resize(sz);
-                if (ltlagx[i].size() != sz) ltlagx[i].resize(sz);
-                if (ltmugx[i].size() != sz) ltmugx[i].resize(sz);
-                if (lsix[i].size() != sz) lsix[i].resize(sz);
-                if (ldncvx[i].size() != sz) ldncvx[i].resize(sz);
-                if (lhlspscx[i].size() != sz) lhlspscx[i].resize(sz);
-                if (lhlsvscx[i].size() != sz) lhlsvscx[i].resize(sz);
-                if (lhvspscx[i].size() != sz) lhvspscx[i].resize(sz);
-                if (lhvsvscx[i].size() != sz) lhvsvscx[i].resize(sz);
-                if (lepstgasx[i].size() != sz) lepstgasx[i].resize(sz);
+                  if (lphixmusux[i][j].size() != sz) vec.push_back(&lphixmusux[i][j]);
+                if (lcpgx[i].size() != sz) vec.push_back(&lcpgx[i]);
+                if (ltlagx[i].size() != sz) vec.push_back(&ltlagx[i]);
+                if (ltmugx[i].size() != sz) vec.push_back(&ltmugx[i]);
+                if (lsix[i].size() != sz) vec.push_back(&lsix[i]);
+                if (ldncvx[i].size() != sz) vec.push_back(&ldncvx[i]);
+                if (lhlspscx[i].size() != sz) vec.push_back(&lhlspscx[i]);
+                if (lhlsvscx[i].size() != sz) vec.push_back(&lhlsvscx[i]);
+                if (lhvspscx[i].size() != sz) vec.push_back(&lhvspscx[i]);
+                if (lhvsvscx[i].size() != sz) vec.push_back(&lhvsvscx[i]);
+                if (lepstgasx[i].size() != sz) vec.push_back(&lepstgasx[i]);
               }
+            }
          }
-       }
+      }
+
+      ArrOfDouble::resize_all(vec, sz);
+      vec.clear(); 
+      std::vector<int> vecSize; 
+      std::vector<const double*> vecPtr; 
+
+      if ((mode == saturated) || (mode == liquid) || (mode == unknown) || (mode == vapor))  
+      { ZoneScopedN("resize_eos_fields zone mode saturated");
+        // Le pointeur l2tsdpvv est utilise pour d2_T_sat_d_p_d_p que l'on ait
+        // ou non des incondensables (notamment pour H20, pour Na, pas ce pb)
+        //En attente de correction dans cathare : on devrait avoir l2tsp1 dans CATHARe2_Water.cxx
+        vec.push_back(&l2tsdpvv);
+        vecSize.push_back(sz);
+        vecPtr.push_back(l2tsp1.get_ptr());
+      }
+
+      if ( (mode == vapor) || (mode == unknown) ) 
+      {
+         if(nincon == 0){
+           vec.push_back(&ltspv); vecSize.push_back(sz); vecPtr.push_back(ltsp.get_ptr()); 
+           vec.push_back(&ltspvv); vecSize.push_back(sz); vecPtr.push_back(ltsp1.get_ptr());
+           vec.push_back(&lhlsv); vecSize.push_back(sz); vecPtr.push_back(lhlsp.get_ptr());
+           vec.push_back(&lhlsvv); vecSize.push_back(sz); vecPtr.push_back(lhlsp1.get_ptr());
+           vec.push_back(&lcplsv); vecSize.push_back(sz); vecPtr.push_back(lcplsp.get_ptr());
+           vec.push_back(&lclsvv); vecSize.push_back(sz); vecPtr.push_back(lclsp1.get_ptr());
+           vec.push_back(&lrlsv); vecSize.push_back(sz); vecPtr.push_back(lrlsp.get_ptr());
+           vec.push_back(&lrlsvv); vecSize.push_back(sz); vecPtr.push_back(lrlsp1.get_ptr());
+           vec.push_back(&lhlsvsc); vecSize.push_back(sz); vecPtr.push_back(lhlspsc.get_ptr());
+           vec.push_back(&lhlsvsc1); vecSize.push_back(sz); vecPtr.push_back(lhlspsc1.get_ptr());
+           vec.push_back(&lhlsvsc2); vecSize.push_back(sz); vecPtr.push_back(lhlspsc2.get_ptr());
+           vec.push_back(&lhlsvsc3); vecSize.push_back(sz); vecPtr.push_back(lhlspsc3.get_ptr());
+           vec.push_back(&lhvsv); vecSize.push_back(sz); vecPtr.push_back(lhvsp.get_ptr());
+           vec.push_back(&lhvsvv); vecSize.push_back(sz); vecPtr.push_back(lhvsp1.get_ptr());
+           vec.push_back(&lcpvsv); vecSize.push_back(sz); vecPtr.push_back(lcpvsp.get_ptr());
+           vec.push_back(&lcvsvv); vecSize.push_back(sz); vecPtr.push_back(lcvsp1.get_ptr());
+           vec.push_back(&lrvsv); vecSize.push_back(sz); vecPtr.push_back(lrvsp.get_ptr());
+           vec.push_back(&lrvsvv); vecSize.push_back(sz); vecPtr.push_back(lrvsp1.get_ptr());
+           vec.push_back(&lhvsvsc); vecSize.push_back(sz); vecPtr.push_back(lhvspsc.get_ptr());
+           vec.push_back(&lhvsvsc1); vecSize.push_back(sz); vecPtr.push_back(lhvspsc1.get_ptr());
+           vec.push_back(&lhvsvsc2); vecSize.push_back(sz); vecPtr.push_back(lhvspsc2.get_ptr());
+           vec.push_back(&lsipv); vecSize.push_back(sz); vecPtr.push_back(lsi1.get_ptr());
+           vec.push_back(&lpv); vecSize.push_back(sz); vecPtr.push_back(lp.get_ptr());
+           vec.push_back(&lhv); vecSize.push_back(sz); vecPtr.push_back(lhg.get_ptr());
+           vec.push_back(&lrv); vecSize.push_back(sz); vecPtr.push_back(lrg.get_ptr());
+           vec.push_back(&lrv1); vecSize.push_back(sz); vecPtr.push_back(lrg1.get_ptr());
+           vec.push_back(&lrv3); vecSize.push_back(sz); vecPtr.push_back(lrg3.get_ptr());
+           vec.push_back(&ltgpv); vecSize.push_back(sz); vecPtr.push_back(ltg1.get_ptr());
+           vec.push_back(&ltghv); vecSize.push_back(sz); vecPtr.push_back(ltg3.get_ptr());
+           //vec.push_back(&lrvpv); vecSize.push_back(sz); vecPtr.push_back(lrg1.get_ptr());
+           //vec.push_back(&lrvhv); vecSize.push_back(sz); vecPtr.push_back(lrg3.get_ptr());
+           vec.push_back(&lcpv); vecSize.push_back(sz); vecPtr.push_back(lcpg.get_ptr());
+           //vec.push_back(&lcpvpv); vecSize.push_back(sz); vecPtr.push_back(lcpg1.get_ptr());
+           //vec.push_back(&lcpvhv); vecSize.push_back(sz); vecPtr.push_back(lcpg3.get_ptr());
+           vec.push_back(&lhfv); vecSize.push_back(sz); vecPtr.push_back(lhf.get_ptr());
+           vec.push_back(&lhfvv); vecSize.push_back(sz); vecPtr.push_back(lhf1.get_ptr());
+           vec.push_back(&lhvpv); vecSize.push_back(sz); vecPtr.push_back(lhg1.get_ptr());
+           vec.push_back(&ltlav); vecSize.push_back(sz); vecPtr.push_back(ltlag.get_ptr());
+           vec.push_back(&ltmuv); vecSize.push_back(sz); vecPtr.push_back(ltmug.get_ptr());
+           vec.push_back(&llavpv); vecSize.push_back(sz); vecPtr.push_back(llagpv.get_ptr());
+           vec.push_back(&llavtg); vecSize.push_back(sz); vecPtr.push_back(llagtg.get_ptr());
+           vec.push_back(&lmuvpv); vecSize.push_back(sz); vecPtr.push_back(lmugpv.get_ptr());
+           vec.push_back(&lmuvtg); vecSize.push_back(sz); vecPtr.push_back(lmugtg.get_ptr());
+         }
+      }
+      ArrOfDouble::set_ptr_all(vec, vecPtr, vecSize);
   }
 
   void CATHARE2::preconvert_eos_fields() 
