@@ -53,7 +53,7 @@ namespace NEPTUNE
 
 
   Strings & Strings::operator=(const Strings &right)
-  { ZoneScopedNS("Strings::operator=", 5);
+  { ZoneScopedN("Strings::operator=");
     if (data)  delete [] data ;
     sz = right.sz ;
     data = new AString[sz] ;
@@ -63,7 +63,7 @@ namespace NEPTUNE
   }
 
   int Strings::operator==(const Strings &right) const
-  { ZoneScopedNS("Strings::operator==", 5);
+  { ZoneScopedN("Strings::operator==");
     int ok = 1 ;
     for(int i=0; (ok && i<sz); i++)
       ok *= (data[i]==right.data[i]) ;
@@ -76,7 +76,7 @@ namespace NEPTUNE
 
 
   ostream & operator<<(ostream &stream,const Strings &right)
-  { ZoneScopedNS("operator<<", 5);
+  { ZoneScopedN("operator<<");
     stream << right.sz << endl ;
     for(int i=0; i<right.sz; i++)
       stream << right.data[i] << " " ;
@@ -84,7 +84,7 @@ namespace NEPTUNE
   }
 
   istream & operator>>(istream &stream,Strings &object)
-  { ZoneScopedNS("Strings::operator>>", 5);
+  { ZoneScopedN("Strings::operator>>");
     int sz ;
     stream >> sz;
     object.resize(sz);
@@ -94,7 +94,7 @@ namespace NEPTUNE
   }
 
   const Type_Info& Strings::get_Type_Info () const
-  { ZoneScopedNS("Strings::get_Type_Info", 5);
+  { ZoneScopedN("Strings::get_Type_Info");
     return (Types_Info::instance())[type_Id] ;
   }
 
@@ -107,7 +107,7 @@ namespace NEPTUNE
   }
 
   int Strings::resize(int newsz)
-  { ZoneScopedNS("Strings::resize", 5);
+  { ZoneScopedN("Strings::resize");
     AString* old=data ;
     data = new AString[newsz] ;
     int i = 0 ;
@@ -127,7 +127,7 @@ namespace NEPTUNE
   }
 
   int Strings::search(const char* const str) const
-  { ZoneScopedNS("Strings::search", 5);
+  { ZoneScopedN("Strings::search");
     int i = 0 ;
     while(i<size())
       { if (data[i] == str)  return i ;

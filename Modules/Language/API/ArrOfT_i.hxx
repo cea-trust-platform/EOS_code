@@ -22,7 +22,7 @@
 #ifdef TRACY_ENABLE
 #include "tracy/Tracy.hpp"
 #else
-#define ZoneScopedNS(x, y)
+#define ZoneScopedN(x)
 #define ZoneText(x, y)
 #endif
 
@@ -44,7 +44,7 @@ namespace LANGUAGE_KERNEL
     sz(s), 
     ref_count(1), 
     owner(1)
-  { ZoneScopedNS("Vdata::Vdata", 5);
+  { ZoneScopedN("Vdata::Vdata");
     if (s <= 0)
       data = 0;
     else
@@ -72,7 +72,7 @@ namespace LANGUAGE_KERNEL
   template <class T> 
   inline Vdata<T>::
   ~Vdata() 
-  { ZoneScopedNS("Vdata<T>::~Vdata", 5);
+  { ZoneScopedN("Vdata<T>::~Vdata");
     if(owner && data)
       delete[] data;
   }
@@ -89,7 +89,7 @@ namespace LANGUAGE_KERNEL
   template <class T> 
   inline ArrOf<T>::
   ~ArrOf()
-  { ZoneScopedNS("ArrOf<T>::~ArrOf", 5);
+  { ZoneScopedN("ArrOf<T>::~ArrOf");
     detach();
   }
   template <class T> 
@@ -123,7 +123,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   copy(const ArrOf<T>& A)
   {
-    ZoneScopedNS("ArrOf<T>::copy", 5);
+    ZoneScopedN("ArrOf<T>::copy");
     resize(A.size());
     return inject(A);
   }
@@ -131,7 +131,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   inject(const ArrOf<T>& A)
   {
-    ZoneScopedNS("ArrOf<T>::inject", 5);
+    ZoneScopedN("ArrOf<T>::inject");
     assert(A.size() <= size());
     memcpy(data, A.get_ptr(), A.size()*sizeof(T));
     return *this;
@@ -140,7 +140,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator=(const ArrOf<T>& A)
   {
-    ZoneScopedNS("ArrOf<T>::operator=", 5);
+    ZoneScopedN("ArrOf<T>::operator=");
     ZoneText("by copy", sizeof("by copy"));
     copy(A);
     return *this;
@@ -149,7 +149,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator=(const T& x)
   {
-    ZoneScopedNS("ArrOf<T>::operator=", 5);
+    ZoneScopedN("ArrOf<T>::operator=");
     ZoneText("by filling", sizeof("by filling"));
     if (data) {
       int i = size();
@@ -210,7 +210,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   resize(int n)
   {
-    ZoneScopedNS("ArrOf<T>::resize", 5);
+    ZoneScopedN("ArrOf<T>::resize");
     assert(p);
     assert(n>=0);
     if(size()==n) return *this;
@@ -245,7 +245,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator+=(const ArrOf<T>& y)
   {
-    ZoneScopedNS("ArrOf<T>::operator+=", 5);
+    ZoneScopedN("ArrOf<T>::operator+=");
     ZoneText("with another array", sizeof("with another array"));
     assert(size()==y.size());
     assert(p);
@@ -261,7 +261,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator-=(const ArrOf<T>& y)
   {
-    ZoneScopedNS("ArrOf<T>::operator-=", 5);
+    ZoneScopedN("ArrOf<T>::operator-=");
     ZoneText("with another array", sizeof("with another array"));
     assert(size()==y.size());
     assert(p);
@@ -277,7 +277,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator+=(const T& y)
   {
-    ZoneScopedNS("ArrOf<T>::operator+=", 5);
+    ZoneScopedN("ArrOf<T>::operator+=");
     ZoneText("with an element", sizeof("with an element"));
     assert(p);
      T* dx=(T*) get_ptr();
@@ -291,7 +291,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator-=(const T& y)
   {
-    ZoneScopedNS("ArrOf<T>::operator-=", 5);
+    ZoneScopedN("ArrOf<T>::operator-=");
     ZoneText("with an element", sizeof("with an element"));
     assert(p);
      T* dx=(T*) get_ptr();
@@ -305,7 +305,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator*=(const T& y)
   {
-    ZoneScopedNS("ArrOf<T>::operator*=", 5);
+    ZoneScopedN("ArrOf<T>::operator*=");
     assert(p);
      T* dx=(T*) get_ptr();
     int sz=size();
@@ -318,7 +318,7 @@ namespace LANGUAGE_KERNEL
   inline ArrOf<T>& ArrOf<T>::
   operator/=(const T& y)
   {
-    ZoneScopedNS("ArrOf<T>::operator/=", 5);
+    ZoneScopedN("ArrOf<T>::operator/=");
     assert(p);
      T* dx=(T*) get_ptr();
     int sz=size();
@@ -331,7 +331,7 @@ namespace LANGUAGE_KERNEL
   inline int ArrOf<T>::
   detach()
   {
-    ZoneScopedNS("ArrOf<T>::detach", 5);
+    ZoneScopedN("ArrOf<T>::detach");
     int retour=0;
     if(p)
       if ((p->supr_one_ref()) == 0)
@@ -346,7 +346,7 @@ namespace LANGUAGE_KERNEL
   inline void ArrOf<T>::
   attach(const ArrOf<T>& m)
   {
-    ZoneScopedNS("ArrOf<T>::attach", 5);
+    ZoneScopedN("ArrOf<T>::attach");
     detach();
     m.add_one_ref();
     p = m.p;
@@ -368,7 +368,7 @@ inline void Vdata<T>::set_view(int s, const T* ptr)
   inline ArrOf<T>& ArrOf<T>::
   set_ptr(int nsz, const T* ptr)
   {
-    ZoneScopedNS("ArrOf<T>::set_ptr", 5);
+    ZoneScopedN("ArrOf<T>::set_ptr");
     if (p && p->ref_count == 1)
     {
       p->set_view(nsz, ptr);   // réutilise le Vdata en place, pas de new/delete
@@ -396,7 +396,7 @@ inline void Vdata<T>::set_view(int s, const T* ptr)
   }
   template <class T> 
   inline void ArrOf<T>::clear()
-  { ZoneScopedNS("ArrOf<T>::clear", 5);
+  { ZoneScopedN("ArrOf<T>::clear");
     if (p)
     {
       if (p->owner && p->data)

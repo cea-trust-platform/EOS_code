@@ -135,7 +135,7 @@ namespace NEPTUNE
 // Determine   in return, the class associated with(method_str, ref_str) from index.eos  :  fluid_model_class
 const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 {
-  ZoneScopedNS("EOS::INDEX", 5);
+  ZoneScopedN("EOS::INDEX");
   char method_str_maj[50], ref_str_maj[50] ;
   char method_str_iem[50], ref_str_iem[50] ;
   char *cpt_method, *cpt_ref ;
@@ -238,7 +238,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
    //
    int EOS::index_data(const char *const tmname_in, const char *const fename_in)
    {
-     ZoneScopedNS("EOS::index_data", 5);
+     ZoneScopedN("EOS::index_data");
      char tmname_in_maj[50], fename_in_maj[50] ;
      char tmname_read[50], fename_read[50] ;
      char *cpt_tmname_in, *cpt_fename_in ;
@@ -391,14 +391,14 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   EOS::EOS(const char *const str)
       : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
-     { ZoneScopedNS("EOS::EOS", 5);
+     { ZoneScopedN("EOS::EOS");
       ZoneText("with str arg", sizeof("with str arg"));
        err_handler = new EOS_Std_Error_Handler ;
      }
 
   EOS::EOS(const char *const tmname_in, const char *const fename_in)
      : Object(INDEX(tmname_in, fename_in)), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
-     { ZoneScopedNS("EOS::EOS", 5);
+     { ZoneScopedN("EOS::EOS");
        ZoneText("with tmname_in and fename_in args", sizeof("with tmname_in and fename_in args"));
        index_data(tmname_in, fename_in) ;
        Object obj(fluid_model_class) ;
@@ -409,7 +409,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   EOS::EOS(const char *const tmname_in, const char *const fename_in, const Strings &init_args)
      : Object(INDEX(tmname_in,fename_in)), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
-     { ZoneScopedNS("EOS::EOS", 5);
+     { ZoneScopedN("EOS::EOS");
        ZoneText("with tmname_in, fename_in and init_args args", sizeof("with tmname_in, fename_in and init_args args"));
        index_data(tmname_in, fename_in) ;
        Object obj(fluid_model_class) ;
@@ -421,7 +421,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
   EOS::EOS(const char *const tmname_in, const char *const fename_in, const Strings &init_args, 
            const double h0, const double s0, const double t0, const double p0)
      : Object(INDEX(tmname_in,fename_in)), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))   // init.b.
-     { ZoneScopedNS("EOS::EOS", 5);
+     { ZoneScopedN("EOS::EOS");
        ZoneText("with tmname_in, fename_in, init_args h0, s0, t0, p0 args", sizeof("with tmname_in, fename_in, init_args h0, s0, t0, p0 args"));
        index_data(tmname_in, fename_in) ;
        Object obj(fluid_model_class) ;
@@ -431,7 +431,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
      }
   EOS::EOS(const char *const str, const Strings &args)
      : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
-     { ZoneScopedNS("EOS::EOS", 5);
+     { ZoneScopedN("EOS::EOS");
        ZoneText("with str and args args", sizeof("with str and args args"));
        fluid_model_obj.init(args);
        err_handler = new EOS_Std_Error_Handler ;
@@ -439,7 +439,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   EOS::EOS(const char *const str, const Object &obj)
     : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
-     { ZoneScopedNS("EOS::EOS", 5);
+     { ZoneScopedN("EOS::EOS");
        ZoneText("with str and obj args", sizeof("with str and obj args"));
        fluid_model_obj.init(dynamic_cast<const Strings&> (get_object(obj.id())));
        err_handler = new EOS_Std_Error_Handler ;
@@ -447,7 +447,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   // Duplicate the "handler", destroy the old handler and store the new one.
   void EOS::set_error_handler(const EOS_Error_Handler  &handler)
-     { ZoneScopedNS("EOS::set_error_handler", 5);
+     { ZoneScopedN("EOS::set_error_handler");
        delete err_handler;
        EOS_Error_Handler  &copy = handler.duplicate();
        err_handler = &copy;
@@ -455,12 +455,12 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   // Save current error handler for future restore on a stack.
   void EOS::save_error_handler()
-     { ZoneScopedNS("EOS::save_error_handler", 5);
+     { ZoneScopedN("EOS::save_error_handler");
        err_handler_stack_.push(*err_handler);
      }
 
   void EOS::restore_error_handler()
-     { ZoneScopedNS("EOS::restore_error_handler", 5);
+     { ZoneScopedN("EOS::restore_error_handler");
        const EOS_Error_Handler  *handler = err_handler_stack_.top_of_stack();
        if (handler)
           { // If stack not empty:
@@ -475,7 +475,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
   vector<string> EOS::is_implemented(const char *pprop1, const char *pprop2,
                                      const vector<string> list_prop, double vprop1, double vprop2)
-     { ZoneScopedNS("EOS::is_implemented", 5);
+     { ZoneScopedN("EOS::is_implemented");
        ZoneText("With two properties", sizeof("With two properties"));
        vector<string> list_propv ;
 
@@ -511,20 +511,20 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
      }
      
     EOS_Error EOS::init_model(const std::string& model_name, const std::string& fluid_name, bool switch_comp_sat,bool swch_calc_deriv_fld)   // ipp 
-  { ZoneScopedNS("EOS::init_model", 5);
+  { ZoneScopedN("EOS::init_model");
     return fluid_model_obj.init_model(model_name, fluid_name, switch_comp_sat, swch_calc_deriv_fld);
   }
   EOS_Internal_Error EOS::compute_Ipp_error(double &error_tot, double* &error_cells, AString prop)
-  {  ZoneScopedNS("EOS::compute_Ipp_error", 5);
+  {  ZoneScopedN("EOS::compute_Ipp_error");
      return fluid_model_obj.compute_Ipp_error(error_tot, error_cells, prop);
   }
   EOS_Internal_Error EOS::compute_Ipp_sat_error(double &error_tot, double* &error_cells, AString prop)
-  {  ZoneScopedNS("EOS::compute_Ipp_sat_error", 5);
+  {  ZoneScopedN("EOS::compute_Ipp_sat_error");
      return fluid_model_obj.compute_Ipp_sat_error(error_tot, error_cells, prop);
   }
 
   vector<string> EOS::is_implemented(const char *pprop1, const vector<string> list_prop, double vprop1)
-     { ZoneScopedNS("EOS::is_implemented", 5);
+     { ZoneScopedN("EOS::is_implemented");
        ZoneText("With one property", sizeof("With one property"));
        vector<string> list_propv ;
 
@@ -553,12 +553,12 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
      }
 
   EOS::~EOS()
-  { ZoneScopedNS("EOS::~EOS", 5);
+  { ZoneScopedN("EOS::~EOS");
     delete err_handler;
   }
   
   int EOS::test()
-  { ZoneScopedNS("EOS::test", 5);
+  { ZoneScopedN("EOS::test");
     ::NEPTUNE_EOS::EOS_Mixing mix1;
     ::NEPTUNE_EOS::EOS_PerfectGas x1;
     ::NEPTUNE_EOS::EOS_StiffenedGas x22;

@@ -43,7 +43,7 @@ namespace CATHARE2
       critical(EOS_Error::bad),
       lfluid(c2ref), licar(0), licargas(0), lienc(0), lirev(61),
       litermin(0), llatypml(0), lmutypml(0), liter(1), ligotra(0)
-  { ZoneScopedNS("CATHARE2::CATHARE2", 3);
+  { ZoneScopedN("CATHARE2::CATHARE2");
     F77NAME(c2_inifld)() ;
     F77NAME(c2_getfldprop)(lfluid, 
                         xpm, xhlm, xhvm, xtlm, xtgm,
@@ -69,13 +69,13 @@ namespace CATHARE2
   }
 
   CATHARE2::~CATHARE2()
-  { ZoneScopedNS("CATHARE2::~CATHARE2", 3);
+  { ZoneScopedN("CATHARE2::~CATHARE2");
   }
 
   EOS_Error CATHARE2::verify(const EOS_Field& in,
                              EOS_Error_Field& errfield, 
                              const domain dom) const
-  { ZoneScopedNS("CATHARE2::verify", 5);
+  { ZoneScopedN("CATHARE2::verify");
     double tabsk_fluid = 0.e0 ;
     double P_min       = 0.e0 ;
     double P_max       = 0.e0 ;
@@ -140,7 +140,7 @@ namespace CATHARE2
   }
 
   int CATHARE2::map_eos_field(const EOS_Field& f, domain mode)
-  { ZoneScopedNS("CATHARE2::map_eos_field", 5);
+  { ZoneScopedN("CATHARE2::map_eos_field");
     assert(f.size() == nsca) ;
 
     switch(f.get_property_number())
@@ -1122,7 +1122,7 @@ namespace CATHARE2
   }
 
   EOS_Error CATHARE2::map_eos_fields(const EOS_Fields& f, vector<int>& existprop_fields, domain mode) 
-  { ZoneScopedNS("CATHARE2::map_eos_fields", 5);
+  { ZoneScopedN("CATHARE2::map_eos_fields");
     int f_size = f.size() ;
     assert (f_size > 0);
     int can = 0;
@@ -1138,7 +1138,7 @@ namespace CATHARE2
   int CATHARE2::unmap_eos_field(const EOS_Field& f, domain mode)
   { assert(f.size() == nsca) ;
     //ArrOfDouble ltmp ;
-    ZoneScopedNS("CATHARE2::unmap_eos_field", 5);
+    ZoneScopedN("CATHARE2::unmap_eos_field");
     switch(f.get_property_number()) 
        {
          case NEPTUNE::p :
@@ -1537,7 +1537,7 @@ namespace CATHARE2
 
 
   int CATHARE2::unmap_eos_fields(const EOS_Fields& f, domain mode) 
-  { ZoneScopedNS("CATHARE2::unmap_eos_fields", 3);
+  { ZoneScopedN("CATHARE2::unmap_eos_fields");
     assert (f.size() > 0) ;
     int nbunmap = 0 ;
     for (int i=0; i<f.size(); i++)
@@ -1548,7 +1548,7 @@ namespace CATHARE2
 
 
   void CATHARE2::rezise_eos_fields(int sz, domain mode) 
-  { ZoneScopedNS("CATHARE2::resize_eos_fields", 3);
+  { ZoneScopedN("CATHARE2::resize_eos_fields");
     if (ltsp.size() != sz) ltsp.resize(sz);
     if (ltsp1.size() != sz) ltsp1.resize(sz);
     if (l2tsp1.size() != sz) l2tsp1.resize(sz);
@@ -1899,7 +1899,7 @@ namespace CATHARE2
   }
 
   void CATHARE2::preconvert_eos_fields() 
-  { ZoneScopedNS("CATHARE2::preconvert_eos_fields", 5);
+  { ZoneScopedN("CATHARE2::preconvert_eos_fields");
     if (lfluid != 100003) 
        { if (ltl.size() == nsca) ltl -= tabsk;
          if (ltg.size() == nsca) ltg -= tabsk;
@@ -1908,7 +1908,7 @@ namespace CATHARE2
   }
 
   void CATHARE2::postconvert_eos_fields() 
-  { ZoneScopedNS("CATHARE2::postconvert_eos_fields", 5);
+  { ZoneScopedN("CATHARE2::postconvert_eos_fields");
     if (lfluid != 100003) 
        { if (ltl.size()  == nsca) ltl  += tabsk ;
          if (ltg.size()  == nsca) ltg  += tabsk ;
@@ -1917,7 +1917,7 @@ namespace CATHARE2
   }
 
   EOS_Error CATHARE2::calc2_p(const EOS_Field &p, EOS_Fields &out, EOS_Error_Field &ferr)
-  { ZoneScopedNS("CATHARE2::calc2_p", 5);
+  { ZoneScopedN("CATHARE2::calc2_p");
     typ_ths = TH_space::Psat ;
     ferr = EOS_Internal_Error::OK ;
     nsca = p.size() ;
@@ -1969,7 +1969,7 @@ namespace CATHARE2
   }
 
   EOS_Error CATHARE2::calc2_t(const EOS_Field &t, EOS_Fields &out, EOS_Error_Field &ferr)
-  { ZoneScopedNS("CATHARE2::calc2_t", 5);
+  { ZoneScopedN("CATHARE2::calc2_t");
     typ_ths = TH_space::Tsat ;
     ferr = EOS_Internal_Error::OK ;
     nsca = t.size() ;
@@ -2027,7 +2027,7 @@ namespace CATHARE2
 
   EOS_Error CATHARE2::calc2_ph(const EOS_Field &p, const EOS_Field &h, EOS_Fields &out, EOS_Error_Field &ferr)
   { 
-    ZoneScopedNS("CATHARE2::calc2_ph", 5);
+    ZoneScopedN("CATHARE2::calc2_ph");
     typ_ths = TH_space::Ph ;
     ferr = EOS_Internal_Error::OK ;
     nsca = p.size() ;
@@ -2167,7 +2167,7 @@ namespace CATHARE2
   }
 
   EOS_Error CATHARE2::calc2_pt(const EOS_Field &p, const EOS_Field &t, EOS_Fields &out, EOS_Error_Field &ferr)
-  { ZoneScopedNS("CATHARE2::calc2_pt", 5);
+  { ZoneScopedN("CATHARE2::calc2_pt");
     typ_ths = TH_space::PT ;
     ferr = EOS_Internal_Error::OK ;
     nsca = p.size() ;
@@ -2315,7 +2315,7 @@ namespace CATHARE2
 
   EOS_Internal_Error CATHARE2::calc2_h_pT_mixing(double p, double T, double &h)
   {
-    ZoneScopedNS("CATHARE2::calc2_h_pT_mixing", 5);
+    ZoneScopedN("CATHARE2::calc2_h_pT_mixing");
     // set_mixing_properties has already been done for (r,cp0,cp1,... and c_i)
     nsca = 1 ;
     EOS_Field fh("h","h",NEPTUNE::h,1,&h) ;
@@ -2369,7 +2369,7 @@ namespace CATHARE2
   }
   
   EOS_Error CATHARE2::calc2_lim() 
-  { ZoneScopedNS("CATHARE2::calc2_lim", 5);
+  { ZoneScopedN("CATHARE2::calc2_lim");
     ArrOfDouble diff(nsca) ;
     diff   = lhvsp ;
     diff  -= lhlsp ;
@@ -2382,7 +2382,7 @@ namespace CATHARE2
   }
 
   EOS_Error CATHARE2::calc2_critical()
-  { ZoneScopedNS("CATHARE2::calc2_critical", 5);
+  { ZoneScopedN("CATHARE2::calc2_critical");
     if (pc > 0) 
        { ArrOfInt err_arr(1) ;
          EOS_Error_Field ferr(err_arr) ;
@@ -2500,7 +2500,7 @@ namespace CATHARE2
   }
 
   EOS_Internal_Error CATHARE2::compute_h_l_lim_p( double p, double& h_l_lim )
-  { ZoneScopedNS("CATHARE2::compute_h_l_lim_p", 5);
+  { ZoneScopedN("CATHARE2::compute_h_l_lim_p");
     ArrOfInt err_arr(1) ;
     EOS_Error_Field ferr(err_arr) ;
     ferr = EOS_Internal_Error::OK ;
@@ -2513,7 +2513,7 @@ namespace CATHARE2
   }
 
   EOS_Internal_Error CATHARE2::compute_h_v_lim_p( double p, double& h_v_lim )
-  { ZoneScopedNS("CATHARE2::compute_h_v_lim_p", 5);
+  { ZoneScopedN("CATHARE2::compute_h_v_lim_p");
     ArrOfInt err_arr(1) ;
     EOS_Error_Field ferr(err_arr) ;
     ferr = EOS_Internal_Error::OK ;
@@ -2526,7 +2526,7 @@ namespace CATHARE2
   }
 
   void CATHARE2::describe_error(const EOS_Internal_Error error, AString & description)
-  { ZoneScopedNS("CATHARE2::describe_error", 5);
+  { ZoneScopedN("CATHARE2::describe_error");
     switch(error.get_partial_code()) 
        { case ::CATHARE2::erpile_error:
            description = "EOS_Cathare2: erpile error"; break;
@@ -2584,7 +2584,7 @@ namespace CATHARE2
   }
 
   EOS_Internal_Error CATHARE2::convert_eos_error(const int partial_code) const
-  { ZoneScopedNS("CATHARE2::convert_eos_error", 5);
+  { //ZoneScopedN("CATHARE2::convert_eos_error");
 //    return EOS_Internal_Error::OK;
     switch (partial_code) 
        { case ::CATHARE2::ok:               return EOS_Internal_Error::OK ;

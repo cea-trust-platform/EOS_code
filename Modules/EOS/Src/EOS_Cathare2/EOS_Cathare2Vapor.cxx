@@ -44,7 +44,7 @@ namespace NEPTUNE_EOS
                                                   Cathare2Vapor_create)) ;
 
   const Type_Info& EOS_Cathare2Vapor::get_Type_Info () const
-  { ZoneScopedNS("EOS_Cathare2Vapor::get_Type_Info", 5);
+  { ZoneScopedN("EOS_Cathare2Vapor::get_Type_Info");
     return (Types_Info::instance())[type_Id];
   }
 
@@ -54,7 +54,7 @@ namespace NEPTUNE_EOS
 
   EOS_Error EOS_Cathare2Vapor::calc2_mixing(const int n, const EOS_Fields& in, EOS_Fields& out, EOS_Error_Field& ferr)
   { // set_mixing_properties has already been done for (r,cp0,cp1,...)
-    ZoneScopedNS("EOS_Cathare2Vapor::calc2_mixing", 5);
+    ZoneScopedN("EOS_Cathare2Vapor::calc2_mixing");
     CATHARE2::CATHARE2 *local_pilot;
 
     #ifdef _OPENMP

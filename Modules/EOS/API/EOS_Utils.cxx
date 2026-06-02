@@ -8,7 +8,7 @@ using NEPTUNE::Strings ;
 namespace NEPTUNE
 {
     char * packStrings(const NEPTUNE::Strings & s, int lString, long & size)
-    {   ZoneScopedNS("Strings::packStrings", 3);
+    {   ZoneScopedN("Strings::packStrings");
         assert(lString > 0);
 
         int iS, nS = s.size();

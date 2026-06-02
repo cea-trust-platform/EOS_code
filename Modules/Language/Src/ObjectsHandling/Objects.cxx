@@ -49,7 +49,7 @@ namespace OBJECTSHANDLING
       step(1024)       ,
       next(0)          ,
       free(0)
-  { ZoneScopedNS("Objects::Objects", 5);
+  { ZoneScopedN("Objects::Objects");
     ZoneText("with no args", sizeof("with no args"));
     //std::cerr << endl;
     //std::cerr << endl;
@@ -74,7 +74,7 @@ namespace OBJECTSHANDLING
       step(1024)       ,
       next(0)          ,
       free(0)
-  { ZoneScopedNS("Objects::Objects", 5);
+  { ZoneScopedN("Objects::Objects");
     ZoneText("by copy", sizeof("by copy"));
     (void)right ;
     std::cerr << "This should not append!!" << endl ;
@@ -84,7 +84,7 @@ namespace OBJECTSHANDLING
 
 
   Objects::~Objects()
-  { ZoneScopedNS("Objects::~Objects", 5);
+  { ZoneScopedN("Objects::~Objects");
     std::cerr << "End of the simulation : " << std::endl
               << "Cleaning up memory ... "  << std::flush ;
     for(int i=0; i<nb_obj_max; i++)
@@ -105,7 +105,7 @@ namespace OBJECTSHANDLING
 
 
   NEPTUNE::Boolean Objects::is_object(const NEPTUNE::Object_ID& key)
-  { ZoneScopedNS("Objects::is_object", 5);
+  { ZoneScopedN("Objects::is_object");
     if ((key<0) || (key>=nb_obj_max))  std::cerr << key << "Not allowed" << endl ;
     if (the_objects[key]) return 1 ;
     else return 0 ;
@@ -146,7 +146,7 @@ namespace OBJECTSHANDLING
   }
 
   int  Objects::add_object (NumberedObject *obj)
-  { //ZoneScopedNS("Objects::add_object", 5);
+  { //ZoneScopedN("Objects::add_object");
 #ifdef _OPENMP
 //  if (omp_in_parallel()) {
     mutex_objects.lock();
@@ -183,7 +183,7 @@ namespace OBJECTSHANDLING
   }
 
   NEPTUNE::Boolean Objects::delete_object (const NEPTUNE::Object_ID& obj)
-  { //ZoneScopedNS("Objects::delete_object", 5);
+  { //ZoneScopedN("Objects::delete_object");
 #ifdef _OPENMP
 //  if (omp_in_parallel()) {
     mutex_objects.lock();
@@ -225,7 +225,7 @@ namespace OBJECTSHANDLING
     //       if(obj)
     //  delete_object(*(obj));
     //     }
-    ZoneScopedNS("Objects::destroy_all", 5);
+    ZoneScopedN("Objects::destroy_all");
     delete[] the_objects ;
     the_objects = 0    ;
     nb_obj_max  = 1024 ;

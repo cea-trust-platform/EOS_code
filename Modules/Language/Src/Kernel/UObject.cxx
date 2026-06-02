@@ -56,7 +56,7 @@ namespace LANGUAGE_KERNEL
   }
 
   const NEPTUNE::AString& UObject::get_type () const
-  { ZoneScopedNS("UObject::get_type", 5);
+  { ZoneScopedN("UObject::get_type");
     return (get_Type_Info().get_name()) ;
   }
 

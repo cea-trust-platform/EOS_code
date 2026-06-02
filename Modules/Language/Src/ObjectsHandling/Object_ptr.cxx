@@ -65,7 +65,7 @@ namespace OBJECTSHANDLING
 
 
   const NumberedObject& Object_ptr::get_object ()
-  { ZoneScopedNS("Object_ptr::get_object", 5);
+  { ZoneScopedN("Object_ptr::get_object");
     return Objects::instance().get_object(key) ;
   }
 

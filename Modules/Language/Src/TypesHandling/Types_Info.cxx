@@ -30,7 +30,7 @@ namespace NEPTUNE
 {
   int RegisterType(const char* type, const char* coment, unsigned int sz, 
                    RegisteredClass& (*create) (void))
-  { ZoneScopedNS("RegisterType", 5);
+  { ZoneScopedN("RegisterType");
     ZoneText("without mother", sizeof("without mother"));
     Types_Info& les_types       = Types_Info::instance()   ;
     NEPTUNE::AString type_str   = NEPTUNE::AString(type)   ;
@@ -41,7 +41,7 @@ namespace NEPTUNE
 
   int RegisterType(const char* type, const char* mother, const char* coment, 
                    unsigned int sz, RegisteredClass& (*create) (void))
-  { ZoneScopedNS("RegisterType", 5);
+  { ZoneScopedN("RegisterType");
     ZoneText("with mother", sizeof("with mother"));
     Types_Info& les_types       = Types_Info::instance()   ;
     NEPTUNE::AString type_str   = NEPTUNE::AString(type)   ;
@@ -142,7 +142,7 @@ namespace TYPESHANDLING
                                  unsigned int sz, 
                                  RegisteredClass& (*create) (void))
   { //cerr << "Registering type " << type << endl;
-    ZoneScopedNS("Types_Info::register_type", 5);
+    ZoneScopedN("Types_Info::register_type");
     ZoneText("with mother", sizeof("with mother"));
     Type_Info* new_type = new Type_Info(type, coment, create, sz, mother) ;
     return the_Type_Info.add_object(*new_type) ;
@@ -154,7 +154,7 @@ namespace TYPESHANDLING
                                  unsigned int sz, 
                                  RegisteredClass& (*create) (void))
   { //cerr << "Registering type " << type << endl;
-    ZoneScopedNS("Types_Info::register_type", 5);
+    ZoneScopedN("Types_Info::register_type");
     ZoneText("without mother", sizeof("without mother"));
     Type_Info* new_type = new Type_Info(type, coment, create, sz) ;
     int return_value    = the_Type_Info.add_object(*new_type) ;
@@ -163,20 +163,20 @@ namespace TYPESHANDLING
 
 
   RegisteredClass& Types_Info::create_Object (NEPTUNE::AString type) const
-  { ZoneScopedNS("Types_Info::create_Object", 5);
+  { ZoneScopedN("Types_Info::create_Object");
     return (*this)[type].instance() ;
   }
 
 
   int Types_Info::size_of_Object (const RegisteredClass& ob) const
-  { ZoneScopedNS("Types_Info::size_of_Object", 5);
+  { ZoneScopedN("Types_Info::size_of_Object");
     return ob.get_Type_Info().get_sz() ;
   }
 
 
   const Type_Info& Types_Info::operator [] (const NEPTUNE::AString& type) const
   { // number of types
-    ZoneScopedNS("Types_Info::operator[]", 5);
+    ZoneScopedN("Types_Info::operator[]");
     int nbt = Types_Info::instance().nb_types() ;
 
     for (int i=0; i<nbt; i++)
@@ -194,7 +194,7 @@ namespace TYPESHANDLING
 
   // Print EOS types
   void  Types_Info::print_types() const
-  { ZoneScopedNS("Types_Info::print_types", 5);
+  { ZoneScopedN("Types_Info::print_types");
     // number of types
     int nbt = Types_Info::instance().nb_types() ;
     //  type names array
@@ -235,7 +235,7 @@ namespace TYPESHANDLING
 
   // Sort
   void  Types_Info::ctri(const int nbt, NEPTUNE::Strings &chac, int *indx) const
-  { ZoneScopedNS("Types_Info::ctri", 5);
+  { ZoneScopedN("Types_Info::ctri");
     int iflag, k ;
 
     int nindic = 1 ;

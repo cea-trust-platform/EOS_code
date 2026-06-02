@@ -48,7 +48,7 @@ namespace NEPTUNE_EOS
   }
 
   static RegisteredClass& CathareIncondensableGas_create()
-  { ZoneScopedNS("CathareIncondensableGas_create", 3);
+  { ZoneScopedN("CathareIncondensableGas_create");
     return *(new EOS_CathareIncondensableGas()) ;
   }
 
@@ -72,12 +72,12 @@ namespace NEPTUNE_EOS
                                                             CathareIncondensableGas_create)) ;
 
   const Type_Info& EOS_CathareIncondensableGas::get_Type_Info () const
-  { ZoneScopedNS("EOS_CathareIncondensableGas::get_Type_Info", 5);
+  { ZoneScopedN("EOS_CathareIncondensableGas::get_Type_Info");
     return (Types_Info::instance())[type_Id] ;
   }
 
   int EOS_CathareIncondensableGas::init(const Strings& args) 
-  { ZoneScopedNS("EOS_CathareIncondensableGas::init", 5);
+  { ZoneScopedN("EOS_CathareIncondensableGas::init");
     ZoneText("init with one args", sizeof("init with one args"));
     int i = 0 ;
     if (cathare_name == AString("        ")) 
@@ -133,7 +133,7 @@ namespace NEPTUNE_EOS
   }
 
   int EOS_CathareIncondensableGas::init(const Strings& args, const Strings& other_args) 
-  { ZoneScopedNS("EOS_CathareIncondensableGas::init", 5);
+  { ZoneScopedN("EOS_CathareIncondensableGas::init");
     ZoneText("init with two args", sizeof("init with two args"));
     int iret ;
     iret = init(args) ;

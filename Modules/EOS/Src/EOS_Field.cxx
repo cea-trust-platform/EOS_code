@@ -18,11 +18,11 @@
 
 #include "Language/API/Types_Info.hxx"
 #include "EOS/API/EOS_Field.hxx"
-
+#include "tracy/Tracy.hpp"
 namespace NEPTUNE
 {
   static RegisteredClass& EOS_Field_create()
-  { ZoneScopedNS("EOS_Field_create", 3);
+  { ZoneScopedN("EOS_Field_create");
     return *(new EOS_Field()) ;
   }
 
@@ -86,7 +86,7 @@ namespace NEPTUNE
   int EOS_Field::init(const char* const namet, 
                       const char* const namep,
                       ArrOfDouble &x) 
-  { ZoneScopedNS("EOS_Field::init", 3);
+  { ZoneScopedN("EOS_Field::init");
     property_title  = namet ;
     property_name   = namep ;
     {ZoneScopedN("gen_property_number inside init");
@@ -99,7 +99,7 @@ namespace NEPTUNE
                       const char* const namep,
                       int prop_numb,
                       ArrOfDouble &x) 
-  { ZoneScopedNS("EOS_Field::init", 3);
+  { ZoneScopedN("EOS_Field::init");
     ZoneText("with property number", sizeof("with property number"));
     property_title  = namet ;
     property_name   = namep ;
@@ -112,7 +112,7 @@ namespace NEPTUNE
                       const char* const namep,
                       int prop_numb,
 					  int nsz, double* ptr)
-  { ZoneScopedNS("EOS_Field::init", 3);
+  { ZoneScopedN("EOS_Field::init");
     ZoneText("with property number and pointer to array", sizeof("with property number and pointer to array"));
     property_title  = namet ;
     property_name   = namep ;
@@ -147,7 +147,7 @@ namespace NEPTUNE
   int EOS_Field::init(const char* const namet,
                       const char* const namep,
 					  int nsz, double* ptr)
-  { ZoneScopedNS("EOS_Field::init", 3);
+  { ZoneScopedN("EOS_Field::init");
     property_title  = namet ;
     property_name   = namep ;
     property_number = gen_property_number(namep)   ;

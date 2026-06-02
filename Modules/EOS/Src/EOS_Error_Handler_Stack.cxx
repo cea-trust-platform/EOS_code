@@ -54,7 +54,7 @@ namespace NEPTUNE
   //! Destructor: destroy handler_ (does NOT destroy next_)
   EOS_Error_Handler_Stack_Elt::
   ~EOS_Error_Handler_Stack_Elt()
-  { ZoneScopedNS("EOS_Error_Handler_Stack_Elt::~EOS_Error_Handler_Stack_Elt", 3);
+  { ZoneScopedN("EOS_Error_Handler_Stack_Elt::~EOS_Error_Handler_Stack_Elt");
     delete handler_;
   }
 
@@ -71,7 +71,7 @@ namespace NEPTUNE
   //! Destroy all stack elements
   EOS_Error_Handler_Stack::
   ~EOS_Error_Handler_Stack()
-  { ZoneScopedNS("EOS_Error_Handler_Stack::~EOS_Error_Handler_Stack", 3);
+  { ZoneScopedN("EOS_Error_Handler_Stack::~EOS_Error_Handler_Stack");
     while (top_of_stack_)
       pop();
   }
@@ -79,7 +79,7 @@ namespace NEPTUNE
   //! Add a new element to stack (make a copy of the handler)
   void EOS_Error_Handler_Stack::
   push(const EOS_Error_Handler & handler)
-  { ZoneScopedNS("EOS_Error_Handler_Stack::push", 3);
+  { ZoneScopedN("EOS_Error_Handler_Stack::push");
     EOS_Error_Handler_Stack_Elt * next = top_of_stack_;
     top_of_stack_ = new EOS_Error_Handler_Stack_Elt(handler, next);
   }
@@ -90,7 +90,7 @@ namespace NEPTUNE
   //! Pointer is NULL if stack is empty.
   const EOS_Error_Handler * EOS_Error_Handler_Stack::
   top_of_stack() const
-  { ZoneScopedNS("EOS_Error_Handler_Stack::top_of_stack", 3);
+  { ZoneScopedN("EOS_Error_Handler_Stack::top_of_stack");
     if (top_of_stack_)
       return top_of_stack_->handler_;
     else
@@ -100,7 +100,7 @@ namespace NEPTUNE
   //! Destroys the top of stack element.
   void EOS_Error_Handler_Stack::
   pop()
-  { ZoneScopedNS("EOS_Error_Handler_Stack::pop", 3);
+  { ZoneScopedN("EOS_Error_Handler_Stack::pop");
     if (top_of_stack_) {
       EOS_Error_Handler_Stack_Elt * old = top_of_stack_;
       top_of_stack_ = top_of_stack_->next_;

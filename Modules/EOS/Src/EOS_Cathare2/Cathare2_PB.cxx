@@ -28,7 +28,7 @@ namespace CATHARE2 {
   
   //
   int CATHARE2_PB::fhpfld(int& ill, int& ivstat, int& ivalu, domain mode)
-  { ZoneScopedNS("CATHARE2_PB::fhpfld", 5);
+  { ZoneScopedN("CATHARE2_PB::fhpfld");
     (void)ivalu ;
     int itest, icalcp ;
     ivstat = 0 ;
@@ -43,7 +43,7 @@ namespace CATHARE2 {
                          lrvsp[0], lrvsp1[0]) ;
 
     if ((mode == liquid) || (mode == unknown))
-       { ZoneScopedNS("CATHARE2_PB::fhpfld - Liquid mode", 5);
+       { ZoneScopedN("CATHARE2_PB::fhpfld - Liquid mode");
          F77DECLARE(c2_fhliqpb)(nsca, lp[0], lhl[0], 
                              ltl[0], ltl1[0], ltl2[0],
                              lrl[0], lrl1[0], lrl2[0],
@@ -59,13 +59,13 @@ namespace CATHARE2 {
        }
     
     if ((mode == vapor) || (mode == unknown)) 
-       { ZoneScopedNS("CATHARE2_PB::fhpfld - Vapor mode", 5);
+       { ZoneScopedN("CATHARE2_PB::fhpfld - Vapor mode");
          F77DECLARE(c2_usetvd)(nsca, lxvap[0],  un) ;
          F77DECLARE(c2_usetvd)(nsca, lxnc[0], zero) ;
          F77DECLARE(c2_usetvd)(nsca, lrnc[0], zero) ;
          F77DECLARE(c2_usetvd)(nsca, lmnc[0], zero) ;
          if (nincon == 0) 
-            { ZoneScopedNS("CATHARE2_PB::fhpfld - No incondensable gas", 5);
+            { ZoneScopedN("CATHARE2_PB::fhpfld - No incondensable gas");
                for (int i=1; i<=nsca; i++) 
                  lprgr[i-1] = fldr ;
               
@@ -88,7 +88,7 @@ namespace CATHARE2 {
 
          else 
             { // incondensable gas
-              ZoneScopedNS("CATHARE2_PB::fhpfld - Incondensable gas", 5);
+              ZoneScopedN("CATHARE2_PB::fhpfld - Incondensable gas");
               F77DECLARE(c2_usetvd)(nsca, lxrsu[0],    zero) ;
               F77DECLARE(c2_usetvd)(nsca, lxcpsu[0],   zero) ;
               F77DECLARE(c2_usetvd)(nsca, lxcpsutg[0], zero) ;
@@ -229,12 +229,12 @@ namespace CATHARE2 {
   
   //
   int CATHARE2_PB::ftrafld(int& ill, int& ivstat, domain mode)
-  { ZoneScopedNS("CATHARE2_PB::ftrafld", 5);
+  { ZoneScopedN("CATHARE2_PB::ftrafld");
     ill = 0 ;
     ivstat = 0 ;
 
     if ((mode == liquid) || (mode == unknown)) 
-      { ZoneScopedNS("CATHARE2_PB::ftrafld - Liquid mode", 5);
+      { ZoneScopedN("CATHARE2_PB::ftrafld - Liquid mode");
          F77DECLARE(c2_fhliqapb)(nsca,
                             ltl[0], ltl1[0], ltl2[0],
                             ltlal[0], ltlal1[0], ltlal2[0], 
@@ -242,7 +242,7 @@ namespace CATHARE2 {
       }
 
     if ((mode == vapor) || (mode == unknown)) 
-       { ZoneScopedNS("CATHARE2_PB::ftrafld - Vapor mode", 5);
+       { ZoneScopedN("CATHARE2_PB::ftrafld - Vapor mode");
          F77DECLARE(c2_fhvapapb)(nsca, 
                               ltg[0],
                               ltspv[0], ltspvv[0], 
@@ -250,7 +250,7 @@ namespace CATHARE2 {
                               ltmuv[0], lmuvpv[0], lmuvtg[0],
                               lsi[0], lsipv[0]) ;
          if (nincon == 0) 
-            { ZoneScopedNS("CATHARE2_PB::ftrafld - No incondensable gas", 5);
+            { ZoneScopedN("CATHARE2_PB::ftrafld - No incondensable gas");
               F77DECLARE(c2_fhbasa)(nsca, ltg1[0], ltg3[0], 
                                  llavpv[0], llavtg[0], lmuvpv[0], lmuvtg[0],
                                  ltlag1[0], ltlag3[0], ltmug1[0], ltmug3[0]) ;
@@ -261,7 +261,7 @@ namespace CATHARE2 {
 
          else 
             { // incondensable gas
-              ZoneScopedNS("CATHARE2_PB::ftrafld - Incondensable gas", 5);
+              ZoneScopedN("CATHARE2_PB::ftrafld - Incondensable gas");
               for (int j=1; j<=nincon; j++) 
                  F77DECLARE(c2_fhxinit)(nsca, ltgk[0], lprxl0[j-1], lprxl1[j-1], lprxl2[j-1], 
                                   lprxm0[j-1], lprxm1[j-1], lprxm2[j-1],
@@ -407,7 +407,7 @@ namespace CATHARE2 {
   
   //
   void CATHARE2_PB::fpsattfld() 
-  { ZoneScopedNS("CATHARE2_PB::fpsattfld", 5);
+  { ZoneScopedN("CATHARE2_PB::fpsattfld");
     for (int ill=0; ill<nsca; ill++)
        F77DECLARE(c2_fpsattpb)(ltsp[ill], 
                             lp[ill], ltsp1[ill], l2tsdpvv[ill], 
@@ -421,7 +421,7 @@ namespace CATHARE2 {
 
   //
   void CATHARE2_PB::ftsatpfld() 
-  { ZoneScopedNS("CATHARE2_PB::ftsatpfld", 5);
+  { ZoneScopedN("CATHARE2_PB::ftsatpfld");
     F77DECLARE(c2_ftsatppb)(nsca, lp[0], 
                          ltsp[0], ltsp1[0], l2tsdpvv[0],
                          lhlsp[0], lhlsp1[0],
@@ -434,7 +434,7 @@ namespace CATHARE2 {
   
   //
   void CATHARE2_PB::ftliqfld() 
-  { ZoneScopedNS("CATHARE2_PB::ftliqfld", 5);
+  { ZoneScopedN("CATHARE2_PB::ftliqfld");
     F77DECLARE(c2_ftliqpb)(nsca, lp[0], ltl[0], 
                         lhlpt[0],  lhl1pt[0],  lhl2pt[0], 
                         lcplpt[0], lcpl1pt[0], lcpl2pt[0], 
@@ -443,7 +443,7 @@ namespace CATHARE2 {
 
   //
   void CATHARE2_PB::ftvapfld() 
-  { ZoneScopedNS("CATHARE2_PB::ftvapfld", 5);
+  { ZoneScopedN("CATHARE2_PB::ftvapfld");
     int ill, ivstat ;
     F77DECLARE(c2_ftvappb)(nsca, ill, ivstat, 
                         lp[0], ltg[0],

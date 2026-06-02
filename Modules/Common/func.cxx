@@ -28,7 +28,7 @@
 //             0 : positive comparison
 //             1 : negative comparison
 int eostp_strcmp(const char* str1, const char* str2)
-{ ZoneScopedNS("eostp_strcmp", 3);
+{ ZoneScopedN("eostp_strcmp");
   short istr1 ;
   while (*str1)
      { istr1 = (short) *str1 ;
@@ -63,7 +63,7 @@ int eostp_strcmp(const char* str1, const char* str2)
 // output : strr 
 //
 void eostp_strcov(const char* strd, char* strr)
-{ ZoneScopedNS("eostp_strcov", 3);
+{ ZoneScopedN("eostp_strcov");
   short istrd ;
   while (*strd)
      { istrd = (short) *strd ;

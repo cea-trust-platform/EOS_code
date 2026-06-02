@@ -33,7 +33,7 @@ namespace NEPTUNE_EOS
   }
   
   static RegisteredClass& EOS_Refprop10_vapor_create()
-  { ZoneScopedNS("EOS_Refprop10_vapor_create", 3);
+  { ZoneScopedN("EOS_Refprop10_vapor_create");
     return *(new EOS_Refprop10_vapor()) ;
   }
   
@@ -44,14 +44,14 @@ namespace NEPTUNE_EOS
                                                  EOS_Refprop10_vapor_create)) ;
  
   int EOS_Refprop10_vapor::init(const Strings& strings)
-  { ZoneScopedNS("EOS_Refprop10_vapor::init", 3);
+  { ZoneScopedN("EOS_Refprop10_vapor::init");
     int iret ;
     iret = EOS_Refprop10::init(strings) ;
     return iret ;
   }
 
   EOS_Internal_Error EOS_Refprop10_vapor::call_therm(EOS_thermprop prop, double T, double rho, double& value) const
-  { ZoneScopedNS("EOS_Refprop10_vapor::call_therm", 3);
+  { ZoneScopedN("EOS_Refprop10_vapor::call_therm");
     EOS_Internal_Error err ;
     double e, h, p, s, cv, cp, w, hjt ;
 

@@ -28,7 +28,7 @@ namespace NEPTUNE_EOS
 {
 
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_T_sat_p(double p, double& t_sat) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_T_sat_p", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_T_sat_p");
     EOS_Internal_Error err ;
     double rhol, rhov, xliq, xvapint;
     int i=1;
@@ -51,7 +51,7 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_h_l_sat_T(double T, double& h_lsat) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_h_l_sat_T", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_h_l_sat_T");
     EOS_Internal_Error err ;
     double p_sat, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
@@ -76,7 +76,7 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_h_v_sat_T(double T, double& h_vsat) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_h_v_sat_T", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_h_v_sat_T");
     EOS_Internal_Error err ;
     double p_sat, rhol, rhov, xliq, xvapint;
     double h_refprop = 0.e0 ;
@@ -102,7 +102,7 @@ namespace NEPTUNE_EOS
 
 
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_p_sat_T(double T, double& p_sat) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_p_sat_T", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_p_sat_T");
     EOS_Internal_Error err ;
     double rhol, rhov, xliq, xvapint;
     double p_refprop = 0.e0 ;
@@ -128,7 +128,7 @@ namespace NEPTUNE_EOS
 
   //! call tprho - rho return with refprop unit
   inline EOS_Internal_Error EOS_Refprop10_liquid::call_tprho(double p, double T, double& rho_refprop) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::call_tprho", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::call_tprho");
     EOS_Internal_Error err ;
     int i = -1;
     int j = 0;
@@ -170,7 +170,7 @@ namespace NEPTUNE_EOS
 
   //! h(p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_h_pT(double p, double T, double& h) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_h_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_h_pT");
     EOS_Internal_Error err ;
 
     double rho_refprop = 0.e0  ;
@@ -204,7 +204,7 @@ namespace NEPTUNE_EOS
   }*/
   //! u(p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_u_pT(double p, double T, double& u) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_u_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_u_pT");
     EOS_Internal_Error err;
 
     double rho_refprop = 0.e0  ;
@@ -215,7 +215,7 @@ namespace NEPTUNE_EOS
   }
   //! u(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_u_ph(double p, double h, double& u) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_u_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_u_ph");
     double T ;
     EOS_Internal_Error err ;
     
@@ -230,7 +230,7 @@ namespace NEPTUNE_EOS
   }
   //! s(p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_s_pT(double p, double T, double& s) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_s_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_s_pT");
     EOS_Internal_Error err ;
 
     double rho_refprop = 0.e0  ;
@@ -241,7 +241,7 @@ namespace NEPTUNE_EOS
   }
   //! s(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_s_ph(double p, double h, double& s) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_s_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_s_ph");
     double T;
     EOS_Internal_Error err;
     
@@ -256,7 +256,7 @@ namespace NEPTUNE_EOS
   }
   //! cp(p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_cp_pT(double p, double T, double& cp) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_cp_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_cp_pT");
     EOS_Internal_Error err ;
 
     double rho_refprop = 0.e0  ;
@@ -267,7 +267,7 @@ namespace NEPTUNE_EOS
   }
    //! cp(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_cp_ph(double p, double h, double& cp) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_cp_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_cp_ph");
     double T;
     EOS_Internal_Error err;
     
@@ -282,7 +282,7 @@ namespace NEPTUNE_EOS
   }  
    //! cv(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_cv_ph(double p, double h, double& cv) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_cv_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_cv_ph");
     double T;
     EOS_Internal_Error err;
     
@@ -297,7 +297,7 @@ namespace NEPTUNE_EOS
   }  
    //! beta(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_beta_ph(double p, double h, double& beta) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_beta_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_beta_ph");
     double T;
         double pi,e,s,cv,cp,w, Z, hjt,A, G, xkappa,dPdrho,d2PdD2,dPT,drhodT,drhodP,spare1,spare2,spare3, spare4;
     EOS_Internal_Error err;
@@ -315,7 +315,7 @@ namespace NEPTUNE_EOS
   }  
   //! w(p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_w_pT(double p, double T, double& w) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_w_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_w_pT");
     EOS_Internal_Error err;
 
     double rho_refprop = 0.e0  ;
@@ -326,7 +326,7 @@ namespace NEPTUNE_EOS
   }
   //! w(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_w_ph(double p, double h, double& w) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_w_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_w_ph");
     double T;
     EOS_Internal_Error err;
     
@@ -342,7 +342,7 @@ namespace NEPTUNE_EOS
 
   //! mu(p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_mu_pT(double p, double T, double& mu) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_mu_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_mu_pT");
     EOS_Internal_Error err;
     double tcx;
     mu = 0.e0 ;
@@ -363,7 +363,7 @@ namespace NEPTUNE_EOS
   }
   //! mu(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_mu_ph(double p, double h, double& mu) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_mu_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_mu_ph");
     EOS_Internal_Error err ;
     double T,tcx;
     mu = 0.e0 ;
@@ -388,7 +388,7 @@ namespace NEPTUNE_EOS
   }
   //! lambda(p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_lambda_pT(double p, double T, double& lambda) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_lambda_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_lambda_pT");
     EOS_Internal_Error err ;
     double eta;
     lambda = 0.e0 ;
@@ -408,7 +408,7 @@ namespace NEPTUNE_EOS
   }
   //! lambda(p,h)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_lambda_ph(double p, double h, double& lambda) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_lambda_ph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_lambda_ph");
     EOS_Internal_Error err;
     double T,eta;
     lambda = 0.e0 ;
@@ -432,7 +432,7 @@ namespace NEPTUNE_EOS
 
   //! dh/dT  (p constante)
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_d_h_d_T_p_pT(double p, double T, double& h) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_d_h_d_T_p_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_d_h_d_T_p_pT");
     EOS_Internal_Error err ;
     double rho, dhdt_d, dhdd_t, dhdd_p, dhdp_t,dhdp_d ;
 
@@ -447,7 +447,7 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10_liquid::compute_d_T_sat_d_p_p(double p, double& dt_sat) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::compute_d_T_sat_d_p_p", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::compute_d_T_sat_d_p_p");
     EOS_Internal_Error err;
 
     if (nbcomp == 1)
@@ -480,7 +480,7 @@ namespace NEPTUNE_EOS
   }
 
   inline EOS_Internal_Error EOS_Refprop10_liquid::is_metastable(double rho, double p, double T, bool& meta) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::is_metastable", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::is_metastable");
     EOS_Internal_Error err ;
     double h, rho2 ;
 
@@ -500,7 +500,7 @@ namespace NEPTUNE_EOS
 
   //! Compute REFPROP phase flag (1=liquid ; 2=vapor)
   inline EOS_Internal_Error EOS_Refprop10_liquid::calrp_kph(double p, double h, int& kph) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::calrp_kph", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::calrp_kph");
     (void)p ; (void)h ;
     kph = 1 ;
     return EOS_Internal_Error::OK ;
@@ -508,7 +508,7 @@ namespace NEPTUNE_EOS
 
   //! Compute REFPROP phase flag (1=liquid ; 2=vapor) in (p,T)
   inline EOS_Internal_Error EOS_Refprop10_liquid::calrp_kph_pT(double p, double T, int& kph) const
-  { ZoneScopedNS("EOS_Refprop10_liquid::calrp_kph_pT", 3);
+  { ZoneScopedN("EOS_Refprop10_liquid::calrp_kph_pT");
     (void)p ; (void)T ;
     kph = 1 ;
     return EOS_Internal_Error::OK ;

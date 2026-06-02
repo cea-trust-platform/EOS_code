@@ -23,7 +23,7 @@
 namespace NEPTUNE
 {
   static RegisteredClass& EOS_Error_Field_create()
-  { ZoneScopedNS("EOS_Error_Field_create", 3);
+  { ZoneScopedN("EOS_Error_Field_create");
     return *(new EOS_Error_Field()) ;
   }
   
