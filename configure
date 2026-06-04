@@ -89,7 +89,8 @@ Options to install plugins:
 
   --with-coolprop
   --with-libcoolprop
-  --with-libcoolprop-lib
+  --with-libcoolprop-shared
+  --with-libcoolprop-static
   --with-libcoolprop-include
 
 Some influential environment variables:

@@ -202,80 +202,12 @@ if(WITH_PLUGIN_FLICA4)
   include(EOS_RPC)
 endif()
 
-# COOLPROP
-if (USER_LIBCOOLPROP_PATH)
-  message(STATUS "lib coolprop path specified by used : ${USER_COOLPROP_PATH}")
-  set(LIBCOOLPROP_INC ${USER_LIBCOOLPROP_PATH}/include)
-  set(LIBCOOLPROP_LIB_DIR ${USER_LIBCOOLPROP_PATH}/lib)
-  set(ENV{LD_LIBRARY_PATH} ${USER_LIBCOOLPROP_PATH}/lib/:$ENV{LD_LIBRARY_PATH} )
-  message(STATUS "options --with-libcoolprop=<path> adds ${USER_LIBCOOLPROP_PATH}/lib to LD_LIBRARY_PATH")
-endif(USER_LIBCOOLPROP_PATH)
-if (USER_LIBCOOLPROP_INCLUDE_PATH)
-  message(STATUS "lib coolprop include path specified by user : ${USER_LIBCOOLPROP_INCLUDE_PATH}")
-  set(LIBCOOLPROP_INC ${USER_LIBCOOLPROP_INCLUDE_PATH})
-endif(USER_LIBCOOLPROP_INCLUDE_PATH)
-if (USER_LIBCOOLPROP_LIB_PATH)
-  message(STATUS "lib coolprop library path specified by user : ${USER_LIBCOOLPROP_LIB_PATH}")
-  set(LIBCOOLPROP_LIB_DIR ${USER_LIBCOOLPROP_LIB_PATH})
-endif(USER_LIBCOOLPROP_LIB_PATH)
 
-# -------------------------------------------------------------------------
-# Automatically add all CoolProp externals include directories
-# -------------------------------------------------------------------------
-if (LIBCOOLPROP_INC)
-  message(STATUS "Configuring CoolProp include directories...")
 
-  # Détermination de la racine CoolProp à partir du dossier include
-  get_filename_component(COOLPROP_ROOT "${LIBCOOLPROP_INC}" DIRECTORY)
 
-  set(COOLPROP_EXTERNAL_DIRS
-      ${LIBCOOLPROP_INC}
-      ${COOLPROP_ROOT}/externals
-      ${COOLPROP_ROOT}/externals/fmtlib
-      ${COOLPROP_ROOT}/externals/Eigen
-      ${COOLPROP_ROOT}/externals/REFPROP-headers
-      ${COOLPROP_ROOT}/externals/IF97
-      ${COOLPROP_ROOT}/externals/msgpack
-      ${COOLPROP_ROOT}/externals/rapidjson
-      ${COOLPROP_ROOT}/install/include
-  )
 
-  foreach(dir ${COOLPROP_EXTERNAL_DIRS})
-    if (EXISTS ${dir})
-      include_directories(${dir})
-      message(STATUS "Added CoolProp include dir: ${dir}")
-    else()
-      message(WARNING "CoolProp external include dir not found: ${dir}")
-    endif()
-  endforeach()
-endif()
 
-if (LIBCOOLPROP_LIB_DIR)
-  # Static
-  set (CMAKE_FIND_LIBRARY_SUFFIXES .a)
-  find_library(LIBCOOLPROP_STATLIB1 NAMES CoolProp PATHS ${LIBCOOLPROP_LIB_DIR} NO_DEFAULT_PATH)
-  set (LIBCOOLPROP_STATICLIB ${LIBCOOLPROP_STATLIB1})
 
-  # Shared
-  set (CMAKE_FIND_LIBRARY_SUFFIXES .so)
-  find_library(LIBCOOLPROP_SHARLIB1 NAMES CoolProp PATHS ${LIBCOOLPROP_LIB_DIR} NO_DEFAULT_PATH)
-  set (LIBCOOLPROP_SHAREDLIB ${LIBCOOLPROP_SHARLIB1})
-
-  # Test
-  if (NOT LIBCOOLPROP_STATICLIB AND NOT LIBCOOLPROP_SHAREDLIB)
-    message(FATAL_ERROR "Not found CoolProp library after CoolProp user request")
-  endif (NOT LIBCOOLPROP_STATICLIB AND NOT LIBCOOLPROP_SHAREDLIB)
-
-  # Sanity
-  if (NOT LIBCOOLPROP_STATICLIB)
-    set(LIBCOOLPROP_STATICLIB "")
-  endif()
-  if (NOT LIBCOOLPROP_SHAREDLIB)
-    set(LIBCOOLPROP_SHAREDLIB "")
-  endif()
-
-  list(APPEND pc_libs_private "-L${LIBCOOLPROP_LIB_DIR} -lCoolProp")
-endif (LIBCOOLPROP_LIB_DIR)
 
 
 # Error messages
@@ -291,13 +223,76 @@ if (WITH_IPP)
   endif (NOT EXISTS ${HDF5_LIB_DIR})
 endif (WITH_IPP)
 #
-# Exterior include directories : GLOBALEXT_INC variable
-set (GLOBALEXT_INC ${MPI_INC} ${HDF5_INC} ${MED_INC} ${LIBCOOLPROP_INC} ${RPC_INC})
-#
-# Exterior library files : GLOBALEXT_LIB variable
-set (GLOBALEXT_LIB       ${MPI_LIB} ${HDF5_SHAREDLIB} ${MED_SHAREDLIB} ${LIBCOOLPROP_SHAREDLIB} ${RPC_LIB})
-set (GLOBALEXT_STATICLIB ${MPI_LIB} ${HDF5_STATICLIB} ${MED_STATICLIB} ${LIBCOOLPROP_STATICLIB} ${RPC_STATIC_LIB})
 
+
+#================ COOLPROP =============================
+if(WITH_PLUGIN_COOLPROP)
+  message(STATUS "CoolProp plugin requested : ${WITH_PLUGIN_COOLPROP}")
+
+  # Chemin vers la libcoolprop (optionnel, sinon on cherche dans le plugin)
+  if(USER_LIBCOOLPROP_PATH)
+    message(STATUS "CoolProp library path specified by user : ${USER_LIBCOOLPROP_PATH}")
+    set(COOLPROP_ROOT_HINT "${USER_LIBCOOLPROP_PATH}")
+  else()
+    # Fallback : on cherche dans le répertoire du plugin lui-même
+    set(COOLPROP_ROOT_HINT "${WITH_PLUGIN_COOLPROP}")
+  endif()
+
+  # Appel au module FindCoolProp.cmake (dans Tools/)
+  set(CoolProp_ROOT_HINT "${COOLPROP_ROOT_HINT}")
+  set(CoolProp_PLUGIN_DIR "${WITH_PLUGIN_COOLPROP}")
+  find_package(CoolProp REQUIRED)
+
+  if(CoolProp_FOUND)
+    message(STATUS "CoolProp include dirs : ${COOLPROP_INCLUDE_DIRS}")
+    message(STATUS "CoolProp shared lib   : ${COOLPROP_SHAREDLIB}")
+    message(STATUS "CoolProp static lib   : ${COOLPROP_STATICLIB}")
+
+    set(LIBCOOLPROP_INC        ${COOLPROP_INCLUDE_DIRS})
+    set(LIBCOOLPROP_SHAREDLIB  ${COOLPROP_SHAREDLIB})
+    set(LIBCOOLPROP_STATICLIB  ${COOLPROP_STATICLIB})
+  else()
+    message(FATAL_ERROR "CoolProp not found. Check --with-coolprop and --with-libcoolprop paths.")
+  endif()
+
+else()
+  message(STATUS "CoolProp plugin        : disabled")
+  set(LIBCOOLPROP_INC       "")
+  set(LIBCOOLPROP_SHAREDLIB "")
+  set(LIBCOOLPROP_STATICLIB "")
+endif()
+# ======================================================
+
+# ======================================================
+# EOS EXTERNAL DEPENDENCIES
+# ======================================================
+
+# Exterior include directories
+set(GLOBALEXT_INC
+    ${MPI_INC}
+    ${HDF5_INC}
+    ${MED_INC}
+    ${LIBCOOLPROP_INC}
+    ${RPC_INC}
+)
+
+# Shared libraries
+set(GLOBALEXT_LIB
+    ${MPI_LIB}
+    ${HDF5_SHAREDLIB}
+    ${MED_SHAREDLIB}
+      ${LIBCOOLPROP_STATICLIB} 
+    ${RPC_LIB}
+)
+
+# Static libraries
+set(GLOBALEXT_STATICLIB
+    ${MPI_LIB}
+    ${HDF5_STATICLIB}
+    ${MED_STATICLIB}
+    ${LIBCOOLPROP_STATICLIB}
+    ${RPC_STATIC_LIB}
+)
 # Configure parameters
 # --------------------
 #
