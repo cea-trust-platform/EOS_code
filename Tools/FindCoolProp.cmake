@@ -66,33 +66,96 @@ endif()
 list(GET _COOLPROP_STATIC_LIB_CANDIDATES 0 COOLPROP_STATICLIB)
 message(STATUS "FindCoolProp: libCoolProp.a found : ${COOLPROP_STATICLIB}")
 
-
 # -----------------------------------------------------------------------
-# 5. Recherche du dossier build/_deps
+# 5. Détermination de la racine des sources CoolProp
+#    On remonte d'un niveau depuis static_library/ pour trouver soit :
+#      - externals/  (ancienne version, sources in-tree)
+#      - build/_deps (nouvelle version, dépendances fetchées par CMake)
 # -----------------------------------------------------------------------
 get_filename_component(_COOLPROP_BASE_DIR "${CoolProp_ROOT_HINT}" DIRECTORY)
 
+# Chemin vers la racine des sources CoolProp (contient externals/, include/, ...)
+# CoolProp_ROOT_HINT pointe vers <coolprop_src>/static_library/../  => _COOLPROP_BASE_DIR
+# mais selon l'installation _COOLPROP_BASE_DIR peut être le build dir.
+# On cherche externals/ d'abord à côté de static_library/, sinon on remonte.
+set(_COOLPROP_EXTERNALS_DIR "")
 set(_COOLPROP_DEPS_DIR "")
-set(_COOLPROP_DEPS_CANDIDATE "${_COOLPROP_BASE_DIR}/build/_deps")
 
-if(EXISTS "${_COOLPROP_DEPS_CANDIDATE}")
-  set(_COOLPROP_DEPS_DIR "${_COOLPROP_DEPS_CANDIDATE}")
-  message(STATUS "FindCoolProp: build/_deps found : ${_COOLPROP_DEPS_DIR}")
-else()
-  message(WARNING "FindCoolProp: build/_deps not found in ${_COOLPROP_BASE_DIR}/build/. "
-                  "Dependency headers (fmt, eigen, ...) may be missing.")
+# Candidats pour externals/ : même niveau que static_library/, puis un niveau au-dessus
+foreach(_candidate
+    "${CoolProp_ROOT_HINT}/externals"
+    "${_COOLPROP_BASE_DIR}/externals"
+)
+  if(EXISTS "${_candidate}")
+    set(_COOLPROP_EXTERNALS_DIR "${_candidate}")
+    message(STATUS "FindCoolProp: externals/ found : ${_COOLPROP_EXTERNALS_DIR}")
+    break()
+  endif()
+endforeach()
+
+# Candidats pour build/_deps (nouvelle version)
+if(NOT _COOLPROP_EXTERNALS_DIR)
+  set(_COOLPROP_DEPS_CANDIDATE "${_COOLPROP_BASE_DIR}/build/_deps")
+  if(EXISTS "${_COOLPROP_DEPS_CANDIDATE}")
+    set(_COOLPROP_DEPS_DIR "${_COOLPROP_DEPS_CANDIDATE}")
+    message(STATUS "FindCoolProp: build/_deps found : ${_COOLPROP_DEPS_DIR}")
+  else()
+    message(WARNING "FindCoolProp: neither externals/ nor build/_deps found. "
+                    "Dependency headers (fmt, eigen, ...) may be missing.")
+  endif()
 endif()
+
 # -----------------------------------------------------------------------
-# 6. Collecte des includes des dépendances dans _deps
+# 6. Collecte des includes des dépendances
 # -----------------------------------------------------------------------
 set(_COOLPROP_DEP_INCLUDES "")
 
-if(_COOLPROP_DEPS_DIR)
-  # Liste des dépendances connues de CoolProp et leurs sous-dossiers d'include
-  # Format : <nom-src>  <sous-dossier-include-relatif>
+# ---- 6a. Ancienne version : externals/ --------------------------------
+if(_COOLPROP_EXTERNALS_DIR)
+  # Format : <nom-dossier-dans-externals>  <sous-dossier-include-relatif>
+  # Laisser le sous-dossier vide "" si la racine du dépôt EST l'include path.
+  set(_COOLPROP_EXT_MAP
+    "fmtlib"         ""   # externals/fmtlib/fmt/...
+    "Eigen"          ""          # externals/Eigen/ (headers à la racine)
+    "msgpack-c"      "include"   # externals/msgpack-c/include/
+    "rapidjson"      "include"   # externals/rapidjson/include/
+    "IF97"           ""          # externals/IF97/
+    "multicomplex"   ""          # externals/multicomplex/
+    "REFPROP-headers" ""         # externals/REFPROP-headers/
+  )
+
+  list(LENGTH _COOLPROP_EXT_MAP _ext_map_len)
+  set(_i 0)
+  while(_i LESS _ext_map_len)
+    list(GET _COOLPROP_EXT_MAP ${_i} _dep_name)
+    math(EXPR _i_next "${_i} + 1")
+    list(GET _COOLPROP_EXT_MAP ${_i_next} _dep_sub)
+    math(EXPR _i "${_i} + 2")
+
+    set(_dep_path "${_COOLPROP_EXTERNALS_DIR}/${_dep_name}")
+    if(EXISTS "${_dep_path}")
+      if(_dep_sub STREQUAL "")
+        list(APPEND _COOLPROP_DEP_INCLUDES "${_dep_path}")
+        message(STATUS "FindCoolProp: ext include [${_dep_name}] : ${_dep_path}")
+      else()
+        set(_dep_inc "${_dep_path}/${_dep_sub}")
+        if(EXISTS "${_dep_inc}")
+          list(APPEND _COOLPROP_DEP_INCLUDES "${_dep_inc}")
+          message(STATUS "FindCoolProp: ext include [${_dep_name}] : ${_dep_inc}")
+        else()
+          message(WARNING "FindCoolProp: include subdir not found for [${_dep_name}] : ${_dep_inc}")
+        endif()
+      endif()
+    else()
+      message(STATUS "FindCoolProp: ext dep [${_dep_name}] not present, skipping")
+    endif()
+  endwhile()
+
+# ---- 6b. Nouvelle version : build/_deps -------------------------------
+elseif(_COOLPROP_DEPS_DIR)
   set(_COOLPROP_DEP_MAP
     "fmt-src"              "include"
-    "eigen-src"            ""           # eigen : la racine est l'include
+    "eigen-src"            ""
     "msgpack-c-src"        "include"
     "rapidjson-src"        "include"
     "if97-src"             ""
@@ -101,10 +164,7 @@ if(_COOLPROP_DEPS_DIR)
     "refprop_headers-src"  ""
   )
 
-  # On itère par paires (nom, sous-dossier)
   list(LENGTH _COOLPROP_DEP_MAP _dep_map_len)
-  math(EXPR _dep_map_last "${_dep_map_len} - 1")
-
   set(_i 0)
   while(_i LESS _dep_map_len)
     list(GET _COOLPROP_DEP_MAP ${_i} _dep_name)
@@ -135,8 +195,6 @@ endif()
 # -----------------------------------------------------------------------
 # 7. Assemblage final de COOLPROP_INCLUDE_DIRS
 # -----------------------------------------------------------------------
-
-
 set(COOLPROP_INCLUDE_DIRS
   "${_COOLPROP_STATIC_ROOT}"            # CoolPropLib.h  (static_library/)
   "${_COOLPROP_BASE_DIR}/include"       # DataStructures.h et autres headers CoolProp
@@ -149,6 +207,7 @@ if(NOT EXISTS "${_COOLPROP_BASE_DIR}/include/DataStructures.h")
                   "${_COOLPROP_BASE_DIR}/include. "
                   "Check your CoolProp installation.")
 endif()
+
 
 # -----------------------------------------------------------------------
 # 7.5 Recherche de libCoolProp.so (Shared Library)
@@ -167,15 +226,15 @@ else()
   message(WARNING "FindCoolProp: libCoolProp.so not found under ${_COOLPROP_SHARED_ROOT}")
 endif()
 
+
 # -----------------------------------------------------------------------
 # 8. Validation finale via find_package_handle_standard_args
 # -----------------------------------------------------------------------
 include(FindPackageHandleStandardArgs)
-# On demande au moins la lib statique OU la dynamique pour valider le package
 find_package_handle_standard_args(CoolProp
   REQUIRED_VARS
-    COOLPROP_MAIN_HEADER
     COOLPROP_STATICLIB
+    COOLPROP_MAIN_HEADER
   VERSION_VAR
     CoolProp_VERSION
 )
@@ -183,7 +242,6 @@ find_package_handle_standard_args(CoolProp
 # Variables en cache pour l'inspecteur CMake
 set(COOLPROP_INCLUDE_DIRS "${COOLPROP_INCLUDE_DIRS}" CACHE STRING "CoolProp include directories" FORCE)
 set(COOLPROP_STATICLIB    "${COOLPROP_STATICLIB}"    CACHE FILEPATH "CoolProp static library"    FORCE)
-set(COOLPROP_SHAREDLIB    "${COOLPROP_SHAREDLIB}"    CACHE FILEPATH "CoolProp shared library"    FORCE) # <-- MODIFIÉ ICI
+set(COOLPROP_SHAREDLIB    "${COOLPROP_SHAREDLIB}"    CACHE FILEPATH "CoolProp shared library" FORCE)
 
 mark_as_advanced(COOLPROP_INCLUDE_DIRS COOLPROP_STATICLIB COOLPROP_SHAREDLIB COOLPROP_MAIN_HEADER)
-

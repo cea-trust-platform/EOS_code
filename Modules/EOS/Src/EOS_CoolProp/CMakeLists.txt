@@ -25,7 +25,7 @@ felemlib(${TGT_OBJ} LTM_TGT_OBJ GLOB_RECURSE)
 
 # -------------------------------------------------------------------
 # CoolProp requiert C++17 (std::string_view dans DataStructures.h)
-# La compilation réelle se fait sur la cible OBJECT → c'est elle qu'on cible
+# La compilation réelle se fait sur la cible OBJECT  c'est elle qu'on cible
 # -------------------------------------------------------------------
 set_target_properties(${TGT_OBJ}
   PROPERTIES
@@ -34,10 +34,6 @@ set_target_properties(${TGT_OBJ}
     CXX_EXTENSIONS OFF
 )
 target_compile_definitions(${TGT_OBJ} PRIVATE COOLPROP_LIB_STATIC)
-
-# ===================================================================
-# TU REMPLACES TOUTE LA FIN PAR CE BLOC ICI :
-# ===================================================================
 
 # Spécification des répertoires d'inclusion directement sur la cible d'objets
 target_include_directories(${TGT_OBJ} PRIVATE 
