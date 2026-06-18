@@ -217,10 +217,6 @@ add_opteq "--with-flica4"                 "WITH_PLUGIN_FLICA4"
 
 add_opteq "--with-coolprop"               "WITH_PLUGIN_COOLPROP"
 add_opteq "--with-libcoolprop"             "USER_LIBCOOLPROP_PATH"
-add_opteq "--with-libcoolprop-shared"     "USER_LIBCOOLPROP_SHARED_PATH"
-add_opteq "--with-libcoolprop-static"     "USER_LIBCOOLPROP_STATIC_PATH"
-add_opteq "--with-libcoolprop-include"    "USER_LIBCOOLPROP_INCLUDE_PATH"
-
 #=============================================================================
 
 # init

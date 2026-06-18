@@ -89,9 +89,6 @@ Options to install plugins:
 
   --with-coolprop
   --with-libcoolprop
-  --with-libcoolprop-shared
-  --with-libcoolprop-static
-  --with-libcoolprop-include
 
 Some influential environment variables:
   CXX                                   force the c++ compiler
