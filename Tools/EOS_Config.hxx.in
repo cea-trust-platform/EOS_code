@@ -24,6 +24,7 @@
 #cmakedefine WITH_PLUGIN_REFPROP_10
 #cmakedefine WITH_PLUGIN_CATHARE2
 #cmakedefine WITH_PLUGIN_CATHARE
+#cmakedefine WITH_PLUGIN_COOLPROP
 #cmakedefine WITH_PLUGIN_HITEC
 #cmakedefine WITH_PLUGIN_NAK
 #cmakedefine WITH_PLUGIN_FLICA4

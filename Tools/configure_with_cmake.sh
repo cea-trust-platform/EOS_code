@@ -216,11 +216,7 @@ add_opteq "--with-refprop10"              "WITH_PLUGIN_REFPROP_10"
 add_opteq "--with-flica4"                 "WITH_PLUGIN_FLICA4"
 
 add_opteq "--with-coolprop"               "WITH_PLUGIN_COOLPROP"
-
-add_opteq "--with-libcoolprop"            "USER_LIBCOOLPROP_PATH"
-add_opteq "--with-libcoolprop-lib"        "USER_LIBCOOLPROP_LIB_PATH"
-add_opteq "--with-libcoolprop-include"    "USER_LIBCOOLPROP_INCLUDE_PATH"
-
+add_opteq "--with-libcoolprop"             "USER_LIBCOOLPROP_PATH"
 #=============================================================================
 
 # init

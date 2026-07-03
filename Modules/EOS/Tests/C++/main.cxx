@@ -7002,7 +7002,57 @@ int main()
 
   }
 #endif //WITH_PLUGIN_NAK
-   
+#ifdef WITH_PLUGIN_COOLPROP
+  {
+    cout<<endl<<endl;
+    cout<<"--------------------------------------- "<<endl;
+    cout<<"------ Test 20: EOS_Coolprop--------- "<<endl<<endl;
+
+
+    EOS liquid("EOS_CoolProp","WaterLiquid");
+    
+    
+    cout << endl << "**   eos " << endl;
+    cout << "   * fluid   : " <<liquid.fluid_name()<<endl;
+    cout << "   * table   : " <<liquid.table_name()<<endl;
+    cout << "   * version : " <<liquid.version_name()<<endl<<endl;
+    cout << liquid<<endl;
+    test_features(liquid);
+
+      EOS_Error cr;
+      int n=1;
+         int ncout=1; // (ncout<=n)
+       // (field - field - field)
+
+     
+    ArrOfDouble xp(n);
+    for(int i=0; i<n; i++)
+      xp[i]=(i+1)*1.e5;
+    EOS_Field P("Pressure","p", NEPTUNE::p,xp);
+    ArrOfInt ierr(n);
+    EOS_Error_Field err(ierr);
+    ArrOfDouble xh(n);
+    ArrOfDouble xt(n);
+
+    for(int i=0; i<n; i++)
+      xh[i]=  2.000000e+05;
+
+    EOS_Field h("Enthalpy","h", NEPTUNE::h,xh);
+    EOS_Field temp("Densité","rho", NEPTUNE::T,xt);
+
+    cr=liquid.compute(P,h,temp,err);
+    cout << endl<< "* field field field [cr=" << cr <<"]"<< endl;
+    for(int i=0; i<ncout; i++)
+      {
+        cout <<"in "<<P.get_property_title()<<" "<<P[i]<<endl;
+        cout <<"in "<<h.get_property_title()<<" "<<h[i]<<endl;
+        cout <<" out "<<temp.get_property_title()<<" "<<temp[i]<<endl;
+      }
+
+
+
+    }
+#endif
   cout<<endl<<endl;
   cout<<"--------------------------------------- "<<endl;
   cout<<"---------------- End ------------------ "<<endl;

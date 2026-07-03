@@ -1,6 +1,4 @@
-# CoolProp version 6.4.3
-# Pre-configure
-#
+# CoolProp - Pre-configure
 execute_process(COMMAND ${CMAKE_COMMAND} -E echo_append "--  > Configuring plugin CoolProp  ...")
 message(STATUS "PLUGIN: ${WITH_PLUGIN_COOLPROP}")
 message(STATUS "PATH: ${CMAKE_CURRENT_SOURCE_DIR}")
@@ -14,24 +12,31 @@ execute_process(
     RESULT_VARIABLE   CONFIGURE_RESULT
 )
 
-if (NOT ${CONFIGURE_RESULT} EQUAL 0)
-  message(FATAL_ERROR "Error while configuring plugin CoolProp. See ${CMAKE_BINARY_DIR}/CoolProp_pre_configure.log")
+if(NOT ${CONFIGURE_RESULT} EQUAL 0)
+  message(FATAL_ERROR "Error while configuring plugin CoolProp. "
+                      "See ${CMAKE_BINARY_DIR}/CoolProp_pre_configure.log")
 endif()
 
-# object target = directory name : TGT_OBJ
+# object target = directory name
 STRING(REGEX REPLACE "(^.*/)(.*$)" "\\2" TGT_OBJ "${CMAKE_CURRENT_SOURCE_DIR}")
 
-#  T.M. elementary library definition
+# T.M. elementary library definition
 felemlib(${TGT_OBJ} LTM_TGT_OBJ GLOB_RECURSE)
 
-#include_directories(${EOS_SOURCE_DIR}/Modules/EOS/Src/EOS_Coolprop ${LIBCOOLPROP_INC})
-include_directories(${GLOBALEXT_INC})
+# -------------------------------------------------------------------
+# CoolProp requiert C++17 (std::string_view dans DataStructures.h)
+# La compilation réelle se fait sur la cible OBJECT  c'est elle qu'on cible
+# -------------------------------------------------------------------
+set_target_properties(${TGT_OBJ}
+  PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
+target_compile_definitions(${TGT_OBJ} PRIVATE COOLPROP_LIB_STATIC)
 
-# Temporary link to CoolProp lib
-if(BUILD_SHARED_LIB)
-  target_link_libraries(${TGT_OBJ}_shar PUBLIC ${LIBCOOLPROP_SHAREDLIB})
-endif()
-if(BUILD_STATIC_LIB)
-  target_link_libraries(${TGT_OBJ}_stat PUBLIC ${LIBCOOLPROP_STATICLIB})
-endif()
-#target_link_libraries(${TGT_OBJ} CoolProp)
+# Spécification des répertoires d'inclusion directement sur la cible d'objets
+target_include_directories(${TGT_OBJ} PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${GLOBALEXT_INC}
+)

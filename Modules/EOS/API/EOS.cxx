@@ -101,9 +101,10 @@
 
 //PLUGIN INSERT COOLPROP
 #ifdef WITH_PLUGIN_COOLPROP
-#include "EOS/Src/EOS_Coolprop/EOS_Coolprop.hxx"
-#include "EOS/Src/EOS_Coolprop/EOS_Coolprop_vapor.hxx"
-#include "EOS/Src/EOS_Coolprop/EOS_Coolprop_liquid.hxx"
+#include "EOS/Src/EOS_CoolProp/EOS_CoolProp.hxx"
+#include "CoolPropLib.h"
+//#include "EOS/Src/EOS_Coolprop/EOS_Coolprop_vapor.hxx"
+//#include "EOS/Src/EOS_Coolprop/EOS_Coolprop_liquid.hxx"
 #endif
 
 
@@ -612,8 +613,10 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 
     //PLUGIN INSERT COOLPROP
 #ifdef WITH_PLUGIN_COOLPROP
-    ::NEPTUNE_EOS::EOS_Coolprop_Liquid x301;
-    ::NEPTUNE_EOS::EOS_Coolprop_Vapor x302;
+   ::NEPTUNE_EOS::EOS_CoolProp  x301;
+    //::NEPTUNE_EOS::EOS_CoolProp x301;
+   // ::NEPTUNE_EOS::EOS_Coolprop_Liquid x301;
+   // ::NEPTUNE_EOS::EOS_Coolprop_Vapor x302;
 #endif
 
     ::NEPTUNE::EOS_Error_Field x999;
