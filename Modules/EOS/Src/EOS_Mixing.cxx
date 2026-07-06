@@ -413,13 +413,11 @@ namespace NEPTUNE_EOS
        }
     if (idim == 1)
     {
-      //cout << "EOS_Mixing fields : saturation curve" << endl;
       (*this)[0].fluid().compute(input[0],r,errfield);
       return errfield.find_worst_error().generic_error();
     }
     else if (idim == 2 && id_P == 1 && id_h == 1)
     {
-      //cout << "EOS_Mixing fields : plan ph" << endl;
       //
       // algorithme complet c2
       //
@@ -1305,8 +1303,6 @@ namespace NEPTUNE_EOS
     }
     else if (idim == 2 && id_P == 1 && id_T == 1)
     {
-      //cout << "EOS_Mixing fields : plan pT" << endl;
-
       ArrOfDouble xc0(nsca,0.e0);
       ArrOfDouble xc1(nsca,0.e0);
       ArrOfDouble xc2(nsca,0.e0);
@@ -1472,8 +1468,6 @@ namespace NEPTUNE_EOS
   int EOS_Mixing::compute_pv_hv_ph(double P, double h, double &Pv, double &hv,
                  double c_0, double c_1, double c_2, double c_3, double c_4, double c_5) const
   {
-
-    cout << "Affichage Entrée " << " P  "<< P  <<  " H "<< H  << endl;
     ArrOfDouble c(nb_fluids) ;
     totab(c, c_0 ,c_1, c_2, c_3, c_4, c_5) ;
     //
@@ -1500,9 +1494,6 @@ namespace NEPTUNE_EOS
     
    /// double TSS7 = TSS7K - 273.15; //Tsat P=7bar in °C Water : TSS7= 164.930E+0;
     double TSS7 = std::round((TSS7K - 273.15) * 100.0) / 100.0;  // je met a 2 decimale pour correspondre à cathare TMP
-    cout << "PRE FHSUM : "<<  " t crit " << Tcrit << " TSS7K " << TSS7K << " tss7 " <<TSS7<< endl;
-    double Tinit=Tcrit;
-    double Tactuel;
 
     for(int i=1; i<nb_fluids; i++)
       {
@@ -1510,7 +1501,6 @@ namespace NEPTUNE_EOS
         err = (*this)[i].fluid().compute_cp_pT(P,Tcrit,cpi); 
         err = (*this)[i].fluid().compute_d_cp_d_T_p_pT(P,Tcrit,dcpi); 
         err = (*this)[i].fluid().compute_h_pT(P,TSS7K,hi);
-        cout << "Hi " << hi << "cpi" << cpi << endl;
         cpsum += c[i]*cpi;
         dcpsum += c[i]*dcpi;
         xrsum += c[i]*(*this)[i].fluid().get_prxr();
@@ -1563,7 +1553,6 @@ namespace NEPTUNE_EOS
     double atv = (h - zerhvs*c[0] - hi7sum) / zdeno;
     hv = acpv*atv + zerhvs;
     xhv[0]=hv;
-    cout << " Pv " << Pv << " hv " << hv <<  " Tsatpv " << Tsatpv <<  " hi7sum " << hi7sum << endl;    //
     // Newton method
     // Resolution of F(Pv, hv)=0 and G(Pv,hv)=0
     //
@@ -1620,13 +1609,11 @@ namespace NEPTUNE_EOS
       dcpi= 0.e0;
       hi=2766.43E+3;
 
-      cout << " Avant Newton " << " Pv " << Pv << " hv " << hv <<  " Tg" << Tg <<  " TSS7K " << TSS7K << endl ;
       for(int i=1; i<nb_fluids; i++)
       {
         err = (*this)[i].fluid().compute_cp_pT(Pv,Tg,cpi); //TODO modify this function as independant of P&T
         err = (*this)[i].fluid().compute_d_cp_d_T_p_pT(Pv,Tg,dcpi); //TODO verifié di c'est d_p_T ou d_T_p
         err = (*this)[i].fluid().compute_h_pT(Pv,TSS7K,hi);
-        cout << "VERIF HI" << hi << endl;
       for(int i=1; i<nb_fluids; i++)
         cpsum += c[i]*cpi;
         dcpsum += c[i]*dcpi;
@@ -1654,10 +1641,6 @@ namespace NEPTUNE_EOS
       // calcul Pv, hv
       Pv = std::max(1.0e-10, std::max(1.0e-2*c[0],Pv+dpvr));
       hv = hv + dhvr;
-      cout << "Post newton PV: " << Pv << " Hv= "<< hv << "dvpr = " << dpvr << endl;
-      std::cout << "USDEN = " << usden << " DPVR = " <<dpvr<< " DHVR = " << dhvr << std::endl;
-      std::cout << "DFDPV = " << dfdpv << " DFDHV = " << dfdhv << " DGDPV = " << dgdpv << " = DGDHV =" << dgdhv << std::endl;
-      std::cout << "   "<< endl;
 
       xpv[0]=Pv;
       xhv[0]=hv;
@@ -1666,11 +1649,8 @@ namespace NEPTUNE_EOS
     //
     // Verification convergence TODO implementer erreur propre
     //
-     cout << "dvpr " << fabs(dpvr) << " valp = "<< valp << " dhvr = " << fabs(dhvr) << " valh = "<< valh << endl;
     if ( (k >= nb_iter_max) && ((fabs(dpvr) > valp) || (fabs(dhvr) > valh)) )
     {
-     
-      cout << "EOS_Mixing solver : No convergence in (Pv, hv) computation" << endl;
       return EOS_Error::error ;
     }
     return EOS_Error::good;
