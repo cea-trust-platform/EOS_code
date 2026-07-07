@@ -525,6 +525,12 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
     }
 
+    //[Patch]Init ph plan for v6.4.3 of coolprop, if not done get_h_max(h_max) don't work.
+    double rho;
+    double p=1.0e7;
+    double h=800000;
+    compute_rho_ph(p, h, rho);
+
     return EOS_Error::good ;
   }
 
