@@ -76,6 +76,23 @@ namespace NEPTUNE
             register_property(d_gamma_d_p_h, "dgammadph");
             register_property(d_gamma_d_h_p, "dgammadhp");
 
+            // CROSS DERIVEES (d2X/dPdh, used by the bicubic Hermite patch)
+            register_property(d2_T_d_p_d_h, "d2tdpdh");
+            register_property(d2_rho_d_p_d_h, "d2rhodpdh");
+            register_property(d2_u_d_p_d_h, "d2udpdh");
+            register_property(d2_s_d_p_d_h, "d2sdpdh");
+            register_property(d2_mu_d_p_d_h, "d2mudpdh");
+            register_property(d2_lambda_d_p_d_h, "d2lambdadpdh");
+            register_property(d2_cp_d_p_d_h, "d2cpdpdh");
+            register_property(d2_cv_d_p_d_h, "d2cvdpdh");
+            register_property(d2_sigma_d_p_d_h, "d2sigmadpdh");
+            register_property(d2_w_d_p_d_h, "d2wdpdh");
+            register_property(d2_g_d_p_d_h, "d2gdpdh");
+            register_property(d2_f_d_p_d_h, "d2fdpdh");
+            register_property(d2_pr_d_p_d_h, "d2prdpdh");
+            register_property(d2_beta_d_p_d_h, "d2betadpdh");
+            register_property(d2_gamma_d_p_d_h, "d2gammadpdh");
+
             // … et toutes les autres dérivées
 
             // SATURATION

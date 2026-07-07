@@ -62,6 +62,33 @@ namespace
       default:     return false;
     }
   }
+
+  // Maps a base thermodynamic property to its stored cross derivative
+  // (d2_prop_d_p_d_h), when EOS_IGen computed it (cf. therm_properties.hxx).
+  // Same eligible set as bicubic_derivative_properties() above.
+  bool bicubic_cross_derivative_property(NEPTUNE::EOS_Property prop,
+                                          NEPTUNE::EOS_Property &d2_prop)
+  {
+    switch (prop)
+    {
+      case NEPTUNE::T:      d2_prop = NEPTUNE::d2_T_d_p_d_h;      return true;
+      case NEPTUNE::rho:    d2_prop = NEPTUNE::d2_rho_d_p_d_h;    return true;
+      case NEPTUNE::u:      d2_prop = NEPTUNE::d2_u_d_p_d_h;      return true;
+      case NEPTUNE::s:      d2_prop = NEPTUNE::d2_s_d_p_d_h;      return true;
+      case NEPTUNE::mu:     d2_prop = NEPTUNE::d2_mu_d_p_d_h;     return true;
+      case NEPTUNE::lambda: d2_prop = NEPTUNE::d2_lambda_d_p_d_h; return true;
+      case NEPTUNE::cp:     d2_prop = NEPTUNE::d2_cp_d_p_d_h;     return true;
+      case NEPTUNE::cv:     d2_prop = NEPTUNE::d2_cv_d_p_d_h;     return true;
+      case NEPTUNE::sigma:  d2_prop = NEPTUNE::d2_sigma_d_p_d_h;  return true;
+      case NEPTUNE::w:      d2_prop = NEPTUNE::d2_w_d_p_d_h;      return true;
+      case NEPTUNE::g:      d2_prop = NEPTUNE::d2_g_d_p_d_h;      return true;
+      case NEPTUNE::f:      d2_prop = NEPTUNE::d2_f_d_p_d_h;      return true;
+      case NEPTUNE::pr:     d2_prop = NEPTUNE::d2_pr_d_p_d_h;     return true;
+      case NEPTUNE::beta:   d2_prop = NEPTUNE::d2_beta_d_p_d_h;   return true;
+      case NEPTUNE::gamma:  d2_prop = NEPTUNE::d2_gamma_d_p_d_h;  return true;
+      default:              return false;
+    }
+  }
 }
 
 namespace NEPTUNE_EOS
@@ -1075,23 +1102,26 @@ namespace NEPTUNE_EOS
     return res;
   }
 
-  double EOS_Ipp::bicubic_interpolator(double p, double h, EOS_Fields &cellval) const
+  double EOS_Ipp::bicubic_interpolator(double p, double h, EOS_Fields &cellval,
+                                        bool has_cross_derivative) const
   {
     // cellval rows (4 corners each, same corner ordering as bilinear_interpolator):
     //   [0] = p           [1] = h
     //   [2] = f  (property value)
     //   [3] = d f/dp |h   (property first derivative, at constant h)
     //   [4] = d f/dh |p   (property first derivative, at constant p)
+    //   [5] = d2 f/dp.dh  (stored cross derivative, only read if has_cross_derivative)
     //
     // Corners in local unit-square coordinates (t=pcal, u=hcal):
     //   node0=(0,0)  node1=(0,1)  node2=(1,1)  node3=(1,0)
     //
     // Bicubic (tensor-product cubic Hermite) patch : matches f, df/dp and df/dh
-    // exactly at the 4 corners. The cross derivative d2f/dp.dh is not stored by
-    // EOS_IGen; it is approximated locally (from the same 4 corners) as the
-    // average of the two available one-sided finite differences of df/dp and
-    // df/dh across the cell. This is an approximation (not the exact mixed
-    // partial) but requires no extra data and converges as the mesh is refined.
+    // exactly at the 4 corners. When the true cross derivative d2f/dp.dh is
+    // available from the database (EOS_IGen), it is used directly. Otherwise it
+    // is approximated locally (from the same 4 corners) as the average of the
+    // two available one-sided finite differences of df/dp and df/dh across the
+    // cell -- an approximation (not the exact mixed partial) but one that
+    // requires no extra data and converges as the mesh is refined.
 
     double p0 = cellval[0][0], p3 = cellval[0][3];
     double h0 = cellval[1][0], h1 = cellval[1][1];
@@ -1107,11 +1137,23 @@ namespace NEPTUNE_EOS
     double ft00 = cellval[3][0] * dp, ft01 = cellval[3][1] * dp, ft11 = cellval[3][2] * dp, ft10 = cellval[3][3] * dp;
     double fu00 = cellval[4][0] * dh, fu01 = cellval[4][1] * dh, fu11 = cellval[4][2] * dh, fu10 = cellval[4][3] * dh;
 
-    // Local twist estimate (see note above)
-    double ftu00 = 0.5 * ((ft01 - ft00) + (fu10 - fu00));
-    double ftu01 = 0.5 * ((ft01 - ft00) + (fu11 - fu01));
-    double ftu11 = 0.5 * ((ft11 - ft10) + (fu11 - fu01));
-    double ftu10 = 0.5 * ((ft11 - ft10) + (fu10 - fu00));
+    double ftu00, ftu01, ftu11, ftu10;
+    if (has_cross_derivative)
+    {
+      // d2F/dt.du = d2f/dp.dh * dp * dh
+      ftu00 = cellval[5][0] * dp * dh;
+      ftu01 = cellval[5][1] * dp * dh;
+      ftu11 = cellval[5][2] * dp * dh;
+      ftu10 = cellval[5][3] * dp * dh;
+    }
+    else
+    {
+      // Local twist estimate (see note above)
+      ftu00 = 0.5 * ((ft01 - ft00) + (fu10 - fu00));
+      ftu01 = 0.5 * ((ft01 - ft00) + (fu11 - fu01));
+      ftu11 = 0.5 * ((ft11 - ft10) + (fu11 - fu01));
+      ftu10 = 0.5 * ((ft11 - ft10) + (fu10 - fu00));
+    }
 
     // Cubic Hermite basis functions on [0,1]: H0/H1 for values, K0/K1 for slopes
     double t = pcal, t2 = t * t, t3 = t2 * t;
@@ -1387,7 +1429,7 @@ namespace NEPTUNE_EOS
     return (*err_cell_ph[i_prop])[idx].get_code();
   }
 
-  bool EOS_Ipp::has_bicubic_data(EOS_Property prop) const
+  bool EOS_Ipp::has_bicubic_first_derivative_data(EOS_Property prop) const
   {
     EOS_Property dp_prop, dh_prop;
     if (!bicubic_derivative_properties(prop, dp_prop, dh_prop))
@@ -1400,11 +1442,30 @@ namespace NEPTUNE_EOS
     return err_cell_ph[prop] != nullptr && err_cell_ph[dp_prop] != nullptr && err_cell_ph[dh_prop] != nullptr;
   }
 
-  // recupere les valeurs p, h, f et ses deux derivees premieres pour les 4 coins de la maille reelle
-  EOS_Internal_Error EOS_Ipp::get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const
+  bool EOS_Ipp::has_bicubic_cross_derivative_data(EOS_Property prop) const
+  {
+    EOS_Property d2_prop;
+    if (!bicubic_cross_derivative_property(prop, d2_prop))
+      return false;
+
+    int sz = (int)err_cell_ph.size();
+    if (d2_prop < 0 || d2_prop >= sz)
+      return false;
+
+    return err_cell_ph[d2_prop] != nullptr;
+  }
+
+  // recupere les valeurs p, h, f et ses deux derivees premieres (et la derivee croisee
+  // stockee si fetch_cross_derivative) pour les 4 coins de la maille reelle
+  EOS_Internal_Error EOS_Ipp::get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val,
+                                                       bool fetch_cross_derivative) const
   {
     EOS_Property dp_prop, dh_prop;
-    bicubic_derivative_properties(i_prop, dp_prop, dh_prop); // caller checked has_bicubic_data(i_prop)
+    bicubic_derivative_properties(i_prop, dp_prop, dh_prop); // caller checked has_bicubic_first_derivative_data(i_prop)
+
+    EOS_Property d2_prop = NEPTUNE::NotATProperty;
+    if (fetch_cross_derivative)
+      bicubic_cross_derivative_property(i_prop, d2_prop); // caller checked has_bicubic_cross_derivative_data(i_prop)
 
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
@@ -1414,11 +1475,15 @@ namespace NEPTUNE_EOS
       cell_val[2][i_node] = val_prop_properties[i_prop][id_corn];
       cell_val[3][i_node] = val_prop_properties[dp_prop][id_corn];
       cell_val[4][i_node] = val_prop_properties[dh_prop][id_corn];
+      if (fetch_cross_derivative)
+        cell_val[5][i_node] = val_prop_properties[d2_prop][id_corn];
     }
 
     EOS_Internal_Error ierr = (*err_cell_ph[i_prop])[idx].get_code();
     ierr = worst_internal_error(ierr, (*err_cell_ph[dp_prop])[idx].get_code());
     ierr = worst_internal_error(ierr, (*err_cell_ph[dh_prop])[idx].get_code());
+    if (fetch_cross_derivative)
+      ierr = worst_internal_error(ierr, (*err_cell_ph[d2_prop])[idx].get_code());
     return ierr;
   }
 
@@ -1795,32 +1860,40 @@ namespace NEPTUNE_EOS
     // Bicubic Hermite patch, only if explicitly selected and the property has its
     // two first-derivative fields available in the loaded database; otherwise
     // (and for any property outside the 2D base-property set) fall back to the
-    // historical bilinear path below.
-    if (interp_method == BICUBIC && has_bicubic_data(prop))
+    // historical bilinear path below. When the true stored cross derivative is
+    // also available, it is used in place of the local finite-difference twist
+    // estimate (cf. bicubic_interpolator) -- its absence alone never causes a
+    // fallback to bilinear as long as the first derivatives are present.
+    if (interp_method == BICUBIC && has_bicubic_first_derivative_data(prop))
     {
-      EOS_Fields values(5);
+      bool has_cross_derivative = has_bicubic_cross_derivative_data(prop);
+      EOS_Fields values(has_cross_derivative ? 6 : 5);
 
       ArrOfDouble ap(4);
       ArrOfDouble ah(4);
       ArrOfDouble ar(4);
       ArrOfDouble arp(4);
       ArrOfDouble arh(4);
+      ArrOfDouble arph(4);
       EOS_Field pf("P", "p", NEPTUNE::p, ap);
       EOS_Field hf("h", "h", NEPTUNE::h, ah);
       EOS_Field rf(name_prop_string.aschar(), name_prop_string.aschar(), prop, ar);
-      EOS_Field rpf("d_p", "d_p", prop, arp); // scratch: d(prop)/dp |h at the 4 corners
-      EOS_Field rhf("d_h", "d_h", prop, arh); // scratch: d(prop)/dh |p at the 4 corners
+      EOS_Field rpf("d_p", "d_p", prop, arp);   // scratch: d(prop)/dp |h at the 4 corners
+      EOS_Field rhf("d_h", "d_h", prop, arh);   // scratch: d(prop)/dh |p at the 4 corners
+      EOS_Field rphf("d2_ph", "d2_ph", prop, arph); // scratch: d2(prop)/dp.dh at the 4 corners
       values[0] = pf;
       values[1] = hf;
       values[2] = rf;
       values[3] = rpf;
       values[4] = rhf;
+      if (has_cross_derivative)
+        values[5] = rphf;
 
-      ierr = get_cell_values_bicubic(index, prop, values);
+      ierr = get_cell_values_bicubic(index, prop, values, has_cross_derivative);
       if (ierr != EOS_Internal_Error::OK)
         return ierr;
 
-      res = bicubic_interpolator(p, h, values);
+      res = bicubic_interpolator(p, h, values, has_cross_derivative);
       return EOS_Internal_Error::OK;
     }
 

@@ -98,6 +98,24 @@ namespace NEPTUNE
     if (eostp_strcmp(name,"dhdpt")      == 0)  return d_h_d_p_T      ;
     if (eostp_strcmp(name,"dhdsp")      == 0)  return d_h_d_s_p      ;
     if (eostp_strcmp(name,"dhdps")      == 0)  return d_h_d_p_s      ;
+
+    // Cross derivatives d2(X)/dp.dh
+    if (eostp_strcmp(name,"d2tdpdh")      == 0)  return d2_T_d_p_d_h      ;
+    if (eostp_strcmp(name,"d2rhodpdh")    == 0)  return d2_rho_d_p_d_h    ;
+    if (eostp_strcmp(name,"d2udpdh")      == 0)  return d2_u_d_p_d_h      ;
+    if (eostp_strcmp(name,"d2sdpdh")      == 0)  return d2_s_d_p_d_h      ;
+    if (eostp_strcmp(name,"d2mudpdh")     == 0)  return d2_mu_d_p_d_h     ;
+    if (eostp_strcmp(name,"d2lambdadpdh") == 0)  return d2_lambda_d_p_d_h ;
+    if (eostp_strcmp(name,"d2cpdpdh")     == 0)  return d2_cp_d_p_d_h     ;
+    if (eostp_strcmp(name,"d2cvdpdh")     == 0)  return d2_cv_d_p_d_h     ;
+    if (eostp_strcmp(name,"d2sigmadpdh")  == 0)  return d2_sigma_d_p_d_h  ;
+    if (eostp_strcmp(name,"d2wdpdh")      == 0)  return d2_w_d_p_d_h      ;
+    if (eostp_strcmp(name,"d2gdpdh")      == 0)  return d2_g_d_p_d_h      ;
+    if (eostp_strcmp(name,"d2fdpdh")      == 0)  return d2_f_d_p_d_h      ;
+    if (eostp_strcmp(name,"d2prdpdh")     == 0)  return d2_pr_d_p_d_h     ;
+    if (eostp_strcmp(name,"d2betadpdh")   == 0)  return d2_beta_d_p_d_h   ;
+    if (eostp_strcmp(name,"d2gammadpdh")  == 0)  return d2_gamma_d_p_d_h  ;
+
     return NotATProperty ;
   }
 

@@ -63,6 +63,14 @@ namespace NEPTUNE_EOS
               void set_interpolation_method(Interpolation_Method method);
               Interpolation_Method get_interpolation_method() const;
 
+              //! True if prop is a base 2D property with both first-derivative fields
+              //! (d_prop_d_p_h, d_prop_d_h_p) loaded from the current database -- the
+              //! minimum required for BICUBIC; otherwise BICUBIC falls back to bilinear.
+              bool has_bicubic_first_derivative_data(EOS_Property prop) const;
+              //! True if, in addition, the stored cross derivative (d2_prop_d_p_d_h) is
+              //! loaded -- used in place of the local twist approximation when available.
+              bool has_bicubic_cross_derivative_data(EOS_Property prop) const;
+
               //! Error handling methods
               void describe_error(const EOS_Internal_Error error, AString &description) const;
 
@@ -375,13 +383,17 @@ namespace NEPTUNE_EOS
               double bilinear_interpolator(double p, double h, EOS_Fields &cellval) const;
 
               // Bicubic (Hermite patch) interpolation on the 2D (p,h) mesh.
-              // cellval rows: [0]=p, [1]=h, [2]=f, [3]=d f/dp |h, [4]=d f/dh |p (4 corners each)
-              double bicubic_interpolator(double p, double h, EOS_Fields &cellval) const;
-              // Fetches f and its two first partial derivatives at the 4 corners of the cell.
-              EOS_Internal_Error get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const;
-              // True if prop is a base thermodynamic property with both first-derivative
-              // fields (d_prop_d_p_h, d_prop_d_h_p) loaded from the current database.
-              bool has_bicubic_data(EOS_Property prop) const;
+              // cellval rows: [0]=p, [1]=h, [2]=f, [3]=d f/dp |h, [4]=d f/dh |p,
+              // [5]=d2 f/dp.dh (4 corners each). Row [5] is only read when
+              // has_cross_derivative is true; otherwise the cross derivative is
+              // approximated locally from rows [3]/[4] (cf. EOS_Ipp.cxx).
+              double bicubic_interpolator(double p, double h, EOS_Fields &cellval,
+                                           bool has_cross_derivative) const;
+              // Fetches f and its two first partial derivatives at the 4 corners of the
+              // cell (rows 0-4), plus the stored cross derivative (row 5) if
+              // fetch_cross_derivative is true.
+              EOS_Internal_Error get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val,
+                                                          bool fetch_cross_derivative) const;
 
               EOS_Internal_Error check_ph_bounds(double p, double h) const;
               EOS_Internal_Error check_p_bounds_satlim(double p) const;
