@@ -44,9 +44,9 @@ namespace NEPTUNE_EOS
               };
 
               virtual const AString &table_name() const;
-              mutable bool switch_model;         // If true : on surcharge les fcts compute si calcul pas ok
-              mutable bool switch_comp_sat_;     // If true : on surcharge les fcts compute si calcul pas ok
-              mutable bool swch_calc_deriv_fld_; // If true: calcule d_lambda_d_h_p avec la methode du fluide
+              mutable bool switch_model;         // If true: override the compute functions when the calculation is not ok
+              mutable bool switch_comp_sat_;     // If true: override the compute functions when the calculation is not ok
+              mutable bool swch_calc_deriv_fld_; // If true: compute d_lambda_d_h_p using the fluid's own method
               mutable std::vector<std::vector<double>> r1_val;
               mutable std::vector<std::vector<double>> r2_val;
               EOS *obj_fluid = nullptr;
@@ -290,7 +290,7 @@ namespace NEPTUNE_EOS
               mutable double tmax_cpt;
               mutable int save_bound;
               Interpolation_Method interp_method; // BILINEAR by default (compatibility)
-              double erreurtot; // erreur de l'interpolation sur le maillage
+              double erreurtot; // interpolation error over the mesh
               double tcrit;
               double pcrit;
               double hcrit;
@@ -346,24 +346,24 @@ namespace NEPTUNE_EOS
                                         EOS_Error_Field &errfield) const;
               EOS_Error compute(const EOS_Field &p, EOS_Fields &r, EOS_Error_Field &errfield) const;
 
-              /* Fonction qui servent a recuperer les bornes d'un jdd (lance les calculs avec le fluid declarer par init model)*/
+              /* Function used to retrieve the bounds of a dataset (runs the calculations with the fluid declared via init_model) */
               virtual EOS_Error compute_(const EOS_Field &p, const EOS_Field &h, EOS_Fields &r,
                                          EOS_Error_Field &errfield) const;
-              /* Fonction qui servent a recuperer les bornes d'un jdd (lance les calculs avec le fluid declarer par init model)*/
+              /* Function used to retrieve the bounds of a dataset (runs the calculations with the fluid declared via init_model) */
               EOS_Error compute_(const EOS_Field &p, EOS_Fields &r, EOS_Error_Field &errfield) const;
 
        private:
               static int type_Id;
               AString FluidStr;
 
-              ArrOfInt corners;        // liste des 4 noeuds formant les angles de chaque mailles du
-                                       // maillage non conforme. Taille : 4 * nb_cells_med_mesh
-                                       // sommet i de la maille j -> corners[i + 4*j]
-              ArrOfInt fnodes2phnodes; // correspondance entre chaque maille du maillage ph et la maille
-                                       // du maillage non conforme (med) dans laquelle elle est
-              ArrOfInt fnodes2pnodes; // correspondance entre chaque maille du maillage p et la maille dans regime saturation
-              ArrOfInt fnodes2pnodes_lim; // correspondance entre chaque maille du maillage p et la maille dans regime limite
-                                       // 
+              ArrOfInt corners;        // list of the 4 nodes forming the corners of each cell of the
+                                       // non-conforming mesh. Size: 4 * nb_cells_med_mesh
+                                       // vertex i of cell j -> corners[i + 4*j]
+              ArrOfInt fnodes2phnodes; // correspondence between each cell of the ph mesh and the cell
+                                       // of the non-conforming (med) mesh it is in
+              ArrOfInt fnodes2pnodes; // correspondence between each cell of the p mesh and the cell in the saturation regime
+              ArrOfInt fnodes2pnodes_lim; // correspondence between each cell of the p mesh and the cell in the limit regime
+                                       //
               // Extracts an optional ":bicubic"/":bilinear" suffix from file_name, sets
               // interp_method accordingly (BILINEAR if absent/unrecognized), and strips
               // the suffix from file_name in place.

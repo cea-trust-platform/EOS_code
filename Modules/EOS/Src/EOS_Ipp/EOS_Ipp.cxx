@@ -25,7 +25,7 @@
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Config.hxx"
 #include <fstream>
-#include <iostream> // pour std::cerr
+#include <iostream> // for std::cerr
 #include <set>
 #include <string>
 #include <vector>
@@ -400,7 +400,7 @@ namespace NEPTUNE_EOS
                               EOS_Fields &r,
                               EOS_Error_Field &errfield) const
   {
-    if (save_bound == 1) // a ne faire qu'une seule fois
+    if (save_bound == 1) // to be done only once
     {
       hmin_cpt = 100000.;
       hmax_cpt = 0.;
@@ -437,18 +437,18 @@ namespace NEPTUNE_EOS
     // std::vector<std::vector<double>> r1_val; // defined with size 20*30
     // std::vector<std::vector<double>> r2_val; // defined with size 20*30
 
-    // EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield); // debug : la calcul tourne t'il tjr ?
+    // EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield); // debug: does the computation still run?
     EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
-    // Remplissage de r1_val et r2_val
+    // Filling r1_val and r2_val
     for (int pts = 0; pts < pp.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
-        r1_val[prop][pts] = r[prop].get_data()[pts]; // debug : la calcul tourne t'il tjr ?
+        r1_val[prop][pts] = r[prop].get_data()[pts]; // debug: does the computation still run?
     // EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
     EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield);
     for (int pts = 0; pts < pp.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
         r2_val[prop][pts] = r[prop].get_data()[pts];
-    // calcul de l'erreur pour chaque prop et pts et renvoie du max
+    // compute the error for each prop and pts, and return the max
     double err_ipp_rp = 0;
     int propmax = 0;
     if (err == EOS_Error::good && err2 == EOS_Error::good)
@@ -477,7 +477,7 @@ namespace NEPTUNE_EOS
           propmax = prop;
         }
       }
-      std::cout << " Number of prop :  " << r.size() << " Number of calcul : " << pp.size() << endl;
+      std::cout << " Number of prop :  " << r.size() << " Number of computations : " << pp.size() << endl;
       std::cout << "The error is " << err_ipp_rp << " for " << r[propmax].get_property_name() << endl;
     }
     else
@@ -493,7 +493,7 @@ namespace NEPTUNE_EOS
                               EOS_Error_Field &errfield) const
   {
 
-    // Affichage des bornes à chaque calcul
+    // Displaying the bounds at each calculation
     std::cout << "The min and max of the calculations are:" << endl;
     std::cout << "pmin: " << pmin_cpt << endl;
     std::cout << "pmax: " << pmax_cpt << endl;
@@ -504,7 +504,7 @@ namespace NEPTUNE_EOS
       pmax_cpt = max(pmax_cpt, p.get_data()[pts]);
     }
     EOS_Error err = EOS_Fluid::compute(p, r, errfield);
-    // Remplissage de r1_val et r2_val
+    // Filling r1_val and r2_val
     for (int pts = 0; pts < p.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
         r1_val[prop][pts] = r[prop].get_data()[pts];
@@ -512,7 +512,7 @@ namespace NEPTUNE_EOS
     for (int pts = 0; pts < p.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
         r2_val[prop][pts] = r[prop].get_data()[pts];
-    // calcul de l'erreur pour chaque prop et pts et renvoie du max
+    // compute the error for each prop and pts, and return the max
     double err_ipp_rp = 0;
     int propmax = 0;
     for (int prop = 0; prop < r.size(); prop++)
@@ -573,7 +573,7 @@ namespace NEPTUNE_EOS
     return err;
   }
 
-  // load de tous les champs
+  // load all fields
   EOS_Error EOS_Ipp::load_med_nodes(EOS_Med &med)
   {
     EOS_Error errM;
@@ -588,7 +588,7 @@ namespace NEPTUNE_EOS
       return errM;
     }
 
-    // pour chaque maillage get des infos
+    // for each mesh, get info
     int nb_ns = names.size();
     for (int i = 0; i < nb_ns; i++)
     {
@@ -670,7 +670,7 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
-  // load de tous les champs (== toutes les proprietes presentes)
+  // load all fields (== all present properties)
   EOS_Error EOS_Ipp::load_med_champ(EOS_Med &med)
   {
     EOS_Error errM;
@@ -688,7 +688,7 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
     }
 
-    // correction jp mars 2012 : pourquoi nb_champ/2 ??
+    // correction jp march 2012: why nb_champ/2 ??
     // int vectorsz = nb_champ/2;
     int vectorsz = nb_champ / 2 + 1;
     all_prop_val.resize(vectorsz);
@@ -765,17 +765,17 @@ namespace NEPTUNE_EOS
       }
     }
 
- //  std::cout << "Nom de p : " << NEPTUNE::get_property_name(NEPTUNE::p) << "\n";
-   // std::cout << "Nom de h : " << NEPTUNE::get_property_name(NEPTUNE::h) << "\n";
-    //std::cout << "Nom de T : " << NEPTUNE::get_property_name(NEPTUNE::T) << "\n";
-    //std::cout << "Nom inconnu : " << NEPTUNE::get_property_name(42) << "\n";
+ //  std::cout << "Name of p: " << NEPTUNE::get_property_name(NEPTUNE::p) << "\n";
+   // std::cout << "Name of h: " << NEPTUNE::get_property_name(NEPTUNE::h) << "\n";
+    //std::cout << "Name of T: " << NEPTUNE::get_property_name(NEPTUNE::T) << "\n";
+    //std::cout << "Unknown name: " << NEPTUNE::get_property_name(42) << "\n";
      // std::cout << "size ph: " << val_prop_properties.size() << "\n";
 
 
     return EOS_Error::good;
   }
 
-  // load selectif : uniquement les champs demandes par l'user
+  // selective load: only the fields requested by the user
   EOS_Error EOS_Ipp::load_med_champ(EOS_Med &med, const Strings &properties)
   {
     EOS_Error errM;
@@ -798,7 +798,7 @@ namespace NEPTUNE_EOS
       errM = med.get_Champ_Noeud_Infos(i, name, type, nbcomp, m_ass);
 
       char namecov[PROPNAME_MSIZE];
-      eostp_strcov(name.aschar(), namecov); // namecov : base alphanumérical property
+      eostp_strcov(name.aschar(), namecov); // namecov : base alphanumerical property
 
       if (errM != EOS_Error::good)
       {
@@ -970,17 +970,17 @@ namespace NEPTUNE_EOS
   void EOS_Ipp::linear_interpolator(double p, double &res) const
   {
     // nodes
-    //  fields[0] = 2 valeurs en p
-    //  fields[1] = 2 valeurs de la propriete
-    //  p = valeur p du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[1]
+    //  fields[0] = 2 p values
+    //  fields[1] = 2 property values
+    //  p = p value of the point to interpolate
+    //  res = interpolation result for the property (prop_name is in fields[1]
 
-    // Formule interpolation
+    // Interpolation formula
     // f(p*) = C1f1 + C2f2
-    // avec :   C1,C2 : valeur à calculer
+    // with :   C1,C2 : value to compute
     //                          C1 = 1-p*
     //                          C2 = p*
-    //                  f1,f2 : valeur de la propriete en C1 et C2
+    //                  f1,f2 : property value at C1 and C2
     //                  p* = (p-p1)/(p2-p1)
 
     double C1, C2;
@@ -1000,17 +1000,17 @@ namespace NEPTUNE_EOS
   double EOS_Ipp::linear_interpolator(double p, EOS_Fields &segmval) const
   {
     // nodes
-    //  fields[0] = 2 valeurs en p
-    //  fields[1] = 2 valeurs de la propriete
-    //  p = valeur p du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[1]
+    //  fields[0] = 2 p values
+    //  fields[1] = 2 property values
+    //  p = p value of the point to interpolate
+    //  res = interpolation result for the property (prop_name is in fields[1]
 
-    // Formule interpolation
+    // Interpolation formula
     // f(p*) = C1f1 + C2f2
-    // avec :   C1,C2 : valeur à calculer
+    // with :   C1,C2 : value to compute
     //                          C1 = 1-p*
     //                          C2 = p*
-    //                  f1,f2 : valeur de la propriete en C1 et C2
+    //                  f1,f2 : property value at C1 and C2
     //                  p* = (p-p1)/(p2-p1)
 
     double res;
@@ -1030,18 +1030,18 @@ namespace NEPTUNE_EOS
   {
 
     // nodes
-    //  fields[0] = 4 valeurs en p
-    //  fields[1] = 4 valeurs en h
-    //  fields[2] = 4 valeurs de la propriete (pour chaque point)
-    //  p = valeur p du point à interpoler
-    //  h = valeur h du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[2]
+    //  fields[0] = 4 p values
+    //  fields[1] = 4 h values
+    //  fields[2] = 4 property values (one per point)
+    //  p = p value of the point to interpolate
+    //  h = h value of the point to interpolate
+    //  res = interpolation result for the property (prop_name is in fields[2]
 
-    // Formule interpolation
-    //  f(h*,p*) = somme(Cifi)
-    //  avec :    i = 1,...,4 == noeud
-    //                   fi = valeur de la propriete au noeud i
-    //                   Ci = à calculer
+    // Interpolation formula
+    //  f(h*,p*) = sum(Cifi)
+    //  with :    i = 1,...,4 == node
+    //                   fi = property value at node i
+    //                   Ci = to compute
     //                           C4 = h*p*
     //                           C3 = p* - C4
     //                           C2 = h* - C4
@@ -1066,18 +1066,18 @@ namespace NEPTUNE_EOS
   double EOS_Ipp::bilinear_interpolator(double p, double h, EOS_Fields &cellval) const
   {
     // nodes
-    //  fields[0] = 4 valeurs en p
-    //  fields[1] = 4 valeurs en h
-    //  fields[2] = 4 valeurs de la propriete (pour chaque point)
-    //  p = valeur p du point à interpoler
-    //  h = valeur h du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[2]
+    //  fields[0] = 4 p values
+    //  fields[1] = 4 h values
+    //  fields[2] = 4 property values (one per point)
+    //  p = p value of the point to interpolate
+    //  h = h value of the point to interpolate
+    //  res = interpolation result for the property (prop_name is in fields[2]
 
-    // Formule interpolation
-    //  f(h*,p*) = somme(Cifi)
-    //  avec :    i = 1,...,4 == noeud
-    //                   fi = valeur de la propriete au noeud i
-    //                   Ci = à calculer
+    // Interpolation formula
+    //  f(h*,p*) = sum(Cifi)
+    //  with :    i = 1,...,4 == node
+    //                   fi = property value at node i
+    //                   Ci = to compute
     //                           C4 = h*p*
     //                           C3 = p* - C4
     //                           C2 = h* - C4
@@ -1211,10 +1211,10 @@ namespace NEPTUNE_EOS
       }
     }
   }
-  // correspondance noeud fictif avec 1 noeud du polygone
-  // On stocke la valeur de l'index pour pouvoir retrouver polygone dans connect_ph
-  //(besoin des 4 noeuds pour les interpolations)
-  // facon de faire à revoir peu robuste (Cf. condition d'enregistrement de fnodes2phnodes[l])
+  // correspondence between a fictitious node and 1 node of the polygon
+  // The index value is stored to be able to retrieve the polygon in connect_ph
+  // (the 4 nodes are needed for interpolation)
+  // this approach should be revisited, not very robust (cf. condition for storing fnodes2phnodes[l])
   void EOS_Ipp::f_mesh2r_mesh()
   {
     unsigned int nb_cell = index_conn_ph.size() - 1;
@@ -1232,9 +1232,9 @@ namespace NEPTUNE_EOS
       unsigned int node_1, node_2, node_3;
       unsigned int node_0 = connect_ph[num_first_node];
 
-      // Si plus de 4 sommets dans la maille, on parcourt les sommets de long des arêtes dans le
-      // sens trigo et on reconnait le premier coin quand P devient constant, puis le deuxième quand
-      // h devient constant, et le troisième quand p redevient constant
+      // If the cell has more than 4 vertices, walk the vertices along the edges in
+      // trigonometric order and recognize the first corner when P becomes constant, then
+      // the second when h becomes constant, and the third when p becomes constant again
       if (nb_node_in_cell > 4)
       {
         unsigned int num_node_in_cell = num_first_node + 1;
@@ -1250,7 +1250,7 @@ namespace NEPTUNE_EOS
           num_node_in_cell++;
         node_3 = connect_ph[num_node_in_cell];
       }
-      // Si la maille n'a que 4 sommets, alors ce sont les 4 angles de la maille
+      // If the cell has only 4 vertices, then they are the 4 corners of the cell
       else
       {
         node_1 = connect_ph[num_first_node + 1];
@@ -1363,7 +1363,7 @@ namespace NEPTUNE_EOS
     }
   }
 
-  // renvoie le numéro de la cellule réelle contenant (p, h)
+  // returns the number of the actual cell containing (p, h)
   int EOS_Ipp::get_cellidx(double &p, double &h) const
   {
     unsigned int ih, ip;
@@ -1383,13 +1383,13 @@ namespace NEPTUNE_EOS
 
   /*
    * EOS_Ipp::get_segmidx :
-   *      return indice of first node of segment (indice in nodes_sat/lim)
+   *      return index of first node of segment (index in nodes_sat/lim)
    *            (note = nodes in nodes_sat/lim are stored in ascending order)
    *
    * double& p  : intput p value
    * int     sat_lim  : sat or lim curve
    *
-   * return : int (indice)
+   * return : int (index)
    */
   int EOS_Ipp::get_segmidx(double &p, int sat_lim) const
   {
@@ -1413,8 +1413,8 @@ namespace NEPTUNE_EOS
   }
 
 
-  // recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille réelle
-  //  idx = indice dans le maillage med = fnodes2phnodes[indice_h + Nb_pts_h * indice_p]
+  // fetches the p, h and "property" values for the 4 points (=corners) of the actual cell
+  //  idx = index in the med mesh = fnodes2phnodes[index_h + Nb_pts_h * index_p]
   EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const
   {
 
@@ -1455,8 +1455,8 @@ namespace NEPTUNE_EOS
     return err_cell_ph[d2_prop] != nullptr;
   }
 
-  // recupere les valeurs p, h, f et ses deux derivees premieres (et la derivee croisee
-  // stockee si fetch_cross_derivative) pour les 4 coins de la maille reelle
+  // Fetches p, h, f and its two first derivatives (plus the stored cross
+  // derivative if fetch_cross_derivative) for the 4 corners of the actual cell
   EOS_Internal_Error EOS_Ipp::get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val,
                                                        bool fetch_cross_derivative) const
   {
@@ -1550,48 +1550,48 @@ namespace NEPTUNE_EOS
     values[0] = pf;
     values[1] = hf;
     values[2] = rf;
-    // Récupération des valeurs des cellules
+    // Retrieving the cell values
 
     for (unsigned int i_cell = 0; i_cell < nb_cell; i_cell++)
     {
       error_cells[i_cell] = 0;
       get_cell_values(i_cell, prop, values);
-      // Calcule des barycentres et des volumes
+      // Compute barycenters and volumes
       ar_Ipp_bary[0] = 0; //
       ar_fluid_bary[0] = 0;
       //vol_loc = abs((ap[0] - ap[2]) * (ah[0] - ah[2]));
       ap_bary = (ap[0] + ap[1] + ap[2] + ap[3]) / 4;
       ah_bary = (ah[0] + ah[1] + ah[2] + ah[3]) / 4;
-      // Calcule avec le fluide
+      // Compute with the fluid
       NEPTUNE::EOS_Error worst_liq = obj_fluid->compute(p_bary, h_bary, rf_fluid_bary, eos_error_field);
       NEPTUNE::EOS_Internal_Error worst_ipp = compute_prop_ph(prop, ap_bary[0], ah_bary[0], ar_Ipp_bary[0]);
       if ((worst_liq == 0) && (worst_ipp.get_code() == 0))
       {
-        // Calcule des erreurs avec les valeurs des barycentres
+        // Compute errors using the barycenter values
         /*if (abs(ar_Ipp_bary[0]-ar_fluid_bary[0])>10)
         {
-          std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
-          std::cout<<"La diff est " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
-          std::cout << "Les erreurs sont : Ipp : " << worst_ipp.get_partial_code() << ", fluide : " << worst_liq<<endl;
+          std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
+          std::cout<<"The diff is " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
+          std::cout << "The errors are: Ipp: " << worst_ipp.get_partial_code() << ", fluid: " << worst_liq<<endl;
           nb_cell_pb++;
         }
         else
         {*/
-        // erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])) * vol_loc; // Erreur en norme L^1
-        erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])); // Erreur local sans prendre en compte l'aire de la cellule
+        // erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])) * vol_loc; // Error in L^1 norm
+        erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])); // Local error, not accounting for cell area
         error_cells[i_cell] = erreur_loc;
         erreurtot += erreur_loc;
         //}
       }
       else
       {
-        // std::cout<< "erreur ipp" << worst_ipp.get_code() << " et " << "erreur liquide : " << worst_liq << endl ;
-        /*std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
+        // std::cout<< "ipp error" << worst_ipp.get_code() << " and " << "fluid error: " << worst_liq << endl ;
+        /*std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
         nb_cell_pb++;
       }
     }
-    // erreurtot = erreurtot / ((hmax_ipp - hmin_ipp) * (pmax_ipp - pmin_ipp)); // normalisation de l'erreur
-    erreurtot = erreurtot / (nb_cell - nb_cell_pb); // moyenne de l'erreur
+    // erreurtot = erreurtot / ((hmax_ipp - hmin_ipp) * (pmax_ipp - pmin_ipp)); // error normalization
+    erreurtot = erreurtot / (nb_cell - nb_cell_pb); // error average
     error_tot = erreurtot;
     std::cout << "There were " << nb_cell_pb << " problematic cells out of " << nb_cell << ".";
     return EOS_Internal_Error::OK;
@@ -1632,38 +1632,38 @@ namespace NEPTUNE_EOS
     EOS_Field rf(propname.aschar(), propname.aschar(),prop, ar);
     values[0] = pf;
     values[1] = rf;
-    std::cout << "Le nombre de noeuds est " << nodes_sat[0].size() << endl;
-    std::cout << "Le nombre de segm est " << nb_seg << endl;
+    std::cout << "The number of nodes is " << nodes_sat[0].size() << endl;
+    std::cout << "The number of segm is " << nb_seg << endl;
     std::cout << "Pmin= " << pmin_ipp << endl;
     std::cout << "Pmax= " << pmax_ipp << endl;
-    // Récupération des valeurs des cellules
+    // Retrieving the cell values
     for (int i_seg = 0; i_seg < nb_seg - 1; i_seg++)
     {
       error_cells[i_seg] = 0;
       get_segm_values(i_seg, prop, 0, values);
-      // Calcule des barycentres et des volumes
+      // Compute barycenters and volumes
       ar_Ipp_bary[0] = 0; //
       ar_fluid_bary[0] = 0;
       vol_loc = abs((ap[1] - ap[0]));
       ap_bary = (ap[0] + ap[1]) / 2;
-      // Calcule avec le fluide
-      std::cout << "calcul pour (p,h):" << ap_bary[0] << "," << endl;
+      // Compute with the fluid
+      std::cout << "computing for (p,h):" << ap_bary[0] << "," << endl;
       NEPTUNE::EOS_Error worst_liq = obj_fluid->compute(p_bary, rf_fluid_bary, eos_error_field);
       NEPTUNE::EOS_Internal_Error worst_ipp = compute_prop_p(prop, ap_bary[0], 0, ar_Ipp_bary[0]);
       if ((worst_liq == 0) && (worst_ipp.get_code() == 0))
       {
-        // Calcule des erreurs avec les valeurs des barycentres
+        // Compute errors using the barycenter values
         /*if (abs(ar_Ipp_bary[0]-ar_fluid_bary[0])>10)
         {
-          std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
-          std::cout<<"La diff est " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
-          std::cout << "Les erreurs sont : Ipp : " << worst_ipp.get_partial_code() << ", fluide : " << worst_liq<<endl;
+          std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
+          std::cout<<"The diff is " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
+          std::cout << "The errors are: Ipp: " << worst_ipp.get_partial_code() << ", fluid: " << worst_liq<<endl;
           nb_cell_pb++;
         }
         else
         {*/
 
-        std::cout << "La diff est " << abs(ar_Ipp_bary[0] - ar_fluid_bary[0]) << endl;
+        std::cout << "The diff is " << abs(ar_Ipp_bary[0] - ar_fluid_bary[0]) << endl;
         erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])) * vol_loc;
         error_cells[i_seg] = erreur_loc;
         erreurtot += erreur_loc;
@@ -1671,12 +1671,12 @@ namespace NEPTUNE_EOS
       }
       else
       {
-        std::cout << "erreur ipp" << worst_ipp.get_code() << " et " << "erreur liquide : " << worst_liq << endl;
-        /*std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
+        std::cout << "ipp error" << worst_ipp.get_code() << " and " << "fluid error: " << worst_liq << endl;
+        /*std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
         nb_seg_pb++;
       }
     }
-    erreurtot = erreurtot / ((pmax_ipp - pmin_ipp)); // normalisation de l'erreur
+    erreurtot = erreurtot / ((pmax_ipp - pmin_ipp)); // error normalization
     error_tot = erreurtot;
     std::cout << "There were " << nb_seg_pb << " problematic cells out of " << nb_seg << ".";
     return EOS_Internal_Error::OK;
@@ -1759,7 +1759,7 @@ namespace NEPTUNE_EOS
       ierr = get_cell_values(med_cell, prop, values);
       pcal = (p - values[0][0]) / (values[0][2] - values[0][0]);
 
-      /* a = values[2][1] - values[2][0];   // This calcul doesn't correspond to the one on the report
+      /* a = values[2][1] - values[2][0];   // This computation doesn't correspond to the one on the report
       b = values[2][2] - values[2][0];
       c = values[2][3] - values[2][2] - a;
       d = values[2][0]; */ 
@@ -1919,7 +1919,7 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
-  // tag = 0 pour sat et tag = 1 pour lim
+  // tag = 0 for sat and tag = 1 for lim
   EOS_Internal_Error EOS_Ipp::compute_prop_p(EOS_Property prop,
                                              double p, int sat_lim, double &res) const
   {

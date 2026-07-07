@@ -128,24 +128,24 @@ int main()
     // ---- 1. Method selection ----
     if (ipp_default.get_interpolation_method() != EOS_Ipp::BILINEAR)
     {
-      cerr << "ECHEC selection : no suffix should default to BILINEAR" << endl;
+      cerr << "FAILED selection: no suffix should default to BILINEAR" << endl;
       test_failed = true;
     }
     if (ipp_bicubic.get_interpolation_method() != EOS_Ipp::BICUBIC)
     {
-      cerr << "ECHEC selection : \":bicubic\" suffix should select BICUBIC" << endl;
+      cerr << "FAILED selection: \":bicubic\" suffix should select BICUBIC" << endl;
       test_failed = true;
     }
     if (ipp_bilinear_expl.get_interpolation_method() != EOS_Ipp::BILINEAR)
     {
-      cerr << "ECHEC selection : \":bilinear\" suffix should select BILINEAR" << endl;
+      cerr << "FAILED selection: \":bilinear\" suffix should select BILINEAR" << endl;
       test_failed = true;
     }
     // programmatic override via the setter must take precedence
     ipp_bilinear_expl.set_interpolation_method(EOS_Ipp::BICUBIC);
     if (ipp_bilinear_expl.get_interpolation_method() != EOS_Ipp::BICUBIC)
     {
-      cerr << "ECHEC selection : set_interpolation_method() should override the suffix" << endl;
+      cerr << "FAILED selection: set_interpolation_method() should override the suffix" << endl;
       test_failed = true;
     }
     ipp_bilinear_expl.set_interpolation_method(EOS_Ipp::BILINEAR); // restore
@@ -167,14 +167,14 @@ int main()
 
       if (e_ref != EOS_Error::good || e_bilin != EOS_Internal_Error::OK || e_bicub != EOS_Internal_Error::OK)
       {
-        cerr << "ECHEC coin exact : erreur de calcul (ref=" << e_ref << ")" << endl;
+        cerr << "FAILED exact corner: computation error (ref=" << e_ref << ")" << endl;
         test_failed = true;
       }
       else if (!in_relative_range(T_bilin, T_ref, REL_TOL_EXACT) ||
                !in_relative_range(T_bicub, T_ref, REL_TOL_EXACT))
       {
-        cerr << "ECHEC coin exact : T ref=" << T_ref << " bilineaire=" << T_bilin
-             << " bicubique=" << T_bicub << endl;
+        cerr << "FAILED exact corner: T ref=" << T_ref << " bilinear=" << T_bilin
+             << " bicubic=" << T_bicub << endl;
         test_failed = true;
       }
     }
@@ -213,24 +213,24 @@ int main()
 
     if (nb_pts_ok == 0)
     {
-      cerr << "ECHEC : aucun point interieur n'a pu etre calcule" << endl;
+      cerr << "FAILED: no interior point could be computed" << endl;
       test_failed = true;
     }
     if (max_err_bilin > REL_TOL_BILINEAR)
     {
-      cerr << "ECHEC : erreur bilineaire hors tolerance (" << max_err_bilin << ")" << endl;
+      cerr << "FAILED: bilinear error out of tolerance (" << max_err_bilin << ")" << endl;
       test_failed = true;
     }
     if (max_err_bicub > REL_TOL_BICUBIC)
     {
-      cerr << "ECHEC : erreur bicubique hors tolerance (" << max_err_bicub << ")" << endl;
+      cerr << "FAILED: bicubic error out of tolerance (" << max_err_bicub << ")" << endl;
       test_failed = true;
     }
     // small margin to absorb numerical noise while still requiring bicubic to be
     // at least as good as bilinear on this curved property
     if (max_err_bicub > max_err_bilin * 1.1 + 1.e-12)
     {
-      cerr << "ECHEC : le bicubique n'ameliore pas la precision par rapport au bilineaire ("
+      cerr << "FAILED: bicubic does not improve accuracy over bilinear ("
            << max_err_bicub << " vs " << max_err_bilin << ")" << endl;
       test_failed = true;
     }
@@ -244,8 +244,8 @@ int main()
 
       if (e_bilin_oob != EOS_Ipp::OUT_OF_BOUNDS || e_bicub_oob != EOS_Ipp::OUT_OF_BOUNDS)
       {
-        cerr << "ECHEC bords : point hors domaine non signale en OUT_OF_BOUNDS "
-             << "(bilineaire=" << e_bilin_oob.get_code() << ", bicubique=" << e_bicub_oob.get_code() << ")" << endl;
+        cerr << "FAILED bounds: out-of-domain point not reported as OUT_OF_BOUNDS "
+             << "(bilinear=" << e_bilin_oob.get_code() << ", bicubic=" << e_bicub_oob.get_code() << ")" << endl;
         test_failed = true;
       }
     }
@@ -255,8 +255,8 @@ int main()
     {
       if (!ipp_bicubic.has_bicubic_first_derivative_data(NEPTUNE::rho))
       {
-        cerr << "ECHEC : la base par defaut (liste de proprietes complete) devrait "
-             << "contenir les derivees premieres de rho" << endl;
+        cerr << "FAILED: the default base (full property list) should contain "
+             << "rho's first derivatives" << endl;
         test_failed = true;
       }
       // The cross derivative itself is only picked up by EOS_IGen if the fluid
@@ -266,7 +266,7 @@ int main()
       // absence there is exactly the scenario the local-twist fallback exists
       // for (cf. section 6), so it is reported but not treated as a failure.
       bool has_cross = ipp_bicubic.has_bicubic_cross_derivative_data(NEPTUNE::rho);
-      cout << "  derivee croisee stockee dans la base par defaut : " << (has_cross ? "oui" : "non") << endl;
+      cout << "  cross derivative stored in the default base: " << (has_cross ? "yes" : "no") << endl;
       if (has_cross)
         any_cross_derivative_stored = true;
 
@@ -284,19 +284,19 @@ int main()
         double d2_manual = (d1_plus - d1_minus) / (2. * dh_fd);
         double denom = fabs(d2_manual) > 1.e-30 ? fabs(d2_manual) : 1.;
         double rel_err = fabs(d2_impl - d2_manual) / denom;
-        cout << "  d2(rho)/dp.dh : implementation=" << d2_impl
-             << " ; difference finie manuelle=" << d2_manual
-             << " ; ecart relatif=" << rel_err << endl;
+        cout << "  d2(rho)/dp.dh: implementation=" << d2_impl
+             << " ; manual finite difference=" << d2_manual
+             << " ; relative gap=" << rel_err << endl;
         if (rel_err > 1.e-2)
         {
-          cerr << "ECHEC coherence numerique d2_rho_d_p_d_h (ecart=" << rel_err << ")" << endl;
+          cerr << "FAILED numerical consistency d2_rho_d_p_d_h (gap=" << rel_err << ")" << endl;
           test_failed = true;
         }
       }
       else
       {
-        cerr << "ECHEC : impossible de calculer d2_rho_d_p_d_h ou ses composantes "
-             << "pour le test de coherence numerique" << endl;
+        cerr << "FAILED: could not compute d2_rho_d_p_d_h or its components "
+             << "for the numerical consistency test" << endl;
         test_failed = true;
       }
     }
@@ -306,7 +306,7 @@ int main()
     //         patch (local twist approximation), not silently fall back to
     //         bilinear, as long as the first derivatives are present ----
     {
-      AString restricted_name = "restreint_sans_croisee_";
+      AString restricted_name = "restricted_no_cross_";
       restricted_name += methodes[m];
 
       EOS_IGen obj_igen;
@@ -328,7 +328,7 @@ int main()
 
       if (err != EOS_Error::good)
       {
-        cerr << "ECHEC : impossible de generer la base restreinte (sans derivee croisee)" << endl;
+        cerr << "FAILED: could not generate the restricted base (without cross derivative)" << endl;
         test_failed = true;
       }
       else
@@ -339,12 +339,12 @@ int main()
 
         if (!ipp_restricted.has_bicubic_first_derivative_data(NEPTUNE::rho))
         {
-          cerr << "ECHEC base restreinte : les derivees premieres devraient etre presentes" << endl;
+          cerr << "FAILED restricted base: first derivatives should be present" << endl;
           test_failed = true;
         }
         if (ipp_restricted.has_bicubic_cross_derivative_data(NEPTUNE::rho))
         {
-          cerr << "ECHEC base restreinte : la derivee croisee ne devrait pas etre presente" << endl;
+          cerr << "FAILED restricted base: the cross derivative should not be present" << endl;
           test_failed = true;
         }
 
@@ -364,7 +364,7 @@ int main()
 
         if (eb != EOS_Internal_Error::OK || el != EOS_Internal_Error::OK)
         {
-          cerr << "ECHEC base restreinte : echec de calcul de rho" << endl;
+          cerr << "FAILED restricted base: rho computation failed" << endl;
           test_failed = true;
         }
         else if (rho_bicub_restricted == rho_bilin_restricted)
@@ -372,8 +372,8 @@ int main()
           // On a curved property this would only coincide if BICUBIC had silently
           // degraded to the bilinear path instead of using the Hermite patch with
           // its local twist approximation.
-          cerr << "ECHEC base restreinte : le mode BICUBIC semble degrader vers le "
-               << "bilineaire au lieu d'utiliser l'approximation locale" << endl;
+          cerr << "FAILED restricted base: BICUBIC mode appears to degrade to "
+               << "bilinear instead of using the local approximation" << endl;
           test_failed = true;
         }
       }
@@ -382,9 +382,9 @@ int main()
 
   if (nb_methodes > 0 && !any_cross_derivative_stored)
   {
-    cerr << "ECHEC : aucun fluide teste n'a permis a EOS_IGen de stocker la "
-         << "derivee croisee d2_rho_d_p_d_h -- la chaine generation/chargement "
-         << "semble cassee" << endl;
+    cerr << "FAILED: none of the tested fluids let EOS_IGen store the cross "
+         << "derivative d2_rho_d_p_d_h -- the generation/loading chain appears "
+         << "broken" << endl;
     test_failed = true;
   }
 
