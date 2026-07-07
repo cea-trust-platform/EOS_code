@@ -19,6 +19,7 @@
 #include "EOS/API/EOS_Std_Error_Handler.hxx"
 #include "EOS/API/EOS_Config.hxx"
 #include "EOS_IGen/API/EOS_IGen.hxx"
+#include "test_utils.hxx"
 
 using namespace NEPTUNE;
 using namespace NEPTUNE_EOS_IGEN;
@@ -116,14 +117,6 @@ using namespace NEPTUNE_EOS_IGEN;
 
 
 static const double REL_TOL = 0.01;   // ±1 %
-
-// vérifie si val est dans [ (1-tol)*ref ; (1+tol)*ref ]
-bool in_relative_range(double val, double ref, double tol)
-{
-    if (ref == 0.0) return (val == 0.0);  // cas particulier
-    double diff = std::fabs(val - ref);
-    return diff <= tol * std::fabs(ref);
-}
 
 
 int main()

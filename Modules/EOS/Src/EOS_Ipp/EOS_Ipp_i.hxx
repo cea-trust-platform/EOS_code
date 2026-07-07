@@ -97,6 +97,16 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
+  inline void EOS_Ipp::set_interpolation_method(Interpolation_Method method)
+  {
+    interp_method = method;
+  }
+
+  inline EOS_Ipp::Interpolation_Method EOS_Ipp::get_interpolation_method() const
+  {
+    return interp_method;
+  }
+
   inline EOS_Internal_Error EOS_Ipp::compute_T_ph(double p, double h, double &res) const
   {
     EOS_Property prop= NEPTUNE::T;

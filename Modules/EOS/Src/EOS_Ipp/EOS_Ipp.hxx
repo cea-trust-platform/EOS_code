@@ -35,6 +35,14 @@ namespace NEPTUNE_EOS
               static const AString tablename;
 
        public:
+              //! Interpolation method used on the 2D (p,h) mesh for physical properties.
+              //! BILINEAR is the historical/default behaviour, preserved for compatibility.
+              enum Interpolation_Method
+              {
+                     BILINEAR = 0,
+                     BICUBIC = 1
+              };
+
               virtual const AString &table_name() const;
               mutable bool switch_model;         // If true : on surcharge les fcts compute si calcul pas ok
               mutable bool switch_comp_sat_;     // If true : on surcharge les fcts compute si calcul pas ok
@@ -49,6 +57,11 @@ namespace NEPTUNE_EOS
               virtual int init(const Strings &);
               //! to initialize an implementation of EOS_Ipp with supplementary parameters
               virtual int init(const Strings &, const Strings &);
+
+              //! Select the interpolation method to use on the 2D (p,h) mesh.
+              //! Has no effect on the 1D saturation/limit curves (always linear).
+              void set_interpolation_method(Interpolation_Method method);
+              Interpolation_Method get_interpolation_method() const;
 
               //! Error handling methods
               void describe_error(const EOS_Internal_Error error, AString &description) const;
@@ -268,6 +281,7 @@ namespace NEPTUNE_EOS
               mutable double tmin_cpt;
               mutable double tmax_cpt;
               mutable int save_bound;
+              Interpolation_Method interp_method; // BILINEAR by default (compatibility)
               double erreurtot; // erreur de l'interpolation sur le maillage
               double tcrit;
               double pcrit;
@@ -342,6 +356,11 @@ namespace NEPTUNE_EOS
               ArrOfInt fnodes2pnodes; // correspondance entre chaque maille du maillage p et la maille dans regime saturation
               ArrOfInt fnodes2pnodes_lim; // correspondance entre chaque maille du maillage p et la maille dans regime limite
                                        // 
+              // Extracts an optional ":bicubic"/":bilinear" suffix from file_name, sets
+              // interp_method accordingly (BILINEAR if absent/unrecognized), and strips
+              // the suffix from file_name in place.
+              void extract_interpolation_method(AString &file_name);
+
               void load_domain_values(EOS_Med &med);
               EOS_Error load_med_nodes(EOS_Med &med);
               EOS_Error load_med_champ(EOS_Med &med);
@@ -354,6 +373,15 @@ namespace NEPTUNE_EOS
               double linear_interpolator(double p, EOS_Fields &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;
               double bilinear_interpolator(double p, double h, EOS_Fields &cellval) const;
+
+              // Bicubic (Hermite patch) interpolation on the 2D (p,h) mesh.
+              // cellval rows: [0]=p, [1]=h, [2]=f, [3]=d f/dp |h, [4]=d f/dh |p (4 corners each)
+              double bicubic_interpolator(double p, double h, EOS_Fields &cellval) const;
+              // Fetches f and its two first partial derivatives at the 4 corners of the cell.
+              EOS_Internal_Error get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const;
+              // True if prop is a base thermodynamic property with both first-derivative
+              // fields (d_prop_d_p_h, d_prop_d_h_p) loaded from the current database.
+              bool has_bicubic_data(EOS_Property prop) const;
 
               EOS_Internal_Error check_ph_bounds(double p, double h) const;
               EOS_Internal_Error check_p_bounds_satlim(double p) const;
