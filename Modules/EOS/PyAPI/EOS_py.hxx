@@ -6,6 +6,10 @@
 #include "EOS/API/EOS.hxx"
 #include <sstream>
 
+// Forward declaration only: keeps the (heavier) EOS_IGen headers out of this
+// file, included only in EOS_py.cxx -- same pattern as EOS_Ipp below.
+namespace NEPTUNE_EOS_IGEN { class EOS_IGen; }
+
 class EOS_py {
 public:
     EOS_py(const std::string& meth);
@@ -48,6 +52,24 @@ public:
     double get_p() const;
     double get_mm() const;
 
+    // Selects the interpolation method used on the 2D (p,h) mesh, when this
+    // EOS_py object wraps an EOS_Ipp interpolator (method == "EOS_Ipp").
+    // mode must be "bilinear" or "bicubic". Throws if this object does not
+    // wrap an EOS_Ipp interpolator (cf. EOS_Ipp::Interpolation_Method).
+    void set_interpolation_method(const std::string& mode);
+    // Returns "bilinear" or "bicubic". Throws if this object does not wrap
+    // an EOS_Ipp interpolator.
+    std::string get_interpolation_method() const;
+
+    // True if the loaded base has the two first-derivative fields for
+    // prop_name (e.g. "T") -- the minimum required for BICUBIC. Throws if
+    // this object does not wrap an EOS_Ipp interpolator.
+    bool has_bicubic_first_derivative_data(const std::string& prop_name) const;
+    // True if, in addition, the stored cross derivative (d2_<prop>_d_p_d_h)
+    // is loaded -- used by the Hermite patch instead of the local twist
+    // approximation when available (cf. EOS_Ipp::bicubic_interpolator).
+    bool has_bicubic_cross_derivative_data(const std::string& prop_name) const;
+
 private:
     NEPTUNE::EOS* eos_;
 
@@ -56,6 +78,80 @@ private:
         NEPTUNE::EOS_Error (NEPTUNE::EOS::*func)(double&) const,
         const std::string& name
     ) const;
+};
+
+
+// Thin wrapper around NEPTUNE_EOS_IGEN::EOS_IGen : builds a regular (p,h)
+// interpolation mesh over a rectangular (p,T) domain and writes it to a
+// .med base readable by EOS_py("EOS_Ipp", file_name) (cf. EOS_py above).
+//
+// This exposes only the "regular mesh" workflow already used by the
+// project's own C++ mesh-generation tools (e.g.
+// Modules/EOS_IGen/Tests/C++/main.cxx, EOSIGenTest): set_extremum ->
+// make_mesh -> [set_list_properties] -> write_med. EOS_IGen's adaptive,
+// quality-driven refinement (EOS_IGen_QI, set_quality,
+// make_local_refine/make_global_refine, compute_qualities) is NOT exposed
+// here -- use the C++ API directly for that, or extend this wrapper.
+//
+// EOS_IGen only ever builds a mesh in the (p, T) plane (cf.
+// EOS_IGen::set_extremum(p_min, p_max, T_min, T_max) and ::make_mesh in
+// Modules/EOS_IGen/API/EOS_IGen.cxx): there is no way to choose another pair
+// of abscissa/ordinate variables, and node spacing is always regular
+// (linear) in p and T -- no logarithmic-scale option exists in the
+// underlying C++ API. This wrapper does not invent either capability.
+class EOS_IGen_py {
+public:
+    // method/reference identify the real fluid model used to compute
+    // property values at each mesh node (e.g. "EOS_Cathare2"/"WaterLiquid"),
+    // exactly as for EOS_py(method, reference).
+    EOS_IGen_py(const std::string& method, const std::string& reference);
+    ~EOS_IGen_py();
+
+    // Sets the rectangular (p, T) domain bounds, in Pa and K. Must be called
+    // before make_mesh(). Throws if p_min <= 0, p_max <= p_min or T_max <= T_min.
+    void set_extremum(double p_min, double p_max, double T_min, double T_max);
+
+    // Restricts the properties computed/stored at each mesh node (e.g.
+    // {"T", "d_T_d_p_h", "d_T_d_h_p", "d2_T_d_p_d_h"}). Optional: if never
+    // called, EOS_IGen falls back to its full default property list (every
+    // entry of Modules/EOS/API/therm_properties.hxx). Must be called before
+    // make_mesh() to take effect.
+    void set_list_properties(std::vector<std::string> properties);
+
+    // Builds a regular nb_mesh_p x nb_mesh_h (p,h) mesh spanning the domain
+    // set by set_extremum (the h bounds are derived internally from the
+    // real fluid model at the 4 (p,T) corners) and computes the requested
+    // properties at each node. level_max=-1 (default) means no refinement.
+    // Throws if set_extremum() was not called first, if nb_mesh_p/nb_mesh_h
+    // < 2, or if the underlying EOS_IGen::make_mesh call fails (e.g. a
+    // corner falls outside the fluid model's valid domain).
+    void make_mesh(int nb_mesh_p, int nb_mesh_h, int level_max = -1);
+
+    // Writes the final .med interpolation base (plus its index.eos entry)
+    // under $USER_EOS_DATA/EOS_Ipp/<file_name>.med. Throws if make_mesh()
+    // was not called first, or if the write fails (e.g. USER_EOS_DATA not
+    // set/not writable).
+    void write_med(const std::string& file_name);
+
+    // Human-readable summary (method, reference, domain, mesh status) --
+    // handy for notebooks/debugging, not a substitute for the getters below.
+    std::string describe() const;
+
+    double get_p_min() const;
+    double get_p_max() const;
+    double get_T_min() const;
+    double get_T_max() const;
+
+private:
+    NEPTUNE_EOS_IGEN::EOS_IGen* igen_;
+    std::string method_;
+    std::string reference_;
+    double p_min_;
+    double p_max_;
+    double T_min_;
+    double T_max_;
+    bool extremum_set_;
+    bool mesh_built_;
 };
 
 

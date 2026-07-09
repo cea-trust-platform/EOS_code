@@ -1,5 +1,7 @@
 #include "EOS_py.hxx"
 #include "Language/API/UObject.hxx"
+#include "EOS/Src/EOS_Ipp/EOS_Ipp.hxx"
+#include "EOS_IGen/API/EOS_IGen.hxx"
 
 #include <stdexcept>
 #include <string>
@@ -209,6 +211,170 @@ double EOS_py::get_mm() const {
 double EOS_py::get_p() const {
     return call_getter(&NEPTUNE::EOS::get_p, "get_p");
 }
+
+void EOS_py::set_interpolation_method(const std::string& mode) {
+    if (!eos_) {
+        throw std::runtime_error("EOS_py::eos_ not initialized");
+    }
+    NEPTUNE_EOS::EOS_Ipp* ipp = dynamic_cast<NEPTUNE_EOS::EOS_Ipp*>(&eos_->fluid());
+    if (!ipp) {
+        throw std::runtime_error(
+            "set_interpolation_method: this EOS object does not wrap an EOS_Ipp interpolator"
+        );
+    }
+    if (mode == "bilinear") {
+        ipp->set_interpolation_method(NEPTUNE_EOS::EOS_Ipp::BILINEAR);
+    } else if (mode == "bicubic") {
+        ipp->set_interpolation_method(NEPTUNE_EOS::EOS_Ipp::BICUBIC);
+    } else {
+        throw std::runtime_error(
+            "set_interpolation_method: mode must be 'bilinear' or 'bicubic', got '" + mode + "'"
+        );
+    }
+}
+
+std::string EOS_py::get_interpolation_method() const {
+    if (!eos_) {
+        throw std::runtime_error("EOS_py::eos_ not initialized");
+    }
+    NEPTUNE_EOS::EOS_Ipp* ipp = dynamic_cast<NEPTUNE_EOS::EOS_Ipp*>(&eos_->fluid());
+    if (!ipp) {
+        throw std::runtime_error(
+            "get_interpolation_method: this EOS object does not wrap an EOS_Ipp interpolator"
+        );
+    }
+    return (ipp->get_interpolation_method() == NEPTUNE_EOS::EOS_Ipp::BICUBIC) ? "bicubic" : "bilinear";
+}
+
+bool EOS_py::has_bicubic_first_derivative_data(const std::string& prop_name) const {
+    if (!eos_) {
+        throw std::runtime_error("EOS_py::eos_ not initialized");
+    }
+    NEPTUNE_EOS::EOS_Ipp* ipp = dynamic_cast<NEPTUNE_EOS::EOS_Ipp*>(&eos_->fluid());
+    if (!ipp) {
+        throw std::runtime_error(
+            "has_bicubic_first_derivative_data: this EOS object does not wrap an EOS_Ipp interpolator"
+        );
+    }
+    NEPTUNE::EOS_Property prop = NEPTUNE::gen_property_number(prop_name.c_str());
+    return ipp->has_bicubic_first_derivative_data(prop);
+}
+
+bool EOS_py::has_bicubic_cross_derivative_data(const std::string& prop_name) const {
+    if (!eos_) {
+        throw std::runtime_error("EOS_py::eos_ not initialized");
+    }
+    NEPTUNE_EOS::EOS_Ipp* ipp = dynamic_cast<NEPTUNE_EOS::EOS_Ipp*>(&eos_->fluid());
+    if (!ipp) {
+        throw std::runtime_error(
+            "has_bicubic_cross_derivative_data: this EOS object does not wrap an EOS_Ipp interpolator"
+        );
+    }
+    NEPTUNE::EOS_Property prop = NEPTUNE::gen_property_number(prop_name.c_str());
+    return ipp->has_bicubic_cross_derivative_data(prop);
+}
+
+EOS_IGen_py::EOS_IGen_py(const std::string& method, const std::string& reference)
+    : igen_(nullptr), method_(method), reference_(reference),
+      p_min_(0.0), p_max_(0.0), T_min_(0.0), T_max_(0.0),
+      extremum_set_(false), mesh_built_(false)
+{
+    igen_ = new NEPTUNE_EOS_IGEN::EOS_IGen(method.c_str(), reference.c_str());
+}
+
+EOS_IGen_py::~EOS_IGen_py() {
+    delete igen_;
+}
+
+void EOS_IGen_py::set_extremum(double p_min, double p_max, double T_min, double T_max) {
+    if (p_min <= 0.0 || p_max <= p_min) {
+        throw std::runtime_error(
+            "EOS_IGen_py::set_extremum: need 0 < p_min < p_max (got p_min="
+            + std::to_string(p_min) + ", p_max=" + std::to_string(p_max) + ")"
+        );
+    }
+    if (T_max <= T_min) {
+        throw std::runtime_error(
+            "EOS_IGen_py::set_extremum: need T_min < T_max (got T_min="
+            + std::to_string(T_min) + ", T_max=" + std::to_string(T_max) + ")"
+        );
+    }
+    igen_->set_extremum(p_min, p_max, T_min, T_max);
+    p_min_ = p_min;
+    p_max_ = p_max;
+    T_min_ = T_min;
+    T_max_ = T_max;
+    extremum_set_ = true;
+}
+
+void EOS_IGen_py::set_list_properties(std::vector<std::string> properties) {
+    if (properties.empty()) {
+        throw std::runtime_error(
+            "EOS_IGen_py::set_list_properties: empty list -- omit the call entirely "
+            "to keep EOS_IGen's full default property list"
+        );
+    }
+    // EOS_IGen::set_list_propi takes a non-const reference: pass our local copy.
+    igen_->set_list_propi(properties);
+}
+
+void EOS_IGen_py::make_mesh(int nb_mesh_p, int nb_mesh_h, int level_max) {
+    if (!extremum_set_) {
+        throw std::runtime_error("EOS_IGen_py::make_mesh: call set_extremum() first");
+    }
+    if (nb_mesh_p < 2 || nb_mesh_h < 2) {
+        throw std::runtime_error(
+            "EOS_IGen_py::make_mesh: nb_mesh_p and nb_mesh_h must be >= 2 (got "
+            + std::to_string(nb_mesh_p) + ", " + std::to_string(nb_mesh_h) + ")"
+        );
+    }
+    NEPTUNE::EOS_Error err = igen_->make_mesh(nb_mesh_p, nb_mesh_h, level_max);
+    if (err != NEPTUNE::EOS_Error::good) {
+        throw std::runtime_error(
+            "EOS_IGen_py::make_mesh: EOS_IGen::make_mesh failed (error code = "
+            + std::to_string(static_cast<int>(err))
+            + ") -- check that the domain corners are inside the fluid model's valid range"
+        );
+    }
+    mesh_built_ = true;
+}
+
+void EOS_IGen_py::write_med(const std::string& file_name) {
+    if (!mesh_built_) {
+        throw std::runtime_error("EOS_IGen_py::write_med: call make_mesh() first");
+    }
+    NEPTUNE::AString name(file_name.c_str());
+    igen_->set_file_med_name(name);
+    NEPTUNE::EOS_Error err = igen_->write_med();
+    if (err != NEPTUNE::EOS_Error::good) {
+        throw std::runtime_error(
+            "EOS_IGen_py::write_med: EOS_IGen::write_med failed (error code = "
+            + std::to_string(static_cast<int>(err))
+            + ") -- check that USER_EOS_DATA is set and writable"
+        );
+    }
+}
+
+std::string EOS_IGen_py::describe() const {
+    std::ostringstream oss;
+    oss << "** eos igen (mesh generator) **" << "\n";
+    oss << "   * method    : " << method_ << "\n";
+    oss << "   * reference : " << reference_ << "\n";
+    if (extremum_set_) {
+        oss << "   * domain    : p in [" << p_min_ << ", " << p_max_ << "] Pa, "
+            << "T in [" << T_min_ << ", " << T_max_ << "] K" << "\n";
+    } else {
+        oss << "   * domain    : not set (call set_extremum)" << "\n";
+    }
+    oss << "   * mesh      : " << (mesh_built_ ? "built" : "not built yet") << "\n";
+    return oss.str();
+}
+
+double EOS_IGen_py::get_p_min() const { return p_min_; }
+double EOS_IGen_py::get_p_max() const { return p_max_; }
+double EOS_IGen_py::get_T_min() const { return T_min_; }
+double EOS_IGen_py::get_T_max() const { return T_max_; }
+
 
 EOS_Mixing_py::EOS_Mixing_py(
     std::vector<std::string> methods,
