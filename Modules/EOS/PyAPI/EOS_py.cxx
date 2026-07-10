@@ -339,6 +339,47 @@ void EOS_IGen_py::make_mesh(int nb_mesh_p, int nb_mesh_h, int level_max) {
     mesh_built_ = true;
 }
 
+void EOS_IGen_py::set_quality(const std::string& property, const std::string& type,
+                               int is_abs, double limit_qi) {
+    if (!mesh_built_) {
+        throw std::runtime_error("EOS_IGen_py::set_quality: call make_mesh() first");
+    }
+    if (type != "centre" && type != "node") {
+        throw std::runtime_error(
+            "EOS_IGen_py::set_quality: type must be 'centre' or 'node', got '" + type + "'"
+        );
+    }
+    igen_->set_quality(property.c_str(), type.c_str(), is_abs, limit_qi);
+}
+
+void EOS_IGen_py::make_global_refine() {
+    if (!mesh_built_) {
+        throw std::runtime_error("EOS_IGen_py::make_global_refine: call make_mesh() first");
+    }
+    NEPTUNE::EOS_Error err = igen_->make_global_refine();
+    if (err != NEPTUNE::EOS_Error::good) {
+        throw std::runtime_error(
+            "EOS_IGen_py::make_global_refine: EOS_IGen::make_global_refine failed "
+            "(error code = " + std::to_string(static_cast<int>(err))
+            + ") -- check that set_quality() was called with a property available in the base"
+        );
+    }
+}
+
+void EOS_IGen_py::make_local_refine(bool cont) {
+    if (!mesh_built_) {
+        throw std::runtime_error("EOS_IGen_py::make_local_refine: call make_mesh() first");
+    }
+    NEPTUNE::EOS_Error err = igen_->make_local_refine(cont);
+    if (err != NEPTUNE::EOS_Error::good) {
+        throw std::runtime_error(
+            "EOS_IGen_py::make_local_refine: EOS_IGen::make_local_refine failed "
+            "(error code = " + std::to_string(static_cast<int>(err))
+            + ") -- check that set_quality() was called with a property available in the base"
+        );
+    }
+}
+
 void EOS_IGen_py::write_med(const std::string& file_name) {
     if (!mesh_built_) {
         throw std::runtime_error("EOS_IGen_py::write_med: call make_mesh() first");

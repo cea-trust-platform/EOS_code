@@ -223,12 +223,17 @@ def generate_mesh_igen(
       exists in EOS_IGen or EOS_Mesh (Modules/EOS_IGen/Src/EOS_Mesh.*) --
       the mesh is always regular (constant step) in p and T. Same logic as
       above: value explicitly rejected rather than ignored.
-    - **Adaptive refinement not exposed**: EOS_IGen separately offers
-      quality-criterion-driven refinement (set_quality, compute_qualities,
-      make_local_refine, make_global_refine, class EOS_IGen_QI): this
-      function does not expose it (only make_mesh's level_max is, value -1
-      only tested). Use the C++ API directly, or extend EOS_IGen_py, for
-      that need.
+    - **Adaptive refinement not wrapped by this convenience function**:
+      EOS_IGen separately offers quality-criterion-driven refinement
+      (set_quality, make_local_refine, make_global_refine), now exposed
+      directly as EOS_IGen_py methods (unlike generate_mesh_igen, which
+      only ever passes level_max=-1, i.e. no refinement). For a refined
+      mesh, build the EOS_IGen_py object by hand instead of calling this
+      function: EOS_IGen_py(method, reference) -> set_extremum -> make_mesh
+      (level_max >= 1) -> [set_list_properties] -> set_quality(...) ->
+      make_global_refine() or make_local_refine() -> write_med. See
+      EOS/api_python_interpolateur/eos_py_demo_interpolateur.ipynb for a
+      worked example.
     - **(p,T) domain only, not (p,h) directly**: even though the mesh ends
       up stored in (p,h), bounds must be given in (p,T) --
       EOS_IGen::make_mesh_ph exists on the C++ side for a direct (p,h) mesh

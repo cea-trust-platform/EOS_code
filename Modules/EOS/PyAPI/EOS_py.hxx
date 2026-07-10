@@ -85,13 +85,15 @@ private:
 // interpolation mesh over a rectangular (p,T) domain and writes it to a
 // .med base readable by EOS_py("EOS_Ipp", file_name) (cf. EOS_py above).
 //
-// This exposes only the "regular mesh" workflow already used by the
-// project's own C++ mesh-generation tools (e.g.
-// Modules/EOS_IGen/Tests/C++/main.cxx, EOSIGenTest): set_extremum ->
-// make_mesh -> [set_list_properties] -> write_med. EOS_IGen's adaptive,
-// quality-driven refinement (EOS_IGen_QI, set_quality,
-// make_local_refine/make_global_refine, compute_qualities) is NOT exposed
-// here -- use the C++ API directly for that, or extend this wrapper.
+// This exposes the same workflow already used by the project's own C++
+// mesh-generation tools (e.g. Modules/EOS_IGen/Tests/C++/main.cxx,
+// EOSIGenTest): set_extremum -> make_mesh -> [set_list_properties] ->
+// write_med for a regular mesh, or set_extremum -> make_mesh(level_max) ->
+// [set_list_properties] -> set_quality(...) -> make_global_refine() /
+// make_local_refine() -> write_med for a quality-driven adaptively refined
+// one. compute_qualities() itself is not exposed separately: it is called
+// internally by make_global_refine/make_local_refine, exactly as in the
+// C++ API.
 //
 // EOS_IGen only ever builds a mesh in the (p, T) plane (cf.
 // EOS_IGen::set_extremum(p_min, p_max, T_min, T_max) and ::make_mesh in
@@ -126,6 +128,43 @@ public:
     // < 2, or if the underlying EOS_IGen::make_mesh call fails (e.g. a
     // corner falls outside the fluid model's valid domain).
     void make_mesh(int nb_mesh_p, int nb_mesh_h, int level_max = -1);
+
+    // Defines a mesh-refinement quality criterion, consumed by
+    // make_global_refine()/make_local_refine(): at each candidate node (or
+    // cell center, depending on type), the criterion compares the current
+    // EOS_Ipp interpolated value of `property` to the real fluid model's
+    // value, and flags the mesh as "not good enough" wherever the
+    // difference exceeds limit_qi. May be called several times to combine
+    // several criteria (all must pass). Must be called after make_mesh().
+    //   property : e.g. "T", "rho", "mu" -- any property in the base.
+    //   type     : "centre" (evaluate at cell centers) or "node" (at nodes).
+    //   is_abs   : 1 for an absolute threshold on |Ipp - real|, 0 for a
+    //              relative threshold on |Ipp - real| / |real|.
+    //   limit_qi : the threshold itself.
+    void set_quality(const std::string& property, const std::string& type,
+                      int is_abs, double limit_qi);
+
+    // Iteratively adds nodes UNIFORMLY over the whole mesh (uniform
+    // halving of every cell) until every quality criterion set via
+    // set_quality() is satisfied everywhere, or the level_max passed to
+    // make_mesh() is reached. Must be called after make_mesh() and at
+    // least one set_quality() call. Throws if the underlying call fails
+    // (e.g. no quality criterion set, or a quality property not available
+    // in the base).
+    void make_global_refine();
+
+    // Iteratively adds nodes only WHERE the quality criteria fail (as
+    // opposed to make_global_refine's uniform refinement), until satisfied
+    // or level_max is reached -- cheaper than global refinement for a
+    // criterion that only fails in a small region (e.g. near a steep
+    // gradient). cont=true (default) also adds "continuity nodes" at the
+    // boundary between refined and unrefined regions, which EOS_Ipp
+    // expects for a conforming mesh; cont=false produces a non-conforming
+    // mesh, used by this project's own tests specifically to exercise
+    // EOS_Ipp's handling of that case -- prefer cont=true unless you have
+    // a specific reason not to. Must be called after make_mesh() and at
+    // least one set_quality() call.
+    void make_local_refine(bool cont = true);
 
     // Writes the final .med interpolation base (plus its index.eos entry)
     // under $USER_EOS_DATA/EOS_Ipp/<file_name>.med. Throws if make_mesh()
