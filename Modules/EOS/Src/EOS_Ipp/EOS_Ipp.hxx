@@ -383,6 +383,11 @@ namespace NEPTUNE_EOS
               EOS_Error load_med_scalar(EOS_Med &med);
 
               int get_cellidx(double &p, double &h) const;
+              // Real (med) cells whose p-range contains p, in ascending h order:
+              // the cell list scanned by the h(p,T) inversions. Each identified
+              // cell is used to jump directly over its own h-extent, so the cost
+              // is O(number of real cells in the p-column), not O(nb_h_virtual).
+              std::vector<unsigned int> get_cells_containing_p(double p) const;
               int get_segmidx(double &p, int sat_lim) const;
               void linear_interpolator(double p, double &res) const;
               double linear_interpolator(double p, EOS_Fields &segmval) const;

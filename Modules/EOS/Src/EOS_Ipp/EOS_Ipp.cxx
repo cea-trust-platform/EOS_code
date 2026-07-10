@@ -27,7 +27,6 @@
 #include <cmath>
 #include <fstream>
 #include <iostream> // for std::cerr
-#include <set>
 #include <string>
 #include <vector>
 #define DBL_EPSILON 1e-9
@@ -1500,6 +1499,46 @@ namespace NEPTUNE_EOS
     return fnodes2phnodes[i];
   }
 
+  // Returns the real (med) cells whose p-range contains p, in ascending h
+  // order -- the cell list scanned by the h(p,T) inversions (compute_h_l_pT,
+  // compute_h_v_pT, compute_h_pT_bicubic).
+  //
+  // Instead of visiting every virtual row of the p-column (O(nb_h_virtual),
+  // which can be huge on refined bases since delta_h_f is the finest cell
+  // height), each identified cell is used to jump directly to the first
+  // virtual row above its top edge, so the cost is O(number of real cells in
+  // the column). The row index of a cell edge is recovered with the same
+  // round() as f_mesh2r_mesh, so the jump lands exactly on the grid.
+  //
+  // Note: the historical scan collected the same cells in a
+  // std::set<unsigned int>, i.e. iterated them by ascending med cell number;
+  // the h-ascending order used here can only pick a different cell in the
+  // degenerate case where several cells admit an inversion root (root exactly
+  // on a shared edge), where both orders give an equivalent h.
+  std::vector<unsigned int> EOS_Ipp::get_cells_containing_p(double p) const
+  {
+    std::vector<unsigned int> cells;
+
+    unsigned int ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // if p equal to pmax_ipp (cf. get_cellidx)
+    if (ip == nb_p_virtual)
+      ip--;
+
+    unsigned int ih = 0;
+    while (ih < nb_h_virtual)
+    {
+      unsigned int cell = fnodes2phnodes[nb_h_virtual * ip + ih];
+      cells.push_back(cell);
+
+      // Jump to the first virtual row above the top edge of this cell
+      double h_top = nodes_ph[1][corners[2 + 4 * cell]];
+      unsigned int ih_next = (unsigned int)round((h_top - hmin_ipp) / delta_h_f);
+      ih = (ih_next > ih) ? ih_next : ih + 1; // guaranteed progress
+    }
+
+    return cells;
+  }
+
   /*
    * EOS_Ipp::get_segmidx :
    *      return index of first node of segment (index in nodes_sat/lim)
@@ -1891,13 +1930,8 @@ namespace NEPTUNE_EOS
     if (has_cross_derivative)
       values[5] = rphf;
 
-    // Get all real cells containing p (same scan as the bilinear inversion)
-    std::set<unsigned int> cells_containing_p;
-    for (double h = hmin_ipp + delta_h_f / 2; h < hmax_ipp; h += delta_h_f)
-    {
-      unsigned int med_id_cell = get_cellidx(p, h);
-      cells_containing_p.insert(med_id_cell);
-    }
+    // Get all real cells containing p (same cell list as the bilinear inversion)
+    std::vector<unsigned int> cells_containing_p = get_cells_containing_p(p);
 
     for (auto med_cell : cells_containing_p)
     {
@@ -1978,13 +2012,8 @@ namespace NEPTUNE_EOS
     values[1] = hf;
     values[2] = rf;
 
-    // Get all real cells containing p   : TODO: Optimize these lines
-    std::set<unsigned int> cells_containing_p;
-    for (double h = hmin_ipp + delta_h_f / 2; h < hmax_ipp; h += delta_h_f)
-    {
-      unsigned int med_id_cell = get_cellidx(p, h);
-      cells_containing_p.insert(med_id_cell);
-    }
+    // Get all real cells containing p (ascending h order)
+    std::vector<unsigned int> cells_containing_p = get_cells_containing_p(p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
@@ -2048,13 +2077,8 @@ namespace NEPTUNE_EOS
     values[1] = hf;
     values[2] = rf;
 
-    // Get all real cells containing p
-    std::set<unsigned int> cells_containing_p;
-    for (double h = hmin_ipp + delta_h_f / 2; h < hmax_ipp; h += delta_h_f)
-    {
-      unsigned int med_id_cell = get_cellidx(p, h);
-      cells_containing_p.insert(med_id_cell);
-    }
+    // Get all real cells containing p (ascending h order)
+    std::vector<unsigned int> cells_containing_p = get_cells_containing_p(p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
