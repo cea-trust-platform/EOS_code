@@ -339,6 +339,13 @@ namespace NEPTUNE_EOS
 
               EOS_Internal_Error compute_h_l_pT(double p, double T, double &res) const;
               EOS_Internal_Error compute_h_v_pT(double p, double T, double &res) const;
+              // Inversion h(p,T) on the bicubic (Hermite patch) representation of
+              // T(p,h): used by compute_h_l_pT / compute_h_v_pT when the BICUBIC
+              // method is selected and the T derivative fields are available.
+              // Same cell-scanning strategy as the bilinear inversion (cf. report
+              // Doc/Interpolator), but the per-cell equation T(p,h) = T is cubic in
+              // h at fixed p and is solved in closed form (cf. EOS_Ipp.cxx).
+              EOS_Internal_Error compute_h_pT_bicubic(double p, double T, double &res) const;
               EOS_Internal_Error check_p_bounds_ph(double p) const;
 
               virtual EOS_Error init_model(const std::string &model_name, const std::string &fluid_name, bool switch_comp_sat, bool swch_calc_deriv_fld); // for the interpolator
@@ -389,6 +396,15 @@ namespace NEPTUNE_EOS
               // approximated locally from rows [3]/[4] (cf. EOS_Ipp.cxx).
               double bicubic_interpolator(double p, double h, EOS_Fields &cellval,
                                            bool has_cross_derivative) const;
+              // Extracts the Hermite patch data of a cell in unit-square coordinates
+              // (t along p, u along h): corner values f and derivatives ft = df/dt,
+              // fu = df/du, ftu = d2f/dt.du, scaled from the physical derivatives of
+              // cellval. Corner order: 0=(t=0,u=0), 1=(0,1), 2=(1,1), 3=(1,0). When
+              // has_cross_derivative is false, ftu is the local twist approximation
+              // (cf. EOS_Ipp.cxx). Shared by bicubic_interpolator (direct evaluation)
+              // and compute_h_pT_bicubic (inversion), so both use the same patch.
+              void bicubic_patch_data(EOS_Fields &cellval, bool has_cross_derivative,
+                                       double f[4], double ft[4], double fu[4], double ftu[4]) const;
               // Fetches f and its two first partial derivatives at the 4 corners of the
               // cell (rows 0-4), plus the stored cross derivative (row 5) if
               // fetch_cross_derivative is true.

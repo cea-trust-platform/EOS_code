@@ -24,6 +24,7 @@
 #include "EOS/API/EOS_Field.hxx"
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Config.hxx"
+#include <cmath>
 #include <fstream>
 #include <iostream> // for std::cerr
 #include <set>
@@ -88,6 +89,113 @@ namespace
       case NEPTUNE::gamma:  d2_prop = NEPTUNE::d2_gamma_d_p_d_h;  return true;
       default:              return false;
     }
+  }
+
+  // Real roots of c3*x^3 + c2*x^2 + c1*x + c0 = 0, returned in ascending order.
+  // Used by the bicubic h(p,T) inversion (the per-cell equation T(p,h) = T is
+  // cubic in h at fixed p).
+  //
+  // Closed form (Cardano, trigonometric method for the three-real-root case);
+  // a leading coefficient is treated as zero when negligible w.r.t. the largest
+  // coefficient magnitude, degrading gracefully to the quadratic/linear case
+  // (the linear case is exactly the bilinear inversion equation). A fully
+  // degenerate equation (all coefficients negligible: e.g. saturation plateau
+  // where T does not depend on h) reports no isolated root. Each closed-form
+  // root is polished by a residual-guarded Newton step to reduce roundoff.
+  // Returns the number of real roots stored in roots[] (0 to 3).
+  int cubic_real_roots(double c3, double c2, double c1, double c0, double roots[3])
+  {
+    double scale = fabs(c3);
+    if (fabs(c2) > scale) scale = fabs(c2);
+    if (fabs(c1) > scale) scale = fabs(c1);
+    if (fabs(c0) > scale) scale = fabs(c0);
+    if (scale <= 0.)
+      return 0;
+    const double eps_coef = 1.e-12 * scale;
+
+    int nb = 0;
+    if (fabs(c3) <= eps_coef)
+    {
+      if (fabs(c2) <= eps_coef)
+      {
+        // Linear equation: c1*x + c0 = 0
+        if (fabs(c1) <= eps_coef)
+          return 0; // constant equation: no isolated root
+        roots[nb++] = -c0 / c1;
+      }
+      else
+      {
+        // Quadratic equation: numerically stable form avoiding cancellation
+        double disc = c1 * c1 - 4. * c2 * c0;
+        if (disc < 0.)
+          return 0;
+        double sq = sqrt(disc);
+        double q = -0.5 * (c1 + (c1 >= 0. ? sq : -sq));
+        roots[nb++] = q / c2;
+        roots[nb++] = (fabs(q) > 0.) ? c0 / q : q / c2;
+      }
+    }
+    else
+    {
+      // General cubic: normalize to monic form, then depress with x = y - a/3
+      double a = c2 / c3, b = c1 / c3, c = c0 / c3;
+      double pdep = b - a * a / 3.;
+      double qdep = 2. * a * a * a / 27. - a * b / 3. + c;
+      double shift = -a / 3.;
+      double delta = 0.25 * qdep * qdep + pdep * pdep * pdep / 27.;
+
+      if (delta > 0.)
+      {
+        // One real root (Cardano)
+        double sq = sqrt(delta);
+        roots[nb++] = cbrt(-0.5 * qdep + sq) + cbrt(-0.5 * qdep - sq) + shift;
+      }
+      else if (pdep < 0.)
+      {
+        // Three real roots (possibly repeated): trigonometric method
+        double r = 2. * sqrt(-pdep / 3.);
+        double arg = 3. * qdep / (pdep * r);
+        if (arg > 1.) arg = 1.;
+        if (arg < -1.) arg = -1.;
+        double theta = acos(arg) / 3.;
+        const double two_pi_3 = 2. * M_PI / 3.;
+        roots[nb++] = r * cos(theta) + shift;
+        roots[nb++] = r * cos(theta - two_pi_3) + shift;
+        roots[nb++] = r * cos(theta + two_pi_3) + shift;
+      }
+      else
+      {
+        // delta <= 0 with pdep >= 0 forces pdep = qdep = 0: triple root
+        roots[nb++] = shift;
+      }
+    }
+
+    // Newton polish (kept only if it reduces the residual)
+    for (int i = 0; i < nb; i++)
+    {
+      double x = roots[i];
+      double fx = ((c3 * x + c2) * x + c1) * x + c0;
+      double dfx = (3. * c3 * x + 2. * c2) * x + c1;
+      if (fabs(dfx) > 0.)
+      {
+        double xn = x - fx / dfx;
+        double fxn = ((c3 * xn + c2) * xn + c1) * xn + c0;
+        if (fabs(fxn) < fabs(fx))
+          roots[i] = xn;
+      }
+    }
+
+    // Ascending order (at most 3 values)
+    for (int i = 0; i < nb - 1; i++)
+      for (int j = i + 1; j < nb; j++)
+        if (roots[j] < roots[i])
+        {
+          double tmp = roots[i];
+          roots[i] = roots[j];
+          roots[j] = tmp;
+        }
+
+    return nb;
   }
 }
 
@@ -1102,8 +1210,8 @@ namespace NEPTUNE_EOS
     return res;
   }
 
-  double EOS_Ipp::bicubic_interpolator(double p, double h, EOS_Fields &cellval,
-                                        bool has_cross_derivative) const
+  void EOS_Ipp::bicubic_patch_data(EOS_Fields &cellval, bool has_cross_derivative,
+                                    double f[4], double ft[4], double fu[4], double ftu[4]) const
   {
     // cellval rows (4 corners each, same corner ordering as bilinear_interpolator):
     //   [0] = p           [1] = h
@@ -1115,45 +1223,56 @@ namespace NEPTUNE_EOS
     // Corners in local unit-square coordinates (t=pcal, u=hcal):
     //   node0=(0,0)  node1=(0,1)  node2=(1,1)  node3=(1,0)
     //
-    // Bicubic (tensor-product cubic Hermite) patch : matches f, df/dp and df/dh
-    // exactly at the 4 corners. When the true cross derivative d2f/dp.dh is
-    // available from the database (EOS_IGen), it is used directly. Otherwise it
-    // is approximated locally (from the same 4 corners) as the average of the
-    // two available one-sided finite differences of df/dp and df/dh across the
-    // cell -- an approximation (not the exact mixed partial) but one that
-    // requires no extra data and converges as the mesh is refined.
+    // The physical derivatives are scaled to the unit square
+    // (d/dt = d/dp * dp, d/du = d/dh * dh). When the true cross derivative
+    // d2f/dp.dh is available from the database (EOS_IGen), it is used directly.
+    // Otherwise it is approximated locally (from the same 4 corners) as the
+    // average of the two available one-sided finite differences of df/dp and
+    // df/dh across the cell -- an approximation (not the exact mixed partial)
+    // but one that requires no extra data and converges as the mesh is refined.
 
-    double p0 = cellval[0][0], p3 = cellval[0][3];
-    double h0 = cellval[1][0], h1 = cellval[1][1];
-    double dp = p3 - p0;
-    double dh = h1 - h0;
+    double dp = cellval[0][3] - cellval[0][0];
+    double dh = cellval[1][1] - cellval[1][0];
 
-    double pcal = (p - p0) / dp;
-    double hcal = (h - h0) / dh;
+    for (unsigned short i = 0; i < 4; i++)
+    {
+      f[i] = cellval[2][i];
+      ft[i] = cellval[3][i] * dp;
+      fu[i] = cellval[4][i] * dh;
+    }
 
-    double f00 = cellval[2][0], f01 = cellval[2][1], f11 = cellval[2][2], f10 = cellval[2][3];
-
-    // Scale the physical derivatives to the unit square (d/dt = d/dp * dp, d/du = d/dh * dh)
-    double ft00 = cellval[3][0] * dp, ft01 = cellval[3][1] * dp, ft11 = cellval[3][2] * dp, ft10 = cellval[3][3] * dp;
-    double fu00 = cellval[4][0] * dh, fu01 = cellval[4][1] * dh, fu11 = cellval[4][2] * dh, fu10 = cellval[4][3] * dh;
-
-    double ftu00, ftu01, ftu11, ftu10;
     if (has_cross_derivative)
     {
       // d2F/dt.du = d2f/dp.dh * dp * dh
-      ftu00 = cellval[5][0] * dp * dh;
-      ftu01 = cellval[5][1] * dp * dh;
-      ftu11 = cellval[5][2] * dp * dh;
-      ftu10 = cellval[5][3] * dp * dh;
+      for (unsigned short i = 0; i < 4; i++)
+        ftu[i] = cellval[5][i] * dp * dh;
     }
     else
     {
       // Local twist estimate (see note above)
-      ftu00 = 0.5 * ((ft01 - ft00) + (fu10 - fu00));
-      ftu01 = 0.5 * ((ft01 - ft00) + (fu11 - fu01));
-      ftu11 = 0.5 * ((ft11 - ft10) + (fu11 - fu01));
-      ftu10 = 0.5 * ((ft11 - ft10) + (fu10 - fu00));
+      ftu[0] = 0.5 * ((ft[1] - ft[0]) + (fu[3] - fu[0]));
+      ftu[1] = 0.5 * ((ft[1] - ft[0]) + (fu[2] - fu[1]));
+      ftu[2] = 0.5 * ((ft[2] - ft[3]) + (fu[2] - fu[1]));
+      ftu[3] = 0.5 * ((ft[2] - ft[3]) + (fu[3] - fu[0]));
     }
+  }
+
+  double EOS_Ipp::bicubic_interpolator(double p, double h, EOS_Fields &cellval,
+                                        bool has_cross_derivative) const
+  {
+    // Bicubic (tensor-product cubic Hermite) patch : matches f, df/dp and df/dh
+    // exactly at the 4 corners (cf. bicubic_patch_data for the patch data and
+    // the handling of the cross derivative).
+
+    double p0 = cellval[0][0], p3 = cellval[0][3];
+    double h0 = cellval[1][0], h1 = cellval[1][1];
+
+    double pcal = (p - p0) / (p3 - p0);
+    double hcal = (h - h0) / (h1 - h0);
+
+    // Patch data in unit-square coordinates: corners 0=(0,0), 1=(0,1), 2=(1,1), 3=(1,0)
+    double f[4], ft[4], fu[4], ftu[4];
+    bicubic_patch_data(cellval, has_cross_derivative, f, ft, fu, ftu);
 
     // Cubic Hermite basis functions on [0,1]: H0/H1 for values, K0/K1 for slopes
     double t = pcal, t2 = t * t, t3 = t2 * t;
@@ -1169,10 +1288,10 @@ namespace NEPTUNE_EOS
     double Ku0 = u3 - 2. * u2 + u;
     double Ku1 = u3 - u2;
 
-    double res = Ht0 * Hu0 * f00 + Ht0 * Hu1 * f01 + Ht1 * Hu1 * f11 + Ht1 * Hu0 * f10
-               + Kt0 * Hu0 * ft00 + Kt0 * Hu1 * ft01 + Kt1 * Hu1 * ft11 + Kt1 * Hu0 * ft10
-               + Ht0 * Ku0 * fu00 + Ht0 * Ku1 * fu01 + Ht1 * Ku1 * fu11 + Ht1 * Ku0 * fu10
-               + Kt0 * Ku0 * ftu00 + Kt0 * Ku1 * ftu01 + Kt1 * Ku1 * ftu11 + Kt1 * Ku0 * ftu10;
+    double res = Ht0 * Hu0 * f[0] + Ht0 * Hu1 * f[1] + Ht1 * Hu1 * f[2] + Ht1 * Hu0 * f[3]
+               + Kt0 * Hu0 * ft[0] + Kt0 * Hu1 * ft[1] + Kt1 * Hu1 * ft[2] + Kt1 * Hu0 * ft[3]
+               + Ht0 * Ku0 * fu[0] + Ht0 * Ku1 * fu[1] + Ht1 * Ku1 * fu[2] + Ht1 * Ku0 * fu[3]
+               + Kt0 * Ku0 * ftu[0] + Kt0 * Ku1 * ftu[1] + Kt1 * Ku1 * ftu[2] + Kt1 * Ku0 * ftu[3];
 
     return res;
   }
@@ -1720,9 +1839,125 @@ namespace NEPTUNE_EOS
     return INVERT_h_pT;
   }
 
+  // Bicubic counterpart of the bilinear h(p,T) inversion of compute_h_l_pT /
+  // compute_h_v_pT (cf. report Doc/Interpolator for the bilinear methodology,
+  // reused here): all real cells whose p-range contains p are scanned, and in
+  // each of them the equation T(p,h) = T is solved on the very same Hermite
+  // patch as bicubic_interpolator, so that a subsequent direct evaluation
+  // T(p, h(p,T)) in BICUBIC mode gives back the input T.
+  //
+  // How the bicubic coefficients are used: at fixed p (fixed t = pcal), the
+  // tensor-product patch collapses to a 1D cubic Hermite polynomial in
+  // u = hcal on [0,1],
+  //     T(u) = A0*Hu0(u) + A1*Hu1(u) + D0*Ku0(u) + D1*Ku1(u)
+  // where A0/A1 (edge values) and D0/D1 (edge u-derivatives) are obtained by a
+  // 1D Hermite evaluation in t along the two edges u=0 and u=1. Written in
+  // monomial form this is a cubic equation in u, solved in closed form
+  // (cf. cubic_real_roots); a root is accepted when it lies in [0,1] with the
+  // same boundary tolerance (DBL_EPSILON) as the bilinear inversion, and the
+  // first (smallest) valid root of the first matching cell is returned, as in
+  // the bilinear version. Degenerate cells in u (saturation plateau: T almost
+  // independent of h) yield no isolated root and are skipped -- the bilinear
+  // inversion skips them too (0/0 division -> NaN -> rejected by the [0,1]
+  // test).
+  //
+  // Assumptions at the domain borders: no extrapolation is attempted; if no
+  // scanned cell yields a root in [0,1], INVERT_h_pT is returned, exactly like
+  // the bilinear inversion.
+  EOS_Internal_Error EOS_Ipp::compute_h_pT_bicubic(double p, double T, double &res) const
+  {
+    EOS_Internal_Error ierr;
+    bool has_cross_derivative = has_bicubic_cross_derivative_data(NEPTUNE::T);
+
+    EOS_Fields values(has_cross_derivative ? 6 : 5);
+
+    ArrOfDouble ap(4);
+    ArrOfDouble ah(4);
+    ArrOfDouble ar(4);
+    ArrOfDouble arp(4);
+    ArrOfDouble arh(4);
+    ArrOfDouble arph(4);
+    EOS_Field pf("P", "p", NEPTUNE::p, ap);
+    EOS_Field hf("h", "h", NEPTUNE::h, ah);
+    EOS_Field rf("T", "T", NEPTUNE::T, ar);
+    EOS_Field rpf("d_p", "d_p", NEPTUNE::T, arp);       // scratch: dT/dp |h at the 4 corners
+    EOS_Field rhf("d_h", "d_h", NEPTUNE::T, arh);       // scratch: dT/dh |p at the 4 corners
+    EOS_Field rphf("d2_ph", "d2_ph", NEPTUNE::T, arph); // scratch: d2T/dp.dh at the 4 corners
+    values[0] = pf;
+    values[1] = hf;
+    values[2] = rf;
+    values[3] = rpf;
+    values[4] = rhf;
+    if (has_cross_derivative)
+      values[5] = rphf;
+
+    // Get all real cells containing p (same scan as the bilinear inversion)
+    std::set<unsigned int> cells_containing_p;
+    for (double h = hmin_ipp + delta_h_f / 2; h < hmax_ipp; h += delta_h_f)
+    {
+      unsigned int med_id_cell = get_cellidx(p, h);
+      cells_containing_p.insert(med_id_cell);
+    }
+
+    for (auto med_cell : cells_containing_p)
+    {
+      ierr = get_cell_values_bicubic(med_cell, NEPTUNE::T, values, has_cross_derivative);
+
+      double pcal = (p - values[0][0]) / (values[0][3] - values[0][0]);
+
+      // Patch data in unit-square coordinates: corners 0=(0,0), 1=(0,1), 2=(1,1), 3=(1,0)
+      double f[4], ft[4], fu[4], ftu[4];
+      bicubic_patch_data(values, has_cross_derivative, f, ft, fu, ftu);
+
+      // 1D Hermite evaluation in t along the edges u=0 (corners 0,3) and u=1
+      // (corners 1,2): values A0/A1 and u-derivatives D0/D1 of T at (t,u=0/1)
+      double t = pcal, t2 = t * t, t3 = t2 * t;
+      double Ht0 = 2. * t3 - 3. * t2 + 1.;
+      double Ht1 = -2. * t3 + 3. * t2;
+      double Kt0 = t3 - 2. * t2 + t;
+      double Kt1 = t3 - t2;
+
+      double A0 = Ht0 * f[0] + Ht1 * f[3] + Kt0 * ft[0] + Kt1 * ft[3];
+      double A1 = Ht0 * f[1] + Ht1 * f[2] + Kt0 * ft[1] + Kt1 * ft[2];
+      double D0 = Ht0 * fu[0] + Ht1 * fu[3] + Kt0 * ftu[0] + Kt1 * ftu[3];
+      double D1 = Ht0 * fu[1] + Ht1 * fu[2] + Kt0 * ftu[1] + Kt1 * ftu[2];
+
+      // Monomial coefficients of T(u) - T = 0, from
+      // T(u) = A0*(2u^3-3u^2+1) + A1*(-2u^3+3u^2) + D0*(u^3-2u^2+u) + D1*(u^3-u^2)
+      double c3 = 2. * (A0 - A1) + D0 + D1;
+      double c2 = -3. * (A0 - A1) - 2. * D0 - D1;
+      double c1 = D0;
+      double c0 = A0 - T;
+
+      double uroots[3];
+      int nb_roots = cubic_real_roots(c3, c2, c1, c0, uroots);
+
+      for (int k = 0; k < nb_roots; k++)
+      {
+        double hcal = uroots[k];
+        if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
+        {
+          // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
+          res = hcal * (values[1][1] - values[1][0]) + values[1][0];
+          return EOS_Internal_Error::OK;
+        }
+      }
+    }
+
+    return EOS_Ipp::INVERT_h_pT;
+  }
+
   EOS_Internal_Error EOS_Ipp::compute_h_l_pT(double p, double T, double &res) const
   {
     //    cout << "--- compute_h_l_pT p="<<p<<" T="<<T<<endl;
+
+    // Bicubic inversion of h(p,T): only when the BICUBIC method is selected and
+    // the T first-derivative fields are available in the loaded database;
+    // otherwise the historical bilinear inversion below is used (same fallback
+    // policy as compute_prop_ph).
+    if (interp_method == BICUBIC && has_bicubic_first_derivative_data(NEPTUNE::T))
+      return compute_h_pT_bicubic(p, T, res);
+
     EOS_Internal_Error ierr;
     double pcal, hcal, h;
     double a, b, c, d;
@@ -1786,6 +2021,13 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::compute_h_v_pT(double p, double T, double &res) const
   {
+    // Bicubic inversion of h(p,T): same policy as compute_h_l_pT above. The
+    // liquid/vapor distinction is not made here (as in the bilinear inversion,
+    // both scans cover the whole (p,h) mesh); it is handled by the caller
+    // (compute_h_pT) through the comparison with the saturation enthalpies.
+    if (interp_method == BICUBIC && has_bicubic_first_derivative_data(NEPTUNE::T))
+      return compute_h_pT_bicubic(p, T, res);
+
     EOS_Internal_Error ierr;
     double pcal, hcal, h;
     double a, b, c, d;
