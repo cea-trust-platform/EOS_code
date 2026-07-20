@@ -303,9 +303,9 @@ int main()
     EOS_Ipp &ipp_bilinear_expl = dynamic_cast<EOS_Ipp &>(obj_bilinear_expl.fluid());
 
     // ---- 1. Method selection ----
-    if (ipp_default.get_interpolation_method() != EOS_Ipp::BILINEAR)
+    if (ipp_default.get_interpolation_method() != EOS_Ipp::BICUBIC)
     {
-      cerr << "FAILED selection: no suffix should default to BILINEAR" << endl;
+      cerr << "FAILED selection: no suffix should default to BICUBIC" << endl;
       test_failed = true;
     }
     if (ipp_bicubic.get_interpolation_method() != EOS_Ipp::BICUBIC)
@@ -335,14 +335,18 @@ int main()
     ipp_default.get_h_max(hmax);
 
     // ---- 2. Exact corner point (pmin,hmin) : both methods must reproduce the
-    //         database value read directly from the mesh node ----
+    //         database value read directly from the mesh node. Also checks
+    //         that the no-suffix default (now BICUBIC) is not just flagged
+    //         as such but numerically matches the explicit BICUBIC path ----
     {
-      double T_ref, T_bilin, T_bicub;
+      double T_ref, T_bilin, T_bicub, T_default;
       EOS_Error e_ref = obj_eos.compute_T_ph(pmin, hmin, T_ref);
-      EOS_Internal_Error e_bilin = ipp_default.compute_T_ph(pmin, hmin, T_bilin);
+      EOS_Internal_Error e_bilin = ipp_bilinear_expl.compute_T_ph(pmin, hmin, T_bilin);
       EOS_Internal_Error e_bicub = ipp_bicubic.compute_T_ph(pmin, hmin, T_bicub);
+      EOS_Internal_Error e_default = ipp_default.compute_T_ph(pmin, hmin, T_default);
 
-      if (e_ref != EOS_Error::good || e_bilin != EOS_Internal_Error::OK || e_bicub != EOS_Internal_Error::OK)
+      if (e_ref != EOS_Error::good || e_bilin != EOS_Internal_Error::OK ||
+          e_bicub != EOS_Internal_Error::OK || e_default != EOS_Internal_Error::OK)
       {
         cerr << "FAILED exact corner: computation error (ref=" << e_ref << ")" << endl;
         test_failed = true;
@@ -352,6 +356,12 @@ int main()
       {
         cerr << "FAILED exact corner: T ref=" << T_ref << " bilinear=" << T_bilin
              << " bicubic=" << T_bicub << endl;
+        test_failed = true;
+      }
+      else if (!in_relative_range(T_default, T_bicub, REL_TOL_EXACT))
+      {
+        cerr << "FAILED exact corner: no-suffix default (T=" << T_default
+             << ") does not match the explicit BICUBIC evaluation (T=" << T_bicub << ")" << endl;
         test_failed = true;
       }
     }
@@ -370,7 +380,7 @@ int main()
 
         double T_ref, T_bilin, T_bicub;
         EOS_Error e_ref = obj_eos.compute_T_ph(p, h, T_ref);
-        EOS_Internal_Error e_bilin = ipp_default.compute_T_ph(p, h, T_bilin);
+        EOS_Internal_Error e_bilin = ipp_bilinear_expl.compute_T_ph(p, h, T_bilin);
         EOS_Internal_Error e_bicub = ipp_bicubic.compute_T_ph(p, h, T_bicub);
 
         if (e_ref == EOS_Error::good && e_bilin == EOS_Internal_Error::OK && e_bicub == EOS_Internal_Error::OK)
@@ -416,7 +426,7 @@ int main()
     {
       double dummy;
       double p_oob = pmax + (pmax - pmin);
-      EOS_Internal_Error e_bilin_oob = ipp_default.compute_T_ph(p_oob, hmin, dummy);
+      EOS_Internal_Error e_bilin_oob = ipp_bilinear_expl.compute_T_ph(p_oob, hmin, dummy);
       EOS_Internal_Error e_bicub_oob = ipp_bicubic.compute_T_ph(p_oob, hmin, dummy);
 
       if (e_bilin_oob != EOS_Ipp::OUT_OF_BOUNDS || e_bicub_oob != EOS_Ipp::OUT_OF_BOUNDS)

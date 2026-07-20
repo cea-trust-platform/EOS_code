@@ -75,9 +75,9 @@ def main():
 
     ipp = eos_py.EOS_py("EOS_Ipp", MESH_NAME)
 
-    # --- 2. Methode d'interpolation par defaut = bilineaire -----------------
-    check(ipp.get_interpolation_method() == "bilinear",
-          "get_interpolation_method() par defaut doit valoir 'bilinear' (obtenu '{}')".format(
+    # --- 2. Methode d'interpolation par defaut = bicubique -------------------
+    check(ipp.get_interpolation_method() == "bicubic",
+          "get_interpolation_method() par defaut doit valoir 'bicubic' (obtenu '{}')".format(
               ipp.get_interpolation_method()))
 
     # --- 3. Presence des donnees necessaires au mode bicubique --------------

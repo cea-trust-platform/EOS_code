@@ -288,10 +288,10 @@ namespace NEPTUNE_EOS
   // Extracts an optional ":bicubic"/":bilinear" suffix appended to the file name
   // (e.g. "raffinement_local_Cathare2:bicubic"), so callers can pick the
   // interpolation method through the usual EOS("EOS_Ipp", "...") factory string.
-  // Absence of suffix preserves the historical behaviour (BILINEAR).
+  // By default , the interpolation method is BICUBIC.
   void EOS_Ipp::extract_interpolation_method(AString &file_name)
   {
-    interp_method = BILINEAR;
+    interp_method = BICUBIC;
     char *raw = file_name.aschar();
     char *sep = strrchr(raw, ':');
     if (sep == NULL)
