@@ -79,6 +79,19 @@ namespace NEPTUNE_EOS
       EOS_Error compute_perfect_gas(const EOS_Fields& input,
                                     EOS_Fields& r,
                                     EOS_Error_Field& errfield) const;
+
+
+      void compute_mixture_thermal_terms(
+                                    double P,       
+                                    double T,       
+                                    double TSS7K,     
+                                    double TSS7,      
+                                    const ArrOfDouble& c,
+                                    double& cpsum,    
+                                    double& dcpsum,    
+                                    double& xrsum,     
+                                    double& hi7sum,    
+                                    double& valp) const;
     public:
       virtual EOS_Internal_Error calcamix_T_ph(double p, double h, double&
                                      , double C_0
