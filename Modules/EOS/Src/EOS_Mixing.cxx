@@ -341,7 +341,8 @@ namespace NEPTUNE_EOS
     int iP    = 0 ;
     int iT    = 0 ;
     int ih    = 0 ;
-    int ic[6] ; for (int i=0; i<7; i++)  ic[i] = -1 ;
+    int ic[6];
+std::fill(std::begin(ic), std::end(ic), -1);
     int idim  = 0 ;
 
     for (int i_in=0; i_in<nb_infields; i_in++)
@@ -1488,7 +1489,7 @@ namespace NEPTUNE_EOS
     double valh=1.e0;
 
     EOS_Internal_Error err;
-    double Tcrit,tsat;
+    double Tcrit;
     err = (*this)[0].fluid().get_T_crit(Tcrit);
     err = (*this)[0].fluid().compute_T_sat_p(700000,TSS7K);
     
