@@ -1615,7 +1615,6 @@ std::fill(std::begin(ic), std::end(ic), -1);
         err = (*this)[i].fluid().compute_cp_pT(Pv,Tg,cpi); //TODO modify this function as independant of P&T
         err = (*this)[i].fluid().compute_d_cp_d_T_p_pT(Pv,Tg,dcpi); //TODO verifié di c'est d_p_T ou d_T_p
         err = (*this)[i].fluid().compute_h_pT(Pv,TSS7K,hi);
-      for(int i=1; i<nb_fluids; i++)
         cpsum += c[i]*cpi;
         dcpsum += c[i]*dcpi;
         xrsum += c[i]*(*this)[i].fluid().get_prxr();
