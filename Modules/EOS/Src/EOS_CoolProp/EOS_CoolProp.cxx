@@ -1198,10 +1198,10 @@ namespace NEPTUNE_EOS
   EOS_CoolProp::compute_sigma_pT(double p, double T, double& r) const
   {
     long err_ = 0;
-
+    (void)T;
     r = _update_and_compute_from_pair(abstract_state_handle_,
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
+                                      p, sat_quality_,
+                                      CoolProp::PQ_INPUTS,
                                       CoolProp::isurface_tension,
                                       err_);
 
