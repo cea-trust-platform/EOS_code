@@ -1457,7 +1457,44 @@ std::fill(std::begin(ic), std::end(ic), -1);
     return err ;
   }
 
+  void EOS_Mixing::compute_mixture_thermal_terms(
+      double P,          // Pression [Pa]
+      double T,          // Température 
+      double TSS7K,      // Température de référence saturation 7 bar [K]
+      double TSS7,       // Température de référence saturation 7 bar [°C]
+      const ArrOfDouble& c,
+      double& cpsum,     // Σ(ci * cpi) [J/kg/K]
+      double& dcpsum,    // Σ(ci * dcp/dT)
+      double& xrsum,     // Σ(ci * prxr)
+      double& hi7sum,    // Σ(ci * (hi - cpi*TSS7))
+      double& valp       // Critère de convergence pression
+  ) const
+  {
+      double cpi = 0.0;
+      double dcpi = 0.0;
+      double hi = 0.0;
 
+      cpsum  = 0.0;
+      dcpsum = 0.0;
+      xrsum  = 0.0;
+      hi7sum = 0.0;
+
+      const double epspp = 1.e3;
+
+      for (int i = 1; i < nb_fluids; ++i)
+      {
+          (*this)[i].fluid().compute_cp_pT(P, T, cpi);
+          (*this)[i].fluid().compute_d_cp_d_T_p_pT(P, T, dcpi);
+          (*this)[i].fluid().compute_h_pT(P, TSS7K, hi);
+
+          cpsum  += c[i] * cpi;
+          dcpsum += c[i] * dcpi;
+          xrsum  += c[i] * (*this)[i].fluid().get_prxr();
+          hi7sum += c[i] * hi - c[i] * cpi * TSS7;
+
+          valp = std::min(valp, epspp * c[i]);
+      }
+  }
 
 //
 // Methodes algorithme cathare
@@ -1471,46 +1508,36 @@ std::fill(std::begin(ic), std::end(ic), -1);
   {
     ArrOfDouble c(nb_fluids) ;
     totab(c, c_0 ,c_1, c_2, c_3, c_4, c_5) ;
-    //
-    // compute cpsum=sum(Ci*cpi)
-    //
-    // init    hi7sum=sum(Ci*hi)
-    //
-    double TSS7K= 0.e0;
-    double cpsum=0.e0;
-    double dcpsum=0.e0;
-    double xrsum=0.e0;
-    double hi7sum=0.e0;
-    double cpi=0.e0;
-    double dcpi= 0.e0;
-    double hi= 0.0e0; //par defaut 2766.46e+3 en ref
+    EOS_Internal_Error err;
+
+    //  Ref temp 
+    double Tcrit = 0.0;
+    double TSS7K = 0.0;
+
+    (*this)[0].fluid().get_T_crit(Tcrit);
+
+    //  TSS7K : T sat 7bar in Kelvin
+    (*this)[0].fluid().compute_T_sat_p(700000, TSS7K);
+
+   
+    //  TSS7 °C (rounded to 2 decimal places for Cathar consistency)
+    double TSS7 = std::round((TSS7K - 273.15) * 100.0) / 100.0;
+
     double epspp=1.e3;
     double valp=epspp;
     double valh=1.e0;
 
-    EOS_Internal_Error err;
-    double Tcrit;
-    err = (*this)[0].fluid().get_T_crit(Tcrit);
-    err = (*this)[0].fluid().compute_T_sat_p(700000,TSS7K);
-    
-   /// double TSS7 = TSS7K - 273.15; //Tsat P=7bar in °C Water : TSS7= 164.930E+0;
-    double TSS7 = std::round((TSS7K - 273.15) * 100.0) / 100.0;  // je met a 2 decimale pour correspondre à cathare TMP
+    //  Mixing Coef 
+    double cpsum  = 0.0;
+    double dcpsum = 0.0;
+    double xrsum  = 0.0;
+    double hi7sum = 0.0; 
 
-    for(int i=1; i<nb_fluids; i++)
-      {
-     //   err = (*this)[i].fluid().compute_T_ph(P,h,Tinit);
-        err = (*this)[i].fluid().compute_cp_pT(P,Tcrit,cpi); 
-        err = (*this)[i].fluid().compute_d_cp_d_T_p_pT(P,Tcrit,dcpi); 
-        err = (*this)[i].fluid().compute_h_pT(P,TSS7K,hi);
-        cpsum += c[i]*cpi;
-        dcpsum += c[i]*dcpi;
-        xrsum += c[i]*(*this)[i].fluid().get_prxr();
-        hi7sum += c[i]*hi - c[i]*cpi*TSS7; 
-        valp = std::min(valp, epspp*c[i]);
-      }
-    
-     // set_pretreatment_sum(P,Tactuel,c,hi,T_sat_7bar,epspp,cpsum,dcpsum,xrsum,hi7sum,valp)
-
+    // Init compute terms : 
+    // input : P init, Tcrit Fluid, TSS7K, TSS7 [°C], c, valp
+    // output : cpsum, dcpsum, xrsum, hi7sum
+    compute_mixture_thermal_terms(P, Tcrit, TSS7K, TSS7, c, cpsum, dcpsum, xrsum, hi7sum, valp );
+        
     //
     // init Pv
     //
@@ -1554,6 +1581,8 @@ std::fill(std::begin(ic), std::end(ic), -1);
     double atv = (h - zerhvs*c[0] - hi7sum) / zdeno;
     hv = acpv*atv + zerhvs;
     xhv[0]=hv;
+
+
     // Newton method
     // Resolution of F(Pv, hv)=0 and G(Pv,hv)=0
     //
@@ -1563,36 +1592,33 @@ std::fill(std::begin(ic), std::end(ic), -1);
     double dhvr = 2*valh;
     double Tg, dtgpv, dtghv, rv, drvpv, drvhv;
     int k;
-    //int ierr;
+    
+    EOS_Field fin_tmp1 ("in_tmp1", "p",NEPTUNE::p, xpv);
+    EOS_Field fin_tmp2 ("in_tmp2", "h",NEPTUNE::h, xhv);
+    EOS_Field fout_tmp1 ("out_tmp1", "T",NEPTUNE::T, xtg);
+    EOS_Field fout_tmp2 ("out_tmp2", "d_T_d_p_h",NEPTUNE::d_T_d_p_h, xdtgpv);
+    EOS_Field fout_tmp3 ("out_tmp3", "d_T_d_h_p",NEPTUNE::d_T_d_h_p, xdtghv);
+    EOS_Field fout_tmp4 ("out_tmp4", "rho",NEPTUNE::rho, xrv);
+    EOS_Field fout_tmp5 ("out_tmp5", "d_rho_d_p_h",NEPTUNE::d_rho_d_p_h, xdrvpv);
+    EOS_Field fout_tmp6 ("out_tmp6", "d_rho_d_h_p",NEPTUNE::d_rho_d_h_p, xdrvhv);
+    EOS_Error_Field ferr_tmp(xerr);
+
+    EOS_Fields fsin_tmp (2);
+    fsin_tmp[0] = fin_tmp1;
+    fsin_tmp[1] = fin_tmp2;
+    EOS_Fields fsout_tmp (6);
+    fsout_tmp[0] = fout_tmp1;
+    fsout_tmp[1] = fout_tmp2;
+    fsout_tmp[2] = fout_tmp3;
+    fsout_tmp[3] = fout_tmp4;
+    fsout_tmp[4] = fout_tmp5;
+    fsout_tmp[5] = fout_tmp6;
+
+
     int nb_iter_max = 50 ;
-
-
-  //  for(k = 0; (k < nb_iter_max) && ((fabs(dpvr) > valp) || (fabs(dhvr) > valh)); k++) // Tests convergence
-  for (int K = 1; K <= 50; K++)  
-  {
-
-      EOS_Field fin_tmp1 ("in_tmp1", "p",NEPTUNE::p, xpv);
-      EOS_Field fin_tmp2 ("in_tmp2", "h",NEPTUNE::h, xhv);
-      EOS_Field fout_tmp1 ("out_tmp1", "T",NEPTUNE::T, xtg);
-      EOS_Field fout_tmp2 ("out_tmp2", "d_T_d_p_h",NEPTUNE::d_T_d_p_h, xdtgpv);
-      EOS_Field fout_tmp3 ("out_tmp3", "d_T_d_h_p",NEPTUNE::d_T_d_h_p, xdtghv);
-      EOS_Field fout_tmp4 ("out_tmp4", "rho",NEPTUNE::rho, xrv);
-      EOS_Field fout_tmp5 ("out_tmp5", "d_rho_d_p_h",NEPTUNE::d_rho_d_p_h, xdrvpv);
-      EOS_Field fout_tmp6 ("out_tmp6", "d_rho_d_h_p",NEPTUNE::d_rho_d_h_p, xdrvhv);
-      EOS_Error_Field ferr_tmp(xerr);
-
-      EOS_Fields fsin_tmp (2);
-      fsin_tmp[0] = fin_tmp1;
-      fsin_tmp[1] = fin_tmp2;
-      EOS_Fields fsout_tmp (6);
-      fsout_tmp[0] = fout_tmp1;
-      fsout_tmp[1] = fout_tmp2;
-      fsout_tmp[2] = fout_tmp3;
-      fsout_tmp[3] = fout_tmp4;
-      fsout_tmp[4] = fout_tmp5;
-      fsout_tmp[5] = fout_tmp6;
-
-        (*this)[0].fluid().compute(fsin_tmp,fsout_tmp,ferr_tmp);
+    for(k = 0; (k < nb_iter_max) && ((fabs(dpvr) > valp) || (fabs(dhvr) > valh)); k++)  
+    {
+      (*this)[0].fluid().compute(fsin_tmp,fsout_tmp,ferr_tmp);
       Pv = xpv[0];
       Tg = xtg[0];
       dtgpv = xdtgpv[0];
@@ -1601,26 +1627,7 @@ std::fill(std::begin(ic), std::end(ic), -1);
       drvpv = xdrvpv[0];
       drvhv = xdrvhv[0]; 
 
-
-      cpsum=0.e0;
-      dcpsum=0.e0;
-      xrsum=0.e0;
-      hi7sum=0.e0;
-      cpi=0.e0;
-      dcpi= 0.e0;
-      hi=2766.43E+3;
-
-      for(int i=1; i<nb_fluids; i++)
-      {
-        err = (*this)[i].fluid().compute_cp_pT(Pv,Tg,cpi); //TODO modify this function as independant of P&T
-        err = (*this)[i].fluid().compute_d_cp_d_T_p_pT(Pv,Tg,dcpi); //TODO verifié di c'est d_p_T ou d_T_p
-        err = (*this)[i].fluid().compute_h_pT(Pv,TSS7K,hi);
-        cpsum += c[i]*cpi;
-        dcpsum += c[i]*dcpi;
-        xrsum += c[i]*(*this)[i].fluid().get_prxr();
-        hi7sum += c[i]*hi - c[i]*cpi*TSS7; // pour coller au hi7sum de c2
-        valp = std::min(valp, epspp*c[i]);
-      }
+      compute_mixture_thermal_terms(Pv, Tg, TSS7K, TSS7, c, cpsum, dcpsum, xrsum, hi7sum, valp);
 
       // resolution du systeme
       double TgC = Tg-273.15;
