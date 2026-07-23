@@ -836,11 +836,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_rho_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_rho_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -848,11 +849,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_rho_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_rho_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -860,11 +862,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_u_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_u_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -872,11 +875,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_s_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_s_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -884,11 +888,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_s_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_s_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -896,11 +901,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_mu_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_mu_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -908,11 +914,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_mu_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_mu_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -920,11 +927,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_lambda_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_lambda_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -932,11 +940,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_lambda_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_lambda_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -944,11 +953,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_cp_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cp_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -956,11 +966,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_cp_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cp_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -968,11 +979,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_cv_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cv_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -980,11 +992,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_cv_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_cv_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -992,11 +1005,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_sigma_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_sigma_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1004,11 +1018,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_w_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_w_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1016,11 +1031,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_w_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_w_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1028,11 +1044,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_g_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_g_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1040,11 +1057,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_f_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_f_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1052,11 +1070,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_pr_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_pr_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1064,11 +1083,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_beta_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_beta_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1076,11 +1096,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_gamma_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_gamma_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1088,11 +1109,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_h_d_T_p :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_h_d_T_p_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
@@ -1100,11 +1122,12 @@ namespace NEPTUNE
                     }
                  return errfield.find_worst_error().generic_error();
               case NEPTUNE::d_h_d_p_T :
-                 for (int i=0; i<sz; i++)
-                    { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
-                      err = worst_internal_error(errfield[i], err);
-                      errfield.set(i, err);
-                    }
+                 if (lt == 0)
+                    for (int i=0; i<sz; i++)
+                       { EOS_Internal_Error err = compute_T_ph(pp[i],hh[i],tt[i]);
+                         err = worst_internal_error(errfield[i], err);
+                         errfield.set(i, err);
+                       }
                  for (int i=0; i<sz; i++)
                     { EOS_Internal_Error err = compute_d_h_d_p_T_pT(pp[i],tt[i],r[i]);
                       err = worst_internal_error(errfield[i], err);
