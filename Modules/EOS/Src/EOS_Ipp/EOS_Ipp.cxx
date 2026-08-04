@@ -20,6 +20,7 @@
  */
 
 #include "EOS_Ipp.hxx"
+#include "EOS_Ipp_TileCache.hxx"
 #include "EOS/API/EOS.hxx"
 #include "EOS/API/EOS_Field.hxx"
 #include "EOS/API/EOS_Fields.hxx"
@@ -258,6 +259,7 @@ namespace NEPTUNE_EOS
     {
       delete obj_fluid;
     }
+    delete tile_cache_;
   }
 
   static RegisteredClass &EOS_Ipp_create()
@@ -313,7 +315,6 @@ namespace NEPTUNE_EOS
   {
     AString desc_err;
     FluidStr = AString("unknown");
-    EOS_Error errM;
     int sz = strings.size();
     if (sz != 1)
     {
@@ -324,18 +325,35 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
     }
 
-    // directory {DATA}/EOS_Ipp : med_file
+    // directory {DATA}/EOS_Ipp : med_file (or tiled-database manifest)
     AString &file_name = strings[0];
     extract_interpolation_method(file_name);
     if (iret_eos_data_dir)
       return EOS_Error::error;
-    med_file = eos_data_dir.c_str();
-    med_file += "/EOS_Ipp/";
-    med_file += file_name;
+
+    if (EOS_Ipp_TileIndex::is_manifest(std::string(file_name.aschar())))
+      return init_tiled(file_name);
+
+    AString path = eos_data_dir.c_str();
+    path += "/EOS_Ipp/";
+    path += file_name;
+    return load_from_med_path(path);
+  }
+
+  // Historical, eager, whole-database loading body of init(const Strings&),
+  // factored out so EOS_Ipp_TileCache can reuse it, unmodified, to load one
+  // tile of a tiled database (cf. init()'s ".eosmm" manifest detection).
+  EOS_Error EOS_Ipp::load_from_med_path(const AString &full_med_path)
+  {
+    EOS_Error errM;
+    med_file = full_med_path;
 
     // get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med
+    AString base_name = full_med_path;
+    char *raw = base_name.aschar();
+    char *slash = strrchr(raw, '/');
     char *save_pt;
-    method = strtok_r(file_name.aschar(), ".", &save_pt);
+    method = strtok_r(slash ? slash + 1 : raw, ".", &save_pt);
     reference = strtok_r(NULL, ".", &save_pt);
 
     if (method == "eos_igen_qi")
@@ -351,7 +369,7 @@ namespace NEPTUNE_EOS
     {
       cerr << "Error : Open med file" << endl;
       cerr << "Error : EOS_Med::read_File" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
@@ -360,7 +378,7 @@ namespace NEPTUNE_EOS
     if (errM != EOS_Error::good)
     {
       cerr << "Error : EOS_Med::read_header" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
     AString hh = strtok(header.aschar(), ":");
@@ -370,7 +388,7 @@ namespace NEPTUNE_EOS
     errM = load_med_nodes(med);
     if (errM != EOS_Error::good)
     {
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
@@ -378,7 +396,7 @@ namespace NEPTUNE_EOS
     if (errM != EOS_Error::good)
     {
       cerr << "Error : EOS_Ipp::load_med_champ" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
@@ -388,16 +406,62 @@ namespace NEPTUNE_EOS
     {
       cerr << "Error : Close med file" << endl;
       cerr << "Error : EOS_Med::close_File" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
     // pretraitements (2D)
     if (index_conn_ph.size() != 0)
       f_mesh2r_mesh();
-    
+
     if( connect_sat.size() != 0)
       f_mesh1r_mesh();
+    return EOS_Error::ok;
+  }
+
+  // Tiled-database ("streaming") mode: file_name refers to an ".eosmm"
+  // manifest instead of a single .med file. Rather than loading a whole
+  // database eagerly like load_from_med_path(), this builds an
+  // EOS_Ipp_TileCache that lazily loads only the (p,h) tiles later actually
+  // queried through compute_prop_ph/compute_prop_p/compute_h_pT -- cf. the
+  // guards at the top of those three methods, the only places tile_cache_
+  // is consulted. The global (p,h,T) bounds are read from the manifest so
+  // that get_p_min()/get_p_max()/... (unchanged, they just read pmin/pmax/
+  // ...) keep reporting the domain of the whole tiled database, not of
+  // whichever tile happened to be loaded last.
+  int EOS_Ipp::init_tiled(AString file_name)
+  {
+    AString path = eos_data_dir.c_str();
+    path += "/EOS_Ipp/";
+    path += file_name;
+
+    const std::string suffix = (interp_method == BICUBIC) ? "bicubic" : "bilinear";
+    tile_cache_ = new EOS_Ipp_TileCache(std::string(path.aschar()), suffix);
+    if (!tile_cache_->is_valid())
+    {
+      cerr << "Error : EOS_Ipp::init : invalid tiled database manifest " << path.aschar() << endl;
+      delete tile_cache_;
+      tile_cache_ = nullptr;
+      return EOS_Error::error;
+    }
+
+    const EOS_Ipp_TileIndex &idx = tile_cache_->index();
+    pmin = idx.pmin();
+    pmax = idx.pmax();
+    hmin = idx.hmin();
+    hmax = idx.hmax();
+    tmin = idx.tmin();
+    tmax = idx.tmax();
+    pcrit = idx.pcrit();
+    hcrit = idx.hcrit();
+    tcrit = idx.tcrit();
+    pmin_ipp = pmin_cpt = pmin;
+    pmax_ipp = pmax_cpt = pmax;
+    hmin_ipp = hmin_cpt = hmin;
+    hmax_ipp = hmax_cpt = hmax;
+    tmin_ipp = tmin_cpt = tmin;
+    tmax_ipp = tmax_cpt = tmax;
+
     return EOS_Error::ok;
   }
 
@@ -1842,6 +1906,9 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::compute_h_pT(double p, double T, double &h) const
   {
+    if (tile_cache_ != nullptr)
+      return tile_cache_->compute_h_pT(p, T, h);
+
     h = NAN;
     double h_l_sat, h_v_sat, T_sat;
     EOS_Internal_Error ierr;
@@ -2112,6 +2179,9 @@ namespace NEPTUNE_EOS
   EOS_Internal_Error EOS_Ipp::compute_prop_ph(EOS_Property prop,
                                               double p, double h, double &res) const
   {
+    if (tile_cache_ != nullptr)
+      return tile_cache_->compute_prop_ph(prop, p, h, res);
+
     // changer l'acces au prop
     EOS_Internal_Error ierr;
 
@@ -2189,6 +2259,9 @@ namespace NEPTUNE_EOS
   EOS_Internal_Error EOS_Ipp::compute_prop_p(EOS_Property prop,
                                              double p, int sat_lim, double &res) const
   {
+    if (tile_cache_ != nullptr)
+      return tile_cache_->compute_prop_p(prop, p, sat_lim, res);
+
     EOS_Internal_Error ierr;
     EOS_Fields values(2);
 

@@ -65,6 +65,17 @@ if (WITH_IPP)
   set_tests_properties(EOSTestIppBicubic PROPERTIES DEPENDS      EOSIGenTest
                                                     COST         10.
                                                     ENVIRONMENT ${RUN_ENV})
+
+  # EOS_Ipp tiled ("streaming") mode: self-contained (generates its own
+  # fixtures at run time via EOS_Ipp_Tiler, cf. Modules/EOS_IGen/Src), so
+  # unlike EOSTestIpp/EOSTestIppBicubic it does not DEPENDS on EOSIGenTest.
+  message(STATUS "Add test EOSTestIppTiled")
+  add_executable (EOSTestIppTiled  "${CMAKE_CURRENT_SOURCE_DIR}/main_ipp_tiled.cxx")
+  target_include_directories(EOSTestIppTiled PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
+  target_link_libraries(EOSTestIppTiled PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
+  add_test(EOSTestIppTiled bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppTiled 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_tiled")
+  set_tests_properties(EOSTestIppTiled PROPERTIES COST        5.
+                                                   ENVIRONMENT ${RUN_ENV})
 endif (WITH_IPP)
 
 

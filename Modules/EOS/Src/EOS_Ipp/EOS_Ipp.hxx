@@ -30,9 +30,13 @@ using namespace NEPTUNE;
 
 namespace NEPTUNE_EOS
 {
+       class EOS_Ipp_TileCache; // Src/EOS_Ipp_TileCache.hxx: lazy-loaded (p,h) tile cache backing the
+                                 // "tiled database" (streaming) mode of this class, cf. init()/tile_cache_.
+
        class EOS_Ipp : public EOS_Fluid
        {
               static const AString tablename;
+              friend class EOS_Ipp_TileCache; // needs compute_prop_ph/compute_prop_p on each tile's EOS_Ipp
 
        public:
               //! Interpolation method used on the 2D (p,h) mesh for physical properties.
@@ -57,6 +61,15 @@ namespace NEPTUNE_EOS
               virtual int init(const Strings &);
               //! to initialize an implementation of EOS_Ipp with supplementary parameters
               virtual int init(const Strings &, const Strings &);
+
+              //! Loads a single, standalone .med file at an exact path, bypassing the
+              //! {DATA}/EOS_Ipp/ directory convention used by init(const Strings&).
+              //! This factors out the historical, eager, whole-database loading body of
+              //! init(const Strings&) so it can also be used by EOS_Ipp_TileCache to load
+              //! one tile of a tiled database (cf. init()'s ".eosmm" manifest detection).
+              //! Public because EOS_Ipp_TileCache constructs plain EOS_Ipp instances (one
+              //! per tile) rather than being a subclass.
+              EOS_Error load_from_med_path(const AString &full_med_path);
 
               //! Select the interpolation method to use on the 2D (p,h) mesh.
               //! Has no effect on the 1D saturation/limit curves (always linear).
@@ -362,6 +375,15 @@ namespace NEPTUNE_EOS
        private:
               static int type_Id;
               AString FluidStr;
+
+              // Non-null only in "tiled database" (streaming) mode: init() detected a
+              // ".eosmm" manifest instead of a plain .med file. When set, compute_prop_ph,
+              // compute_prop_p and compute_h_pT delegate to it instead of running their
+              // usual body against this instance's own (in that mode, unused) nodes_ph /
+              // connect_ph / ... members. NULL in the historical, whole-database mode, so
+              // every existing caller keeps the exact previous behaviour.
+              EOS_Ipp_TileCache *tile_cache_ = nullptr;
+              int init_tiled(AString file_name);
 
               ArrOfInt corners;        // list of the 4 nodes forming the corners of each cell of the
                                        // non-conforming mesh. Size: 4 * nb_cells_med_mesh
