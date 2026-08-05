@@ -18,6 +18,7 @@
 
 #include "EOS_Ipp_TileIndex.hxx"
 #include <cstddef>
+#include <string>
 
 namespace NEPTUNE_EOS
 {
@@ -55,23 +56,28 @@ namespace NEPTUNE_EOS
     EOS_Ipp *ipp() const { return ipp_; }
     const EOS_Ipp_TileDescriptor &descriptor() const { return desc_; }
 
-    //! Recency stamp, as a plain counter ticked by the owning cache on every
-    //! access. Deliberately not a clock reading: this is written once per
-    //! compute_* call on the hot path, and a steady_clock::now() there cost
-    //! more than the whole rest of the tile lookup.
-    void set_last_use(std::size_t tick) { last_use_ = tick; }
-    std::size_t last_use() const { return last_use_; }
-
     //! Resident size of the loaded tile, in bytes (0 while not loaded).
     //! Measured once at load time from the EOS_Ipp it wraps, since the
     //! arrays do not change afterwards.
     std::size_t footprint_bytes() const { return footprint_bytes_; }
 
+    // Reference counting and identity, for EOS_Ipp_TileStore only: a tile is
+    // shared by every cache that has it resident, and lives until the last of
+    // them drops it. Always called with the store's mutex held, so no atomics.
+    // Recency is deliberately *not* kept here: it is a property of one cache's
+    // usage, not of the shared tile.
+    void add_ref() { ++ref_count_; }
+    int drop_ref() { return --ref_count_; }
+    int ref_count() const { return ref_count_; }
+    void set_store_key(const std::string &key) { store_key_ = key; }
+    const std::string &store_key() const { return store_key_; }
+
   private:
     EOS_Ipp_TileDescriptor desc_;
     EOS_Ipp *ipp_ = nullptr;
-    std::size_t last_use_ = 0;
     std::size_t footprint_bytes_ = 0;
+    int ref_count_ = 0;
+    std::string store_key_;
   };
 }
 #endif /* EOS_IPP_TILE_HXX_ */

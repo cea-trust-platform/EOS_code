@@ -15,12 +15,11 @@
 
 #include "EOS_Ipp_TileCache.hxx"
 #include "EOS_Ipp_Tile.hxx"
+#include "EOS_Ipp_TileStore.hxx"
 #include "EOS_Ipp.hxx"
 
 namespace NEPTUNE_EOS
 {
-  std::mutex EOS_Ipp_TileCache::s_load_mutex;
-
   EOS_Ipp_TileCache::EOS_Ipp_TileCache(const std::string &manifest_path,
                                         const std::string &interpolation_suffix,
                                         std::size_t budget_bytes,
@@ -34,13 +33,18 @@ namespace NEPTUNE_EOS
 
     valid_ = index_.load(manifest_path);
     if (valid_)
+    {
       resident_.assign((std::size_t)index_.nb_tiles(), nullptr);
+      last_use_.assign((std::size_t)index_.nb_tiles(), 0);
+    }
   }
 
   EOS_Ipp_TileCache::~EOS_Ipp_TileCache()
   {
-    for (EOS_Ipp_Tile *tile : loaded_)
-      delete tile;
+    // Drop this cache's references; the store destroys a tile once no cache
+    // holds it any more.
+    for (int tile_id : loaded_ids_)
+      EOS_Ipp_TileStore::release(resident_[(std::size_t)tile_id]);
   }
 
   // Hot path: one bounds test, one array load, one null test, one store.
@@ -52,7 +56,7 @@ namespace NEPTUNE_EOS
     EOS_Ipp_Tile *tile = resident_[(std::size_t)tile_id];
     if (tile != nullptr)
     {
-      tile->set_last_use(++tick_);
+      last_use_[(std::size_t)tile_id] = ++tick_;
       return tile;
     }
     return acquire_miss(tile_id);
@@ -60,25 +64,16 @@ namespace NEPTUNE_EOS
 
   EOS_Ipp_Tile *EOS_Ipp_TileCache::acquire_miss(int tile_id)
   {
-    EOS_Ipp_Tile *tile = new EOS_Ipp_Tile(index_.tile(tile_id));
-    bool ok;
-    {
-      // Only the .med/HDF5 I/O is serialized: two domains needing the same
-      // tile at the same time must not open it concurrently, but once
-      // loaded every subsequent compute_* call is lock-free.
-      std::lock_guard<std::mutex> lock(s_load_mutex);
-      ok = tile->ensure_loaded(interpolation_suffix_);
-    }
-    if (!ok)
-    {
-      delete tile;
+    // Shared with every other cache in the process: this reads the .med only
+    // if no one else has the tile already (cf. EOS_Ipp_TileStore).
+    EOS_Ipp_Tile *tile = EOS_Ipp_TileStore::acquire(index_.tile(tile_id), interpolation_suffix_);
+    if (tile == nullptr)
       return nullptr;
-    }
 
     ++nb_loads_;
-    tile->set_last_use(++tick_);
+    last_use_[(std::size_t)tile_id] = ++tick_;
     resident_[(std::size_t)tile_id] = tile;
-    loaded_.push_back(tile);
+    loaded_ids_.push_back(tile_id);
     resident_bytes_ += tile->footprint_bytes();
     enforce_budget();
     return tile;
@@ -86,7 +81,7 @@ namespace NEPTUNE_EOS
 
   bool EOS_Ipp_TileCache::over_budget() const
   {
-    if (max_resident_tiles_ > 0 && loaded_.size() > max_resident_tiles_)
+    if (max_resident_tiles_ > 0 && loaded_ids_.size() > max_resident_tiles_)
       return true;
     if (budget_bytes_ > 0 && resident_bytes_ > budget_bytes_)
       return true;
@@ -95,27 +90,28 @@ namespace NEPTUNE_EOS
 
   void EOS_Ipp_TileCache::enforce_budget()
   {
-    // Called only when a tile was just loaded; the scan for the least
+    // Called only when a tile was just acquired; the scan for the least
     // recently used victim is paid here rather than by keeping an MRU order
     // up to date on every access.
-    while (over_budget() && loaded_.size() > 1)
+    while (over_budget() && loaded_ids_.size() > 1)
     {
       std::size_t victim_k = 0;
-      for (std::size_t k = 1; k < loaded_.size(); ++k)
+      for (std::size_t k = 1; k < loaded_ids_.size(); ++k)
       {
-        if (loaded_[k]->last_use() < loaded_[victim_k]->last_use())
+        if (last_use_[(std::size_t)loaded_ids_[k]] < last_use_[(std::size_t)loaded_ids_[victim_k]])
           victim_k = k;
       }
 
-      EOS_Ipp_Tile *victim = loaded_[victim_k];
-      if (victim->last_use() == tick_)
-        break; // the tile we just loaded is the only candidate: keep it
+      const int victim_id = loaded_ids_[victim_k];
+      if (last_use_[(std::size_t)victim_id] == tick_)
+        break; // the tile we just acquired is the only candidate: keep it
 
+      EOS_Ipp_Tile *victim = resident_[(std::size_t)victim_id];
       resident_bytes_ -= victim->footprint_bytes();
-      resident_[(std::size_t)victim->descriptor().id] = nullptr;
-      loaded_[victim_k] = loaded_.back();
-      loaded_.pop_back();
-      delete victim;
+      resident_[(std::size_t)victim_id] = nullptr;
+      loaded_ids_[victim_k] = loaded_ids_.back();
+      loaded_ids_.pop_back();
+      EOS_Ipp_TileStore::release(victim);
       ++nb_evictions_;
     }
     // A single tile larger than the whole budget stays resident: refusing to

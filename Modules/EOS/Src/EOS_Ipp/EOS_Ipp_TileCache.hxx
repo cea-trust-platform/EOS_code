@@ -27,9 +27,16 @@ namespace NEPTUNE_EOS
 {
   class EOS_Ipp_Tile;
 
-  //! Per-EOS_Ipp-instance tile cache: lazily loads the (p,h) tiles a tiled
-  //! EOS_Ipp database is split into, keeps the most recently used ones
-  //! resident (LRU, bounded by max_resident_tiles), and evicts the rest.
+  //! Per-EOS_Ipp-instance tile cache: decides which (p,h) tile a query
+  //! belongs to, keeps the ones this instance is using resident within a
+  //! budget, and evicts the least recently used beyond it.
+  //!
+  //! What it does *not* own is the tiles themselves. Those live in the
+  //! process-wide EOS_Ipp_TileStore and are shared by every cache: a cache
+  //! holds a reference for each tile it has resident and drops it on
+  //! eviction. So "resident in this cache" is a per-instance decision, while
+  //! "loaded in memory" is a process-wide fact, and N OpenMP domains working
+  //! on the same region read each tile once and hold one copy of it.
   //!
   //! Threading model: this class is deliberately *not* internally
   //! synchronized for its compute_* hot path. In this codebase OpenMP is
@@ -38,13 +45,10 @@ namespace NEPTUNE_EOS
   //! EOS_Ipp_TileCache) -- so a given cache is only ever touched by the one
   //! thread that owns it, and no lock is needed to call compute_prop_ph /
   //! compute_prop_p / compute_h_pT concurrently with another domain's cache.
-  //! The one piece of state that *is* genuinely shared across domains is the
-  //! underlying .med/HDF5 files on disk: two domains can legitimately need
-  //! the same tile at the same time. To stay safe without knowing whether
-  //! the MED/HDF5 libraries linked in are built thread-safe,
-  //! EOS_Ipp_Tile::ensure_loaded() calls are serialized process-wide via
-  //! s_load_mutex -- held only for the (rare) duration of a tile load, never
-  //! during compute calls.
+  //! Several caches may be reading the *same* shared tile at that moment,
+  //! which is safe because a loaded tile is immutable (cf. EOS_Ipp_TileStore).
+  //! Only acquiring and releasing a tile takes the store's mutex, which also
+  //! serializes the .med/HDF5 reads, MED not being known to be thread-safe.
   class EOS_Ipp_TileCache
   {
   public:
@@ -80,7 +84,7 @@ namespace NEPTUNE_EOS
     // above the number of distinct tiles a run touches means thrashing.
     std::size_t nb_loads() const { return nb_loads_; }
     std::size_t nb_evictions() const { return nb_evictions_; }
-    std::size_t nb_resident() const { return loaded_.size(); }
+    std::size_t nb_resident() const { return loaded_ids_.size(); }
     std::size_t resident_bytes() const { return resident_bytes_; }
     std::size_t budget_bytes() const { return budget_bytes_; }
 
@@ -104,12 +108,15 @@ namespace NEPTUNE_EOS
 
     // Residency is a flat array indexed by tile id -- one load and a null
     // test to route a point -- rather than a hash lookup plus a list splice
-    // per call. Recency is a counter stamped on the tile, and the victim is
-    // found by a scan of the (few) loaded tiles when a load actually needs
-    // room; evictions are rare next to hits, so paying there instead of on
-    // every single access is the cheaper trade.
-    std::vector<EOS_Ipp_Tile *> resident_; // size nb_tiles, null where not loaded
-    std::vector<EOS_Ipp_Tile *> loaded_;   // the non-null entries of resident_, unordered
+    // per call. Recency is a counter, in a parallel array because the tile
+    // objects themselves are shared with the other caches of the process
+    // (cf. EOS_Ipp_TileStore) and each cache has its own idea of what it used
+    // last. The victim is found by scanning the (few) resident tiles when a
+    // load actually needs room; evictions are rare next to hits, so paying
+    // there instead of on every access is the cheaper trade.
+    std::vector<EOS_Ipp_Tile *> resident_; // size nb_tiles, null where not resident here
+    std::vector<std::size_t> last_use_;    // size nb_tiles, parallel to resident_
+    std::vector<int> loaded_ids_;          // ids of the non-null entries, unordered
     std::size_t tick_ = 0;
 
     // Reused across compute_h_pT calls so the column scan allocates nothing
@@ -120,7 +127,7 @@ namespace NEPTUNE_EOS
     std::size_t nb_loads_ = 0;
     std::size_t nb_evictions_ = 0;
 
-    static std::mutex s_load_mutex;
+    
   };
 }
 #endif /* EOS_IPP_TILECACHE_HXX_ */
