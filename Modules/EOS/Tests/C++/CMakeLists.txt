@@ -77,6 +77,15 @@ if (WITH_IPP)
   set_tests_properties(EOSTestIppTiled PROPERTIES COST        5.
                                                    ENVIRONMENT ${RUN_ENV})
 
+  # Performance bench and value-regression harness. Not registered as a ctest
+  # test: it is a measuring instrument, run by hand around a change
+  # (--dump before, --check after), and its numbers only mean something when
+  # the machine is otherwise idle.
+  message(STATUS "Add tool eos_ipp_bench")
+  add_executable (eos_ipp_bench  "${CMAKE_CURRENT_SOURCE_DIR}/main_ipp_bench.cxx")
+  target_include_directories(eos_ipp_bench PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
+  target_link_libraries(eos_ipp_bench PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
+
   # Concurrency regression: one EOS_Ipp instance per thread, single-file and
   # tiled, results compared against the serial run. Needs OpenMP to mean
   # anything (without it the test still builds and runs, serially).
