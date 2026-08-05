@@ -17,7 +17,7 @@
 #define EOS_IPP_TILE_HXX_
 
 #include "EOS_Ipp_TileIndex.hxx"
-#include <chrono>
+#include <cstddef>
 
 namespace NEPTUNE_EOS
 {
@@ -55,28 +55,17 @@ namespace NEPTUNE_EOS
     EOS_Ipp *ipp() const { return ipp_; }
     const EOS_Ipp_TileDescriptor &descriptor() const { return desc_; }
 
-    void touch() { last_access_ = std::chrono::steady_clock::now(); }
-    std::chrono::steady_clock::time_point last_access() const { return last_access_; }
-
-    //! Pinning keeps a tile out of the LRU eviction pool while it is in use
-    //! by the batch of points currently being dispatched by the cache.
-    void pin() { ++pin_count_; }
-    void unpin()
-    {
-      if (pin_count_ > 0)
-        --pin_count_;
-    }
-    bool is_pinned() const { return pin_count_ > 0; }
-
-    //! Rough memory footprint, used by EOS_Ipp_TileCache to enforce a
-    //! tile-count (or, in a later iteration, a byte) budget.
-    std::size_t footprint_hint() const { return 1; }
+    //! Recency stamp, as a plain counter ticked by the owning cache on every
+    //! access. Deliberately not a clock reading: this is written once per
+    //! compute_* call on the hot path, and a steady_clock::now() there cost
+    //! more than the whole rest of the tile lookup.
+    void set_last_use(std::size_t tick) { last_use_ = tick; }
+    std::size_t last_use() const { return last_use_; }
 
   private:
     EOS_Ipp_TileDescriptor desc_;
     EOS_Ipp *ipp_ = nullptr;
-    int pin_count_ = 0;
-    std::chrono::steady_clock::time_point last_access_ = std::chrono::steady_clock::now();
+    std::size_t last_use_ = 0;
   };
 }
 #endif /* EOS_IPP_TILE_HXX_ */

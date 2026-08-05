@@ -28,32 +28,33 @@ namespace NEPTUNE_EOS
         max_resident_tiles_(max_resident_tiles > 0 ? max_resident_tiles : 1)
   {
     valid_ = index_.load(manifest_path);
+    if (valid_)
+      resident_.assign((std::size_t)index_.nb_tiles(), nullptr);
   }
 
   EOS_Ipp_TileCache::~EOS_Ipp_TileCache()
   {
-    for (EOS_Ipp_Tile *tile : mru_)
+    for (EOS_Ipp_Tile *tile : loaded_)
       delete tile;
   }
 
+  // Hot path: one bounds test, one array load, one null test, one store.
   EOS_Ipp_Tile *EOS_Ipp_TileCache::acquire(int tile_id)
   {
-    if (tile_id < 0)
+    if (tile_id < 0 || (std::size_t)tile_id >= resident_.size())
       return nullptr;
 
-    auto found = lookup_.find(tile_id);
-    if (found != lookup_.end())
+    EOS_Ipp_Tile *tile = resident_[(std::size_t)tile_id];
+    if (tile != nullptr)
     {
-      EOS_Ipp_Tile *tile = *(found->second);
-      if (found->second != mru_.begin())
-      {
-        mru_.splice(mru_.begin(), mru_, found->second);
-        found->second = mru_.begin();
-      }
-      tile->touch();
+      tile->set_last_use(++tick_);
       return tile;
     }
+    return acquire_miss(tile_id);
+  }
 
+  EOS_Ipp_Tile *EOS_Ipp_TileCache::acquire_miss(int tile_id)
+  {
     EOS_Ipp_Tile *tile = new EOS_Ipp_Tile(index_.tile(tile_id));
     bool ok;
     {
@@ -70,32 +71,34 @@ namespace NEPTUNE_EOS
     }
 
     ++nb_loads_;
-    tile->touch();
-    mru_.push_front(tile);
-    lookup_[tile_id] = mru_.begin();
+    tile->set_last_use(++tick_);
+    resident_[(std::size_t)tile_id] = tile;
+    loaded_.push_back(tile);
     enforce_budget();
     return tile;
   }
 
   void EOS_Ipp_TileCache::enforce_budget()
   {
-    while (mru_.size() > max_resident_tiles_)
+    // Called only when a tile was just loaded, so at most one tile over
+    // budget per call; the scan for the least recently used one is paid here
+    // rather than by keeping an MRU order up to date on every access.
+    while (loaded_.size() > max_resident_tiles_)
     {
-      auto victim_it = mru_.end();
-      for (auto rit = mru_.rbegin(); rit != mru_.rend(); ++rit)
+      std::size_t victim_k = 0;
+      for (std::size_t k = 1; k < loaded_.size(); ++k)
       {
-        if (!(*rit)->is_pinned())
-        {
-          victim_it = std::next(rit).base();
-          break;
-        }
+        if (loaded_[k]->last_use() < loaded_[victim_k]->last_use())
+          victim_k = k;
       }
-      if (victim_it == mru_.end())
-        break; // every resident tile is pinned: over budget, but nothing evictable right now
 
-      EOS_Ipp_Tile *victim = *victim_it;
-      lookup_.erase(victim->descriptor().id);
-      mru_.erase(victim_it);
+      EOS_Ipp_Tile *victim = loaded_[victim_k];
+      if (victim->last_use() == tick_)
+        break; // the tile we just loaded is the only candidate: keep it
+
+      resident_[(std::size_t)victim->descriptor().id] = nullptr;
+      loaded_[victim_k] = loaded_.back();
+      loaded_.pop_back();
       delete victim;
       ++nb_evictions_;
     }

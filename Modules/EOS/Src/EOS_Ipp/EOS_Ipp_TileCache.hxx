@@ -19,8 +19,6 @@
 #include "EOS_Ipp_TileIndex.hxx"
 #include "EOS/API/EOS_Error.hxx"
 #include "EOS/API/EOS_properties.hxx"
-#include <list>
-#include <unordered_map>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -70,14 +68,16 @@ namespace NEPTUNE_EOS
     // Telemetry, useful to size max_resident_tiles / the (p,h) tiling grid.
     std::size_t nb_loads() const { return nb_loads_; }
     std::size_t nb_evictions() const { return nb_evictions_; }
-    std::size_t nb_resident() const { return mru_.size(); }
+    std::size_t nb_resident() const { return loaded_.size(); }
 
   private:
-    // Resolves tile_id to a loaded, MRU-touched, EOS_Ipp_Tile*; loads it on
-    // first access and evicts the least-recently-used non-pinned tile(s) if
-    // that pushes residency over max_resident_tiles_. Returns nullptr if
-    // tile_id < 0 (out of the tiled domain) or the load failed.
+    // Resolves tile_id to a loaded EOS_Ipp_Tile*, stamping it as the most
+    // recently used; loads it on first access and evicts if that pushes
+    // residency over max_resident_tiles_. Returns nullptr if tile_id < 0
+    // (out of the tiled domain) or the load failed.
     EOS_Ipp_Tile *acquire(int tile_id);
+    // Out-of-line slow path of acquire(): everything but the resident hit.
+    EOS_Ipp_Tile *acquire_miss(int tile_id);
     void enforce_budget();
 
     EOS_Ipp_TileIndex index_;
@@ -85,8 +85,15 @@ namespace NEPTUNE_EOS
     std::string interpolation_suffix_;
     std::size_t max_resident_tiles_;
 
-    std::list<EOS_Ipp_Tile *> mru_; // front = most recently used
-    std::unordered_map<int, std::list<EOS_Ipp_Tile *>::iterator> lookup_; // tile_id -> position in mru_
+    // Residency is a flat array indexed by tile id -- one load and a null
+    // test to route a point -- rather than a hash lookup plus a list splice
+    // per call. Recency is a counter stamped on the tile, and the victim is
+    // found by a scan of the (few) loaded tiles when a load actually needs
+    // room; evictions are rare next to hits, so paying there instead of on
+    // every single access is the cheaper trade.
+    std::vector<EOS_Ipp_Tile *> resident_; // size nb_tiles, null where not loaded
+    std::vector<EOS_Ipp_Tile *> loaded_;   // the non-null entries of resident_, unordered
+    std::size_t tick_ = 0;
 
     // Reused across compute_h_pT calls so the column scan allocates nothing
     // per point. Safe as plain state: a cache belongs to one thread
