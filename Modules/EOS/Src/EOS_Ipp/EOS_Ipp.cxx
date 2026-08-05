@@ -1816,15 +1816,25 @@ namespace NEPTUNE_EOS
     // exactly at the 4 corners (cf. bicubic_patch_data for the patch data and
     // the handling of the cross derivative).
 
+    // Patch data in unit-square coordinates: corners 0=(0,0), 1=(0,1), 2=(1,1), 3=(1,0)
+    double f[4], ft[4], fu[4], ftu[4];
+    bicubic_patch_data(cellval, has_cross_derivative, f, ft, fu, ftu);
+    return bicubic_evaluate(p, h, cellval, f, ft, fu, ftu);
+  }
+
+  // Evaluation on a patch that has already been extracted. Separate from
+  // bicubic_interpolator so a caller holding the patch of the cell it last
+  // touched can skip rebuilding it: the patch is a property of the cell and
+  // the field, not of the point being asked for.
+  double EOS_Ipp::bicubic_evaluate(double p, double h, const EOS_Ipp_CellData &cellval,
+                                    const double f[4], const double ft[4],
+                                    const double fu[4], const double ftu[4]) const
+  {
     double p0 = cellval[0][0], p3 = cellval[0][3];
     double h0 = cellval[1][0], h1 = cellval[1][1];
 
     double pcal = (p - p0) / (p3 - p0);
     double hcal = (h - h0) / (h1 - h0);
-
-    // Patch data in unit-square coordinates: corners 0=(0,0), 1=(0,1), 2=(1,1), 3=(1,0)
-    double f[4], ft[4], fu[4], ftu[4];
-    bicubic_patch_data(cellval, has_cross_derivative, f, ft, fu, ftu);
 
     // Cubic Hermite basis functions on [0,1]: H0/H1 for values, K0/K1 for slopes
     double t = pcal, t2 = t * t, t3 = t2 * t;
@@ -2059,6 +2069,16 @@ namespace NEPTUNE_EOS
   {
     static thread_local std::vector<unsigned int> scratch;
     return scratch;
+  }
+
+  // The last cell compute_prop_ph interpolated in, on this thread
+  // (cf. EOS_Ipp_CellCache). thread_local for the same reason as
+  // column_scratch(), and keyed on the instance because one thread alternates
+  // between the tiles of a tiled database.
+  static EOS_Ipp_CellCache &cell_cache()
+  {
+    static thread_local EOS_Ipp_CellCache cache;
+    return cache;
   }
 
   // returns the number of the actual cell containing (p, h), or -1 when the
@@ -2806,7 +2826,6 @@ namespace NEPTUNE_EOS
     // also available, it is used in place of the local finite-difference twist
     // estimate (cf. bicubic_interpolator) -- its absence alone never causes a
     // fallback to bilinear as long as the first derivatives are present.
-    EOS_Ipp_CellData values;
 
     // One lookup for the three questions this used to answer with two switch
     // statements and up to four range-checked pointer-vector reads, per point.
@@ -2814,23 +2833,55 @@ namespace NEPTUNE_EOS
       return EOS_Ipp::PROP_NOT_IN_DB;
     const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
 
-    if (interp_method == BICUBIC && pl.has_first_derivatives)
+    const bool bicubic = (interp_method == BICUBIC && pl.has_first_derivatives);
+
+    // Consecutive points of a host code's batch walk its own mesh, so they
+    // land in the same interpolation cell over and over. Remembering the last
+    // one skips the gather -- four corner indices scattered across two node
+    // arrays and up to four property arrays, which is where a query spends
+    // most of its memory traffic -- and, in bicubic, the Hermite patch built
+    // from it, neither of which depends on (p,h) within the cell.
+    //
+    // thread_local, and keyed on the instance, for the same reason as
+    // column_scratch(): a loaded tile's EOS_Ipp is shared between the caches
+    // of different threads, so the cache cannot live in the object.
+    EOS_Ipp_CellCache &cache = cell_cache();
+    if (cache.owner == this && cache.cell == index && cache.prop == (int)prop
+        && cache.bicubic == bicubic)
     {
-      const bool has_cross_derivative = pl.has_cross_derivative;
-
-      ierr = get_cell_values_bicubic(index, prop, values, has_cross_derivative);
-      if (ierr != EOS_Internal_Error::OK)
-        return ierr;
-
-      res = bicubic_interpolator(p, h, values, has_cross_derivative);
+      if (cache.ierr != EOS_Internal_Error::OK)
+        return cache.ierr;
+      res = bicubic ? bicubic_evaluate(p, h, cache.values, cache.f, cache.ft, cache.fu, cache.ftu)
+                    : bilinear_interpolator(p, h, cache.values);
       return EOS_Internal_Error::OK;
     }
 
-    ierr = get_cell_values(index, prop, values);
+    // Miss: fill the cache in place, so this costs no copy over what the
+    // non-caching version wrote into its own local anyway.
+    cache.owner   = this;
+    cache.cell    = index;
+    cache.prop    = (int)prop;
+    cache.bicubic = bicubic;
+
+    if (bicubic)
+    {
+      const bool has_cross_derivative = pl.has_cross_derivative;
+
+      cache.ierr = ierr = get_cell_values_bicubic(index, prop, cache.values, has_cross_derivative);
+      if (ierr != EOS_Internal_Error::OK)
+        return ierr;
+
+      bicubic_patch_data(cache.values, has_cross_derivative,
+                         cache.f, cache.ft, cache.fu, cache.ftu);
+      res = bicubic_evaluate(p, h, cache.values, cache.f, cache.ft, cache.fu, cache.ftu);
+      return EOS_Internal_Error::OK;
+    }
+
+    cache.ierr = ierr = get_cell_values(index, prop, cache.values);
     if (ierr != EOS_Internal_Error::OK)
       return ierr;
 
-    res = bilinear_interpolator(p, h, values);
+    res = bilinear_interpolator(p, h, cache.values);
 
     return EOS_Internal_Error::OK;
   }

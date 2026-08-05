@@ -93,6 +93,29 @@ namespace NEPTUNE_EOS
                                     *err_dh = nullptr, *err_d2 = nullptr;
        };
 
+       //! The last interpolation cell a thread touched, with the patch built
+       //! from it. Consecutive points of a host code's batch walk its own mesh
+       //! and land in the same cell over and over, so the gather -- four corner
+       //! indices scattered across two node arrays and up to four property
+       //! arrays -- and the Hermite patch derived from it are worth keeping
+       //! between calls. Neither depends on (p,h) inside the cell.
+       //!
+       //! Keyed on the instance as well as the cell, and held thread_local
+       //! rather than in EOS_Ipp: a loaded tile's EOS_Ipp is shared by the
+       //! caches of several threads (cf. EOS_Ipp_TileStore), and the whole
+       //! reason that sharing is safe is that the object stays immutable under
+       //! concurrent compute_* calls.
+       struct EOS_Ipp_CellCache
+       {
+              const void *owner = nullptr;
+              int  cell = -1;
+              int  prop = -1;
+              bool bicubic = false;
+              NEPTUNE::EOS_Internal_Error ierr;
+              EOS_Ipp_CellData values;
+              double f[4], ft[4], fu[4], ftu[4];
+       };
+
        class EOS_Ipp : public EOS_Fluid
        {
               static const AString tablename;
@@ -583,6 +606,13 @@ namespace NEPTUNE_EOS
               // approximated locally from rows [3]/[4] (cf. EOS_Ipp.cxx).
               double bicubic_interpolator(double p, double h, const EOS_Ipp_CellData &cellval,
                                            bool has_cross_derivative) const;
+              // The evaluation half of bicubic_interpolator, taking a patch that was
+              // already extracted. Split out so compute_prop_ph can keep the patch of
+              // the cell it last touched instead of rebuilding it per point: the patch
+              // depends on the cell and the property, not on where in it (p,h) falls.
+              double bicubic_evaluate(double p, double h, const EOS_Ipp_CellData &cellval,
+                                       const double f[4], const double ft[4],
+                                       const double fu[4], const double ftu[4]) const;
               // Extracts the Hermite patch data of a cell in unit-square coordinates
               // (t along p, u along h): corner values f and derivatives ft = df/dt,
               // fu = df/du, ftu = d2f/dt.du, scaled from the physical derivatives of

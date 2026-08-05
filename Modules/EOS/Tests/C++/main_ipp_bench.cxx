@@ -44,6 +44,8 @@
 #include "EOS/API/EOS_Std_Error_Handler.hxx"
 #include "timer.hxx"
 
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -167,6 +169,7 @@ namespace
 
   private:
     void scenario_ph(EOS &eos, const char *name, const std::vector<std::string> &props);
+    void scenario_ph_local(EOS &eos, const char *name, const std::vector<std::string> &props);
     void scenario_pT(EOS &eos, const char *name, const std::vector<std::string> &props);
     void scenario_ph_oob(EOS &eos, const char *name, const std::vector<std::string> &props);
     void scenario_scalar(EOS &eos);
@@ -250,6 +253,73 @@ namespace
     }
     r.seconds  = best;
     r.nb_calls = (long)n * nf;
+    collect(r, out, err);
+    results_.push_back(r);
+  }
+
+  // Same request as scenario_ph, but with the spatial locality a solver
+  // actually has. The uniformly random points of the other scenarios are the
+  // worst case for anything that remembers the last cell: with 200000 points
+  // scattered over a refined mesh, consecutive points are almost never in the
+  // same one. A host code does not work that way -- it walks its own mesh, and
+  // neighbouring cells of the flow sit close together in (p,h) -- so both
+  // patterns have to be measured, and an optimisation that helps one must be
+  // checked not to hurt the other.
+  //
+  // The field here is a smooth sweep (a slow loop across the domain) with a
+  // little noise on top, which keeps the points moving without teleporting
+  // them.
+  void Bench::scenario_ph_local(EOS &eos, const char *name, const std::vector<std::string> &props)
+  {
+    const int n  = opt_.nb_points;
+    const int nf = (int)props.size();
+
+    std::vector<double> p((std::size_t)n), h((std::size_t)n);
+    {
+      Lcg rng(97531ULL);
+      const double p0 = pmin_ + 0.05 * (pmax_ - pmin_), p1 = pmax_ - 0.05 * (pmax_ - pmin_);
+      const double h0 = hmin_ + 0.05 * (hmax_ - hmin_), h1 = hmax_ - 0.05 * (hmax_ - hmin_);
+      const double period = 5000.;
+      for (int i = 0; i < n; i++)
+      {
+        const double u = 0.5 * (1. + sin(2. * M_PI * (double)i / period));
+        const double v = 0.5 * (1. + cos(2. * M_PI * (double)i / (period * 1.7)));
+        const double jp = 0.002 * (rng.next01() - 0.5);
+        const double jh = 0.002 * (rng.next01() - 0.5);
+        p[(std::size_t)i] = p0 + (p1 - p0) * std::min(1., std::max(0., u + jp));
+        h[(std::size_t)i] = h0 + (h1 - h0) * std::min(1., std::max(0., v + jh));
+      }
+    }
+
+    ArrOfDouble pd(n, &p[0]), hd(n, &h[0]);
+    EOS_Field pf("p", "p", NEPTUNE::p, pd);
+    EOS_Field hf("h", "h", NEPTUNE::h, hd);
+
+    std::vector<ArrOfDouble> out_data((std::size_t)nf);
+    EOS_Fields out(nf);
+    for (int f = 0; f < nf; f++)
+    {
+      out_data[(std::size_t)f].resize(n);
+      out[f] = EOS_Field(props[(std::size_t)f].c_str(), props[(std::size_t)f].c_str(),
+                         out_data[(std::size_t)f]);
+    }
+    ArrOfInt err_data(n);
+    EOS_Error_Field err(err_data);
+
+    Result r;
+    r.name = name;
+    double best = 0.;
+    for (int it = 0; it < opt_.nb_repeat; it++)
+    {
+      Timer t;
+      t.start();
+      eos.compute(pf, hf, out, err);
+      t.stop();
+      if (it == 0 || t.elapsed() < best) best = t.elapsed();
+    }
+    r.seconds  = best;
+    r.nb_calls = (long)n * nf;
+    r.note     = "spatially coherent points, as a solver produces";
     collect(r, out, err);
     results_.push_back(r);
   }
@@ -441,6 +511,8 @@ namespace
     else
       std::cout << "  (skipping phN_oob: no reference model " << opt_.model
                 << "/" << opt_.fluid << ")" << std::endl;
+
+    scenario_ph_local(eos, "phN_loc", many);
 
     return true;
   }
