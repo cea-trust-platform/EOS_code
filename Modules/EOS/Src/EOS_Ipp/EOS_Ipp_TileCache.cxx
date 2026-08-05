@@ -79,6 +79,21 @@ namespace NEPTUNE_EOS
     return tile;
   }
 
+  std::size_t EOS_Ipp_TileCache::estimated_capacity_tiles() const
+  {
+    if (max_resident_tiles_ > 0 && budget_bytes_ == 0)
+      return max_resident_tiles_;
+
+    if (loaded_ids_.empty() || resident_bytes_ == 0)
+      return 0; // nothing loaded yet: no basis for an average tile size
+
+    const std::size_t average = resident_bytes_ / loaded_ids_.size();
+    std::size_t capacity = (average > 0) ? budget_bytes_ / average : 0;
+    if (max_resident_tiles_ > 0 && max_resident_tiles_ < capacity)
+      capacity = max_resident_tiles_;
+    return capacity;
+  }
+
   bool EOS_Ipp_TileCache::over_budget() const
   {
     if (max_resident_tiles_ > 0 && loaded_ids_.size() > max_resident_tiles_)

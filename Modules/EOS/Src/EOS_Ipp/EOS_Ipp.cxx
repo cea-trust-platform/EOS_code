@@ -861,12 +861,111 @@ namespace NEPTUNE_EOS
     return err2;
   }
 
+  // Tiled mode: computes the batch with its points regrouped by tile, so each
+  // tile is used for all of its points in one go instead of being revisited
+  // as the batch wanders across the (p,h) plane.
+  //
+  // Only the *order* changes -- the permuted fields go through exactly the
+  // same EOS_Fluid::compute dispatch, and results are scattered back -- so
+  // every property kind keeps working and every value is unchanged.
+  //
+  // Worth doing only when the batch touches more tiles than the budget can
+  // hold: otherwise every tile stays resident anyway and the permutation is
+  // pure cost. Returns false when it decided not to, leaving the caller to
+  // run the batch as it came.
+  bool EOS_Ipp::compute_tiled_regrouped(const EOS_Field &pp, const EOS_Field &hh,
+                                         EOS_Fields &r, EOS_Error_Field &errfield,
+                                         EOS_Error &result) const
+  {
+    const int sz = pp.size();
+    const int nb_tiles = tile_cache_->index().nb_tiles();
+    if (sz < 2 || nb_tiles < 2)
+      return false;
+
+    // Which tile each point falls in; nb_tiles is the bucket for the points
+    // that fall outside the tiled domain, which must keep their place in the
+    // batch so their error code still lands on the right index.
+    std::vector<int> bucket((std::size_t)sz);
+    std::vector<int> count((std::size_t)nb_tiles + 1, 0);
+    int nb_distinct = 0;
+    for (int i = 0; i < sz; i++)
+    {
+      const int tile_id = tile_cache_->index().locate(pp[i], hh[i]);
+      const int b = (tile_id < 0) ? nb_tiles : tile_id;
+      bucket[(std::size_t)i] = b;
+      if (count[(std::size_t)b]++ == 0)
+        nb_distinct++;
+    }
+
+    // Skip the reordering only when the batch is known to fit: an unknown
+    // capacity (nothing loaded yet, so no idea what a tile costs) means
+    // regrouping, because the two mistakes are not symmetric. Regrouping a
+    // batch that would have fitted was measured at worst a couple of percent,
+    // and often slightly faster for the locality; not regrouping one that
+    // does not fit costs two orders of magnitude.
+    const std::size_t capacity = tile_cache_->estimated_capacity_tiles();
+    if (capacity != 0 && (std::size_t)nb_distinct <= capacity)
+      return false;
+
+    // Counting sort: tile ids are dense and small, so this is one more pass.
+    std::vector<int> offset((std::size_t)nb_tiles + 2, 0);
+    for (int b = 0; b <= nb_tiles; b++)
+      offset[(std::size_t)b + 1] = offset[(std::size_t)b] + count[(std::size_t)b];
+    std::vector<int> order((std::size_t)sz);
+    {
+      std::vector<int> cursor(offset);
+      for (int i = 0; i < sz; i++)
+        order[(std::size_t)cursor[(std::size_t)bucket[(std::size_t)i]]++] = i;
+    }
+
+    ArrOfDouble p_sorted(sz), h_sorted(sz);
+    for (int k = 0; k < sz; k++)
+    {
+      p_sorted[k] = pp[order[(std::size_t)k]];
+      h_sorted[k] = hh[order[(std::size_t)k]];
+    }
+    EOS_Field p_field(pp.get_property_title().aschar(), pp.get_property_name().aschar(),
+                      pp.get_property_number(), p_sorted);
+    EOS_Field h_field(hh.get_property_title().aschar(), hh.get_property_name().aschar(),
+                      hh.get_property_number(), h_sorted);
+
+    const int nb_out = r.size();
+    std::vector<ArrOfDouble> out_data((std::size_t)nb_out);
+    EOS_Fields out(nb_out);
+    for (int f = 0; f < nb_out; f++)
+    {
+      out_data[(std::size_t)f].resize(sz);
+      out[f] = EOS_Field(r[f].get_property_title().aschar(), r[f].get_property_name().aschar(),
+                         r[f].get_property_number(), out_data[(std::size_t)f]);
+    }
+    ArrOfInt err_data(sz);
+    EOS_Error_Field err_sorted(err_data);
+
+    result = EOS_Fluid::compute(p_field, h_field, out, err_sorted);
+
+    for (int k = 0; k < sz; k++)
+    {
+      const int i = order[(std::size_t)k];
+      for (int f = 0; f < nb_out; f++)
+        r[f][i] = out[f][k];
+      errfield.set(i, err_sorted[k]);
+    }
+    return true;
+  }
+
   EOS_Error EOS_Ipp::compute(const EOS_Field &pp,
                              const EOS_Field &hh,
                              EOS_Fields &r,
                              EOS_Error_Field &errfield) const
   {
-    EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield);
+    EOS_Error err;
+    if (tile_cache_ != nullptr && compute_tiled_regrouped(pp, hh, r, errfield, err))
+    {
+      if (err == EOS_Error::good)
+        return err;
+    }
+    else
+      err = EOS_Fluid::compute(pp, hh, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
         std::cout << "Error detected : " << err << " ;";

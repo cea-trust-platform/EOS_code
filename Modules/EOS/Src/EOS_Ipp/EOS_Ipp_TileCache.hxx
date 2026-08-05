@@ -88,6 +88,14 @@ namespace NEPTUNE_EOS
     std::size_t resident_bytes() const { return resident_bytes_; }
     std::size_t budget_bytes() const { return budget_bytes_; }
 
+    //! Roughly how many tiles the budget can hold at once, from the average
+    //! size of what is resident. Used to decide whether a batch of points is
+    //! worth regrouping by tile before computing it (cf. EOS_Ipp::compute):
+    //! a batch that fits does not need it, one that does not would otherwise
+    //! reload tiles all the way through. Returns 0 while nothing is loaded
+    //! yet, i.e. "no opinion".
+    std::size_t estimated_capacity_tiles() const;
+
   private:
     // Resolves tile_id to a loaded EOS_Ipp_Tile*, stamping it as the most
     // recently used; loads it on first access and evicts if that pushes

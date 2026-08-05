@@ -438,6 +438,16 @@ namespace NEPTUNE_EOS
               EOS_Ipp_TileCache *tile_cache_ = nullptr;
               int init_tiled(AString file_name);
 
+              // Tiled mode: runs a (p,h) batch with its points regrouped by tile,
+              // so a batch spanning more tiles than the cache can hold does not
+              // reload them all the way through. Only the order changes -- the
+              // permuted fields go through the same EOS_Fluid::compute dispatch and
+              // the results are scattered back. Returns false (having done nothing)
+              // when regrouping would not pay for itself.
+              bool compute_tiled_regrouped(const EOS_Field &pp, const EOS_Field &hh,
+                                           EOS_Fields &r, EOS_Error_Field &errfield,
+                                           EOS_Error &result) const;
+
               ArrOfInt corners;        // list of the 4 nodes forming the corners of each cell of the
                                        // non-conforming mesh. Size: 4 * nb_cells_med_mesh
                                        // vertex i of cell j -> corners[i + 4*j]
