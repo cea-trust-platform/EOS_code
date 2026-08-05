@@ -1858,13 +1858,64 @@ namespace NEPTUNE_EOS
     return EOS_Internal_Error::OK;
   }
 
+  // Saturation enthalpy on the requested side, used by compute_h_pT to check
+  // that the root it just inverted really lies in the expected phase.
+  //
+  // The historical route -- re-inverting T(p,h) = T_sat on the 2D mesh -- is
+  // kept as the primary one, so that on a single-file database this returns
+  // bit for bit what compute_h_pT used to compare against. It is however
+  // structurally unable to answer on a tiled database: inside a tile the
+  // inversion only ever sees that tile's h-slice, and the saturation enthalpy
+  // generally lives in a *different* tile of the column. So when it fails,
+  // the stored 1D saturation curve -- which every tile of a column carries a
+  // copy of -- is read instead, rather than leaving the caller to compare
+  // against a value that was never written.
+  EOS_Internal_Error EOS_Ipp::compute_h_sat_for_phase(double p, double T_sat, bool liquid,
+                                                       double &res) const
+  {
+    // Read the stored 1D saturation curve first: one segment lookup, and it
+    // tells us where the answer lies before we consider scanning for it.
+    const EOS_Property prop = liquid ? NEPTUNE::h_l_sat : NEPTUNE::h_v_sat;
+    const int sz = (int)err_segm_sat.size();
+    double from_curve = NAN;
+    bool has_curve = false;
+    if (prop >= 0 && prop < sz && err_segm_sat[prop] != nullptr)
+      has_curve = (compute_prop_p(prop, p, 0, from_curve) == EOS_Internal_Error::OK)
+                  && !std::isnan(from_curve);
+
+    // The 2D inversion at T_sat stays authoritative -- it is what a
+    // single-file database has always compared against -- but it is only
+    // worth attempting when the curve says the answer can fall inside this
+    // mesh's own h-range. On a tile it usually cannot, the saturation
+    // enthalpy of the column living in a different tile, and the attempt
+    // would be a guaranteed miss paid for by a scan of every cell of the
+    // column.
+    EOS_Internal_Error ierr = EOS_Ipp::INVERT_h_pT;
+    if (!has_curve || (from_curve >= hmin_ipp && from_curve <= hmax_ipp))
+    {
+      res = NAN;
+      ierr = liquid ? compute_h_l_pT(p, T_sat, res) : compute_h_v_pT(p, T_sat, res);
+      if (ierr == EOS_Internal_Error::OK && !std::isnan(res))
+        return ierr;
+    }
+
+    if (has_curve)
+    {
+      res = from_curve;
+      return EOS_Internal_Error::OK;
+    }
+
+    res = NAN;
+    return ierr;
+  }
+
   EOS_Internal_Error EOS_Ipp::compute_h_pT(double p, double T, double &h) const
   {
     if (tile_cache_ != nullptr)
       return tile_cache_->compute_h_pT(p, T, h);
 
     h = NAN;
-    double h_l_sat, h_v_sat, T_sat;
+    double h_sat = NAN, T_sat;
     EOS_Internal_Error ierr;
     EOS_Internal_Error ierrT, ierr1, ierr2, ierr3;
 
@@ -1876,26 +1927,23 @@ namespace NEPTUNE_EOS
     if (ierrT != EOS_Internal_Error::OK)
       return ierrT;
 
-    if (T <= T_sat)
-    {
-      ierr1 = compute_h_l_pT(p, T, h);
-      ierr2 = compute_h_l_pT(p, T_sat, h_l_sat);
-      ierr3 = worst_internal_error(ierr1, ierr2);
-      if (std::isnan(h))
-        return EOS_Internal_Error::EOS_BAD_COMPUTE; // If the computation of h failed
-      if (h <= h_l_sat)
-        return ierr3;
-    }
-    else
-    {
-      ierr1 = compute_h_v_pT(p, T, h);
-      ierr2 = compute_h_v_pT(p, T_sat, h_v_sat);
-      ierr3 = worst_internal_error(ierr1, ierr2);
-      if (std::isnan(h))
-        return ierr3; // If the computation of h failed
-      if (h >= h_v_sat)
-        return ierr3;
-    }
+    const bool liquid = (T <= T_sat);
+
+    ierr1 = liquid ? compute_h_l_pT(p, T, h) : compute_h_v_pT(p, T, h);
+    if (std::isnan(h))
+      return liquid ? EOS_Internal_Error::EOS_BAD_COMPUTE : ierr1; // the inversion itself failed
+
+    ierr2 = compute_h_sat_for_phase(p, T_sat, liquid, h_sat);
+    // Without a usable saturation enthalpy the phase check cannot be made.
+    // It used to be attempted anyway, against an uninitialized double, which
+    // accepted or rejected a perfectly good root essentially at random.
+    if (ierr2 != EOS_Internal_Error::OK || std::isnan(h_sat))
+      return ierr2;
+
+    ierr3 = worst_internal_error(ierr1, ierr2);
+    if (liquid ? (h <= h_sat) : (h >= h_sat))
+      return ierr3;
+
     return INVERT_h_pT;
   }
 

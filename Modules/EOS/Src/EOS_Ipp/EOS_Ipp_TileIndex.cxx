@@ -18,6 +18,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 
 namespace NEPTUNE_EOS
 {
@@ -73,11 +74,40 @@ namespace NEPTUNE_EOS
           return false; // GLOBAL/GRID must appear before any TILE line
 
         EOS_Ipp_TileDescriptor desc;
-        std::string rel_path;
         ls >> desc.ip >> desc.ih >> desc.bbox.pmin >> desc.bbox.pmax
-            >> desc.bbox.hmin >> desc.bbox.hmax >> rel_path;
+            >> desc.bbox.hmin >> desc.bbox.hmax;
         if (!ls)
           return false;
+
+        // Two accepted tails: "<tmin> <tmax> <file>" (current) and just
+        // "<file>" (manifests written before the per-tile T-range existed).
+        // Collecting the remaining tokens keeps both readable without
+        // having to version the line itself.
+        std::vector<std::string> tail;
+        std::string token;
+        while (ls >> token)
+          tail.push_back(token);
+
+        std::string rel_path;
+        if (tail.size() == 1)
+        {
+          rel_path = tail[0]; // no T-range recorded: leave it wide open
+        }
+        else if (tail.size() == 3)
+        {
+          desc.tmin = atof(tail[0].c_str());
+          desc.tmax = atof(tail[1].c_str());
+          rel_path = tail[2];
+          if (!(desc.tmax >= desc.tmin))
+            return false;
+        }
+        else
+        {
+          return false;
+        }
+        if (rel_path.empty())
+          return false;
+
         desc.med_file = (!rel_path.empty() && rel_path[0] == '/') ? rel_path : base_dir + rel_path;
         tiles_.push_back(desc);
       }
@@ -134,11 +164,11 @@ namespace NEPTUNE_EOS
     return -1;
   }
 
-  std::vector<int> EOS_Ipp_TileIndex::tiles_in_column(double p) const
+  void EOS_Ipp_TileIndex::tiles_in_column(double p, std::vector<int> &result) const
   {
-    std::vector<int> result;
+    result.clear();
     if (p < domain_.pmin || p > domain_.pmax)
-      return result;
+      return;
 
     int ip = (int)std::floor((p - domain_.pmin) / delta_p_);
     ip = std::min(std::max(ip, 0), nb_p_ - 1);
@@ -149,6 +179,25 @@ namespace NEPTUNE_EOS
       if (tile_id != -1)
         result.push_back(tile_id);
     }
-    return result;
+  }
+
+  void EOS_Ipp_TileIndex::tiles_in_column_for_T(double p, double T, std::vector<int> &result) const
+  {
+    result.clear();
+    if (p < domain_.pmin || p > domain_.pmax)
+      return;
+
+    int ip = (int)std::floor((p - domain_.pmin) / delta_p_);
+    ip = std::min(std::max(ip, 0), nb_p_ - 1);
+
+    // A tile's mesh was generated over a known (p,T) box, so it cannot hold a
+    // root of T(p,h) = T for a T outside that box: filtering here saves the
+    // caller from loading such tiles only to be told there is no root inside.
+    for (int ih = 0; ih < nb_h_; ++ih)
+    {
+      const int tile_id = grid_[(std::size_t)ip * nb_h_ + ih];
+      if (tile_id != -1 && tiles_[tile_id].contains_T(T))
+        result.push_back(tile_id);
+    }
   }
 }

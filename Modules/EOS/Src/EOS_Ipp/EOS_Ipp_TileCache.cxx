@@ -132,7 +132,11 @@ namespace NEPTUNE_EOS
     if (!valid_)
       return EOS_Ipp::MODEL_NOT_INIT;
 
-    const std::vector<int> column = index_.tiles_in_column(p);
+    // Only the tiles whose generation T-range can hold the root: the rest
+    // cannot answer, and visiting them would mean loading them from disk to
+    // be told so.
+    index_.tiles_in_column_for_T(p, T, column_scratch_);
+    const std::vector<int> &column = column_scratch_;
     if (column.empty())
       return EOS_Ipp::OUT_OF_BOUNDS;
 

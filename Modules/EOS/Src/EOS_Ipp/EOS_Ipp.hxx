@@ -381,6 +381,13 @@ namespace NEPTUNE_EOS
 
               EOS_Internal_Error compute_h_l_pT(double p, double T, double &res) const;
               EOS_Internal_Error compute_h_v_pT(double p, double T, double &res) const;
+              //! Saturation enthalpy on the liquid ('liquid' true) or vapor side,
+              //! as used by compute_h_pT to check the phase of the root it inverted.
+              //! Prefers the stored 1D saturation curve over re-inverting T(p,h) at
+              //! T_sat on the 2D mesh -- cheaper, and the only route that works on a
+              //! tiled database (cf. EOS_Ipp.cxx).
+              EOS_Internal_Error compute_h_sat_for_phase(double p, double T_sat, bool liquid,
+                                                         double &res) const;
               // Inversion h(p,T) on the bicubic (Hermite patch) representation of
               // T(p,h): used by compute_h_l_pT / compute_h_v_pT when the BICUBIC
               // method is selected and the T derivative fields are available.

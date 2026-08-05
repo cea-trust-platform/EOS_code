@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <mutex>
 #include <string>
+#include <vector>
 
 namespace NEPTUNE_EOS
 {
@@ -86,6 +87,11 @@ namespace NEPTUNE_EOS
 
     std::list<EOS_Ipp_Tile *> mru_; // front = most recently used
     std::unordered_map<int, std::list<EOS_Ipp_Tile *>::iterator> lookup_; // tile_id -> position in mru_
+
+    // Reused across compute_h_pT calls so the column scan allocates nothing
+    // per point. Safe as plain state: a cache belongs to one thread
+    // (cf. the class comment above).
+    std::vector<int> column_scratch_;
 
     std::size_t nb_loads_ = 0;
     std::size_t nb_evictions_ = 0;

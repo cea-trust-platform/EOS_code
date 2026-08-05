@@ -73,6 +73,7 @@ namespace NEPTUNE_EOS_IGEN
     {
       int ip, ih;
       double p0, p1, h0, h1; // declared (core) cell -- not the halo-widened generation box
+      double tmin, tmax;     // (p,T) generation box actually handed to EOS_IGen
       std::string file_name; // "{tile_basename}_{ip}_{ih}.med"
     };
   }
@@ -156,6 +157,7 @@ namespace NEPTUNE_EOS_IGEN
 
         WrittenTile w;
         w.ip = ip; w.ih = ih; w.p0 = p0; w.p1 = p1; w.h0 = h0; w.h1 = h1;
+        w.tmin = Tmin; w.tmax = Tmax; // exactly the box given to set_extremum above
         w.file_name = name.str() + ".med";
         written.push_back(w);
       }
@@ -187,9 +189,13 @@ namespace NEPTUNE_EOS_IGEN
     out << "GLOBAL " << prm.pmin << " " << prm.pmax << " " << prm.hmin << " " << prm.hmax << " "
         << Tmin_global << " " << Tmax_global << " " << pcrit << " " << hcrit << " " << tcrit << "\n";
     out << "GRID " << prm.nb_p_tiles << " " << prm.nb_h_tiles << "\n";
+    // The per-tile (tmin,tmax) is the (p,T) box the tile's mesh was generated
+    // over, so a reader can tell -- without opening the .med -- that a tile
+    // cannot hold the root of T(p,h) = T (cf. EOS_Ipp_TileIndex).
     for (const WrittenTile &w : written)
       out << "TILE " << w.ip << " " << w.ih << " "
-          << w.p0 << " " << w.p1 << " " << w.h0 << " " << w.h1 << " " << w.file_name << "\n";
+          << w.p0 << " " << w.p1 << " " << w.h0 << " " << w.h1 << " "
+          << w.tmin << " " << w.tmax << " " << w.file_name << "\n";
 
     if (!out.good())
     {

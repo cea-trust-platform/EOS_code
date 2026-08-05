@@ -33,6 +33,18 @@ namespace NEPTUNE_EOS
     int ip = -1;
     int ih = -1;
     EOS_Ipp_PH_BBox bbox;
+
+    // Temperature range the tile's mesh was actually generated over (the
+    // (p,T) box handed to EOS_IGen::set_extremum, i.e. the halo-widened
+    // cell's corner T-range plus its safety margin). A tile cannot invert
+    // T(p,h) = T for a T outside this range, so EOS_Ipp_TileCache uses it to
+    // skip -- without loading them -- the tiles of a p-column that provably
+    // cannot hold the root. Left wide open (-inf, +inf) by manifests written
+    // before the range was recorded, which simply disables the skipping.
+    double tmin = -1e300;
+    double tmax = 1e300;
+    bool contains_T(double T) const { return T >= tmin && T <= tmax; }
+
     std::string med_file; // path of the tile's standalone .med file
   };
 
@@ -48,11 +60,14 @@ namespace NEPTUNE_EOS
   //! instances (e.g. one per OpenMP domain, cf. EOS_Ipp_TileCache) without
   //! any locking.
   //!
-  //! Manifest text format (see EOS_Ipp_TileIndex.cxx for the writer/reader):
+  //! Manifest text format (writer: EOS_IGen/Src/EOS_Ipp_Tiler.cxx):
   //!   GLOBAL pmin pmax hmin hmax tmin tmax pcrit hcrit tcrit
   //!   GRID   nb_p nb_h
-  //!   TILE   ip ih pmin pmax hmin hmax med_file
+  //!   TILE   ip ih pmin pmax hmin hmax tmin tmax med_file
   //!   ...
+  //! Unknown keywords are ignored, and a TILE line may also carry the older
+  //! 7-field form without its (tmin,tmax), so a manifest written by an older
+  //! tiler still loads.
   class EOS_Ipp_TileIndex
   {
   public:
@@ -101,8 +116,17 @@ namespace NEPTUNE_EOS
     //! h(p,T) inversion, which -- exactly like EOS_Ipp::compute_h_pT on a
     //! single, untiled database -- must be able to scan the *entire*
     //! h-extent of the column, not just the one tile a given (p,h) pair
-    //! would resolve to via locate(). Empty if p is outside the domain.
-    std::vector<int> tiles_in_column(double p) const;
+    //! would resolve to via locate(). Cleared and refilled, so the caller
+    //! can keep one vector across calls. Empty if p is outside the domain.
+    void tiles_in_column(double p, std::vector<int> &result) const;
+
+    //! Same, restricted to the tiles whose recorded generation T-range can
+    //! contain T (cf. EOS_Ipp_TileDescriptor::tmin/tmax). This is what makes
+    //! the h(p,T) inversion affordable on a tiled database: without it a
+    //! query whose root is high in the column -- or which has no root at all
+    //! -- loads every tile of that column before giving up. Manifests with no
+    //! recorded T-range keep every tile, i.e. the historical full scan.
+    void tiles_in_column_for_T(double p, double T, std::vector<int> &result) const;
 
   private:
     EOS_Ipp_PH_BBox domain_;
