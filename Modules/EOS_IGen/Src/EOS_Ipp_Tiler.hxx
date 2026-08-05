@@ -52,6 +52,29 @@ namespace NEPTUNE_EOS_IGEN
     std::string quality_property = "rho";
     std::string quality_type = "centre";
     int quality_is_abs = 1;
+
+    // Generating a tile is independent of every other tile, so a grid of them
+    // is embarrassingly parallel; nb_jobs > 1 forks that many worker processes.
+    // Processes rather than threads because EOS_IGen and the MED writer are not
+    // known to be thread-safe, and a tile is written to its own file anyway.
+    int nb_jobs = 1;
+
+    // Skip tiles whose .med already exists, so an interrupted generation can be
+    // resumed instead of restarting from nothing -- on a real model a hundred
+    // tiles is a long run to lose to a failure on the ninety-ninth.
+    bool skip_existing = false;
+
+    // Report what would be generated (tiles, boxes, estimated size) and stop.
+    bool dry_run = false;
+
+    // Silence the source model's own diagnostics during generation. Probing a
+    // model at tile corners legitimately hits properties it does not implement,
+    // and the resulting stream of "Not_implemented" lines buries the tiler's
+    // own messages.
+    bool quiet_source = false;
+
+    // Progress line per tile.
+    bool verbose = true;
   };
 
   //! Generates nb_p_tiles x nb_h_tiles independent EOS_Ipp .med files
