@@ -2045,6 +2045,22 @@ namespace NEPTUNE_EOS
     }
   }
 
+  // Scratch the three h(p,T) inversions hand to get_cells_containing_p, so the
+  // column scan allocates nothing per point -- its declaration has always said
+  // the caller should hoist it, and none of them did.
+  //
+  // thread_local rather than a member of EOS_Ipp, which is what it looks like
+  // it should be. A loaded tile's EOS_Ipp is shared by every
+  // EOS_Ipp_TileCache holding that tile resident (cf. EOS_Ipp_TileStore), and
+  // those caches belong to different threads: the whole reason sharing is safe
+  // is that a loaded tile is immutable under concurrent compute_* calls. A
+  // mutable member would have quietly taken that away.
+  static std::vector<unsigned int> &column_scratch()
+  {
+    static thread_local std::vector<unsigned int> scratch;
+    return scratch;
+  }
+
   // returns the number of the actual cell containing (p, h), or -1 when the
   // point falls on no real cell (outside the meshed region, or in a hole of a
   // mesh that does not tile its bounding box)
@@ -2600,11 +2616,8 @@ namespace NEPTUNE_EOS
     EOS_Ipp_CellData values;
 
     // Get all real cells containing p (same cell list as the bilinear inversion)
-    // Reused across calls rather than built per point: the header of
-    // get_cells_containing_p has always said the caller should hoist this, and
-    // none of the three inversions did, so every point paid a vector
-    // construction plus the reallocations of growing it from empty.
-    std::vector<unsigned int> &cells_containing_p = column_scratch_;
+    // Reused across calls rather than built per point (cf. column_scratch()).
+    std::vector<unsigned int> &cells_containing_p = column_scratch();
     get_cells_containing_p(p, cells_containing_p);
 
     for (auto med_cell : cells_containing_p)
@@ -2676,11 +2689,8 @@ namespace NEPTUNE_EOS
     EOS_Property prop = NEPTUNE::T;
 
     // Get all real cells containing p (ascending h order)
-    // Reused across calls rather than built per point: the header of
-    // get_cells_containing_p has always said the caller should hoist this, and
-    // none of the three inversions did, so every point paid a vector
-    // construction plus the reallocations of growing it from empty.
-    std::vector<unsigned int> &cells_containing_p = column_scratch_;
+    // Reused across calls rather than built per point (cf. column_scratch()).
+    std::vector<unsigned int> &cells_containing_p = column_scratch();
     get_cells_containing_p(p, cells_containing_p);
 
     // read all cells containing p
@@ -2735,11 +2745,8 @@ namespace NEPTUNE_EOS
     EOS_Property prop = NEPTUNE::T;
 
     // Get all real cells containing p (ascending h order)
-    // Reused across calls rather than built per point: the header of
-    // get_cells_containing_p has always said the caller should hoist this, and
-    // none of the three inversions did, so every point paid a vector
-    // construction plus the reallocations of growing it from empty.
-    std::vector<unsigned int> &cells_containing_p = column_scratch_;
+    // Reused across calls rather than built per point (cf. column_scratch()).
+    std::vector<unsigned int> &cells_containing_p = column_scratch();
     get_cells_containing_p(p, cells_containing_p);
 
     // read all cells containing p

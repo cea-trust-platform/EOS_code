@@ -571,13 +571,6 @@ namespace NEPTUNE_EOS
               // returned by value: the h(p,T) inversions call this per point, and
               // a fresh vector per point is an allocation the caller can hoist.
               void get_cells_containing_p(double p, std::vector<unsigned int> &cells) const;
-              //! The vector the three h(p,T) inversions hand to
-              //! get_cells_containing_p. Kept as state so the scan allocates
-              //! nothing per point. Safe as plain state for the same reason
-              //! EOS_Ipp_TileCache keeps its own column_scratch_: an instance is
-              //! only ever used by the one thread that owns it (cf. the threading
-              //! note in EOS_Ipp_TileCache.hxx).
-              mutable std::vector<unsigned int> column_scratch_;
               int get_segmidx(double &p, int sat_lim) const;
               double linear_interpolator(double p, const EOS_Ipp_CellData &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;
