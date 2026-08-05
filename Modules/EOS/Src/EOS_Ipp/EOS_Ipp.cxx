@@ -1138,37 +1138,7 @@ namespace NEPTUNE_EOS
     return err;
   }
 
-  void EOS_Ipp::linear_interpolator(double p, double &res) const
-  {
-    // nodes
-    //  fields[0] = 2 p values
-    //  fields[1] = 2 property values
-    //  p = p value of the point to interpolate
-    //  res = interpolation result for the property (prop_name is in fields[1]
-
-    // Interpolation formula
-    // f(p*) = C1f1 + C2f2
-    // with :   C1,C2 : value to compute
-    //                          C1 = 1-p*
-    //                          C2 = p*
-    //                  f1,f2 : property value at C1 and C2
-    //                  p* = (p-p1)/(p2-p1)
-
-    double C1, C2;
-    double pcal;
-
-    // EOS_Fields nodes2 = *nodes;
-    EOS_Fields nodes2(3);
-
-    pcal = (p - nodes2[0].get_data().get_value_at(0)) /
-           (nodes2[0].get_data().get_value_at(1) - nodes2[0].get_data().get_value_at(0));
-    C1 = 1.e0 - pcal;
-    C2 = pcal;
-
-    res = C1 * nodes[1][0] + C2 * nodes[1][1];
-  }
-
-  double EOS_Ipp::linear_interpolator(double p, EOS_Fields &segmval) const
+  double EOS_Ipp::linear_interpolator(double p, const EOS_Ipp_CellData &segmval) const
   {
     // nodes
     //  fields[0] = 2 p values
@@ -1234,7 +1204,7 @@ namespace NEPTUNE_EOS
     res = (C1 * nodes[2][0]) + (C2 * nodes[2][1]) + (C3 * nodes[2][2]) + (C4 * nodes[2][3]);
   }
 */
-  double EOS_Ipp::bilinear_interpolator(double p, double h, EOS_Fields &cellval) const
+  double EOS_Ipp::bilinear_interpolator(double p, double h, const EOS_Ipp_CellData &cellval) const
   {
     // nodes
     //  fields[0] = 4 p values
@@ -1273,7 +1243,7 @@ namespace NEPTUNE_EOS
     return res;
   }
 
-  void EOS_Ipp::bicubic_patch_data(EOS_Fields &cellval, bool has_cross_derivative,
+  void EOS_Ipp::bicubic_patch_data(const EOS_Ipp_CellData &cellval, bool has_cross_derivative,
                                     double f[4], double ft[4], double fu[4], double ftu[4]) const
   {
     // cellval rows (4 corners each, same corner ordering as bilinear_interpolator):
@@ -1320,7 +1290,7 @@ namespace NEPTUNE_EOS
     }
   }
 
-  double EOS_Ipp::bicubic_interpolator(double p, double h, EOS_Fields &cellval,
+  double EOS_Ipp::bicubic_interpolator(double p, double h, const EOS_Ipp_CellData &cellval,
                                         bool has_cross_derivative) const
   {
     // Bicubic (tensor-product cubic Hermite) patch : matches f, df/dp and df/dh
@@ -1579,9 +1549,9 @@ namespace NEPTUNE_EOS
   // the h-ascending order used here can only pick a different cell in the
   // degenerate case where several cells admit an inversion root (root exactly
   // on a shared edge), where both orders give an equivalent h.
-  std::vector<unsigned int> EOS_Ipp::get_cells_containing_p(double p) const
+  void EOS_Ipp::get_cells_containing_p(double p, std::vector<unsigned int> &cells) const
   {
-    std::vector<unsigned int> cells;
+    cells.clear();
 
     unsigned int ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
     // if p equal to pmax_ipp (cf. get_cellidx)
@@ -1599,8 +1569,6 @@ namespace NEPTUNE_EOS
       unsigned int ih_next = (unsigned int)round((h_top - hmin_ipp) / delta_h_f);
       ih = (ih_next > ih) ? ih_next : ih + 1; // guaranteed progress
     }
-
-    return cells;
   }
 
   /*
@@ -1637,7 +1605,7 @@ namespace NEPTUNE_EOS
 
   // fetches the p, h and "property" values for the 4 points (=corners) of the actual cell
   //  idx = index in the med mesh = fnodes2phnodes[index_h + Nb_pts_h * index_p]
-  EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const
+  EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val) const
   {
 
     for (unsigned short i_node = 0; i_node < 4; i_node++)
@@ -1679,7 +1647,7 @@ namespace NEPTUNE_EOS
 
   // Fetches p, h, f and its two first derivatives (plus the stored cross
   // derivative if fetch_cross_derivative) for the 4 corners of the actual cell
-  EOS_Internal_Error EOS_Ipp::get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val,
+  EOS_Internal_Error EOS_Ipp::get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val,
                                                        bool fetch_cross_derivative) const
   {
     EOS_Property dp_prop, dh_prop;
@@ -1709,7 +1677,7 @@ namespace NEPTUNE_EOS
     return ierr;
   }
 
-  EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, EOS_Property i_prop, int sat_lim, EOS_Fields &segm_val) const
+  EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, EOS_Property i_prop, int sat_lim, EOS_Ipp_CellData &segm_val) const
   {
     if (sat_lim == 0)
     {
@@ -1747,37 +1715,29 @@ namespace NEPTUNE_EOS
     }
     unsigned int nb_cell = index_conn_ph.size() - 1;
     error_cells = new double[nb_cell];
-    EOS_Fields values(3);
+    EOS_Ipp_CellData values;
     std::vector<int> error_eos(1, 0);
     NEPTUNE::EOS_Error_Field eos_error_field(1, &error_eos[0]);
     erreurtot = 0;
     double erreur_loc;
     //double vol_loc;
     long unsigned int nb_cell_pb = 0;
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     ArrOfDouble ap_bary(1);
     ArrOfDouble ah_bary(1);
     EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
     EOS_Field h_bary("h", "h",NEPTUNE::h, ah_bary);
-    AString prop_string = get_property_name(prop); 
+    AString prop_string = get_property_name(prop);
     EOS_Field rf_fluid_bary(prop_string.aschar(), prop_string.aschar(),prop, ar_fluid_bary);
-
-    EOS_Field rf(prop_string.aschar(), prop_string.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
     // Retrieving the cell values
 
     for (unsigned int i_cell = 0; i_cell < nb_cell; i_cell++)
     {
       error_cells[i_cell] = 0;
       get_cell_values(i_cell, prop, values);
+      const double *ap = values[0];
+      const double *ah = values[1];
       // Compute barycenters and volumes
       ar_Ipp_bary[0] = 0; //
       ar_fluid_bary[0] = 0;
@@ -1834,7 +1794,7 @@ namespace NEPTUNE_EOS
 
     error_cells = new double[nb_seg];
 
-    EOS_Fields values(2);
+    EOS_Ipp_CellData values;
 
     std::vector<int> error_eos(1, 0);
     NEPTUNE::EOS_Error_Field eos_error_field(1, &error_eos[0]);
@@ -1842,18 +1802,11 @@ namespace NEPTUNE_EOS
     double erreur_loc;
     double vol_loc;
     long unsigned int nb_seg_pb = 0;
-    ArrOfDouble ap(2);
-    ArrOfDouble ah(2);
-    ArrOfDouble ar(2);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
     ArrOfDouble ap_bary(1);
     EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
     EOS_Field rf_fluid_bary(propname.aschar(), propname.aschar(),prop, ar_fluid_bary);
-    EOS_Field rf(propname.aschar(), propname.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = rf;
     std::cout << "The number of nodes is " << nodes_sat[0].size() << endl;
     std::cout << "The number of segm is " << nb_seg << endl;
     std::cout << "Pmin= " << pmin_ipp << endl;
@@ -1863,6 +1816,7 @@ namespace NEPTUNE_EOS
     {
       error_cells[i_seg] = 0;
       get_segm_values(i_seg, prop, 0, values);
+      const double *ap = values[0];
       // Compute barycenters and volumes
       ar_Ipp_bary[0] = 0; //
       ar_fluid_bary[0] = 0;
@@ -1975,30 +1929,11 @@ namespace NEPTUNE_EOS
     EOS_Internal_Error ierr;
     bool has_cross_derivative = has_bicubic_cross_derivative_data(NEPTUNE::T);
 
-    EOS_Fields values(has_cross_derivative ? 6 : 5);
-
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
-    ArrOfDouble arp(4);
-    ArrOfDouble arh(4);
-    ArrOfDouble arph(4);
-    EOS_Field pf("P", "p", NEPTUNE::p, ap);
-    EOS_Field hf("h", "h", NEPTUNE::h, ah);
-    EOS_Field rf("T", "T", NEPTUNE::T, ar);
-    EOS_Field rpf("d_p", "d_p", NEPTUNE::T, arp);       // scratch: dT/dp |h at the 4 corners
-    EOS_Field rhf("d_h", "d_h", NEPTUNE::T, arh);       // scratch: dT/dh |p at the 4 corners
-    EOS_Field rphf("d2_ph", "d2_ph", NEPTUNE::T, arph); // scratch: d2T/dp.dh at the 4 corners
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
-    values[3] = rpf;
-    values[4] = rhf;
-    if (has_cross_derivative)
-      values[5] = rphf;
+    EOS_Ipp_CellData values;
 
     // Get all real cells containing p (same cell list as the bilinear inversion)
-    std::vector<unsigned int> cells_containing_p = get_cells_containing_p(p);
+    std::vector<unsigned int> cells_containing_p;
+    get_cells_containing_p(p, cells_containing_p);
 
     for (auto med_cell : cells_containing_p)
     {
@@ -2065,22 +2000,12 @@ namespace NEPTUNE_EOS
 
     pcal = hcal = h = 0.e0;
 
-    EOS_Fields values(3);
-    AString propname = "T";
+    EOS_Ipp_CellData values;
     EOS_Property prop = NEPTUNE::T;
 
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(propname.aschar(), propname.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
-
     // Get all real cells containing p (ascending h order)
-    std::vector<unsigned int> cells_containing_p = get_cells_containing_p(p);
+    std::vector<unsigned int> cells_containing_p;
+    get_cells_containing_p(p, cells_containing_p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
@@ -2130,22 +2055,12 @@ namespace NEPTUNE_EOS
 
     pcal = hcal = h = 0.0;
 
-    EOS_Fields values(3);
-    AString prop_string = "T";
+    EOS_Ipp_CellData values;
     EOS_Property prop = NEPTUNE::T;
 
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(prop_string.aschar(), prop_string.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
-
     // Get all real cells containing p (ascending h order)
-    std::vector<unsigned int> cells_containing_p = get_cells_containing_p(p);
+    std::vector<unsigned int> cells_containing_p;
+    get_cells_containing_p(p, cells_containing_p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
@@ -2185,8 +2100,6 @@ namespace NEPTUNE_EOS
     // changer l'acces au prop
     EOS_Internal_Error ierr;
 
-    AString name_prop_string=  get_property_name(prop);
-
     ierr = check_ph_bounds(p, h);
     if (ierr == OUT_OF_BOUNDS)
       return ierr;
@@ -2200,30 +2113,11 @@ namespace NEPTUNE_EOS
     // also available, it is used in place of the local finite-difference twist
     // estimate (cf. bicubic_interpolator) -- its absence alone never causes a
     // fallback to bilinear as long as the first derivatives are present.
+    EOS_Ipp_CellData values;
+
     if (interp_method == BICUBIC && has_bicubic_first_derivative_data(prop))
     {
       bool has_cross_derivative = has_bicubic_cross_derivative_data(prop);
-      EOS_Fields values(has_cross_derivative ? 6 : 5);
-
-      ArrOfDouble ap(4);
-      ArrOfDouble ah(4);
-      ArrOfDouble ar(4);
-      ArrOfDouble arp(4);
-      ArrOfDouble arh(4);
-      ArrOfDouble arph(4);
-      EOS_Field pf("P", "p", NEPTUNE::p, ap);
-      EOS_Field hf("h", "h", NEPTUNE::h, ah);
-      EOS_Field rf(name_prop_string.aschar(), name_prop_string.aschar(), prop, ar);
-      EOS_Field rpf("d_p", "d_p", prop, arp);   // scratch: d(prop)/dp |h at the 4 corners
-      EOS_Field rhf("d_h", "d_h", prop, arh);   // scratch: d(prop)/dh |p at the 4 corners
-      EOS_Field rphf("d2_ph", "d2_ph", prop, arph); // scratch: d2(prop)/dp.dh at the 4 corners
-      values[0] = pf;
-      values[1] = hf;
-      values[2] = rf;
-      values[3] = rpf;
-      values[4] = rhf;
-      if (has_cross_derivative)
-        values[5] = rphf;
 
       ierr = get_cell_values_bicubic(index, prop, values, has_cross_derivative);
       if (ierr != EOS_Internal_Error::OK)
@@ -2232,19 +2126,6 @@ namespace NEPTUNE_EOS
       res = bicubic_interpolator(p, h, values, has_cross_derivative);
       return EOS_Internal_Error::OK;
     }
-
-    EOS_Fields values(3);
-
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(name_prop_string.aschar(), name_prop_string.aschar(),prop, ar); // transformer prop.
-    // EOS_Field rf(prop,prop,ar)
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
 
     ierr = get_cell_values(index, prop, values);
     if (ierr != EOS_Internal_Error::OK)
@@ -2263,16 +2144,7 @@ namespace NEPTUNE_EOS
       return tile_cache_->compute_prop_p(prop, p, sat_lim, res);
 
     EOS_Internal_Error ierr;
-    EOS_Fields values(2);
-
-    ArrOfDouble ap(2);
-    ArrOfDouble ar(2);
-    EOS_Field pf("P", "p", NEPTUNE::p, ap);
-    AString name_prop= get_property_name(prop);
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(),prop, ar); // transformer prop.
-
-    values[0] = pf;
-    values[1] = rf;
+    EOS_Ipp_CellData values;
 
     ierr = check_p_bounds_satlim(p);
     if (ierr == OUT_OF_BOUNDS)

@@ -33,6 +33,35 @@ namespace NEPTUNE_EOS
        class EOS_Ipp_TileCache; // Src/EOS_Ipp_TileCache.hxx: lazy-loaded (p,h) tile cache backing the
                                  // "tiled database" (streaming) mode of this class, cf. init()/tile_cache_.
 
+       //! Interpolation data of one mesh cell (4 corners) or one saturation /
+       //! limit segment (2 endpoints), as a plain block of doubles.
+       //!
+       //! Rows, for a 2D (p,h) cell:
+       //!   [0] = p           [1] = h
+       //!   [2] = f  (the interpolated property)
+       //!   [3] = d f/dp |h   [4] = d f/dh |p     (bicubic only)
+       //!   [5] = d2 f/dp.dh  (bicubic only, when the database stores it)
+       //! For a 1D saturation/limit segment only [0] = p and [1] = f are used,
+       //! with 2 valid entries instead of 4.
+       //!
+       //! This used to be an EOS_Fields of ArrOfDouble, rebuilt on every single
+       //! compute_* call. Those are Language NumberedObjects: each construction
+       //! and destruction allocates, and registers/unregisters itself in the
+       //! global OBJECTSHANDLING::Objects registry behind a process-wide mutex.
+       //! Profiling the scalar hot path put ~33% of its time in malloc/free and
+       //! ~24% in that registry, against ~4% in the interpolation itself -- and
+       //! the registry's own reallocation races made the whole path unusable
+       //! from several threads at once. None of the interpolators ever needed
+       //! more than indexed doubles, so they now take this instead.
+       struct EOS_Ipp_CellData
+       {
+              enum { NB_ROWS = 6, NB_POINTS = 4 };
+              double v[NB_ROWS][NB_POINTS];
+
+              double *operator[](int row) { return v[row]; }
+              const double *operator[](int row) const { return v[row]; }
+       };
+
        class EOS_Ipp : public EOS_Fluid
        {
               static const AString tablename;
@@ -346,9 +375,9 @@ namespace NEPTUNE_EOS
                                                 double p, int tag, double &res) const;
 
               // Retrieve the values of a cell for a given field as well as the associated ph values at the vertices.
-              EOS_Internal_Error get_cell_values(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const;
+              EOS_Internal_Error get_cell_values(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val) const;
 
-              EOS_Internal_Error get_segm_values(int idx, EOS_Property i_prop, int tag, EOS_Fields &segm_val) const;
+              EOS_Internal_Error get_segm_values(int idx, EOS_Property i_prop, int tag, EOS_Ipp_CellData &segm_val) const;
 
               EOS_Internal_Error compute_h_l_pT(double p, double T, double &res) const;
               EOS_Internal_Error compute_h_v_pT(double p, double T, double &res) const;
@@ -409,19 +438,21 @@ namespace NEPTUNE_EOS
               // the cell list scanned by the h(p,T) inversions. Each identified
               // cell is used to jump directly over its own h-extent, so the cost
               // is O(number of real cells in the p-column), not O(nb_h_virtual).
-              std::vector<unsigned int> get_cells_containing_p(double p) const;
+              // The cell list is appended to 'cells' (cleared first) rather than
+              // returned by value: the h(p,T) inversions call this per point, and
+              // a fresh vector per point is an allocation the caller can hoist.
+              void get_cells_containing_p(double p, std::vector<unsigned int> &cells) const;
               int get_segmidx(double &p, int sat_lim) const;
-              void linear_interpolator(double p, double &res) const;
-              double linear_interpolator(double p, EOS_Fields &segmval) const;
+              double linear_interpolator(double p, const EOS_Ipp_CellData &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;
-              double bilinear_interpolator(double p, double h, EOS_Fields &cellval) const;
+              double bilinear_interpolator(double p, double h, const EOS_Ipp_CellData &cellval) const;
 
               // Bicubic (Hermite patch) interpolation on the 2D (p,h) mesh.
               // cellval rows: [0]=p, [1]=h, [2]=f, [3]=d f/dp |h, [4]=d f/dh |p,
               // [5]=d2 f/dp.dh (4 corners each). Row [5] is only read when
               // has_cross_derivative is true; otherwise the cross derivative is
               // approximated locally from rows [3]/[4] (cf. EOS_Ipp.cxx).
-              double bicubic_interpolator(double p, double h, EOS_Fields &cellval,
+              double bicubic_interpolator(double p, double h, const EOS_Ipp_CellData &cellval,
                                            bool has_cross_derivative) const;
               // Extracts the Hermite patch data of a cell in unit-square coordinates
               // (t along p, u along h): corner values f and derivatives ft = df/dt,
@@ -430,12 +461,12 @@ namespace NEPTUNE_EOS
               // has_cross_derivative is false, ftu is the local twist approximation
               // (cf. EOS_Ipp.cxx). Shared by bicubic_interpolator (direct evaluation)
               // and compute_h_pT_bicubic (inversion), so both use the same patch.
-              void bicubic_patch_data(EOS_Fields &cellval, bool has_cross_derivative,
+              void bicubic_patch_data(const EOS_Ipp_CellData &cellval, bool has_cross_derivative,
                                        double f[4], double ft[4], double fu[4], double ftu[4]) const;
               // Fetches f and its two first partial derivatives at the 4 corners of the
               // cell (rows 0-4), plus the stored cross derivative (row 5) if
               // fetch_cross_derivative is true.
-              EOS_Internal_Error get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Fields &cell_val,
+              EOS_Internal_Error get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val,
                                                           bool fetch_cross_derivative) const;
 
               EOS_Internal_Error check_ph_bounds(double p, double h) const;
