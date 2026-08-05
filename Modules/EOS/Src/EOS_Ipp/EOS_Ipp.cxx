@@ -588,6 +588,10 @@ namespace NEPTUNE_EOS
 
     if( connect_sat.size() != 0)
       f_mesh1r_mesh();
+
+    // Last, so it can point at corners and at every property array in their
+    // final position (cf. build_prop_plans).
+    build_prop_plans();
     return EOS_Error::ok;
   }
 
@@ -732,6 +736,10 @@ namespace NEPTUNE_EOS
 
     if( connect_sat.size() != 0)
       f_mesh1r_mesh();
+
+    // Last, so it can point at corners and at every property array in their
+    // final position (cf. build_prop_plans).
+    build_prop_plans();
     return EOS_Error::ok;
   }
 
@@ -2135,6 +2143,70 @@ namespace NEPTUNE_EOS
   }
 
 
+  // Resolves, once per load, everything the interpolation of each property
+  // needs -- which fields exist and where their storage actually is -- so that
+  // compute_prop_ph stops re-deriving it for every point of every batch.
+  // Called at the end of a load, after f_mesh2r_mesh() has built corners.
+  void EOS_Ipp::build_prop_plans()
+  {
+    prop_plan_.assign((std::size_t)NEPTUNE::lastLimProperty + 1, EOS_Ipp_PropPlan());
+
+    node_p_  = (nodes_ph.size() > 0 && nodes_ph[0].size() > 0) ? &nodes_ph[0][0] : nullptr;
+    node_h_  = (nodes_ph.size() > 1 && nodes_ph[1].size() > 0) ? &nodes_ph[1][0] : nullptr;
+    corners_ = (corners.size() > 0) ? &corners[0] : nullptr;
+
+    const int nb_err = (int)err_cell_ph.size();
+    const int nb_val = val_prop_properties.size();
+
+    // A property counts as loaded only when both its values and its per-cell
+    // error field are there. A selective load makes "error field but no
+    // values" ordinary, and reading the values then meant subscripting an
+    // unset EOS_Field -- get_cell_values_bicubic already guarded against it,
+    // get_cell_values did not.
+    for (int prop = 0; prop <= NEPTUNE::lastLimProperty; prop++)
+    {
+      EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+      if (prop >= nb_err || err_cell_ph[(std::size_t)prop] == nullptr)
+        continue;
+      if (prop >= nb_val || val_prop_properties[prop].size() == 0)
+        continue;
+      pl.has_value = true;
+      pl.val = &val_prop_properties[prop][0];
+      pl.err = err_cell_ph[(std::size_t)prop];
+    }
+
+    for (int prop = 0; prop <= NEPTUNE::lastLimProperty; prop++)
+    {
+      EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+      if (!pl.has_value)
+        continue;
+
+      EOS_Property dp_prop, dh_prop;
+      if (bicubic_derivative_properties((EOS_Property)prop, dp_prop, dh_prop)
+          && dp_prop >= 0 && dp_prop <= NEPTUNE::lastLimProperty
+          && dh_prop >= 0 && dh_prop <= NEPTUNE::lastLimProperty
+          && prop_plan_[(std::size_t)dp_prop].has_value
+          && prop_plan_[(std::size_t)dh_prop].has_value)
+      {
+        pl.has_first_derivatives = true;
+        pl.d_dp   = prop_plan_[(std::size_t)dp_prop].val;
+        pl.d_dh   = prop_plan_[(std::size_t)dh_prop].val;
+        pl.err_dp = prop_plan_[(std::size_t)dp_prop].err;
+        pl.err_dh = prop_plan_[(std::size_t)dh_prop].err;
+
+        EOS_Property d2_prop;
+        if (bicubic_cross_derivative_property((EOS_Property)prop, d2_prop)
+            && d2_prop >= 0 && d2_prop <= NEPTUNE::lastLimProperty
+            && prop_plan_[(std::size_t)d2_prop].has_value)
+        {
+          pl.has_cross_derivative = true;
+          pl.d2     = prop_plan_[(std::size_t)d2_prop].val;
+          pl.err_d2 = prop_plan_[(std::size_t)d2_prop].err;
+        }
+      }
+    }
+  }
+
   // fetches the p, h and "property" values for the 4 points (=corners) of the actual cell
   //  idx = index in the med mesh = fnodes2phnodes[index_h + Nb_pts_h * index_p]
   // True if the 2D field of i_prop was loaded from the database. Asking for a
@@ -2143,50 +2215,43 @@ namespace NEPTUNE_EOS
   // straight into a null err_cell_ph entry and segfault.
   bool EOS_Ipp::has_ph_property(EOS_Property i_prop) const
   {
-    const int sz = (int)err_cell_ph.size();
-    return i_prop >= 0 && i_prop < sz && err_cell_ph[i_prop] != nullptr;
+    return i_prop >= 0 && (std::size_t)i_prop < prop_plan_.size()
+           && prop_plan_[(std::size_t)i_prop].has_value;
   }
 
   EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val) const
   {
     if (!has_ph_property(i_prop))
       return EOS_Ipp::PROP_NOT_IN_DB;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)i_prop];
 
+    // Raw pointers hoisted out of the loop. Written through nodes_ph[0][...] /
+    // val_prop_properties[i_prop][...] this was twelve out-of-line
+    // EOS_Fields::operator[] calls, and the property array could not be
+    // resolved once because the compiler had to assume the call might change
+    // it between corners.
+    const int *cor = corners_ + 4 * idx;
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
-      int id_corn = corners[i_node + 4 * idx];
-      cell_val[0][i_node] = nodes_ph[0][id_corn];
-      cell_val[1][i_node] = nodes_ph[1][id_corn];
-      cell_val[2][i_node] = val_prop_properties[i_prop][id_corn];
+      const int id_corn = cor[i_node];
+      cell_val[0][i_node] = node_p_[id_corn];
+      cell_val[1][i_node] = node_h_[id_corn];
+      cell_val[2][i_node] = pl.val[id_corn];
     }
 
-    return (*err_cell_ph[i_prop])[idx].get_code();
+    return (*pl.err)[idx].get_code();
   }
 
   bool EOS_Ipp::has_bicubic_first_derivative_data(EOS_Property prop) const
   {
-    EOS_Property dp_prop, dh_prop;
-    if (!bicubic_derivative_properties(prop, dp_prop, dh_prop))
-      return false;
-
-    int sz = (int)err_cell_ph.size();
-    if (prop < 0 || prop >= sz || dp_prop < 0 || dp_prop >= sz || dh_prop < 0 || dh_prop >= sz)
-      return false;
-
-    return err_cell_ph[prop] != nullptr && err_cell_ph[dp_prop] != nullptr && err_cell_ph[dh_prop] != nullptr;
+    return prop >= 0 && (std::size_t)prop < prop_plan_.size()
+           && prop_plan_[(std::size_t)prop].has_first_derivatives;
   }
 
   bool EOS_Ipp::has_bicubic_cross_derivative_data(EOS_Property prop) const
   {
-    EOS_Property d2_prop;
-    if (!bicubic_cross_derivative_property(prop, d2_prop))
-      return false;
-
-    int sz = (int)err_cell_ph.size();
-    if (d2_prop < 0 || d2_prop >= sz)
-      return false;
-
-    return err_cell_ph[d2_prop] != nullptr;
+    return prop >= 0 && (std::size_t)prop < prop_plan_.size()
+           && prop_plan_[(std::size_t)prop].has_cross_derivative;
   }
 
   // Fetches p, h, f and its two first derivatives (plus the stored cross
@@ -2194,42 +2259,35 @@ namespace NEPTUNE_EOS
   EOS_Internal_Error EOS_Ipp::get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val,
                                                        bool fetch_cross_derivative) const
   {
-    EOS_Property dp_prop, dh_prop;
-    bicubic_derivative_properties(i_prop, dp_prop, dh_prop); // caller checked has_bicubic_first_derivative_data(i_prop)
-
-    EOS_Property d2_prop = NEPTUNE::NotATProperty;
-    if (fetch_cross_derivative)
-      bicubic_cross_derivative_property(i_prop, d2_prop); // caller checked has_bicubic_cross_derivative_data(i_prop)
-
-    // Every field this reads must actually be loaded. The callers check the
-    // error fields, but a database can carry the error field of a property
-    // whose values were not read -- which a selective load makes ordinary --
-    // and the row would then be filled from an unset EOS_Field.
-    if (!has_ph_property(i_prop) || !has_ph_property(dp_prop) || !has_ph_property(dh_prop)
-        || (fetch_cross_derivative && !has_ph_property(d2_prop))
-        || val_prop_properties[i_prop].size() == 0
-        || val_prop_properties[dp_prop].size() == 0
-        || val_prop_properties[dh_prop].size() == 0
-        || (fetch_cross_derivative && val_prop_properties[d2_prop].size() == 0))
+    // Which fields exist and where they live was resolved once at load time
+    // (cf. build_prop_plans). This used to redo two switches over the base
+    // properties and four range-checked lookups in a ~120-entry pointer
+    // vector, per point, and then read the values through twenty-four
+    // out-of-line EOS_Fields subscripts.
+    if (i_prop < 0 || (std::size_t)i_prop >= prop_plan_.size())
+      return EOS_Ipp::PROP_NOT_IN_DB;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)i_prop];
+    if (!pl.has_first_derivatives || (fetch_cross_derivative && !pl.has_cross_derivative))
       return EOS_Ipp::PROP_NOT_IN_DB;
 
+    const int *cor = corners_ + 4 * idx;
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
-      int id_corn = corners[i_node + 4 * idx];
-      cell_val[0][i_node] = nodes_ph[0][id_corn];
-      cell_val[1][i_node] = nodes_ph[1][id_corn];
-      cell_val[2][i_node] = val_prop_properties[i_prop][id_corn];
-      cell_val[3][i_node] = val_prop_properties[dp_prop][id_corn];
-      cell_val[4][i_node] = val_prop_properties[dh_prop][id_corn];
+      const int id_corn = cor[i_node];
+      cell_val[0][i_node] = node_p_[id_corn];
+      cell_val[1][i_node] = node_h_[id_corn];
+      cell_val[2][i_node] = pl.val[id_corn];
+      cell_val[3][i_node] = pl.d_dp[id_corn];
+      cell_val[4][i_node] = pl.d_dh[id_corn];
       if (fetch_cross_derivative)
-        cell_val[5][i_node] = val_prop_properties[d2_prop][id_corn];
+        cell_val[5][i_node] = pl.d2[id_corn];
     }
 
-    EOS_Internal_Error ierr = (*err_cell_ph[i_prop])[idx].get_code();
-    ierr = worst_internal_error(ierr, (*err_cell_ph[dp_prop])[idx].get_code());
-    ierr = worst_internal_error(ierr, (*err_cell_ph[dh_prop])[idx].get_code());
+    EOS_Internal_Error ierr = (*pl.err)[idx].get_code();
+    ierr = worst_internal_error(ierr, (*pl.err_dp)[idx].get_code());
+    ierr = worst_internal_error(ierr, (*pl.err_dh)[idx].get_code());
     if (fetch_cross_derivative)
-      ierr = worst_internal_error(ierr, (*err_cell_ph[d2_prop])[idx].get_code());
+      ierr = worst_internal_error(ierr, (*pl.err_d2)[idx].get_code());
     return ierr;
   }
 
@@ -2542,7 +2600,11 @@ namespace NEPTUNE_EOS
     EOS_Ipp_CellData values;
 
     // Get all real cells containing p (same cell list as the bilinear inversion)
-    std::vector<unsigned int> cells_containing_p;
+    // Reused across calls rather than built per point: the header of
+    // get_cells_containing_p has always said the caller should hoist this, and
+    // none of the three inversions did, so every point paid a vector
+    // construction plus the reallocations of growing it from empty.
+    std::vector<unsigned int> &cells_containing_p = column_scratch_;
     get_cells_containing_p(p, cells_containing_p);
 
     for (auto med_cell : cells_containing_p)
@@ -2614,7 +2676,11 @@ namespace NEPTUNE_EOS
     EOS_Property prop = NEPTUNE::T;
 
     // Get all real cells containing p (ascending h order)
-    std::vector<unsigned int> cells_containing_p;
+    // Reused across calls rather than built per point: the header of
+    // get_cells_containing_p has always said the caller should hoist this, and
+    // none of the three inversions did, so every point paid a vector
+    // construction plus the reallocations of growing it from empty.
+    std::vector<unsigned int> &cells_containing_p = column_scratch_;
     get_cells_containing_p(p, cells_containing_p);
 
     // read all cells containing p
@@ -2669,7 +2735,11 @@ namespace NEPTUNE_EOS
     EOS_Property prop = NEPTUNE::T;
 
     // Get all real cells containing p (ascending h order)
-    std::vector<unsigned int> cells_containing_p;
+    // Reused across calls rather than built per point: the header of
+    // get_cells_containing_p has always said the caller should hoist this, and
+    // none of the three inversions did, so every point paid a vector
+    // construction plus the reallocations of growing it from empty.
+    std::vector<unsigned int> &cells_containing_p = column_scratch_;
     get_cells_containing_p(p, cells_containing_p);
 
     // read all cells containing p
@@ -2731,9 +2801,15 @@ namespace NEPTUNE_EOS
     // fallback to bilinear as long as the first derivatives are present.
     EOS_Ipp_CellData values;
 
-    if (interp_method == BICUBIC && has_bicubic_first_derivative_data(prop))
+    // One lookup for the three questions this used to answer with two switch
+    // statements and up to four range-checked pointer-vector reads, per point.
+    if (prop < 0 || (std::size_t)prop >= prop_plan_.size())
+      return EOS_Ipp::PROP_NOT_IN_DB;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+
+    if (interp_method == BICUBIC && pl.has_first_derivatives)
     {
-      bool has_cross_derivative = has_bicubic_cross_derivative_data(prop);
+      const bool has_cross_derivative = pl.has_cross_derivative;
 
       ierr = get_cell_values_bicubic(index, prop, values, has_cross_derivative);
       if (ierr != EOS_Internal_Error::OK)

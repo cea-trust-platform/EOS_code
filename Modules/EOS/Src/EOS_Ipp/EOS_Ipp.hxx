@@ -62,6 +62,37 @@ namespace NEPTUNE_EOS
               const double *operator[](int row) const { return v[row]; }
        };
 
+       //! Everything the interpolation of one property needs, resolved once when
+       //! the database is loaded rather than on every query.
+       //!
+       //! compute_prop_ph used to re-derive all of this per point *and* per
+       //! property: a switch over the ~15 base properties to name the two
+       //! derivative fields, up to four range-checked lookups in a ~120-entry
+       //! vector of EOS_Error_Field pointers, a second switch for the cross
+       //! derivative -- and then both switches again inside
+       //! get_cell_values_bicubic. None of it depends on (p,h).
+       //!
+       //! The pointers are into the arrays the load filled and stay valid for as
+       //! long as the EOS_Field objects beside them do: an EOS_Field shares its
+       //! storage rather than owning it (cf. EOS_Field::operator=), so this adds
+       //! no lifetime requirement the class did not already have. They are
+       //! rebuilt by build_prop_plans() at the end of every load.
+       struct EOS_Ipp_PropPlan
+       {
+              bool has_value = false;             //!< the 2D field of the property itself is loaded
+              bool has_first_derivatives = false; //!< ... and both d/dp|h and d/dh|p, so BICUBIC is possible
+              bool has_cross_derivative = false;  //!< ... and the stored d2/dp.dh
+
+              //! Per-node property values. Raw, because an EOS_Fields subscript is
+              //! an out-of-line call the compiler cannot hoist out of the
+              //! four-corner loop -- which is how a bilinear query came to make
+              //! twelve of them, and a bicubic one twenty-four.
+              const double *val = nullptr, *d_dp = nullptr, *d_dh = nullptr, *d2 = nullptr;
+              //! Per-cell error codes, one field per property involved.
+              const EOS_Error_Field *err = nullptr, *err_dp = nullptr,
+                                    *err_dh = nullptr, *err_d2 = nullptr;
+       };
+
        class EOS_Ipp : public EOS_Fluid
        {
               static const AString tablename;
@@ -515,6 +546,16 @@ namespace NEPTUNE_EOS
               std::size_t tile_cache_bytes_ = 0;
               std::size_t tile_cache_tiles_ = 0;
 
+              //! Resolves, once per load, what every property needs for its
+              //! interpolation (cf. EOS_Ipp_PropPlan). Must run after
+              //! f_mesh2r_mesh(), whose corners array it points into, and after
+              //! the last thing that may reallocate a property array.
+              void build_prop_plans();
+              std::vector<EOS_Ipp_PropPlan> prop_plan_; //!< indexed by EOS_Property
+              const double *node_p_ = nullptr;          //!< nodes_ph[0], per node
+              const double *node_h_ = nullptr;          //!< nodes_ph[1], per node
+              const int *corners_ = nullptr;            //!< corners, 4 per cell
+
               void load_domain_values(EOS_Med &med);
               EOS_Error load_med_nodes(EOS_Med &med);
               EOS_Error load_med_champ(EOS_Med &med);
@@ -530,6 +571,13 @@ namespace NEPTUNE_EOS
               // returned by value: the h(p,T) inversions call this per point, and
               // a fresh vector per point is an allocation the caller can hoist.
               void get_cells_containing_p(double p, std::vector<unsigned int> &cells) const;
+              //! The vector the three h(p,T) inversions hand to
+              //! get_cells_containing_p. Kept as state so the scan allocates
+              //! nothing per point. Safe as plain state for the same reason
+              //! EOS_Ipp_TileCache keeps its own column_scratch_: an instance is
+              //! only ever used by the one thread that owns it (cf. the threading
+              //! note in EOS_Ipp_TileCache.hxx).
+              mutable std::vector<unsigned int> column_scratch_;
               int get_segmidx(double &p, int sat_lim) const;
               double linear_interpolator(double p, const EOS_Ipp_CellData &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;
