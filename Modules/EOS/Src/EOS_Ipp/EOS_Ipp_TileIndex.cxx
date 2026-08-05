@@ -16,9 +16,13 @@
 #include "EOS_Ipp_TileIndex.hxx"
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
+
+using std::cerr;
+using std::endl;
 
 namespace NEPTUNE_EOS
 {
@@ -30,11 +34,33 @@ namespace NEPTUNE_EOS
     return file_name.compare(file_name.size() - ext.size(), ext.size(), ext) == 0;
   }
 
+  namespace
+  {
+    // Manifest problems used to surface as a bare "invalid tiled database
+    // manifest", which says nothing about what is wrong with a file the user
+    // most likely did not write by hand. Naming the line and what was expected
+    // makes a malformed or truncated manifest diagnosable.
+    bool manifest_error(const std::string &path, int line_no, const std::string &line,
+                        const char *what)
+    {
+      cerr << "EOS_Ipp_TileIndex: " << path;
+      if (line_no > 0)
+        cerr << ":" << line_no;
+      cerr << ": " << what << endl;
+      if (!line.empty())
+        cerr << "  in: " << line << endl;
+      return false;
+    }
+  }
+
   bool EOS_Ipp_TileIndex::load(const std::string &manifest_path)
   {
     std::ifstream in(manifest_path.c_str());
     if (!in.good())
+    {
+      cerr << "EOS_Ipp_TileIndex: cannot open manifest " << manifest_path << endl;
       return false;
+    }
 
     // Tile med_file paths in the manifest are resolved relative to the
     // directory holding the manifest itself, so a tiled database (manifest +
@@ -46,8 +72,10 @@ namespace NEPTUNE_EOS
 
     bool has_global = false, has_grid = false;
     std::string line;
+    int line_no = 0;
     while (std::getline(in, line))
     {
+      ++line_no;
       if (line.empty() || line[0] == '#')
         continue;
 
@@ -55,29 +83,65 @@ namespace NEPTUNE_EOS
       std::string keyword;
       ls >> keyword;
 
-      if (keyword == "GLOBAL")
+      if (keyword == "VERSION")
+      {
+        ls >> version_;
+        if (!ls)
+          return manifest_error(manifest_path, line_no, line, "VERSION expects an integer");
+      }
+      else if (keyword == "SOURCE")
+      {
+        ls >> source_method_ >> source_reference_;
+        if (!ls)
+          return manifest_error(manifest_path, line_no, line, "SOURCE expects: method reference");
+      }
+      else if (keyword == "MESH")
+      {
+        ls >> nb_node_p_ >> nb_node_h_ >> level_max_ >> halo_fraction_;
+        if (!ls)
+          return manifest_error(manifest_path, line_no, line,
+                                "MESH expects: nb_node_p nb_node_h level_max halo_fraction");
+      }
+      else if (keyword == "QUALITY")
+      {
+        ls >> quality_property_ >> quality_type_ >> quality_is_abs_;
+        if (!ls)
+          return manifest_error(manifest_path, line_no, line,
+                                "QUALITY expects: property type is_abs");
+      }
+      else if (keyword == "GLOBAL")
       {
         ls >> domain_.pmin >> domain_.pmax >> domain_.hmin >> domain_.hmax
             >> tmin_ >> tmax_ >> pcrit_ >> hcrit_ >> tcrit_;
+        if (!ls)
+          return manifest_error(manifest_path, line_no, line,
+                                "GLOBAL expects 9 numbers: pmin pmax hmin hmax tmin tmax pcrit hcrit tcrit");
+        if (!(domain_.pmax > domain_.pmin) || !(domain_.hmax > domain_.hmin))
+          return manifest_error(manifest_path, line_no, line,
+                                "GLOBAL has an empty or inverted (p,h) domain");
         has_global = true;
       }
       else if (keyword == "GRID")
       {
         ls >> nb_p_ >> nb_h_;
+        if (!ls)
+          return manifest_error(manifest_path, line_no, line, "GRID expects: nb_p nb_h");
         if (nb_p_ <= 0 || nb_h_ <= 0)
-          return false;
+          return manifest_error(manifest_path, line_no, line, "GRID sizes must be strictly positive");
         has_grid = true;
       }
       else if (keyword == "TILE")
       {
         if (!has_global || !has_grid)
-          return false; // GLOBAL/GRID must appear before any TILE line
+          return manifest_error(manifest_path, line_no, line,
+                                "TILE appears before GLOBAL and GRID, which must come first");
 
         EOS_Ipp_TileDescriptor desc;
         ls >> desc.ip >> desc.ih >> desc.bbox.pmin >> desc.bbox.pmax
             >> desc.bbox.hmin >> desc.bbox.hmax;
         if (!ls)
-          return false;
+          return manifest_error(manifest_path, line_no, line,
+                                "TILE expects: ip ih pmin pmax hmin hmax [tmin tmax] med_file");
 
         // Two accepted tails: "<tmin> <tmax> <file>" (current) and just
         // "<file>" (manifests written before the per-tile T-range existed).
@@ -99,14 +163,15 @@ namespace NEPTUNE_EOS
           desc.tmax = atof(tail[1].c_str());
           rel_path = tail[2];
           if (!(desc.tmax >= desc.tmin))
-            return false;
+            return manifest_error(manifest_path, line_no, line, "TILE has an inverted T-range");
         }
         else
         {
-          return false;
+          return manifest_error(manifest_path, line_no, line,
+                                "TILE expects: ip ih pmin pmax hmin hmax [tmin tmax] med_file");
         }
         if (rel_path.empty())
-          return false;
+          return manifest_error(manifest_path, line_no, line, "TILE has an empty med file name");
 
         desc.med_file = (!rel_path.empty() && rel_path[0] == '/') ? rel_path : base_dir + rel_path;
         tiles_.push_back(desc);
@@ -114,20 +179,36 @@ namespace NEPTUNE_EOS
       // unknown keywords are ignored, for forward-compatibility
     }
 
-    if (!has_global || !has_grid || tiles_.empty())
-      return false;
+    if (!has_global)
+      return manifest_error(manifest_path, line_no, "", "no GLOBAL line: the domain is undefined");
+    if (!has_grid)
+      return manifest_error(manifest_path, line_no, "", "no GRID line: the tiling is undefined");
+    if (tiles_.empty())
+      return manifest_error(manifest_path, line_no, "", "no TILE line: the database is empty");
 
     delta_p_ = (domain_.pmax - domain_.pmin) / nb_p_;
     delta_h_ = (domain_.hmax - domain_.hmin) / nb_h_;
     if (!(delta_p_ > 0.) || !(delta_h_ > 0.))
-      return false;
+      return manifest_error(manifest_path, line_no, "",
+                            "GLOBAL and GRID give a degenerate tile size");
 
     grid_.assign((std::size_t)nb_p_ * (std::size_t)nb_h_, -1);
     for (std::size_t k = 0; k < tiles_.size(); ++k)
     {
       const EOS_Ipp_TileDescriptor &d = tiles_[k];
       if (d.ip < 0 || d.ip >= nb_p_ || d.ih < 0 || d.ih >= nb_h_)
-        return false;
+      {
+        std::ostringstream what;
+        what << "TILE (" << d.ip << "," << d.ih << ") lies outside the " << nb_p_ << "x" << nb_h_
+             << " grid declared by GRID";
+        return manifest_error(manifest_path, 0, "", what.str().c_str());
+      }
+      if (grid_[(std::size_t)d.ip * nb_h_ + d.ih] != -1)
+      {
+        std::ostringstream what;
+        what << "two TILE lines both claim grid cell (" << d.ip << "," << d.ih << ")";
+        return manifest_error(manifest_path, 0, "", what.str().c_str());
+      }
       grid_[(std::size_t)d.ip * nb_h_ + d.ih] = (int)k;
       tiles_[k].id = (int)k;
     }

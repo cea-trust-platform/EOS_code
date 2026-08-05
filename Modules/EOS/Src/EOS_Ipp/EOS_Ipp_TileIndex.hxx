@@ -61,13 +61,19 @@ namespace NEPTUNE_EOS
   //! any locking.
   //!
   //! Manifest text format (writer: EOS_IGen/Src/EOS_Ipp_Tiler.cxx):
-  //!   GLOBAL pmin pmax hmin hmax tmin tmax pcrit hcrit tcrit
-  //!   GRID   nb_p nb_h
-  //!   TILE   ip ih pmin pmax hmin hmax tmin tmax med_file
+  //!   VERSION  n                                       (optional, default 1)
+  //!   SOURCE   method reference                         (optional, provenance)
+  //!   MESH     nb_node_p nb_node_h level_max halo       (optional, provenance)
+  //!   QUALITY  property type is_abs                     (optional, provenance)
+  //!   GLOBAL   pmin pmax hmin hmax tmin tmax pcrit hcrit tcrit
+  //!   GRID     nb_p nb_h
+  //!   TILE     ip ih pmin pmax hmin hmax tmin tmax med_file
   //!   ...
   //! Unknown keywords are ignored, and a TILE line may also carry the older
   //! 7-field form without its (tmin,tmax), so a manifest written by an older
-  //! tiler still loads.
+  //! tiler still loads. The provenance lines carry no meaning for loading; they
+  //! record what the database was generated from, so that a tiled database can
+  //! be identified without opening its tiles (cf. eos_ipp_tiler --info).
   class EOS_Ipp_TileIndex
   {
   public:
@@ -91,7 +97,23 @@ namespace NEPTUNE_EOS
     double tcrit() const { return tcrit_; }
 
     int nb_tiles() const { return (int)tiles_.size(); }
+    int nb_p_tiles() const { return nb_p_; }
+    int nb_h_tiles() const { return nb_h_; }
     const EOS_Ipp_TileDescriptor &tile(int tile_id) const { return tiles_[tile_id]; }
+
+    // Provenance, as recorded by the generator. Empty / zero when the manifest
+    // predates these lines: they describe the database, they are not needed to
+    // load it.
+    int format_version() const { return version_; }
+    const std::string &source_method() const { return source_method_; }
+    const std::string &source_reference() const { return source_reference_; }
+    int nb_node_p() const { return nb_node_p_; }
+    int nb_node_h() const { return nb_node_h_; }
+    int level_max() const { return level_max_; }
+    double halo_fraction() const { return halo_fraction_; }
+    const std::string &quality_property() const { return quality_property_; }
+    const std::string &quality_type() const { return quality_type_; }
+    int quality_is_abs() const { return quality_is_abs_; }
 
     //! O(1) lookup (same direct-indexing principle as EOS_Ipp's own
     //! fnodes2phnodes virtual grid, one level up): returns the id of the
@@ -132,6 +154,15 @@ namespace NEPTUNE_EOS
     EOS_Ipp_PH_BBox domain_;
     double tmin_ = 0., tmax_ = 0.;
     double pcrit_ = 0., hcrit_ = 0., tcrit_ = 0.;
+
+    // Provenance; none of it takes part in loading.
+    int version_ = 1;
+    std::string source_method_, source_reference_;
+    int nb_node_p_ = 0, nb_node_h_ = 0, level_max_ = 0;
+    double halo_fraction_ = 0.;
+    std::string quality_property_, quality_type_;
+    int quality_is_abs_ = 0;
+
     int nb_p_ = 0, nb_h_ = 0;
     double delta_p_ = 0., delta_h_ = 0.;
     std::vector<EOS_Ipp_TileDescriptor> tiles_;
