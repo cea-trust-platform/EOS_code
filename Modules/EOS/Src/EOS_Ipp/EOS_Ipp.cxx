@@ -259,6 +259,22 @@ namespace NEPTUNE_EOS
     {
       delete obj_fluid;
     }
+
+    // Opt-in one-line report: without it, a run whose tile budget is far too
+    // small for its access pattern just looks slow, with nothing pointing at
+    // the cache. nb_loads far above nb_resident is the signature.
+    if (tile_cache_ != nullptr && getenv("EOS_IPP_TILE_CACHE_STATS") != nullptr)
+    {
+      const std::size_t mb = 1024u * 1024u;
+      cerr << "EOS_Ipp tile cache [" << med_file.aschar() << "] : "
+           << tile_cache_->nb_resident() << " tile(s) resident ("
+           << tile_cache_->resident_bytes() / mb << " MB";
+      if (tile_cache_->budget_bytes() > 0)
+        cerr << " of " << tile_cache_->budget_bytes() / mb << " MB budget";
+      cerr << "), " << tile_cache_->nb_loads() << " load(s), "
+           << tile_cache_->nb_evictions() << " eviction(s)" << endl;
+    }
+
     delete tile_cache_;
   }
 
@@ -291,24 +307,164 @@ namespace NEPTUNE_EOS
   // (e.g. "raffinement_local_Cathare2:bicubic"), so callers can pick the
   // interpolation method through the usual EOS("EOS_Ipp", "...") factory string.
   // By default , the interpolation method is BICUBIC.
-  void EOS_Ipp::extract_interpolation_method(AString &file_name)
+  namespace
+  {
+    // "512MB" / "2GB" / "1048576" (plain number = bytes) -> bytes, 0 if unparsable.
+    std::size_t parse_byte_size(const std::string &text)
+    {
+      char *end = nullptr;
+      const double value = strtod(text.c_str(), &end);
+      if (end == text.c_str() || !(value > 0.))
+        return 0;
+
+      std::string unit(end);
+      for (char &c : unit)
+        c = (char)toupper((unsigned char)c);
+
+      double scale = 1.;
+      if (unit == "K" || unit == "KB")      scale = 1024.;
+      else if (unit == "M" || unit == "MB") scale = 1024. * 1024.;
+      else if (unit == "G" || unit == "GB") scale = 1024. * 1024. * 1024.;
+      else if (!unit.empty())               return 0;
+
+      return (std::size_t)(value * scale);
+    }
+  }
+
+  void EOS_Ipp::extract_init_options(AString &file_name)
   {
     interp_method = BICUBIC;
-    char *raw = file_name.aschar();
-    char *sep = strrchr(raw, ':');
-    if (sep == NULL)
+
+    // Defaults from the environment, so a budget can be imposed on a host code
+    // that hard-codes its reference name. An explicit option overrides them.
+    if (const char *env = getenv("EOS_IPP_TILE_CACHE"))
+    {
+      const std::size_t bytes = parse_byte_size(env);
+      if (bytes > 0)
+        tile_cache_bytes_ = bytes;
+      else
+        cerr << "EOS_Ipp::init : cannot parse EOS_IPP_TILE_CACHE=\"" << env
+             << "\" (expected e.g. 512MB), ignored" << endl;
+    }
+
+    std::string full(file_name.aschar());
+    const std::size_t first = full.find(':');
+    if (first == std::string::npos)
       return;
 
-    AString suffix(sep + 1);
-    *sep = '\0';
+    const std::string bare = full.substr(0, first);
+    std::string rest = full.substr(first + 1);
 
-    if (suffix == "bicubic")
-      interp_method = BICUBIC;
-    else if (suffix == "bilinear")
-      interp_method = BILINEAR;
-    else
-      cerr << "EOS_Ipp::init : unknown interpolation method suffix \"" << suffix.aschar()
-           << "\", falling back to bilinear" << endl;
+    while (!rest.empty())
+    {
+      const std::size_t sep = rest.find(':');
+      const std::string option = rest.substr(0, sep);
+      rest = (sep == std::string::npos) ? std::string() : rest.substr(sep + 1);
+      if (option.empty())
+        continue;
+
+      if (option == "bicubic")
+        interp_method = BICUBIC;
+      else if (option == "bilinear")
+        interp_method = BILINEAR;
+      else if (option.compare(0, 6, "cache=") == 0)
+      {
+        const std::size_t bytes = parse_byte_size(option.substr(6));
+        if (bytes > 0)
+          tile_cache_bytes_ = bytes;
+        else
+          cerr << "EOS_Ipp::init : cannot parse option \"" << option
+               << "\" (expected e.g. cache=512MB), ignored" << endl;
+      }
+      else if (option.compare(0, 6, "tiles=") == 0)
+      {
+        const long n = atol(option.substr(6).c_str());
+        if (n > 0)
+          tile_cache_tiles_ = (std::size_t)n;
+        else
+          cerr << "EOS_Ipp::init : cannot parse option \"" << option
+               << "\" (expected e.g. tiles=64), ignored" << endl;
+      }
+      else
+        cerr << "EOS_Ipp::init : unknown option \"" << option << "\" in reference name \""
+             << full << "\", ignored" << endl;
+    }
+
+    file_name = AString(bare.c_str());
+  }
+
+  std::size_t EOS_Ipp::approximate_footprint_bytes() const
+  {
+    // Each array below is a Language object with its own allocation, header
+    // and registry slot on top of its payload. Counting the payload alone
+    // understated a loaded tile's real resident size by about 3x, which for a
+    // memory budget is the dangerous direction to be wrong in, so a constant
+    // per-array term is added. Measured against the process RSS over 100
+    // resident tiles this brings the estimate from 3.1x low to 1.3x low, the
+    // remainder being allocator fragmentation that belongs to no tile in
+    // particular. It is an estimate, not an allocator query: expect a tiled
+    // database to sit somewhat above the byte budget it was given, not below.
+    const std::size_t PER_ARRAY_OVERHEAD = 96;
+    std::size_t bytes = sizeof(EOS_Ipp);
+    std::size_t nb_arrays = 0;
+
+    for (int i = 0; i < nodes_ph.size(); i++)
+      { bytes += (std::size_t)nodes_ph[i].size() * sizeof(double); nb_arrays++; }
+    for (int i = 0; i < nodes_sat.size(); i++)
+      { bytes += (std::size_t)nodes_sat[i].size() * sizeof(double); nb_arrays++; }
+    for (int i = 0; i < nodes_lim.size(); i++)
+      { bytes += (std::size_t)nodes_lim[i].size() * sizeof(double); nb_arrays++; }
+    for (int i = 0; i < val_prop_properties.size(); i++)
+      { bytes += (std::size_t)val_prop_properties[i].size() * sizeof(double); nb_arrays++; }
+
+    bytes += (std::size_t)(corners.size() + fnodes2phnodes.size()
+                           + fnodes2pnodes.size() + fnodes2pnodes_lim.size()
+                           + connect_ph.size() + index_conn_ph.size()
+                           + connect_sat.size() + connect_lim.size()) * sizeof(int);
+    nb_arrays += 8;
+
+    bytes += (std::size_t)(n_p_ph.size() + n_h_ph.size() + n_p_satlim.size()) * sizeof(double);
+    nb_arrays += 3;
+
+    for (const ArrOfDouble &a : all_prop_val)
+      { bytes += (std::size_t)a.size() * sizeof(double); nb_arrays++; }
+    for (const ArrOfInt &a : all_err_val)
+      { bytes += (std::size_t)a.size() * sizeof(int); nb_arrays++; }
+
+    // The per-cell / per-segment error fields, one array per loaded property.
+    for (const EOS_Error_Field *f : err_cell_ph)
+      if (f) { bytes += (std::size_t)f->size() * sizeof(int); nb_arrays++; }
+    for (const EOS_Error_Field *f : err_segm_sat)
+      if (f) { bytes += (std::size_t)f->size() * sizeof(int); nb_arrays++; }
+    for (const EOS_Error_Field *f : err_segm_lim)
+      if (f) { bytes += (std::size_t)f->size() * sizeof(int); nb_arrays++; }
+
+    // The fixed r1_val/r2_val scratch grids are per instance, so on a tiled
+    // database they are paid once per resident tile and are far from
+    // negligible when tiles are small.
+    for (const std::vector<double> &row : r1_val)
+      bytes += row.capacity() * sizeof(double) + sizeof(std::vector<double>);
+    for (const std::vector<double> &row : r2_val)
+      bytes += row.capacity() * sizeof(double) + sizeof(std::vector<double>);
+
+    // Pointer/handle vectors kept alongside the payload.
+    bytes += (err_cell_ph.capacity() + err_segm_sat.capacity() + err_segm_lim.capacity())
+             * sizeof(void *);
+
+    return bytes + nb_arrays * PER_ARRAY_OVERHEAD;
+  }
+
+  bool EOS_Ipp::get_tile_cache_stats(std::size_t &nb_resident, std::size_t &nb_loads,
+                                      std::size_t &nb_evictions, std::size_t &resident_bytes) const
+  {
+    if (tile_cache_ == nullptr)
+      return false;
+
+    nb_resident    = tile_cache_->nb_resident();
+    nb_loads       = tile_cache_->nb_loads();
+    nb_evictions   = tile_cache_->nb_evictions();
+    resident_bytes = tile_cache_->resident_bytes();
+    return true;
   }
 
   int EOS_Ipp::init(const Strings &strings)
@@ -327,7 +483,7 @@ namespace NEPTUNE_EOS
 
     // directory {DATA}/EOS_Ipp : med_file (or tiled-database manifest)
     AString &file_name = strings[0];
-    extract_interpolation_method(file_name);
+    extract_init_options(file_name);
     if (iret_eos_data_dir)
       return EOS_Error::error;
 
@@ -435,8 +591,11 @@ namespace NEPTUNE_EOS
     path += "/EOS_Ipp/";
     path += file_name;
 
+    med_file = path; // so error messages and the cache report name the database
+
     const std::string suffix = (interp_method == BICUBIC) ? "bicubic" : "bilinear";
-    tile_cache_ = new EOS_Ipp_TileCache(std::string(path.aschar()), suffix);
+    tile_cache_ = new EOS_Ipp_TileCache(std::string(path.aschar()), suffix,
+                                        tile_cache_bytes_, tile_cache_tiles_);
     if (!tile_cache_->is_valid())
     {
       cerr << "Error : EOS_Ipp::init : invalid tiled database manifest " << path.aschar() << endl;
@@ -498,7 +657,7 @@ namespace NEPTUNE_EOS
     med_file += "/EOS_Ipp/";
     // file : med_file
     AString &file_name = strings[0];
-    extract_interpolation_method(file_name);
+    extract_init_options(file_name);
     med_file += file_name;
 
     // get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med

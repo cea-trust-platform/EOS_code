@@ -105,6 +105,23 @@ namespace NEPTUNE_EOS
               void set_interpolation_method(Interpolation_Method method);
               Interpolation_Method get_interpolation_method() const;
 
+              //! Approximate resident size of this instance's loaded database, in
+              //! bytes: the mesh nodes, the property values, the connectivity and
+              //! the per-cell error fields. Used to give the tile cache a budget in
+              //! bytes rather than in tiles -- a tile count says nothing about how
+              //! much memory a database will occupy, since that depends entirely on
+              //! how finely each tile was meshed.
+              std::size_t approximate_footprint_bytes() const;
+
+              //! Tiled mode only (null tile_cache_ otherwise): how many tiles are
+              //! currently resident, how many were loaded from disk since init, how
+              //! many were evicted, and the resident bytes. Returns false when this
+              //! instance is not a tiled database. Loads far above the number of
+              //! distinct tiles a run touches means the cache is thrashing and the
+              //! budget is too small.
+              bool get_tile_cache_stats(std::size_t &nb_resident, std::size_t &nb_loads,
+                                        std::size_t &nb_evictions, std::size_t &resident_bytes) const;
+
               //! True if prop is a base 2D property with both first-derivative fields
               //! (d_prop_d_p_h, d_prop_d_h_p) loaded from the current database -- the
               //! minimum required for BICUBIC; otherwise BICUBIC falls back to bilinear.
@@ -429,10 +446,21 @@ namespace NEPTUNE_EOS
               ArrOfInt fnodes2pnodes; // correspondence between each cell of the p mesh and the cell in the saturation regime
               ArrOfInt fnodes2pnodes_lim; // correspondence between each cell of the p mesh and the cell in the limit regime
                                        //
-              // Extracts an optional ":bicubic"/":bilinear" suffix from file_name, sets
-              // interp_method accordingly (BILINEAR if absent/unrecognized), and strips
-              // the suffix from file_name in place.
-              void extract_interpolation_method(AString &file_name);
+              // Strips the ":"-separated options a reference name may carry after the
+              // file name and applies them, leaving file_name holding the bare name.
+              // Recognized:
+              //   bicubic | bilinear     interpolation method on the 2D (p,h) mesh
+              //   cache=<n>[MB|GB]       tiled databases: resident tile budget, in bytes
+              //   tiles=<n>              tiled databases: resident tile budget, in tiles
+              // e.g. "water.eosmm:bicubic:cache=512MB". Historical names carrying just
+              // ":bicubic"/":bilinear" keep working unchanged.
+              void extract_init_options(AString &file_name);
+
+              // Resident tile budget for tiled mode, as set by extract_init_options or
+              // by the EOS_IPP_TILE_CACHE env variable. Zero means "unset": the
+              // EOS_Ipp_TileCache default applies.
+              std::size_t tile_cache_bytes_ = 0;
+              std::size_t tile_cache_tiles_ = 0;
 
               void load_domain_values(EOS_Med &med);
               EOS_Error load_med_nodes(EOS_Med &med);

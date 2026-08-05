@@ -46,6 +46,7 @@ namespace NEPTUNE_EOS
       candidate->set_interpolation_method(EOS_Ipp::BILINEAR);
 
     ipp_ = candidate;
+    footprint_bytes_ = candidate->approximate_footprint_bytes();
     return true;
   }
 }

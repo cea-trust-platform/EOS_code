@@ -62,10 +62,16 @@ namespace NEPTUNE_EOS
     void set_last_use(std::size_t tick) { last_use_ = tick; }
     std::size_t last_use() const { return last_use_; }
 
+    //! Resident size of the loaded tile, in bytes (0 while not loaded).
+    //! Measured once at load time from the EOS_Ipp it wraps, since the
+    //! arrays do not change afterwards.
+    std::size_t footprint_bytes() const { return footprint_bytes_; }
+
   private:
     EOS_Ipp_TileDescriptor desc_;
     EOS_Ipp *ipp_ = nullptr;
     std::size_t last_use_ = 0;
+    std::size_t footprint_bytes_ = 0;
   };
 }
 #endif /* EOS_IPP_TILE_HXX_ */

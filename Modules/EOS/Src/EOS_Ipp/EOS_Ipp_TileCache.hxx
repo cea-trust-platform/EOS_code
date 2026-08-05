@@ -48,11 +48,22 @@ namespace NEPTUNE_EOS
   class EOS_Ipp_TileCache
   {
   public:
+    //! Default resident budget, used when the caller asks for neither a byte
+    //! nor a tile budget. Deliberately expressed in bytes: how much memory a
+    //! given number of tiles costs depends entirely on how finely each was
+    //! meshed, so a tile count is not something a host code can size against
+    //! the memory it actually has.
+    static const std::size_t DEFAULT_BUDGET_BYTES = 512u * 1024u * 1024u;
+
     //! interpolation_suffix: "bicubic"/"bilinear"/"" (cf. EOS_Ipp's own
     //! ":bicubic"/":bilinear" file-name suffix), applied to every tile file.
+    //! budget_bytes / max_resident_tiles: resident budget; whichever is
+    //! non-zero applies, and if both are, a tile must satisfy both. Passing 0
+    //! for both selects DEFAULT_BUDGET_BYTES.
     EOS_Ipp_TileCache(const std::string &manifest_path,
                        const std::string &interpolation_suffix,
-                       std::size_t max_resident_tiles = 64);
+                       std::size_t budget_bytes = 0,
+                       std::size_t max_resident_tiles = 0);
     ~EOS_Ipp_TileCache();
 
     EOS_Ipp_TileCache(const EOS_Ipp_TileCache &) = delete;
@@ -65,10 +76,13 @@ namespace NEPTUNE_EOS
     NEPTUNE::EOS_Internal_Error compute_prop_p(NEPTUNE::EOS_Property prop, double p, int sat_lim, double &res);
     NEPTUNE::EOS_Internal_Error compute_h_pT(double p, double T, double &res);
 
-    // Telemetry, useful to size max_resident_tiles / the (p,h) tiling grid.
+    // Telemetry, useful to size the budget / the (p,h) tiling grid. Loads far
+    // above the number of distinct tiles a run touches means thrashing.
     std::size_t nb_loads() const { return nb_loads_; }
     std::size_t nb_evictions() const { return nb_evictions_; }
     std::size_t nb_resident() const { return loaded_.size(); }
+    std::size_t resident_bytes() const { return resident_bytes_; }
+    std::size_t budget_bytes() const { return budget_bytes_; }
 
   private:
     // Resolves tile_id to a loaded EOS_Ipp_Tile*, stamping it as the most
@@ -78,12 +92,15 @@ namespace NEPTUNE_EOS
     EOS_Ipp_Tile *acquire(int tile_id);
     // Out-of-line slow path of acquire(): everything but the resident hit.
     EOS_Ipp_Tile *acquire_miss(int tile_id);
+    bool over_budget() const;
     void enforce_budget();
 
     EOS_Ipp_TileIndex index_;
     bool valid_ = false;
     std::string interpolation_suffix_;
-    std::size_t max_resident_tiles_;
+    std::size_t budget_bytes_ = 0;        // 0 = no byte limit
+    std::size_t max_resident_tiles_ = 0;  // 0 = no tile-count limit
+    std::size_t resident_bytes_ = 0;
 
     // Residency is a flat array indexed by tile id -- one load and a null
     // test to route a point -- rather than a hash lookup plus a list splice

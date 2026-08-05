@@ -23,10 +23,15 @@ namespace NEPTUNE_EOS
 
   EOS_Ipp_TileCache::EOS_Ipp_TileCache(const std::string &manifest_path,
                                         const std::string &interpolation_suffix,
+                                        std::size_t budget_bytes,
                                         std::size_t max_resident_tiles)
       : interpolation_suffix_(interpolation_suffix),
-        max_resident_tiles_(max_resident_tiles > 0 ? max_resident_tiles : 1)
+        budget_bytes_(budget_bytes),
+        max_resident_tiles_(max_resident_tiles)
   {
+    if (budget_bytes_ == 0 && max_resident_tiles_ == 0)
+      budget_bytes_ = DEFAULT_BUDGET_BYTES;
+
     valid_ = index_.load(manifest_path);
     if (valid_)
       resident_.assign((std::size_t)index_.nb_tiles(), nullptr);
@@ -74,16 +79,26 @@ namespace NEPTUNE_EOS
     tile->set_last_use(++tick_);
     resident_[(std::size_t)tile_id] = tile;
     loaded_.push_back(tile);
+    resident_bytes_ += tile->footprint_bytes();
     enforce_budget();
     return tile;
   }
 
+  bool EOS_Ipp_TileCache::over_budget() const
+  {
+    if (max_resident_tiles_ > 0 && loaded_.size() > max_resident_tiles_)
+      return true;
+    if (budget_bytes_ > 0 && resident_bytes_ > budget_bytes_)
+      return true;
+    return false;
+  }
+
   void EOS_Ipp_TileCache::enforce_budget()
   {
-    // Called only when a tile was just loaded, so at most one tile over
-    // budget per call; the scan for the least recently used one is paid here
-    // rather than by keeping an MRU order up to date on every access.
-    while (loaded_.size() > max_resident_tiles_)
+    // Called only when a tile was just loaded; the scan for the least
+    // recently used victim is paid here rather than by keeping an MRU order
+    // up to date on every access.
+    while (over_budget() && loaded_.size() > 1)
     {
       std::size_t victim_k = 0;
       for (std::size_t k = 1; k < loaded_.size(); ++k)
@@ -96,12 +111,15 @@ namespace NEPTUNE_EOS
       if (victim->last_use() == tick_)
         break; // the tile we just loaded is the only candidate: keep it
 
+      resident_bytes_ -= victim->footprint_bytes();
       resident_[(std::size_t)victim->descriptor().id] = nullptr;
       loaded_[victim_k] = loaded_.back();
       loaded_.pop_back();
       delete victim;
       ++nb_evictions_;
     }
+    // A single tile larger than the whole budget stays resident: refusing to
+    // keep it would mean reloading it on every point.
   }
 
   NEPTUNE::EOS_Internal_Error EOS_Ipp_TileCache::compute_prop_ph(NEPTUNE::EOS_Property prop,
