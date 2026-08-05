@@ -998,13 +998,82 @@ namespace NEPTUNE_EOS
     return true;
   }
 
+  // True when this batch is a (p,T) request worth inverting h once for, and
+  // fills p_field/T_field with the two inputs in a known order.
+  //
+  // EOS_Fluid::compute loops over the output fields on the outside and the
+  // points on the inside, and its single-field overload re-derives h(p,T) for
+  // every one of them. Asking a (p,T) batch for rho, cp, mu, lambda and two
+  // derivatives therefore runs the inversion six times per point -- and on
+  // this class an inversion is not a formula but a scan of every cell in the
+  // p-column, twice over when the saturation check has to scan as well.
+  //
+  // Declining is deliberate in two cases. With fewer than two outputs there is
+  // nothing to share, so the historical path stays bit-identical. And when h
+  // itself is among the outputs, EOS_Fluid handles it through a branch that
+  // only exists while lt == 1 (it returns the inversion straight into the
+  // result field); handing it a (p,h) pair instead would make it report
+  // NOT_IMPLEMENTED. That request is a one-field request in practice, i.e.
+  // exactly the case with nothing to gain.
+  bool EOS_Ipp::hoistable_h_pT(const EOS_Field &pp, const EOS_Field &hh,
+                               const EOS_Fields &r,
+                               const EOS_Field *&p_field, const EOS_Field *&T_field) const
+  {
+    if (r.size() < 2)
+      return false;
+
+    const int a = pp.get_property_number();
+    const int b = hh.get_property_number();
+    if (a == NEPTUNE::p && b == NEPTUNE::T)      { p_field = &pp; T_field = &hh; }
+    else if (a == NEPTUNE::T && b == NEPTUNE::p) { p_field = &hh; T_field = &pp; }
+    else
+      return false;
+
+    for (int f = 0; f < r.size(); f++)
+      if (r[f].get_property_number() == NEPTUNE::h)
+        return false;
+
+    return true;
+  }
+
   EOS_Error EOS_Ipp::compute(const EOS_Field &pp,
                              const EOS_Field &hh,
                              EOS_Fields &r,
                              EOS_Error_Field &errfield) const
   {
     EOS_Error err;
-    if (tile_cache_ != nullptr && compute_tiled_regrouped(pp, hh, r, errfield, err))
+
+    const EOS_Field *p_field = nullptr;
+    const EOS_Field *T_field = nullptr;
+    if (hoistable_h_pT(pp, hh, r, p_field, T_field))
+    {
+      // One inversion per point, then the whole batch as an ordinary (p,h)
+      // request. A point whose inversion failed carries a NaN h out of
+      // compute_h_pT, which check_ph_bounds rejects downstream exactly as it
+      // did when each output field inverted for itself -- so a failed point
+      // still leaves its result untouched and still reports the inversion
+      // error, which is folded back in below.
+      const int sz = pp.size();
+      ArrOfDouble h_data(sz);
+      ArrOfInt invert_codes(sz);
+      EOS_Error_Field invert_err(invert_codes);
+      for (int i = 0; i < sz; i++)
+        invert_err.set(i, compute_h_pT((*p_field)[i], (*T_field)[i], h_data[i]));
+
+      EOS_Field h_field("h", "h", NEPTUNE::h, h_data);
+
+      // In tiled mode this also makes the regrouping meaningful for the first
+      // time: it keys on locate(p, h), and until now a (p,T) batch handed it a
+      // temperature to look up as an enthalpy.
+      if (tile_cache_ != nullptr && compute_tiled_regrouped(*p_field, h_field, r, errfield, err))
+        ; // errfield already set by the regrouped run
+      else
+        err = EOS_Fluid::compute(*p_field, h_field, r, errfield);
+
+      errfield.set_worst_error(invert_err);
+      err = worst_generic_error(err, invert_err.find_worst_error().generic_error());
+    }
+    else if (tile_cache_ != nullptr && compute_tiled_regrouped(pp, hh, r, errfield, err))
     {
       if (err == EOS_Error::good)
         return err;

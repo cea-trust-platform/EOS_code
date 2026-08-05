@@ -457,6 +457,18 @@ namespace NEPTUNE_EOS
               //! properties, when non-empty, restricts every tile load to those fields.
               int init_tiled(AString file_name, const Strings &properties);
 
+              // True when this batch is a (p,T) request whose h(p,T) inversion is
+              // worth doing once per point rather than once per point and per
+              // output field, and sets p_field/T_field to the two inputs in a
+              // known order. EOS_Fluid::compute loops fields on the outside and
+              // re-derives h for each of them, which on this class means
+              // re-scanning a whole p-column per field. Declines for fewer than
+              // two outputs (nothing to share) and when h is itself an output
+              // (cf. EOS_Ipp.cxx).
+              bool hoistable_h_pT(const EOS_Field &pp, const EOS_Field &hh,
+                                  const EOS_Fields &r,
+                                  const EOS_Field *&p_field, const EOS_Field *&T_field) const;
+
               // Tiled mode: runs a (p,h) batch with its points regrouped by tile,
               // so a batch spanning more tiles than the cache can hold does not
               // reload them all the way through. Only the order changes -- the
