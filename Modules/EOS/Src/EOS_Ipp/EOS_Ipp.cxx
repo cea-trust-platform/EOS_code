@@ -232,9 +232,12 @@ namespace NEPTUNE_EOS
     return tablename;
   }
 
-  EOS_Ipp::EOS_Ipp() : r1_val(20, std::vector<double>(30, 0.0)),
-                       r2_val(20, std::vector<double>(30, 0.0)),
-                       nodes(3),
+  // r1_val / r2_val start empty and are sized by compute_() to the batch it is
+  // actually given. They used to be born 20x30 and indexed by [property][point]
+  // without a check, so any batch above 30 points or 20 properties wrote past
+  // them -- and a tiled database paid those 4800 doubles once per resident
+  // tile, for a debug path a tile never takes.
+  EOS_Ipp::EOS_Ipp() : nodes(3),
                        med_file("none"),
                        save_bound(0),
                        interp_method(BILINEAR),
@@ -439,9 +442,10 @@ namespace NEPTUNE_EOS
     for (const EOS_Error_Field *f : err_segm_lim)
       if (f) { bytes += (std::size_t)f->size() * sizeof(int); nb_arrays++; }
 
-    // The fixed r1_val/r2_val scratch grids are per instance, so on a tiled
-    // database they are paid once per resident tile and are far from
-    // negligible when tiles are small.
+    // The r1_val/r2_val scratch grids are per instance, so on a tiled database
+    // they would be paid once per resident tile. They are empty unless
+    // compute_() was called, which for a tile it never is, but they are still
+    // counted: an instance that does take that path should see its cost.
     for (const std::vector<double> &row : r1_val)
       bytes += row.capacity() * sizeof(double) + sizeof(std::vector<double>);
     for (const std::vector<double> &row : r2_val)
@@ -743,6 +747,25 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
+  // Grows the compute_() debug grids to hold nb_prop x nb_pts, keeping
+  // whatever they already had. Only ever called from compute_(), which is a
+  // debug path: an EOS_Ipp that never takes it keeps them empty.
+  void EOS_Ipp::resize_debug_grids(int nb_prop, int nb_pts) const
+  {
+    if ((int)r1_val.size() < nb_prop)
+    {
+      r1_val.resize((std::size_t)nb_prop);
+      r2_val.resize((std::size_t)nb_prop);
+    }
+    for (int i = 0; i < nb_prop; i++)
+    {
+      if ((int)r1_val[(std::size_t)i].size() < nb_pts)
+        r1_val[(std::size_t)i].resize((std::size_t)nb_pts, 0.);
+      if ((int)r2_val[(std::size_t)i].size() < nb_pts)
+        r2_val[(std::size_t)i].resize((std::size_t)nb_pts, 0.);
+    }
+  }
+
   EOS_Error EOS_Ipp::compute_(const EOS_Field &pp,
                               const EOS_Field &hh,
                               EOS_Fields &r,
@@ -782,8 +805,10 @@ namespace NEPTUNE_EOS
         hmax_cpt = max(hmax_cpt, hh.get_data()[pts]);
       }
     }
-    // std::vector<std::vector<double>> r1_val; // defined with size 20*30
-    // std::vector<std::vector<double>> r2_val; // defined with size 20*30
+    // Sized to the batch actually received. These were fixed at 20x30 and
+    // indexed by [property][point] with no check, so a batch of more than 30
+    // points -- which is any real one -- wrote past the end of every row.
+    resize_debug_grids(r.size(), pp.size());
 
     // EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield); // debug: does the computation still run?
     EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
@@ -851,6 +876,8 @@ namespace NEPTUNE_EOS
       pmin_cpt = min(pmin_cpt, p.get_data()[pts]);
       pmax_cpt = max(pmax_cpt, p.get_data()[pts]);
     }
+    resize_debug_grids(r.size(), p.size()); // cf. the (p,h) overload above
+
     EOS_Error err = EOS_Fluid::compute(p, r, errfield);
     // Filling r1_val and r2_val
     for (int pts = 0; pts < p.size(); pts++)
@@ -1648,6 +1675,7 @@ namespace NEPTUNE_EOS
   {
     unsigned int nb_p_nodes = round((pmax_ipp - pmin_ipp) /  delta_p_f);
     fnodes2pnodes.resize(nb_p_nodes);
+    fnodes2pnodes = -1; // cf. f_mesh2r_mesh: an uncovered slot must not read as segment 0
 
     int nb_segm = connect_sat.size() / 2;
 
@@ -1663,6 +1691,7 @@ namespace NEPTUNE_EOS
       }
     }
     fnodes2pnodes_lim.resize(nb_p_nodes);
+    fnodes2pnodes_lim = -1;
 
     nb_segm = connect_lim.size() / 2;
 
@@ -1691,6 +1720,11 @@ namespace NEPTUNE_EOS
     unsigned int nb_p_nodes = round((pmax_ipp - pmin_ipp) / delta_p_f);
 
     fnodes2phnodes.resize(nb_h_nodes * nb_p_nodes);
+    // ArrOfInt zero-fills, so any virtual cell no real cell covers used to read
+    // back as cell 0 -- a corner of the domain, returned as a perfectly valid
+    // answer for a point that is in fact nowhere. -1 makes the hole visible so
+    // get_cellidx can report it instead of inventing a result.
+    fnodes2phnodes = -1;
 
     for (unsigned int i_med_cell = 0; i_med_cell < nb_cell; i_med_cell++)
     {
@@ -1820,7 +1854,11 @@ namespace NEPTUNE_EOS
       for (int j = 0; j < nb_segm; j++)
       {
         idx = connect_lim[k];
-        idx2 = connect_lim[k];
+        // idx2 read connect_lim[k], i.e. the same node as idx, so a segment
+        // whose right node was bad was folded into "as good as its left node"
+        // and reported valid. Compare with the saturation branch above, which
+        // has always used k and k+1.
+        idx2 = connect_lim[k + 1];
         ierr1 = err_nodes_prop_p[idx];
         ierr2 = err_nodes_prop_p[idx2];
         errf.set(j, worst_internal_error(ierr1, ierr2));
@@ -1830,22 +1868,28 @@ namespace NEPTUNE_EOS
     }
   }
 
-  // returns the number of the actual cell containing (p, h)
+  // returns the number of the actual cell containing (p, h), or -1 when the
+  // point falls on no real cell (outside the meshed region, or in a hole of a
+  // mesh that does not tile its bounding box)
   int EOS_Ipp::get_cellidx(double &p, double &h) const
   {
-    unsigned int ih, ip;
-    ih = (unsigned int)((h - hmin_ipp) / delta_h_f);
-    ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // Signed on purpose. check_ph_bounds admits a point up to DBL_EPSILON
+    // below hmin_ipp / pmin_ipp, which makes these quotients slightly
+    // negative; converted straight to unsigned they wrapped to ~4e9 and the
+    // lookup below read far outside fnodes2phnodes.
+    long ih = (long)((h - hmin_ipp) / delta_h_f);
+    long ip = (long)((p - pmin_ipp) / delta_p_f);
 
     // if h or p respectively equal to hmax_ipp or pmax_ipp
-    if (ip == nb_p_virtual)
+    if (ip == (long)nb_p_virtual)
       ip--;
-    if (ih == nb_h_virtual)
+    if (ih == (long)nb_h_virtual)
       ih--;
 
-    int i = nb_h_virtual * ip + ih;
+    if (ip < 0 || ih < 0 || ip >= (long)nb_p_virtual || ih >= (long)nb_h_virtual)
+      return -1;
 
-    return fnodes2phnodes[i];
+    return fnodes2phnodes[(int)((long)nb_h_virtual * ip + ih)];
   }
 
   // Returns the real (med) cells whose p-range contains p, in ascending h
@@ -1876,8 +1920,15 @@ namespace NEPTUNE_EOS
     unsigned int ih = 0;
     while (ih < nb_h_virtual)
     {
-      unsigned int cell = fnodes2phnodes[nb_h_virtual * ip + ih];
-      cells.push_back(cell);
+      int cell = fnodes2phnodes[nb_h_virtual * ip + ih];
+      // A hole in the column (cf. f_mesh2r_mesh): there is no cell here to
+      // scan and none to take an h-extent from, so step one virtual row.
+      if (cell < 0)
+      {
+        ih++;
+        continue;
+      }
+      cells.push_back((unsigned int)cell);
 
       // Jump to the first virtual row above the top edge of this cell
       double h_top = nodes_ph[1][corners[2 + 4 * cell]];
@@ -1894,27 +1945,24 @@ namespace NEPTUNE_EOS
    * double& p  : intput p value
    * int     sat_lim  : sat or lim curve
    *
-   * return : int (index)
+   * return : int (index), or -1 when p falls on no segment of the curve
    */
   int EOS_Ipp::get_segmidx(double &p, int sat_lim) const
   {
-    unsigned int ip;
-    if (sat_lim == 0)
-    {
-    ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // Signed, and range-checked, for the same reason as get_cellidx:
+    // check_p_bounds_satlim admits a p a hair below pmin_ipp, whose quotient
+    // is negative and wrapped to ~4e9 once converted to unsigned.
+    long ip = (long)((p - pmin_ipp) / delta_p_f);
     // if p respectively equal to pmax_ipp
-    if (ip == nb_p_virtual)
+    if (ip == (long)nb_p_virtual)
       ip--;
-    return fnodes2pnodes[ip];
-    }
-    else
-    {
-      ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
-    // if p respectively equal to pmax_ipp
-    if (ip == nb_p_virtual)
-      ip--;
-    return fnodes2pnodes_lim[ip];
-    }
+    if (ip < 0 || ip >= (long)nb_p_virtual)
+      return -1;
+
+    const ArrOfInt &table = (sat_lim == 0) ? fnodes2pnodes : fnodes2pnodes_lim;
+    if (ip >= (long)table.size())
+      return -1;
+    return table[(int)ip];
   }
 
 
@@ -2498,6 +2546,12 @@ namespace NEPTUNE_EOS
       return ierr;
 
     int index = get_cellidx(p, h);
+    // Inside the declared (p,h) box but on no real cell: a mesh that does not
+    // tile its own bounding box has holes, and answering from cell 0 -- which
+    // is what reading the zero-filled lookup table amounted to -- is worse
+    // than admitting the point cannot be interpolated.
+    if (index < 0)
+      return OUT_OF_BOUNDS;
 
     // Bicubic Hermite patch, only if explicitly selected and the property has its
     // two first-derivative fields available in the loaded database; otherwise
@@ -2544,7 +2598,19 @@ namespace NEPTUNE_EOS
       return ierr;
 
     int index = get_segmidx(p, sat_lim);
+    if (index < 0)
+      return OUT_OF_BOUNDS; // cf. get_cellidx: no segment here, so no answer
+
     ierr = get_segm_values(index, prop, sat_lim, values);
+    // The result of this was computed and then dropped, with an unconditional
+    // OK returned in its place. When get_segm_values reports PROP_NOT_IN_DB it
+    // has written nothing into values, so linear_interpolator went on to read
+    // uninitialized stack and the caller was told the answer was good. This is
+    // the 1D counterpart of the guard compute_prop_ph already applies to
+    // get_cell_values, and it matters more, because compute_T_sat_p goes
+    // through here and the whole (p,T) chain goes through compute_T_sat_p.
+    if (ierr != EOS_Internal_Error::OK)
+      return ierr;
 
     res = linear_interpolator(p, values);
 

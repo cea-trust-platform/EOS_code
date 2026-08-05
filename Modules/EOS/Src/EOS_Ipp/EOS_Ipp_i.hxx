@@ -20,11 +20,19 @@
 namespace NEPTUNE_EOS
 {
 
+  //! Molar mass. This used to construct -- and leak -- a whole
+  //! EOS("Refprop10","WaterLiquid") per call, and answer from it whatever
+  //! fluid the database actually held, so the number was wrong for every
+  //! fluid but one and the process grew a Refprop instance each time it was
+  //! asked. The interpolated database carries no molar mass of its own, so
+  //! the honest answer is the reference model's when one is attached, and
+  //! "not implemented" otherwise.
   inline EOS_Internal_Error EOS_Ipp::get_mm(double &mm) const
   {
-    EOS *liquid = new EOS("Refprop10", "WaterLiquid");
-    liquid->get_mm(mm);
-    return EOS_Internal_Error::OK;
+    if (obj_fluid == nullptr)
+      return EOS_Internal_Error::NOT_IMPLEMENTED;
+    return (obj_fluid->get_mm(mm) == EOS_Error::good) ? EOS_Internal_Error::OK
+                                                      : EOS_Internal_Error::NOT_IMPLEMENTED;
   }
 
   inline EOS_Internal_Error EOS_Ipp::get_nbcell(int &nb_cell) const

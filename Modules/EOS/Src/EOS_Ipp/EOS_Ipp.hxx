@@ -80,8 +80,15 @@ namespace NEPTUNE_EOS
               mutable bool switch_model;         // If true: override the compute functions when the calculation is not ok
               mutable bool switch_comp_sat_;     // If true: override the compute functions when the calculation is not ok
               mutable bool swch_calc_deriv_fld_; // If true: compute d_lambda_d_h_p using the fluid's own method
+              //! Per-point interpolated (r1_val) and reference-model (r2_val)
+              //! values, filled by compute_() so it can report the gap between
+              //! them. Empty until compute_() is called and sized by it to the
+              //! batch it received: they used to be born 20x30 and indexed
+              //! [property][point] unchecked, which any batch of more than 30
+              //! points overran.
               mutable std::vector<std::vector<double>> r1_val;
               mutable std::vector<std::vector<double>> r2_val;
+              void resize_debug_grids(int nb_prop, int nb_pts) const;
               EOS *obj_fluid = nullptr;
               EOS_Ipp();
               virtual ~EOS_Ipp();
