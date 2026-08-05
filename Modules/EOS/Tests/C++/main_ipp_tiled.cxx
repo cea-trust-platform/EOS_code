@@ -155,6 +155,47 @@ int main()
       ++nb_checked;
     }
 
+  // ---- 4b. saturation curve: 1D in p, so it is not part of the 2D (p,h)
+  //          tiling -- every tile of a p-column carries its own copy. The
+  //          cache answers a sat query from whichever tile of the column is
+  //          already resident rather than always loading the first one, which
+  //          is only sound because those copies are identical; this checks
+  //          that the answer does not depend on which tile served it, by
+  //          querying the same pressures twice with different (p,h) traffic
+  //          in between to change what is resident.
+  for (double p : ps)
+  {
+    double t_first = 0., t_again = 0., t_mono = 0.;
+    const EOS_Error e1 = tiled.compute_T_sat_p(p, t_first);
+    // Touch every h-tile of this column, so the tile that answered above is
+    // no longer the only resident one.
+    for (double h : hs)
+    {
+      double dummy;
+      tiled.compute_rho_ph(p, h, dummy);
+    }
+    const EOS_Error e2 = tiled.compute_T_sat_p(p, t_again);
+    const EOS_Error em = monolithic.compute_T_sat_p(p, t_mono);
+
+    check_same_error("T_sat_p error code, repeat", e1, e2);
+    if (e1 == EOS_Error::good && e2 == EOS_Error::good && t_first != t_again)
+    {
+      std::cerr << "FAILED T_sat_p depends on which tile of the column is resident: p=" << p
+                << " first=" << t_first << " again=" << t_again << std::endl;
+      ++g_failures;
+    }
+    check_same_error("T_sat_p error code vs monolithic", e1, em);
+    // Only a loose agreement is meaningful here, unlike the bit-exactness
+    // required above: the monolithic database carries one saturation curve
+    // discretized over the whole p-range, while each tiled column carries its
+    // own over a p-range 3 times narrower with the same number of nodes. The
+    // two are different (and the tiled one finer) discretizations of the same
+    // curve, so they legitimately differ by ~1% here -- which is a statement
+    // about mesh resolution, not about the tiling being wrong.
+    if (e1 == EOS_Error::good && em == EOS_Error::good)
+      check_close("T_sat_p value", t_first, t_mono, 5e-2);
+  }
+
   // ---- 5. h(p,T) inversion: forces EOS_Ipp_TileCache::compute_h_pT to scan
   //         every tile of a p-column when that column spans several h-tiles.
   //

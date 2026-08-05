@@ -141,7 +141,30 @@ namespace NEPTUNE_EOS
     if (!valid_)
       return EOS_Ipp::MODEL_NOT_INIT;
 
-    EOS_Ipp_Tile *tile = acquire(index_.locate_column(p));
+    // The saturation/limit curves are 1D in p and every tile of a p-column is
+    // generated over that column's own p-range, so they all carry a bit-for-bit
+    // identical copy of them (checked between tiles of a column: zero relative
+    // difference on T_sat and h_l_sat). Any resident tile of the column can
+    // therefore answer, and answering from one avoids pulling a whole 2D tile
+    // off disk just to read a 1D curve -- which is what always taking the
+    // column's first tile used to do, evicting something else in the process.
+    // Since the copies are identical, which tile answers cannot change the
+    // result.
+    index_.tiles_in_column(p, column_scratch_);
+    if (column_scratch_.empty())
+      return EOS_Ipp::OUT_OF_BOUNDS;
+
+    EOS_Ipp_Tile *tile = nullptr;
+    for (int tile_id : column_scratch_)
+    {
+      if (tile_id >= 0 && (std::size_t)tile_id < resident_.size() && resident_[(std::size_t)tile_id] != nullptr)
+      {
+        tile = acquire(tile_id);
+        break;
+      }
+    }
+    if (tile == nullptr)
+      tile = acquire(column_scratch_.front());
     if (tile == nullptr)
       return EOS_Ipp::OUT_OF_BOUNDS;
 
