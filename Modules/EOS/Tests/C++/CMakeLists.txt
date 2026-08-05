@@ -76,6 +76,19 @@ if (WITH_IPP)
   add_test(EOSTestIppTiled bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppTiled 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_tiled")
   set_tests_properties(EOSTestIppTiled PROPERTIES COST        5.
                                                    ENVIRONMENT ${RUN_ENV})
+
+  # Concurrency regression: one EOS_Ipp instance per thread, single-file and
+  # tiled, results compared against the serial run. Needs OpenMP to mean
+  # anything (without it the test still builds and runs, serially).
+  if (USE_OPENMP)
+    message(STATUS "Add test EOSTestIppOpenMP")
+    add_executable (EOSTestIppOpenMP  "${CMAKE_CURRENT_SOURCE_DIR}/main_ipp_openmp.cxx")
+    target_include_directories(EOSTestIppOpenMP PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
+    target_link_libraries(EOSTestIppOpenMP PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
+    add_test(EOSTestIppOpenMP bash -c "set -o pipefail ; OMP_NUM_THREADS=8 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppOpenMP 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_openmp")
+    set_tests_properties(EOSTestIppOpenMP PROPERTIES COST        5.
+                                                     ENVIRONMENT ${RUN_ENV})
+  endif (USE_OPENMP)
 endif (WITH_IPP)
 
 
