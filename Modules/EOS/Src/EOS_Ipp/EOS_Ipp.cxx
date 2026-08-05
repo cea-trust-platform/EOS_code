@@ -488,7 +488,7 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
 
     if (EOS_Ipp_TileIndex::is_manifest(std::string(file_name.aschar())))
-      return init_tiled(file_name);
+      return init_tiled(file_name, Strings());
 
     AString path = eos_data_dir.c_str();
     path += "/EOS_Ipp/";
@@ -499,7 +499,7 @@ namespace NEPTUNE_EOS
   // Historical, eager, whole-database loading body of init(const Strings&),
   // factored out so EOS_Ipp_TileCache can reuse it, unmodified, to load one
   // tile of a tiled database (cf. init()'s ".eosmm" manifest detection).
-  EOS_Error EOS_Ipp::load_from_med_path(const AString &full_med_path)
+  EOS_Error EOS_Ipp::load_from_med_path(const AString &full_med_path, const Strings &properties)
   {
     EOS_Error errM;
     med_file = full_med_path;
@@ -548,7 +548,12 @@ namespace NEPTUNE_EOS
       return errM;
     }
 
-    errM = load_med_champ(med);
+    // Reading the property fields is what a .med load actually spends its time
+    // in (MEDfieldValueAdvancedRd and MEDfilterClose dominate the profile), so
+    // an explicit property list is worth honouring: it is the difference
+    // between paying for every field a tile carries and paying for the ones
+    // the host code asked for.
+    errM = (properties.size() > 0) ? load_med_champ(med, properties) : load_med_champ(med);
     if (errM != EOS_Error::good)
     {
       cerr << "Error : EOS_Ipp::load_med_champ" << endl;
@@ -585,7 +590,7 @@ namespace NEPTUNE_EOS
   // that get_p_min()/get_p_max()/... (unchanged, they just read pmin/pmax/
   // ...) keep reporting the domain of the whole tiled database, not of
   // whichever tile happened to be loaded last.
-  int EOS_Ipp::init_tiled(AString file_name)
+  int EOS_Ipp::init_tiled(AString file_name, const Strings &properties)
   {
     AString path = eos_data_dir.c_str();
     path += "/EOS_Ipp/";
@@ -593,9 +598,14 @@ namespace NEPTUNE_EOS
 
     med_file = path; // so error messages and the cache report name the database
 
+    std::vector<std::string> wanted;
+    wanted.reserve((std::size_t)properties.size());
+    for (int k = 0; k < properties.size(); k++)
+      wanted.push_back(std::string(properties[k].aschar()));
+
     const std::string suffix = (interp_method == BICUBIC) ? "bicubic" : "bilinear";
     tile_cache_ = new EOS_Ipp_TileCache(std::string(path.aschar()), suffix,
-                                        tile_cache_bytes_, tile_cache_tiles_);
+                                        tile_cache_bytes_, tile_cache_tiles_, wanted);
     if (!tile_cache_->is_valid())
     {
       cerr << "Error : EOS_Ipp::init : invalid tiled database manifest " << path.aschar() << endl;
@@ -658,6 +668,14 @@ namespace NEPTUNE_EOS
     // file : med_file
     AString &file_name = strings[0];
     extract_init_options(file_name);
+
+    // A ".eosmm" manifest selects the tiled path here too, so a tiled database
+    // can be opened for a subset of properties just like a single-file one --
+    // where it matters more, the saving being paid on every tile load rather
+    // than once.
+    if (EOS_Ipp_TileIndex::is_manifest(std::string(file_name.aschar())))
+      return init_tiled(file_name, values);
+
     med_file += file_name;
 
     // get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med
@@ -1218,6 +1236,23 @@ namespace NEPTUNE_EOS
 
     int nb_ps = properties.size();
 
+    // Same sizing as the load-everything overload: these are indexed by
+    // EOS_Property below and by every later compute_*, so they must span the
+    // whole property range whatever subset is actually read. Without this the
+    // first val_prop_properties[prop] assigned here tripped EOS_Fields'
+    // "index<n" assertion, which is why this overload -- and with it the
+    // two-argument init(Strings, Strings) -- could not be used at all.
+    // Reserved, not just sized: node_err2mesh_err() appends to all_err_val and
+    // hands err_cell_ph a field built over the element it just pushed, so a
+    // reallocation would leave every field created before it pointing at freed
+    // storage -- which showed up as error codes read back negative.
+    all_prop_val.reserve((std::size_t)nb_champ);
+    all_err_val.reserve((std::size_t)nb_champ);
+    val_prop_properties.resize(NEPTUNE::lastLimProperty + 1);
+    err_segm_sat.resize(NEPTUNE::lastLimProperty + 1);
+    err_cell_ph.resize(NEPTUNE::lastLimProperty + 1);
+    err_segm_lim.resize(NEPTUNE::lastLimProperty + 1);
+
     for (int i = 0; i < nb_champ; i++)
     {
       AString name;
@@ -1235,57 +1270,79 @@ namespace NEPTUNE_EOS
         return EOS_Error::error;
       }
 
-      if (type == 1) // float -> properties values
-      {              // get property values ?
-        int j = 0;
-        int found = 0;
-        while (j < nb_ps && !found)
+      // A property is stored as two champs: its values, named after the
+      // property, and its per-node error codes, named "IE <property>". The
+      // selection has to recognize both as belonging to the same property --
+      // matching the raw name only ever selected the value champ, so every
+      // property loaded this way ended up without the err_cell_ph entry its
+      // interpolation needs, and computing it returned nothing.
+      AString base_name = name;
+      if (type != 1 && name[0] == 'I' && name[1] == 'E')
+      { // "IE propname" --> "propname"
+        base_name.remove(0);
+        base_name.remove(0);
+        base_name.remove(0);
+      }
+      char basecov[PROPNAME_MSIZE];
+      eostp_strcov(base_name.aschar(), basecov);
+
+      int j = 0;
+      int found = 0;
+      while (j < nb_ps && !found)
+      {
+        if (eostp_strcmp(properties[j].aschar(), basecov) == 0)
+          found = 1;
+        j++;
+      }
+      if (!found)
+        continue;
+
+      // A champ whose name maps to no known EOS_Property cannot be indexed
+      // into val_prop_properties/err_cell_ph at all; say so rather than
+      // scribbling outside them.
+      {
+        const EOS_Property prop = gen_property_number(base_name.aschar());
+        if (prop < 0 || prop > NEPTUNE::lastLimProperty)
         {
-          if (eostp_strcmp(properties[j].aschar(), namecov) == 0)
-            found = 1;
-          j++;
+          cerr << "EOS_Ipp::load_med_champ : requested property \"" << base_name.aschar()
+               << "\" is not a known EOS property, ignored" << endl;
+          continue;
         }
-
-        if (found)
-        {
-          ArrOfDouble xval(nbcomp);
-          all_prop_val.push_back(xval);
-          EOS_Property prop = gen_property_number(namecov);
-          EOS_Field res(namecov, namecov,prop, all_prop_val[all_prop_val.size() - 1]);
-          med.get_Champ_Noeud(name, res);
-          val_prop_properties[prop] = res;
-
       }
 
-      else
-      { // get property values ?
-        int j = 0;
-        int found = 0;
-        while (j < nb_ps && !found)
-        {
-          if (eostp_strcmp(properties[j].aschar(), namecov) == 0)
-            found = 1;
-          j++;
-        }
-
-        if (found)
-        {
-          ArrOfInt err(nbcomp);
-          EOS_Error_Field errf(err);
-
-          med.get_ErrChamp_Noeud(name, errf);
-         
-          errf.set_name(namecov);
-          EOS_Property prop = gen_property_number(namecov);
-          if (m_ass == "ph_domain")
-            node_err2mesh_err(prop,errf);
-          else if (m_ass == "sat_domain")
-            node_err2segm_err(prop,errf, 0);
-          else if (m_ass == "lim_domain")
-            node_err2segm_err(prop, errf, 1);
-        }
+      // The error branch used to be nested as the "else" of "if (found)"
+      // *inside* "if (type == 1)", so it only ever ran for a value champ that
+      // had not been selected -- i.e. never usefully at all.
+      if (type == 1) // float -> property values
+      {
+        ArrOfDouble xval(nbcomp);
+        all_prop_val.push_back(xval);
+        EOS_Property prop = gen_property_number(base_name.aschar());
+        EOS_Field res(basecov, basecov, prop, all_prop_val[all_prop_val.size() - 1]);
+        med.get_Champ_Noeud(name, res);
+        val_prop_properties[prop] = res;
       }
-    }
+      else // int -> per-node error codes for that property
+      {
+        ArrOfInt err(nbcomp);
+        EOS_Error_Field errf(err);
+
+        errM = med.get_ErrChamp_Noeud(name, errf);
+        if (errM != EOS_Error::good)
+        {
+          cerr << "EOS_Med::get_ErrChamp_Noeud" << endl;
+          return EOS_Error::error;
+        }
+
+        errf.set_name(base_name.aschar());
+        EOS_Property prop = gen_property_number(base_name.aschar());
+        if (m_ass == "ph_domain")
+          node_err2mesh_err(prop, errf);
+        else if (m_ass == "sat_domain")
+          node_err2segm_err(prop, errf, 0);
+        else if (m_ass == "lim_domain")
+          node_err2segm_err(prop, errf, 1);
+      }
     }
     return EOS_Error::good;
   }
@@ -1863,8 +1920,20 @@ namespace NEPTUNE_EOS
 
   // fetches the p, h and "property" values for the 4 points (=corners) of the actual cell
   //  idx = index in the med mesh = fnodes2phnodes[index_h + Nb_pts_h * index_p]
+  // True if the 2D field of i_prop was loaded from the database. Asking for a
+  // property a database does not carry -- or, now that a tiled database can be
+  // opened for a subset of them, one that was not selected -- used to walk
+  // straight into a null err_cell_ph entry and segfault.
+  bool EOS_Ipp::has_ph_property(EOS_Property i_prop) const
+  {
+    const int sz = (int)err_cell_ph.size();
+    return i_prop >= 0 && i_prop < sz && err_cell_ph[i_prop] != nullptr;
+  }
+
   EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val) const
   {
+    if (!has_ph_property(i_prop))
+      return EOS_Ipp::PROP_NOT_IN_DB;
 
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
@@ -1915,6 +1984,18 @@ namespace NEPTUNE_EOS
     if (fetch_cross_derivative)
       bicubic_cross_derivative_property(i_prop, d2_prop); // caller checked has_bicubic_cross_derivative_data(i_prop)
 
+    // Every field this reads must actually be loaded. The callers check the
+    // error fields, but a database can carry the error field of a property
+    // whose values were not read -- which a selective load makes ordinary --
+    // and the row would then be filled from an unset EOS_Field.
+    if (!has_ph_property(i_prop) || !has_ph_property(dp_prop) || !has_ph_property(dh_prop)
+        || (fetch_cross_derivative && !has_ph_property(d2_prop))
+        || val_prop_properties[i_prop].size() == 0
+        || val_prop_properties[dp_prop].size() == 0
+        || val_prop_properties[dh_prop].size() == 0
+        || (fetch_cross_derivative && val_prop_properties[d2_prop].size() == 0))
+      return EOS_Ipp::PROP_NOT_IN_DB;
+
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
       int id_corn = corners[i_node + 4 * idx];
@@ -1937,6 +2018,12 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, EOS_Property i_prop, int sat_lim, EOS_Ipp_CellData &segm_val) const
   {
+    // Same guard as get_cell_values: a saturation/limit property the database
+    // does not carry must be reported, not dereferenced.
+    const std::vector<EOS_Error_Field *> &errs = (sat_lim == 0) ? err_segm_sat : err_segm_lim;
+    if (i_prop < 0 || i_prop >= (int)errs.size() || errs[i_prop] == nullptr)
+      return EOS_Ipp::PROP_NOT_IN_DB;
+
     if (sat_lim == 0)
     {
 

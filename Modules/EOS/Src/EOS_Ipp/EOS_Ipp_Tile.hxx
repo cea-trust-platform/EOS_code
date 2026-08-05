@@ -19,6 +19,7 @@
 #include "EOS_Ipp_TileIndex.hxx"
 #include <cstddef>
 #include <string>
+#include <vector>
 
 namespace NEPTUNE_EOS
 {
@@ -49,8 +50,10 @@ namespace NEPTUNE_EOS
     EOS_Ipp_Tile &operator=(const EOS_Ipp_Tile &) = delete;
 
     //! Loads the underlying EOS_Ipp from desc_.med_file if not already
-    //! loaded. Returns true on success.
-    bool ensure_loaded(const std::string &interpolation_suffix);
+    //! loaded. Returns true on success. properties, when non-empty, restricts
+    //! the load to those fields (cf. EOS_Ipp::load_from_med_path).
+    bool ensure_loaded(const std::string &interpolation_suffix,
+                       const std::vector<std::string> &properties);
 
     bool is_loaded() const { return ipp_ != nullptr; }
     EOS_Ipp *ipp() const { return ipp_; }

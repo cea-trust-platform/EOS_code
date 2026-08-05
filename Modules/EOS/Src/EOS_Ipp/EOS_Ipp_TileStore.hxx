@@ -21,6 +21,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <vector>
 
 namespace NEPTUNE_EOS
 {
@@ -54,7 +55,8 @@ namespace NEPTUNE_EOS
     //! interpolation_suffix takes part in the identity of a tile: the same
     //! .med read as bicubic and as bilinear are two different objects.
     static EOS_Ipp_Tile *acquire(const EOS_Ipp_TileDescriptor &desc,
-                                 const std::string &interpolation_suffix);
+                                 const std::string &interpolation_suffix,
+                                 const std::vector<std::string> &properties);
 
     //! Drops one reference; destroys the tile when the last one goes.
     static void release(EOS_Ipp_Tile *tile);

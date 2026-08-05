@@ -23,8 +23,10 @@ namespace NEPTUNE_EOS
   EOS_Ipp_TileCache::EOS_Ipp_TileCache(const std::string &manifest_path,
                                         const std::string &interpolation_suffix,
                                         std::size_t budget_bytes,
-                                        std::size_t max_resident_tiles)
+                                        std::size_t max_resident_tiles,
+                                        const std::vector<std::string> &properties)
       : interpolation_suffix_(interpolation_suffix),
+        properties_(properties),
         budget_bytes_(budget_bytes),
         max_resident_tiles_(max_resident_tiles)
   {
@@ -66,7 +68,7 @@ namespace NEPTUNE_EOS
   {
     // Shared with every other cache in the process: this reads the .med only
     // if no one else has the tile already (cf. EOS_Ipp_TileStore).
-    EOS_Ipp_Tile *tile = EOS_Ipp_TileStore::acquire(index_.tile(tile_id), interpolation_suffix_);
+    EOS_Ipp_Tile *tile = EOS_Ipp_TileStore::acquire(index_.tile(tile_id), interpolation_suffix_, properties_);
     if (tile == nullptr)
       return nullptr;
 

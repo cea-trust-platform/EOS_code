@@ -98,7 +98,13 @@ namespace NEPTUNE_EOS
               //! one tile of a tiled database (cf. init()'s ".eosmm" manifest detection).
               //! Public because EOS_Ipp_TileCache constructs plain EOS_Ipp instances (one
               //! per tile) rather than being a subclass.
-              EOS_Error load_from_med_path(const AString &full_med_path);
+              //! properties, when non-empty, restricts the loading to those fields
+              //! (same selection as init(const Strings&, const Strings&)). Reading a
+              //! .med field is what dominates a tile load, so a tiled database opened
+              //! for a handful of properties both loads and occupies proportionally
+              //! less.
+              EOS_Error load_from_med_path(const AString &full_med_path,
+                                           const Strings &properties = Strings());
 
               //! Select the interpolation method to use on the 2D (p,h) mesh.
               //! Has no effect on the 1D saturation/limit curves (always linear).
@@ -121,6 +127,11 @@ namespace NEPTUNE_EOS
               //! budget is too small.
               bool get_tile_cache_stats(std::size_t &nb_resident, std::size_t &nb_loads,
                                         std::size_t &nb_evictions, std::size_t &resident_bytes) const;
+
+              //! True if the 2D (p,h) field of prop was loaded from the database.
+              //! False both for a property the database does not carry and for one
+              //! left out when the database was opened for a subset of properties.
+              bool has_ph_property(EOS_Property prop) const;
 
               //! True if prop is a base 2D property with both first-derivative fields
               //! (d_prop_d_p_h, d_prop_d_h_p) loaded from the current database -- the
@@ -436,7 +447,8 @@ namespace NEPTUNE_EOS
               // connect_ph / ... members. NULL in the historical, whole-database mode, so
               // every existing caller keeps the exact previous behaviour.
               EOS_Ipp_TileCache *tile_cache_ = nullptr;
-              int init_tiled(AString file_name);
+              //! properties, when non-empty, restricts every tile load to those fields.
+              int init_tiled(AString file_name, const Strings &properties);
 
               // Tiled mode: runs a (p,h) batch with its points regrouped by tile,
               // so a batch spanning more tiles than the cache can hold does not

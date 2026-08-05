@@ -64,10 +64,12 @@ namespace NEPTUNE_EOS
     //! budget_bytes / max_resident_tiles: resident budget; whichever is
     //! non-zero applies, and if both are, a tile must satisfy both. Passing 0
     //! for both selects DEFAULT_BUDGET_BYTES.
+    //! properties, when non-empty, restricts every tile load to those fields.
     EOS_Ipp_TileCache(const std::string &manifest_path,
                        const std::string &interpolation_suffix,
                        std::size_t budget_bytes = 0,
-                       std::size_t max_resident_tiles = 0);
+                       std::size_t max_resident_tiles = 0,
+                       const std::vector<std::string> &properties = std::vector<std::string>());
     ~EOS_Ipp_TileCache();
 
     EOS_Ipp_TileCache(const EOS_Ipp_TileCache &) = delete;
@@ -110,6 +112,7 @@ namespace NEPTUNE_EOS
     EOS_Ipp_TileIndex index_;
     bool valid_ = false;
     std::string interpolation_suffix_;
+    std::vector<std::string> properties_;
     std::size_t budget_bytes_ = 0;        // 0 = no byte limit
     std::size_t max_resident_tiles_ = 0;  // 0 = no tile-count limit
     std::size_t resident_bytes_ = 0;

@@ -36,11 +36,15 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Ipp_Tile *EOS_Ipp_TileStore::acquire(const EOS_Ipp_TileDescriptor &desc,
-                                            const std::string &interpolation_suffix)
+                                            const std::string &interpolation_suffix,
+                                            const std::vector<std::string> &properties)
   {
-    // The .med path identifies the data; the interpolation method identifies
-    // how it will be read, and two tiles differing in it must not be shared.
-    const std::string key = desc.med_file + "|" + interpolation_suffix;
+    // The .med path identifies the data; the interpolation method and the set
+    // of properties loaded identify how much of it was read and how. Two tiles
+    // differing in either are different objects and must not be shared.
+    std::string key = desc.med_file + "|" + interpolation_suffix;
+    for (std::size_t k = 0; k < properties.size(); k++)
+      key += "|" + properties[k];
 
     std::lock_guard<std::mutex> lock(mutex());
 
@@ -56,7 +60,7 @@ namespace NEPTUNE_EOS
     // mutex did -- and now also means two domains wanting the same tile at the
     // same time produce one read instead of two.
     EOS_Ipp_Tile *tile = new EOS_Ipp_Tile(desc);
-    if (!tile->ensure_loaded(interpolation_suffix))
+    if (!tile->ensure_loaded(interpolation_suffix, properties))
     {
       delete tile;
       return nullptr;

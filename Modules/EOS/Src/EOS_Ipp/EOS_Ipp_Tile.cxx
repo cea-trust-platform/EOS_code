@@ -23,13 +23,18 @@ namespace NEPTUNE_EOS
     delete ipp_;
   }
 
-  bool EOS_Ipp_Tile::ensure_loaded(const std::string &interpolation_suffix)
+  bool EOS_Ipp_Tile::ensure_loaded(const std::string &interpolation_suffix,
+                                  const std::vector<std::string> &properties)
   {
     if (ipp_ != nullptr)
       return true;
 
+    Strings wanted((int)properties.size());
+    for (std::size_t k = 0; k < properties.size(); k++)
+      wanted[(int)k] = properties[k].c_str();
+
     EOS_Ipp *candidate = new EOS_Ipp();
-    const EOS_Error err = candidate->load_from_med_path(AString(desc_.med_file.c_str()));
+    const EOS_Error err = candidate->load_from_med_path(AString(desc_.med_file.c_str()), wanted);
     if (err != EOS_Error::good && err != EOS_Error::ok)
     {
       delete candidate;
