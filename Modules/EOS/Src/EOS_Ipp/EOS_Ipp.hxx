@@ -457,6 +457,18 @@ namespace NEPTUNE_EOS
               //! properties, when non-empty, restricts every tile load to those fields.
               int init_tiled(AString file_name, const Strings &properties);
 
+              // Recomputes with the reference model only the points the
+              // interpolator could not answer, rather than the whole batch. hh is
+              // null for the 1D (p) overload. Returns the worst generic error left
+              // in errfield afterwards. Requires obj_fluid non-null.
+              EOS_Error fallback_failed_points(const EOS_Field &pp, const EOS_Field *hh,
+                                               EOS_Fields &r, EOS_Error_Field &errfield) const;
+              //! How many points this instance handed to the reference model.
+              //! Reported at destruction under EOS_IPP_FALLBACK_STATS: a database
+              //! quietly falling back on a large share of its points is one whose
+              //! domain does not match what the host code asks of it.
+              mutable std::size_t nb_fallback_points_ = 0;
+
               // True when this batch is a (p,T) request whose h(p,T) inversion is
               // worth doing once per point rather than once per point and per
               // output field, and sets p_field/T_field to the two inputs in a

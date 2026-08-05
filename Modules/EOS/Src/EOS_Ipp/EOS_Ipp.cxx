@@ -263,6 +263,13 @@ namespace NEPTUNE_EOS
       delete obj_fluid;
     }
 
+    // Same idea for the fallback: points quietly served by the reference model
+    // are the difference between "the interpolator is slow" and "the
+    // interpolator is barely being used", and nothing else says which.
+    if (nb_fallback_points_ > 0 && getenv("EOS_IPP_FALLBACK_STATS") != nullptr)
+      cerr << "EOS_Ipp fallback [" << med_file.aschar() << "] : "
+           << nb_fallback_points_ << " point(s) computed by the reference model" << endl;
+
     // Opt-in one-line report: without it, a run whose tile budget is far too
     // small for its access pattern just looks slow, with nothing pointing at
     // the cache. nb_loads far above nb_resident is the signature.
@@ -1036,6 +1043,103 @@ namespace NEPTUNE_EOS
     return true;
   }
 
+  // Said once per process, not once per failing batch. There is nothing the
+  // caller can do differently on the second occurrence, and a solver that
+  // touches the edge of the domain every timestep printed this on every one
+  // of them.
+  static void warn_no_reference_model()
+  {
+    static bool said = false;
+    if (said)
+      return;
+    said = true;
+    cerr << "EOS_Ipp: some points could not be interpolated and no reference model is "
+         << "attached to fall back on; call init_model() if you want them computed."
+         << endl;
+  }
+
+  // Whole-batch fallback, kept as an escape hatch: EOS_IPP_FALLBACK=batch
+  // restores the historical behaviour of handing the entire batch to the
+  // reference model as soon as one point fails.
+  static bool fallback_whole_batch()
+  {
+    static const bool whole = []() {
+      const char *env = getenv("EOS_IPP_FALLBACK");
+      return env != nullptr && std::string(env) == "batch";
+    }();
+    return whole;
+  }
+
+  // Recomputes with the reference model only the points the interpolator could
+  // not answer.
+  //
+  // This used to hand the whole batch over the moment a single point failed,
+  // which has two problems. The cost is the obvious one: one point out of
+  // domain in a batch of 100000 made the reference model run 100000 times, so
+  // the interpolator ended up slower than the model it exists to replace,
+  // having paid for both. The other is that it made a point's result depend on
+  // its neighbours in the batch -- the same (p,h) returned an interpolated
+  // value or a reference one depending on whether some unrelated point in the
+  // same array happened to be out of bounds.
+  //
+  // hh is null for the 1D (p) overload. The compaction is the one
+  // compute_tiled_regrouped already uses, minus the sorting.
+  EOS_Error EOS_Ipp::fallback_failed_points(const EOS_Field &pp, const EOS_Field *hh,
+                                            EOS_Fields &r, EOS_Error_Field &errfield) const
+  {
+    const int sz = pp.size();
+    std::vector<int> bad;
+    for (int i = 0; i < sz; i++)
+      if (errfield[i].generic_error() != EOS_Error::good)
+        bad.push_back(i);
+
+    if (bad.empty())
+      return errfield.find_worst_error().generic_error();
+
+    const int nb = (int)bad.size();
+    ArrOfDouble p_bad(nb), h_bad(nb);
+    for (int k = 0; k < nb; k++)
+    {
+      p_bad[k] = pp[bad[(std::size_t)k]];
+      if (hh != nullptr)
+        h_bad[k] = (*hh)[bad[(std::size_t)k]];
+    }
+    EOS_Field p_field(pp.get_property_title().aschar(), pp.get_property_name().aschar(),
+                      pp.get_property_number(), p_bad);
+
+    const int nb_out = r.size();
+    std::vector<ArrOfDouble> out_data((std::size_t)nb_out);
+    EOS_Fields out(nb_out);
+    for (int f = 0; f < nb_out; f++)
+    {
+      out_data[(std::size_t)f].resize(nb);
+      out[f] = EOS_Field(r[f].get_property_title().aschar(), r[f].get_property_name().aschar(),
+                         r[f].get_property_number(), out_data[(std::size_t)f]);
+    }
+    ArrOfInt err_bad_data(nb);
+    EOS_Error_Field err_bad(err_bad_data);
+
+    if (hh != nullptr)
+    {
+      EOS_Field h_field(hh->get_property_title().aschar(), hh->get_property_name().aschar(),
+                        hh->get_property_number(), h_bad);
+      obj_fluid->compute(p_field, h_field, out, err_bad);
+    }
+    else
+      obj_fluid->compute(p_field, out, err_bad);
+
+    for (int k = 0; k < nb; k++)
+    {
+      const int i = bad[(std::size_t)k];
+      for (int f = 0; f < nb_out; f++)
+        r[f][i] = out[f][k];
+      errfield.set(i, err_bad[k]);
+    }
+
+    nb_fallback_points_ += (std::size_t)nb;
+    return errfield.find_worst_error().generic_error();
+  }
+
   EOS_Error EOS_Ipp::compute(const EOS_Field &pp,
                              const EOS_Field &hh,
                              EOS_Fields &r,
@@ -1082,17 +1186,15 @@ namespace NEPTUNE_EOS
       err = EOS_Fluid::compute(pp, hh, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
-        std::cout << "Error detected : " << err << " ;";
-        std::cout << "for the pair (" << pp.get_data()[0] << "," << hh.get_data()[0] << ") " << std::endl;
-        //r.print_On(std::cout);
       if (obj_fluid == nullptr)
       {
-        std::cerr << "Error: The interpolator fluid is not initialized. To continue the calculation, call the function init_model(). " << std::endl;
+        warn_no_reference_model();
         return err;
       }
-      err = obj_fluid->compute(pp, hh, r, errfield);
+      err = fallback_whole_batch() ? obj_fluid->compute(pp, hh, r, errfield)
+                                   : fallback_failed_points(pp, &hh, r, errfield);
     }
-    // errfield = EOS_Internal_Error::OK; 
+    // errfield = EOS_Internal_Error::OK;
     return err;
   }
 
@@ -1103,15 +1205,13 @@ namespace NEPTUNE_EOS
     EOS_Error err = EOS_Fluid::compute(p, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
-      std::cout <<" Erreur EOS : " << err; 
-      std::cout << "The point p= (" << p.get_data() << "), Did not produce a valid calculation. " << std::endl;
-      r.print_On(std::cout);
       if (obj_fluid == nullptr)
       {
-        std::cerr << "Error: The interpolator fluid is not initialized. To continue the calculation, call the function init_model().  " << std::endl;
+        warn_no_reference_model();
         return err;
       }
-      err = obj_fluid->compute(p, r, errfield);
+      err = fallback_whole_batch() ? obj_fluid->compute(p, r, errfield)
+                                   : fallback_failed_points(p, nullptr, r, errfield);
     }
     return err;
   }
