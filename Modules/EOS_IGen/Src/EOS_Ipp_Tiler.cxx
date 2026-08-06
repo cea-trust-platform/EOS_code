@@ -283,11 +283,23 @@ namespace NEPTUNE_EOS_IGEN
           break;
         }
 
-        igen.set_quality(prm.quality_property.c_str(), prm.quality_type.c_str(), prm.quality_is_abs);
-        err = igen.compute_qualities();
+        igen.set_quality(prm.quality_property.c_str(), prm.quality_type.c_str(),
+                         prm.quality_is_abs, prm.quality_limit);
+
+        // Refinement, when a threshold was asked for. compute_qualities() only
+        // evaluates the criterion; refining is make_local_refine()'s job, and
+        // this called only the former -- so --level_max had no effect and every
+        // database this tool has produced is its unrefined base mesh. Without a
+        // threshold EOS_IGen's sentinel makes the quality test pass everywhere,
+        // which would refine nothing anyway, so the historical behaviour is
+        // kept exactly for callers that do not ask.
+        const bool refine = (prm.quality_limit > 0.) && (prm.level_max != 0);
+        err = refine ? igen.make_local_refine(prm.refine_continuity)
+                     : igen.compute_qualities();
         if (err != EOS_Error::good)
         {
-          cerr << "EOS_Ipp_Tiler: compute_qualities failed for tile (" << w.ip << "," << w.ih << ")" << endl;
+          cerr << "EOS_Ipp_Tiler: " << (refine ? "make_local_refine" : "compute_qualities")
+               << " failed for tile (" << w.ip << "," << w.ih << ")" << endl;
           worker_err = err;
           break;
         }
@@ -365,7 +377,7 @@ namespace NEPTUNE_EOS_IGEN
     out << "MESH " << prm.nb_node_p << " " << prm.nb_node_h << " " << prm.level_max << " "
         << prm.halo_fraction << "\n";
     out << "QUALITY " << prm.quality_property << " " << prm.quality_type << " "
-        << prm.quality_is_abs << "\n";
+        << prm.quality_is_abs << " " << prm.quality_limit << "\n";
     out << "GLOBAL " << prm.pmin << " " << prm.pmax << " " << prm.hmin << " " << prm.hmax << " "
         << Tmin_global << " " << Tmax_global << " " << pcrit << " " << hcrit << " " << tcrit << "\n";
     out << "GRID " << prm.nb_p_tiles << " " << prm.nb_h_tiles << "\n";

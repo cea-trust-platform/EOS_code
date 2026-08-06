@@ -52,6 +52,18 @@ namespace NEPTUNE_EOS_IGEN
     std::string quality_property = "rho";
     std::string quality_type = "centre";
     int quality_is_abs = 1;
+    //! Threshold the refinement is driven against. EOS_IGen's own default
+    //! (-9999.9) is a sentinel meaning "no threshold", under which the quality
+    //! test always passes and no cell is ever refined -- which made level_max
+    //! decorative: every database this tool produced was the unrefined base
+    //! mesh. Left at the sentinel for compatibility; set it to ask for actual
+    //! refinement.
+    double quality_limit = -9999.9;
+    //! Whether the refinement inserts continuity nodes on the hanging edges it
+    //! creates (EOS_IGen::make_local_refine's argument). True matches the
+    //! "raffinement_local" reference databases, false the
+    //! "raffinement_local_non_continu" ones.
+    bool refine_continuity = true;
 
     // Generating a tile is independent of every other tile, so a grid of them
     // is embarrassingly parallel; nb_jobs > 1 forks that many worker processes.

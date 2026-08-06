@@ -87,7 +87,13 @@ namespace
       "  --level_max=N                   max adaptive refinement level (default -1, EOS_IGen's own)\n"
       "  --quality_property=NAME         property the refinement is driven by (default \"rho\")\n"
       "  --quality_type=TYPE             quality criterion (default \"centre\")\n"
-      "  --quality_is_abs=0|1            absolute rather than relative criterion (default 1)\n\n"
+      "  --quality_is_abs=0|1            absolute rather than relative criterion (default 1)\n"
+      "  --quality_limit=X               refine until the criterion is below X. EOS_IGen's\n"
+      "                                  default is a sentinel under which the test always\n"
+      "                                  passes, so without this no cell is ever refined and\n"
+      "                                  --level_max has no effect\n"
+      "  --refine_continuity=0|1         insert continuity nodes on the hanging edges the\n"
+      "                                  refinement creates (default 1)\n\n"
       "running:\n"
       "  --jobs=N                        generate N tiles at a time (default 1)\n"
       "  --skip_existing                 leave already generated tiles alone, to resume a run\n"
@@ -197,6 +203,8 @@ int main(int argc, char **argv)
   prm.quality_property = arg_s(argc, argv, "quality_property", "rho");
   prm.quality_type     = arg_s(argc, argv, "quality_type", "centre");
   prm.quality_is_abs   = arg_i(argc, argv, "quality_is_abs", 1);
+  prm.quality_limit    = arg_d(argc, argv, "quality_limit", -9999.9);
+  prm.refine_continuity = arg_i(argc, argv, "refine_continuity", 1) != 0;
   prm.nb_jobs       = arg_i(argc, argv, "jobs", 1);
   prm.skip_existing = has_flag(argc, argv, "skip_existing");
   prm.dry_run       = has_flag(argc, argv, "dry_run");
