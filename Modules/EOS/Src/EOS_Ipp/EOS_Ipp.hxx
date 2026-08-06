@@ -22,6 +22,7 @@
 #include "EOS/API/EOS_Std_Error_Handler.hxx" // ajout M.F.
 #include "Language/API/Language.hxx"
 #include "EOS_IGen/Src/EOS_Med.hxx"
+#include "EOS_Ipp_CellLocator.hxx"
 #include <vector>
 #include <string>
 using std::vector;
@@ -627,6 +628,14 @@ namespace NEPTUNE_EOS
               // returned by value: the h(p,T) inversions call this per point, and
               // a fresh vector per point is an allocation the caller can hoist.
               void get_cells_containing_p(double p, std::vector<unsigned int> &cells) const;
+              //! Which cell contains a point, and which cells a p-column holds.
+              //! Replaces fnodes2phnodes, whose size was 4^level_max per base cell
+              //! however few cells the mesh had (cf. EOS_Ipp_CellLocator).
+              EOS_Ipp_CellLocator locator_;
+              //! Compares the locator against the flat table over every virtual
+              //! cell. Run only under EOS_IPP_VERIFY_LOCATOR, since it needs that
+              //! table built alongside.
+              void verify_locator(unsigned int nb_p_nodes, unsigned int nb_h_nodes) const;
               //! Virtual-grid column index of p, shared by get_cellidx,
               //! get_cells_containing_p and the column cache so they cannot drift.
               unsigned int virtual_p_index(double p) const;

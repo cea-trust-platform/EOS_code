@@ -1908,12 +1908,25 @@ namespace NEPTUNE_EOS
     unsigned int nb_h_nodes = round((hmax_ipp - hmin_ipp) / delta_h_f);
     unsigned int nb_p_nodes = round((pmax_ipp - pmin_ipp) / delta_p_f);
 
-    fnodes2phnodes.resize(nb_h_nodes * nb_p_nodes);
-    // ArrOfInt zero-fills, so any virtual cell no real cell covers used to read
-    // back as cell 0 -- a corner of the domain, returned as a perfectly valid
-    // answer for a point that is in fact nowhere. -1 makes the hole visible so
-    // get_cellidx can report it instead of inventing a result.
-    fnodes2phnodes = -1;
+    locator_.begin(nb_p_nodes, nb_h_nodes);
+
+    // EOS_IPP_VERIFY_LOCATOR builds the flat table this used to rely on as
+    // well, and compares the two over every virtual cell once the mesh is in
+    // (cf. verify_locator). It is the only exhaustive check available -- the
+    // virtual grid is finite, so "same answer everywhere" is provable rather
+    // than sampled -- and it costs the very memory the locator exists to save,
+    // so it is opt-in.
+    const bool verify = (getenv("EOS_IPP_VERIFY_LOCATOR") != nullptr);
+    if (verify)
+    {
+      fnodes2phnodes.resize(nb_h_nodes * nb_p_nodes);
+      // ArrOfInt zero-fills, so any virtual cell no real cell covers used to
+      // read back as cell 0 -- a corner of the domain, returned as a perfectly
+      // valid answer for a point that is in fact nowhere.
+      fnodes2phnodes = -1;
+    }
+    else
+      fnodes2phnodes.resize(0);
 
     for (unsigned int i_med_cell = 0; i_med_cell < nb_cell; i_med_cell++)
     {
@@ -1958,19 +1971,65 @@ namespace NEPTUNE_EOS
       unsigned int i_h_min = round((h_min_cell - hmin_ipp) / delta_h_f);
       unsigned int i_h_max = round((h_max_cell - hmin_ipp) / delta_h_f);
 
-      for (unsigned int i_p = i_p_min; i_p < i_p_max; i_p++)
-      {
-        for (unsigned int i_h = i_h_min; i_h < i_h_max; i_h++)
-        {
-          fnodes2phnodes[i_h + nb_h_nodes * i_p] = i_med_cell;
-        }
-      }
+      // The cell's box in virtual-grid coordinates, handed to the locator
+      // instead of being painted cell by cell into a flat table
+      // (cf. EOS_Ipp_CellLocator for what that table cost).
+      locator_.add_cell((int)i_med_cell, (long)i_p_min, (long)i_p_max,
+                        (long)i_h_min, (long)i_h_max);
+
+      if (verify)
+        for (unsigned int i_p = i_p_min; i_p < i_p_max; i_p++)
+          for (unsigned int i_h = i_h_min; i_h < i_h_max; i_h++)
+            fnodes2phnodes[i_h + nb_h_nodes * i_p] = i_med_cell;
 
       corners[0 + 4 * i_med_cell] = node_0;
       corners[1 + 4 * i_med_cell] = node_1;
       corners[2 + 4 * i_med_cell] = node_2;
       corners[3 + 4 * i_med_cell] = node_3;
     }
+
+    locator_.finish();
+
+    if (verify)
+    {
+      verify_locator(nb_p_nodes, nb_h_nodes);
+      fnodes2phnodes.resize(0); // the comparison is done; do not keep paying for it
+    }
+  }
+
+  // Compares the locator against the flat table on every cell of the virtual
+  // grid, which is the whole of its input domain: this proves equality rather
+  // than sampling it. Only run under EOS_IPP_VERIFY_LOCATOR, since it needs
+  // the table the locator replaces.
+  void EOS_Ipp::verify_locator(unsigned int nb_p_nodes, unsigned int nb_h_nodes) const
+  {
+    std::size_t nb_diff = 0;
+    long first_ip = -1, first_ih = -1;
+    int first_old = 0, first_new = 0;
+
+    for (unsigned int ip = 0; ip < nb_p_nodes; ip++)
+      for (unsigned int ih = 0; ih < nb_h_nodes; ih++)
+      {
+        const int old_cell = fnodes2phnodes[(int)(ih + nb_h_nodes * ip)];
+        const int new_cell = locator_.locate_index((long)ip, (long)ih);
+        if (old_cell != new_cell)
+        {
+          if (nb_diff == 0)
+          { first_ip = (long)ip; first_ih = (long)ih; first_old = old_cell; first_new = new_cell; }
+          ++nb_diff;
+        }
+      }
+
+    const std::size_t nb_virtual = (std::size_t)nb_p_nodes * (std::size_t)nb_h_nodes;
+    cerr << "EOS_Ipp locator check [" << med_file.aschar() << "] : "
+         << nb_virtual << " virtual cells, " << locator_.nb_nodes() << " tree nodes, depth "
+         << locator_.depth() << ", " << locator_.footprint_bytes() / 1024 << " kB against "
+         << nb_virtual * sizeof(int) / 1024 << " kB : ";
+    if (nb_diff == 0)
+      cerr << "identical" << endl;
+    else
+      cerr << nb_diff << " DIFFERENCE(S), first at (ip=" << first_ip << ",ih=" << first_ih
+           << ") table=" << first_old << " locator=" << first_new << endl;
   }
 
   void EOS_Ipp::node_err2mesh_err(EOS_Property prop,EOS_Error_Field &err_nodes_prop_ph)
@@ -2115,25 +2174,9 @@ namespace NEPTUNE_EOS
     if (ip < 0 || ih < 0 || ip >= (long)nb_p_virtual || ih >= (long)nb_h_virtual)
       return -1;
 
-    return fnodes2phnodes[(int)((long)nb_h_virtual * ip + ih)];
+    return locator_.locate_index(ip, ih);
   }
 
-  // Returns the real (med) cells whose p-range contains p, in ascending h
-  // order -- the cell list scanned by the h(p,T) inversions (compute_h_l_pT,
-  // compute_h_v_pT, compute_h_pT_bicubic).
-  //
-  // Instead of visiting every virtual row of the p-column (O(nb_h_virtual),
-  // which can be huge on refined bases since delta_h_f is the finest cell
-  // height), each identified cell is used to jump directly to the first
-  // virtual row above its top edge, so the cost is O(number of real cells in
-  // the column). The row index of a cell edge is recovered with the same
-  // round() as f_mesh2r_mesh, so the jump lands exactly on the grid.
-  //
-  // Note: the historical scan collected the same cells in a
-  // std::set<unsigned int>, i.e. iterated them by ascending med cell number;
-  // the h-ascending order used here can only pick a different cell in the
-  // degenerate case where several cells admit an inversion root (root exactly
-  // on a shared edge), where both orders give an equivalent h.
   unsigned int EOS_Ipp::virtual_p_index(double p) const
   {
     unsigned int ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
@@ -2143,30 +2186,24 @@ namespace NEPTUNE_EOS
     return ip;
   }
 
+  // Returns the real (med) cells whose p-range contains p, in ascending h
+  // order -- the cell list scanned by the h(p,T) inversions (compute_h_l_pT,
+  // compute_h_v_pT, compute_h_pT_bicubic).
+  //
+  // This used to walk the column's virtual rows, reading the flat table and
+  // jumping over each cell it found by looking up that cell's top edge: two
+  // indirections per cell on top of the table read. The locator descends its
+  // own structure instead, visiting only the nodes that span the column, and
+  // yields the same cells in the same order.
+  //
+  // Note: the historical scan collected the same cells in a
+  // std::set<unsigned int>, i.e. iterated them by ascending med cell number;
+  // the h-ascending order used since can only pick a different cell in the
+  // degenerate case where several cells admit an inversion root (root exactly
+  // on a shared edge), where both orders give an equivalent h.
   void EOS_Ipp::get_cells_containing_p(double p, std::vector<unsigned int> &cells) const
   {
-    cells.clear();
-
-    const unsigned int ip = virtual_p_index(p);
-
-    unsigned int ih = 0;
-    while (ih < nb_h_virtual)
-    {
-      int cell = fnodes2phnodes[nb_h_virtual * ip + ih];
-      // A hole in the column (cf. f_mesh2r_mesh): there is no cell here to
-      // scan and none to take an h-extent from, so step one virtual row.
-      if (cell < 0)
-      {
-        ih++;
-        continue;
-      }
-      cells.push_back((unsigned int)cell);
-
-      // Jump to the first virtual row above the top edge of this cell
-      double h_top = nodes_ph[1][corners[2 + 4 * cell]];
-      unsigned int ih_next = (unsigned int)round((h_top - hmin_ipp) / delta_h_f);
-      ih = (ih_next > ih) ? ih_next : ih + 1; // guaranteed progress
-    }
+    locator_.cells_in_column((long)virtual_p_index(p), cells);
   }
 
   // get_cells_containing_p, reusing the previous answer when p has not left the
