@@ -31,6 +31,32 @@
 using namespace NEPTUNE_EOS ;
 using namespace NEPTUNE ;
 
+namespace
+{
+  // Next k for which node_glb_tmp[base + k*(row*sz_h + col)] holds a node,
+  // bounded by the largest cell a refinement step can produce and by the grid
+  // itself. Returns -1 when there is none, which means the walk below is no
+  // longer standing on the corner of a cell.
+  //
+  // The three scans it replaces were unbounded, and read past the end of the
+  // array as soon as the walk lost its place -- an assertion in a build with
+  // asserts on, silent corruption in one without.
+  int scan_for_node(const NEPTUNE::ArrOfInt &grid, int base, int row, int col,
+                    int sz_h, int sz_total, int k, int k_max)
+  {
+    while (k <= k_max)
+    {
+      const int idx = base + k * row * sz_h + k * col;
+      if (idx < 0 || idx >= sz_total)
+        return -1;
+      if (grid[idx] != 0)
+        return k;
+      k++;
+    }
+    return -1;
+  }
+}
+
 namespace NEPTUNE_EOS_IGEN
 {
 
@@ -249,7 +275,8 @@ namespace NEPTUNE_EOS_IGEN
   }
   
   void EOS_Mesh::add_local_nodes(int level, bool cont)
-  { int ndomain = domain.size() ;
+  {
+     refine_ok_ = true ; int ndomain = domain.size() ;
 
     if (ndomain == 2)
        { //  création d'un maillage global pour la qualité 
@@ -475,14 +502,27 @@ namespace NEPTUNE_EOS_IGEN
          l = 0 ;
          m = 0 ;
 //          affectation des maille au 4 noeuds qui l'entoure
+         const int sz_total = sz_next_h*sz_next_p ;
+         const int k_max = int(pow(2,level+1)) ; // side of a cell no step has refined
+
          while (m<nb_mesh && l<(sz_next_h*sz_next_p))
-            { mesh_to_node[m][0]=l; //glb_to_node[l];
-              while(node_glb_tmp[l+k*sz_next_h] == 0)
-                 k++ ;
-              while(node_glb_tmp[l+k] == 0)
-                 k++ ;
-              while(node_glb_tmp[l+k*sz_next_h+k] == 0)
-                 k++ ;
+            { // The walk assumes l is the lower-left corner of a cell and that
+              // the other three sit at the same offset k. Local refinement
+              // breaks that from level 2 on -- the end-of-row advance below
+              // steps one entry and then skips empty ones along the row, which
+              // only lands on the next row of cells while every cell in the row
+              // has the same height. With mixed heights it lands mid-row, on a
+              // hole or on a mid-edge node, and the scans then ran off the end
+              // of the grid looking for a corner that is not there.
+              if (node_glb_tmp[l] == 0)
+                 { refine_ok_ = false ; return ; }
+              mesh_to_node[m][0]=l; //glb_to_node[l];
+              k = scan_for_node(node_glb_tmp, l, 1, 0, sz_next_h, sz_total, k, k_max) ;
+              if (k < 0) { refine_ok_ = false ; return ; }
+              k = scan_for_node(node_glb_tmp, l, 0, 1, sz_next_h, sz_total, k, k_max) ;
+              if (k < 0) { refine_ok_ = false ; return ; }
+              k = scan_for_node(node_glb_tmp, l, 1, 1, sz_next_h, sz_total, k, k_max) ;
+              if (k < 0) { refine_ok_ = false ; return ; }
               
               mesh_to_node[m][2] = l+k*sz_next_h ;   //glb_to_node[l+k*sz_next_h];
               mesh_to_node[m][1] = l+k ;             //glb_to_node[l+k];
@@ -531,12 +571,14 @@ namespace NEPTUNE_EOS_IGEN
          ArrOfInt next_to_mesh((sz_next_h-1)*(sz_next_p-1)) ;
                
          while ( (m < nb_mesh) && (l < (sz_next_h*sz_next_p)) )
-            { while(node_glb_tmp[l+k*sz_next_h] == 0)
-                 k++ ;
-              while(node_glb_tmp[l+k] == 0)
-                 k++ ;
-              while(node_glb_tmp[l+k*sz_next_h+k] == 0)
-                 k++ ;
+            { if (node_glb_tmp[l] == 0)   // cf. the walk above
+                 { refine_ok_ = false ; return ; }
+              k = scan_for_node(node_glb_tmp, l, 1, 0, sz_next_h, sz_total, k, k_max) ;
+              if (k < 0) { refine_ok_ = false ; return ; }
+              k = scan_for_node(node_glb_tmp, l, 0, 1, sz_next_h, sz_total, k, k_max) ;
+              if (k < 0) { refine_ok_ = false ; return ; }
+              k = scan_for_node(node_glb_tmp, l, 1, 1, sz_next_h, sz_total, k, k_max) ;
+              if (k < 0) { refine_ok_ = false ; return ; }
               
               for (int i=0; i<k; i++)
                  { for (int j=0; j<k; j++)

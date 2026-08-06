@@ -63,6 +63,11 @@ namespace NEPTUNE_EOS_IGEN
         void set_error(ArrOfInt& ierr);
         
         bool get_exist() const ;
+        //! False when the last add_local_nodes() could not make sense of the
+        //! mesh it was refining and stopped early (cf. EOS_Mesh.cxx). The
+        //! object is then left half-refined and must not be used; the caller
+        //! is expected to turn this into an error rather than write it out.
+        bool refine_ok() const { return refine_ok_ ; }
         int get_level_max() const;
         const EOS_Fields& get_domain() const;
         const EOS_Fields& get_domain_continuity() const;
@@ -89,6 +94,7 @@ namespace NEPTUNE_EOS_IGEN
            
    private:
       bool exist;
+      bool refine_ok_ = true;
       int nb_p;
       int nb_h;
       int level_max;     // max level of refinement applied (no refinement : 

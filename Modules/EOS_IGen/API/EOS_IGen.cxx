@@ -1042,10 +1042,22 @@ namespace NEPTUNE_EOS_IGEN
             test_level_p = true ;
          if ( (mesh_ph->get_exist()) && (mesh_ph->get_level_max() != level) )
             { mesh_ph->add_local_nodes(level, cont) ;
-              if (cont)  mesh_ph->add_continuity_nodes(level) ;
+//            Only on a mesh the step could actually build: the continuity
+//            nodes are derived from the cell lists add_local_nodes fills, and
+//            running this over a half-built one segfaults.
+              if (cont && mesh_ph->refine_ok())  mesh_ph->add_continuity_nodes(level) ;
             }
          else
             test_level_ph = true ;
+
+//       A refinement step that could not make sense of the mesh leaves it half
+//       built, so it must not be carried on with or written out. This used to
+//       run off the end of an array instead (cf. EOS_Mesh::add_local_nodes).
+         if ( !mesh_p->refine_ok() || !mesh_ph->refine_ok() )
+            { cerr << "Error EOS_IGen::make_local_refine : the mesh could not be refined "
+                   << "past level " << level << " ; refinement stopped" << endl ;
+              return EOS_Error::error ;
+            }
          
          if (test_level_p && test_level_ph)  break ;
          refine = true ;
