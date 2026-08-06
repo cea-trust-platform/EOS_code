@@ -170,7 +170,8 @@ namespace
   private:
     void scenario_ph(EOS &eos, const char *name, const std::vector<std::string> &props);
     void scenario_ph_local(EOS &eos, const char *name, const std::vector<std::string> &props);
-    void scenario_pT(EOS &eos, const char *name, const std::vector<std::string> &props);
+    void scenario_pT(EOS &eos, const char *name, const std::vector<std::string> &props,
+                     bool coherent = false);
     void scenario_ph_oob(EOS &eos, const char *name, const std::vector<std::string> &props);
     void scenario_scalar(EOS &eos);
 
@@ -324,15 +325,40 @@ namespace
     results_.push_back(r);
   }
 
-  void Bench::scenario_pT(EOS &eos, const char *name, const std::vector<std::string> &props)
+  void Bench::scenario_pT(EOS &eos, const char *name, const std::vector<std::string> &props,
+                          bool coherent)
   {
-    std::vector<double> p, T;
-    // T bounds come from the database; staying inside them is what makes the
-    // inversion succeed rather than scan a whole column for nothing.
-    make_points(p, T, pmin_, pmax_, tmin_, tmax_, 0., 67890ULL);
-
     const int n  = opt_.nb_points;
     const int nf = (int)props.size();
+
+    std::vector<double> p, T;
+    if (coherent)
+    {
+      // The (p,T) counterpart of scenario_ph_local: consecutive points stay in
+      // the same p-column, as a solver's neighbouring mesh cells do. The
+      // uniformly random alternative below is the worst case for anything that
+      // remembers a column, so measuring only that would hide both the gain
+      // and any cost.
+      p.resize((std::size_t)n);
+      T.resize((std::size_t)n);
+      Lcg rng(86420ULL);
+      const double p0 = pmin_ + 0.05 * (pmax_ - pmin_), p1 = pmax_ - 0.05 * (pmax_ - pmin_);
+      const double t0 = tmin_ + 0.05 * (tmax_ - tmin_), t1 = tmax_ - 0.05 * (tmax_ - tmin_);
+      const double period = 5000.;
+      for (int i = 0; i < n; i++)
+      {
+        const double u = 0.5 * (1. + sin(2. * M_PI * (double)i / period));
+        const double v = 0.5 * (1. + cos(2. * M_PI * (double)i / (period * 1.7)));
+        p[(std::size_t)i] = p0 + (p1 - p0) * std::min(1., std::max(0., u + 0.002 * (rng.next01() - 0.5)));
+        T[(std::size_t)i] = t0 + (t1 - t0) * std::min(1., std::max(0., v + 0.002 * (rng.next01() - 0.5)));
+      }
+    }
+    else
+    {
+      // T bounds come from the database; staying inside them is what makes the
+      // inversion succeed rather than scan a whole column for nothing.
+      make_points(p, T, pmin_, pmax_, tmin_, tmax_, 0., 67890ULL);
+    }
 
     ArrOfDouble pd(n, &p[0]), Td(n, &T[0]);
     EOS_Field pf("p", "p", NEPTUNE::p, pd);
@@ -362,6 +388,8 @@ namespace
     }
     r.seconds  = best;
     r.nb_calls = (long)n * nf;
+    if (coherent)
+      r.note = "spatially coherent points, as a solver produces";
     collect(r, out, err);
     results_.push_back(r);
   }
@@ -505,6 +533,7 @@ namespace
     scenario_ph(eos, "phN", many);
     scenario_pT(eos, "pT1", one_pT);
     scenario_pT(eos, "pTN", many_pT);
+    scenario_pT(eos, "pT1_loc", one_pT, true);
     scenario_scalar(eos);
 
     // The fallback scenario needs a reference model: without one, EOS_Ipp

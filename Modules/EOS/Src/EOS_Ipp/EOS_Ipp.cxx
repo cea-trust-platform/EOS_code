@@ -2057,29 +2057,40 @@ namespace NEPTUNE_EOS
     }
   }
 
-  // Scratch the three h(p,T) inversions hand to get_cells_containing_p, so the
-  // column scan allocates nothing per point -- its declaration has always said
-  // the caller should hoist it, and none of them did.
+  // The last cell compute_prop_ph interpolated in, on this thread
+  // (cf. EOS_Ipp_CellCache).
   //
   // thread_local rather than a member of EOS_Ipp, which is what it looks like
   // it should be. A loaded tile's EOS_Ipp is shared by every
   // EOS_Ipp_TileCache holding that tile resident (cf. EOS_Ipp_TileStore), and
   // those caches belong to different threads: the whole reason sharing is safe
   // is that a loaded tile is immutable under concurrent compute_* calls. A
-  // mutable member would have quietly taken that away.
-  static std::vector<unsigned int> &column_scratch()
-  {
-    static thread_local std::vector<unsigned int> scratch;
-    return scratch;
-  }
-
-  // The last cell compute_prop_ph interpolated in, on this thread
-  // (cf. EOS_Ipp_CellCache). thread_local for the same reason as
-  // column_scratch(), and keyed on the instance because one thread alternates
-  // between the tiles of a tiled database.
+  // mutable member would have quietly taken that away. Keyed on the instance
+  // too, because one thread alternates between the tiles of a tiled database.
   static EOS_Ipp_CellCache &cell_cache()
   {
     static thread_local EOS_Ipp_CellCache cache;
+    return cache;
+  }
+
+  // The cell list of the last p-column an h(p,T) inversion scanned, on this
+  // thread. Same storage rules as cell_cache().
+  //
+  // Building that list means walking the column's virtual rows, jumping cell
+  // by cell, with a lookup-table read and two indirections per cell -- a cost
+  // per point that no filter on the cells themselves can remove, and which the
+  // measurements after the T-range filter showed to be what both interpolation
+  // methods had converged onto. A batch's points do not each land in their own
+  // column: a solver's neighbouring cells share one, and the two inversions
+  // compute_h_pT runs for a single point (the root, then the saturation check)
+  // always do.
+  //
+  // Reentrancy: the reference handed out stays valid for the caller's whole
+  // scan because no inversion runs another one inside its loop -- compute_h_pT
+  // calls them one after the other, never nested.
+  static EOS_Ipp_ColumnCache &column_cache()
+  {
+    static thread_local EOS_Ipp_ColumnCache cache;
     return cache;
   }
 
@@ -2123,14 +2134,20 @@ namespace NEPTUNE_EOS
   // the h-ascending order used here can only pick a different cell in the
   // degenerate case where several cells admit an inversion root (root exactly
   // on a shared edge), where both orders give an equivalent h.
-  void EOS_Ipp::get_cells_containing_p(double p, std::vector<unsigned int> &cells) const
+  unsigned int EOS_Ipp::virtual_p_index(double p) const
   {
-    cells.clear();
-
     unsigned int ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
     // if p equal to pmax_ipp (cf. get_cellidx)
     if (ip == nb_p_virtual)
       ip--;
+    return ip;
+  }
+
+  void EOS_Ipp::get_cells_containing_p(double p, std::vector<unsigned int> &cells) const
+  {
+    cells.clear();
+
+    const unsigned int ip = virtual_p_index(p);
 
     unsigned int ih = 0;
     while (ih < nb_h_virtual)
@@ -2150,6 +2167,21 @@ namespace NEPTUNE_EOS
       unsigned int ih_next = (unsigned int)round((h_top - hmin_ipp) / delta_h_f);
       ih = (ih_next > ih) ? ih_next : ih + 1; // guaranteed progress
     }
+  }
+
+  // get_cells_containing_p, reusing the previous answer when p has not left the
+  // virtual column it was built for (cf. column_cache).
+  const std::vector<unsigned int> &EOS_Ipp::cells_containing_p_cached(double p) const
+  {
+    EOS_Ipp_ColumnCache &cc = column_cache();
+    const unsigned int ip = virtual_p_index(p);
+    if (cc.owner == this && cc.ip == ip)
+      return cc.cells;
+
+    cc.owner = this;
+    cc.ip = ip;
+    get_cells_containing_p(p, cc.cells);
+    return cc.cells;
   }
 
   /*
@@ -2731,9 +2763,7 @@ namespace NEPTUNE_EOS
     EOS_Ipp_CellData values;
 
     // Get all real cells containing p (same cell list as the bilinear inversion)
-    // Reused across calls rather than built per point (cf. column_scratch()).
-    std::vector<unsigned int> &cells_containing_p = column_scratch();
-    get_cells_containing_p(p, cells_containing_p);
+    const std::vector<unsigned int> &cells_containing_p = cells_containing_p_cached(p);
 
     // Cells whose interpolated T provably never reaches the target cannot
     // hold the root, and saying so costs two contiguous doubles instead of
@@ -2812,9 +2842,7 @@ namespace NEPTUNE_EOS
     EOS_Property prop = NEPTUNE::T;
 
     // Get all real cells containing p (ascending h order)
-    // Reused across calls rather than built per point (cf. column_scratch()).
-    std::vector<unsigned int> &cells_containing_p = column_scratch();
-    get_cells_containing_p(p, cells_containing_p);
+    const std::vector<unsigned int> &cells_containing_p = cells_containing_p_cached(p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
@@ -2876,9 +2904,7 @@ namespace NEPTUNE_EOS
     EOS_Property prop = NEPTUNE::T;
 
     // Get all real cells containing p (ascending h order)
-    // Reused across calls rather than built per point (cf. column_scratch()).
-    std::vector<unsigned int> &cells_containing_p = column_scratch();
-    get_cells_containing_p(p, cells_containing_p);
+    const std::vector<unsigned int> &cells_containing_p = cells_containing_p_cached(p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1

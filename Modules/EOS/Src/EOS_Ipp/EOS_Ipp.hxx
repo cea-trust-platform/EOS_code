@@ -116,6 +116,16 @@ namespace NEPTUNE_EOS
               double f[4], ft[4], fu[4], ftu[4];
        };
 
+       //! The cell list of the last p-column an h(p,T) inversion scanned, on one
+       //! thread. Held and keyed like EOS_Ipp_CellCache, and for the same
+       //! reasons.
+       struct EOS_Ipp_ColumnCache
+       {
+              const void *owner = nullptr;
+              unsigned int ip = 0xFFFFFFFFu;
+              std::vector<unsigned int> cells;
+       };
+
        class EOS_Ipp : public EOS_Fluid
        {
               static const AString tablename;
@@ -617,6 +627,13 @@ namespace NEPTUNE_EOS
               // returned by value: the h(p,T) inversions call this per point, and
               // a fresh vector per point is an allocation the caller can hoist.
               void get_cells_containing_p(double p, std::vector<unsigned int> &cells) const;
+              //! Virtual-grid column index of p, shared by get_cellidx,
+              //! get_cells_containing_p and the column cache so they cannot drift.
+              unsigned int virtual_p_index(double p) const;
+              //! Same list as get_cells_containing_p, reusing the last one when p
+              //! falls in the same virtual column (cf. column_cache in EOS_Ipp.cxx).
+              //! The reference is valid until the next call on this thread.
+              const std::vector<unsigned int> &cells_containing_p_cached(double p) const;
               int get_segmidx(double &p, int sat_lim) const;
               double linear_interpolator(double p, const EOS_Ipp_CellData &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;
