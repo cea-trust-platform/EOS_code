@@ -133,6 +133,17 @@ namespace NEPTUNE_EOS_IGEN
       int fd_;
     };
 
+    // Where a worker leaves the tiles it could not generate. Workers are
+    // forked processes, so they cannot append to the parent's list; one small
+    // file per job, read and removed by the parent, is enough and needs no
+    // synchronisation since each job writes only its own.
+    std::string failure_file(const std::string &manifest_file_name, int job)
+    {
+      std::ostringstream path;
+      path << eos_data_dir << "/EOS_Ipp/." << manifest_file_name << ".failed." << job;
+      return path.str();
+    }
+
     // Does this tile's .med already sit in the output directory?
     bool tile_exists(const std::string &file_name)
     {
@@ -146,15 +157,40 @@ namespace NEPTUNE_EOS_IGEN
     struct WrittenTile
     {
       int ip, ih;
-      double p0, p1, h0, h1; // declared (core) cell -- not the halo-widened generation box
-      double tmin, tmax;     // (p,T) generation box actually handed to EOS_IGen
-      std::string file_name; // "{tile_basename}_{ip}_{ih}.med"
+      double p0, p1, h0, h1;     // declared (core) cell -- not the halo-widened generation box
+      double bp0, bp1, bh0, bh1; // the halo-widened box handed to EOS_IGen
+      double tmin, tmax;         // (p,T) generation box actually handed to EOS_IGen
+      std::string file_name;     // "{tile_basename}_{ip}_{ih}.med"
     };
+
+    //! A grid cell with no tile, and why. The manifest records these so a
+    //! partial database says what it is missing instead of looking complete.
+    struct MissingTile
+    {
+      int ip, ih;
+      std::string reason;
+    };
+  }
+
+  namespace
+  {
+    std::string g_manifest_file_name; // for record_failure, set on entry below
+
+    void record_failure(const EOS_Ipp_Tiler_Params &, int job, int ip, int ih,
+                        const std::string &reason)
+    {
+      if (iret_eos_data_dir)
+        return;
+      std::ofstream out(failure_file(g_manifest_file_name, job).c_str(), std::ios::app);
+      if (out.good())
+        out << ip << " " << ih << " " << reason << "\n";
+    }
   }
 
   EOS_Error generate_tiled_database(const EOS_Ipp_Tiler_Params &prm,
                                      const std::string &manifest_file_name)
   {
+    g_manifest_file_name = manifest_file_name;
     if (prm.nb_p_tiles <= 0 || prm.nb_h_tiles <= 0 || !(prm.pmax > prm.pmin) || !(prm.hmax > prm.hmin))
     {
       cerr << "EOS_Ipp_Tiler: invalid parameters (grid size or domain)" << endl;
@@ -185,7 +221,7 @@ namespace NEPTUNE_EOS_IGEN
     // having to re-derive the ordering.
     std::vector<WrittenTile> written;
     written.reserve((std::size_t)nb_tiles);
-    std::vector<double> box_p0(nb_tiles), box_p1(nb_tiles), box_h0(nb_tiles), box_h1(nb_tiles);
+    std::vector<MissingTile> missing;
 
     for (int k = 0; k < nb_tiles; ++k)
     {
@@ -197,20 +233,29 @@ namespace NEPTUNE_EOS_IGEN
       const double h0 = prm.hmin + ih * dh;
       const double h1 = prm.hmin + (ih + 1) * dh;
 
-      box_p0[k] = std::max(prm.pmin, p0 - prm.halo_fraction * dp);
-      box_p1[k] = std::min(prm.pmax, p1 + prm.halo_fraction * dp);
-      box_h0[k] = std::max(prm.hmin, h0 - prm.halo_fraction * dh);
-      box_h1[k] = std::min(prm.hmax, h1 + prm.halo_fraction * dh);
+      const double bp0 = std::max(prm.pmin, p0 - prm.halo_fraction * dp);
+      const double bp1 = std::min(prm.pmax, p1 + prm.halo_fraction * dp);
+      const double bh0 = std::max(prm.hmin, h0 - prm.halo_fraction * dh);
+      const double bh1 = std::min(prm.hmax, h1 + prm.halo_fraction * dh);
 
+      // A tile the source model cannot even be evaluated at is recorded and
+      // skipped rather than ending the run. It is one grid cell out of
+      // nb_tiles, and the reader already copes with a missing one: the tile
+      // index leaves that grid slot empty and locate() answers -1 there
+      // (cf. EOS_Ipp_TileIndex). Abandoning the whole database for it threw
+      // away every tile that would have generated perfectly.
       double Tmin, Tmax;
-      if (!corner_T_range(source, box_p0[k], box_p1[k], box_h0[k], box_h1[k], Tmin, Tmax))
+      if (!corner_T_range(source, bp0, bp1, bh0, bh1, Tmin, Tmax))
       {
-        cerr << "EOS_Ipp_Tiler: could not evaluate T(p,h) at tile (" << ip << "," << ih << ") corners" << endl;
-        return EOS_Error::error;
+        cerr << "EOS_Ipp_Tiler: tile (" << ip << "," << ih
+             << ") skipped: T(p,h) cannot be evaluated at its corners" << endl;
+        missing.push_back(MissingTile{ip, ih, "T(p,h) not evaluable at the tile corners"});
+        continue;
       }
 
       WrittenTile w;
       w.ip = ip; w.ih = ih; w.p0 = p0; w.p1 = p1; w.h0 = h0; w.h1 = h1;
+      w.bp0 = bp0; w.bp1 = bp1; w.bh0 = bh0; w.bh1 = bh1;
       w.tmin = Tmin; w.tmax = Tmax; // exactly the box handed to set_extremum below
       std::ostringstream name;
       name << prm.tile_basename << "_" << ip << "_" << ih;
@@ -220,9 +265,10 @@ namespace NEPTUNE_EOS_IGEN
 
     if (prm.dry_run)
     {
-      cout << "eos_ipp_tiler: dry run, " << nb_tiles << " tile(s) would be generated from "
+      cout << "eos_ipp_tiler: dry run, " << written.size() << " of " << nb_tiles
+           << " tile(s) would be generated from "
            << prm.method << "/" << prm.reference << "\n";
-      for (int k = 0; k < nb_tiles; ++k)
+      for (std::size_t k = 0; k < written.size(); ++k)
         cout << "  " << written[k].file_name
              << "  p=[" << written[k].p0 << "," << written[k].p1 << "]"
              << "  h=[" << written[k].h0 << "," << written[k].h1 << "]"
@@ -238,7 +284,14 @@ namespace NEPTUNE_EOS_IGEN
     // parallel. Forked processes rather than threads: EOS_IGen and the MED
     // writer are not known to be thread-safe, and each tile writes its own
     // file, so there is nothing to share and nothing to lock.
-    const int nb_jobs = (prm.nb_jobs > 1) ? std::min(prm.nb_jobs, nb_tiles) : 1;
+    const int nb_jobs = (prm.nb_jobs > 1) ? std::min(prm.nb_jobs, (int)written.size()) : 1;
+
+    // Any failure files left by a previous run would be read back as this
+    // run's failures, so a resumed generation reported tiles that had since
+    // been produced -- and counted them twice.
+    if (!iret_eos_data_dir)
+      for (int job = 0; job < nb_jobs; ++job)
+        remove(failure_file(manifest_file_name, job).c_str());
     std::vector<pid_t> workers;
     for (int job = 0; job < nb_jobs; ++job)
     {
@@ -259,28 +312,36 @@ namespace NEPTUNE_EOS_IGEN
 
       // Worker (or the single process when nb_jobs == 1): tiles job, job+n, ...
       EOS_Error worker_err = EOS_Error::good;
-      for (int k = job; k < nb_tiles; k += nb_jobs)
+      for (int k = job; k < (int)written.size(); k += nb_jobs)
       {
         const WrittenTile &w = written[k];
 
         if (prm.skip_existing && tile_exists(w.file_name))
         {
           if (prm.verbose)
-            cout << "eos_ipp_tiler: [" << (k + 1) << "/" << nb_tiles << "] " << w.file_name
+            cout << "eos_ipp_tiler: [" << (k + 1) << "/" << written.size() << "] " << w.file_name
                  << " already present, skipped" << endl;
           continue;
         }
 
         Muted_stderr mute(prm.quiet_source);
         EOS_IGen igen(prm.method.c_str(), prm.reference.c_str());
-        igen.set_extremum(box_p0[k], box_p1[k], w.tmin, w.tmax);
+        igen.set_extremum(w.bp0, w.bp1, w.tmin, w.tmax);
 
+        // A tile that fails is recorded and skipped, not the end of the run.
+        // Its neighbours are independent of it -- each generates its own mesh
+        // from the source model over its own box -- so stopping at the first
+        // failure threw away every tile after it as well, on a grid that can
+        // take hours. What the failures cost is a manifest: it is only written
+        // when the database is complete, or when --allow_partial says a
+        // holed one is wanted.
         EOS_Error err = igen.make_mesh(prm.nb_node_p, prm.nb_node_h, prm.level_max);
         if (err != EOS_Error::good)
         {
-          cerr << "EOS_Ipp_Tiler: make_mesh failed for tile (" << w.ip << "," << w.ih << ")" << endl;
+          cerr << "EOS_Ipp_Tiler: tile (" << w.ip << "," << w.ih << ") failed: make_mesh" << endl;
+          record_failure(prm, job, w.ip, w.ih, "make_mesh failed");
           worker_err = err;
-          break;
+          continue;
         }
 
         igen.set_quality(prm.quality_property.c_str(), prm.quality_type.c_str(),
@@ -298,10 +359,11 @@ namespace NEPTUNE_EOS_IGEN
                      : igen.compute_qualities();
         if (err != EOS_Error::good)
         {
-          cerr << "EOS_Ipp_Tiler: " << (refine ? "make_local_refine" : "compute_qualities")
-               << " failed for tile (" << w.ip << "," << w.ih << ")" << endl;
+          const char *what = refine ? "make_local_refine" : "compute_qualities";
+          cerr << "EOS_Ipp_Tiler: tile (" << w.ip << "," << w.ih << ") failed: " << what << endl;
+          record_failure(prm, job, w.ip, w.ih, what);
           worker_err = err;
-          break;
+          continue;
         }
 
         std::ostringstream name;
@@ -314,34 +376,92 @@ namespace NEPTUNE_EOS_IGEN
         }
         if (err != EOS_Error::good)
         {
-          cerr << "EOS_Ipp_Tiler: write_med failed for tile (" << w.ip << "," << w.ih << ")" << endl;
+          cerr << "EOS_Ipp_Tiler: tile (" << w.ip << "," << w.ih << ") failed: write_med" << endl;
+          record_failure(prm, job, w.ip, w.ih, "write_med failed");
           worker_err = err;
-          break;
+          continue;
         }
 
         if (prm.verbose)
-          cout << "eos_ipp_tiler: [" << (k + 1) << "/" << nb_tiles << "] " << w.file_name << endl;
+          cout << "eos_ipp_tiler: [" << (k + 1) << "/" << written.size() << "] " << w.file_name << endl;
       }
 
       if (nb_jobs > 1)
         _exit(worker_err == EOS_Error::good ? 0 : 1); // child: never returns
-      if (worker_err != EOS_Error::good)
-        return worker_err;
+      // Single process: no early return. The failures are in the same file the
+      // forked workers would have written, and the aggregation below is what
+      // decides whether a manifest may be written -- returning here skipped it
+      // and lost the report along with the tiles that did succeed.
+      (void)worker_err;
     }
 
-    // Parent: wait for every worker, and fail if any tile failed. The manifest
-    // is only written once all the tiles it names exist.
-    bool any_worker_failed = false;
+    // Parent: wait for every worker, then collect what they could not
+    // generate. Each worker left its failures in its own file (cf.
+    // record_failure); reading them here is what lets the manifest say which
+    // grid cells have no tile instead of the run simply dying.
     for (std::size_t i = 0; i < workers.size(); ++i)
     {
       int status = 0;
-      if (waitpid(workers[i], &status, 0) < 0 || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
-        any_worker_failed = true;
+      waitpid(workers[i], &status, 0);
     }
-    if (any_worker_failed)
+    for (int job = 0; job < nb_jobs; ++job)
     {
-      cerr << "EOS_Ipp_Tiler: at least one tile failed to generate; no manifest written" << endl;
-      return EOS_Error::error;
+      const std::string path = failure_file(manifest_file_name, job);
+      std::ifstream in(path.c_str());
+      std::string line;
+      while (std::getline(in, line))
+      {
+        std::istringstream ls(line);
+        MissingTile m;
+        if (ls >> m.ip >> m.ih)
+        {
+          std::getline(ls, m.reason);
+          while (!m.reason.empty() && m.reason[0] == ' ')
+            m.reason.erase(0, 1);
+          missing.push_back(m);
+        }
+      }
+      in.close();
+      remove(path.c_str());
+    }
+
+    // Tiles that failed are holes in the grid, which the reader supports, but
+    // a database is not silently allowed to be incomplete: the manifest is
+    // written only when every declared tile exists, unless the caller says a
+    // partial one is what it wants. Either way the tiles that did generate are
+    // on disk, and --skip_existing resumes from there.
+    // A tile that failed must not appear in the manifest: its .med does not
+    // exist, and a TILE line naming a missing file is worse than no line at
+    // all -- the reader would take the grid slot as filled and try to load it.
+    {
+      std::vector<WrittenTile> ok;
+      ok.reserve(written.size());
+      for (const WrittenTile &w : written)
+      {
+        bool failed = false;
+        for (const MissingTile &m : missing)
+          if (m.ip == w.ip && m.ih == w.ih) { failed = true; break; }
+        if (!failed)
+          ok.push_back(w);
+      }
+      written.swap(ok);
+    }
+
+    if (!missing.empty())
+    {
+      cerr << "EOS_Ipp_Tiler: " << missing.size() << " of " << nb_tiles
+           << " tile(s) could not be generated:" << endl;
+      for (const MissingTile &m : missing)
+        cerr << "  (" << m.ip << "," << m.ih << ") " << m.reason << endl;
+      if (!prm.allow_partial)
+      {
+        cerr << "EOS_Ipp_Tiler: no manifest written; the " << written.size()
+             << " tile(s) that succeeded are on disk, so --skip_existing resumes,"
+             << " and --allow_partial writes a manifest for them as they are" << endl;
+        return EOS_Error::error;
+      }
+      cerr << "EOS_Ipp_Tiler: --allow_partial: writing a manifest for the "
+           << written.size() << " tile(s) that succeeded" << endl;
     }
 
     // Manifest, written next to the tiles (not through EOS_Ipp_TileIndex,
@@ -384,6 +504,12 @@ namespace NEPTUNE_EOS_IGEN
     // The per-tile (tmin,tmax) is the (p,T) box the tile's mesh was generated
     // over, so a reader can tell -- without opening the .med -- that a tile
     // cannot hold the root of T(p,h) = T (cf. EOS_Ipp_TileIndex).
+    // A grid cell with no tile. The loader ignores unknown keywords, so this
+    // is readable by older readers too; it is here so a partial database
+    // carries the record of what it is missing and why.
+    for (const MissingTile &m : missing)
+      out << "MISSING " << m.ip << " " << m.ih << " " << m.reason << "\n";
+
     for (const WrittenTile &w : written)
       out << "TILE " << w.ip << " " << w.ih << " "
           << w.p0 << " " << w.p1 << " " << w.h0 << " " << w.h1 << " "

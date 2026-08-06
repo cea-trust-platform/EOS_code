@@ -97,6 +97,8 @@ namespace
       "running:\n"
       "  --jobs=N                        generate N tiles at a time (default 1)\n"
       "  --skip_existing                 leave already generated tiles alone, to resume a run\n"
+      "  --allow_partial                 write a manifest even if some tiles failed; the grid\n"
+      "                                  then has holes, recorded as MISSING lines\n"
       "  --dry_run                       list what would be generated, write nothing\n"
       "  --quiet                         hide the source model's own diagnostics\n"
       "  --silent                        no per-tile progress\n\n"
@@ -205,6 +207,7 @@ int main(int argc, char **argv)
   prm.quality_is_abs   = arg_i(argc, argv, "quality_is_abs", 1);
   prm.quality_limit    = arg_d(argc, argv, "quality_limit", -9999.9);
   prm.refine_continuity = arg_i(argc, argv, "refine_continuity", 1) != 0;
+  prm.allow_partial     = has_flag(argc, argv, "allow_partial");
   prm.nb_jobs       = arg_i(argc, argv, "jobs", 1);
   prm.skip_existing = has_flag(argc, argv, "skip_existing");
   prm.dry_run       = has_flag(argc, argv, "dry_run");

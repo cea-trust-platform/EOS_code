@@ -64,6 +64,12 @@ namespace NEPTUNE_EOS_IGEN
     //! "raffinement_local" reference databases, false the
     //! "raffinement_local_non_continu" ones.
     bool refine_continuity = true;
+    //! Write a manifest even when some tiles could not be generated. The grid
+    //! then has holes, which the reader supports (EOS_Ipp_TileIndex leaves the
+    //! slot empty and locate() answers -1), and the manifest records which
+    //! cells are missing and why. Off by default: an incomplete database
+    //! should have to be asked for.
+    bool allow_partial = false;
 
     // Generating a tile is independent of every other tile, so a grid of them
     // is embarrassingly parallel; nb_jobs > 1 forks that many worker processes.
