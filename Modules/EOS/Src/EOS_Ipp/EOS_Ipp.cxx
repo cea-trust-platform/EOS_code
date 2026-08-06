@@ -592,6 +592,7 @@ namespace NEPTUNE_EOS
     // Last, so it can point at corners and at every property array in their
     // final position (cf. build_prop_plans).
     build_prop_plans();
+    build_cell_T_ranges(); // needs the plans it has just built
     return EOS_Error::ok;
   }
 
@@ -740,6 +741,7 @@ namespace NEPTUNE_EOS
     // Last, so it can point at corners and at every property array in their
     // final position (cf. build_prop_plans).
     build_prop_plans();
+    build_cell_T_ranges(); // needs the plans it has just built
     return EOS_Error::ok;
   }
 
@@ -2243,6 +2245,99 @@ namespace NEPTUNE_EOS
     }
   }
 
+  // Per-cell enclosure of the interpolated T, used by the h(p,T) inversions to
+  // rule a cell out without reading it (cf. the declaration for why one bound
+  // serves both interpolation methods).
+  void EOS_Ipp::build_cell_T_ranges()
+  {
+    cell_T_lo_.clear();
+    cell_T_hi_.clear();
+    cell_T_lo_ptr_ = cell_T_hi_ptr_ = nullptr;
+
+    const int nb_cell = index_conn_ph.size() - 1;
+    if (nb_cell <= 0 || corners_ == nullptr)
+      return;
+    if ((std::size_t)NEPTUNE::T >= prop_plan_.size())
+      return;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)NEPTUNE::T];
+    if (!pl.has_value)
+      return;
+
+    cell_T_lo_.resize((std::size_t)nb_cell);
+    cell_T_hi_.resize((std::size_t)nb_cell);
+
+    EOS_Ipp_CellData cv;
+    double f[4], ft[4], fu[4], ftu[4];
+
+    for (int c = 0; c < nb_cell; c++)
+    {
+      const int *cor = corners_ + 4 * c;
+
+      double lo = pl.val[cor[0]], hi = lo;
+      for (int k = 1; k < 4; k++)
+      {
+        const double v = pl.val[cor[k]];
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+
+      if (pl.has_first_derivatives)
+      {
+        for (int k = 0; k < 4; k++)
+        {
+          const int id = cor[k];
+          cv[0][k] = node_p_[id];
+          cv[1][k] = node_h_[id];
+          cv[2][k] = pl.val[id];
+          cv[3][k] = pl.d_dp[id];
+          cv[4][k] = pl.d_dh[id];
+          if (pl.has_cross_derivative)
+            cv[5][k] = pl.d2[id];
+        }
+        bicubic_patch_data(cv, pl.has_cross_derivative, f, ft, fu, ftu);
+
+        // Bezier control net of the tensor-product cubic Hermite patch. Corner
+        // order here is 0=(t=0,u=0), 1=(0,1), 2=(1,1), 3=(1,0), and the 1D rule
+        // is b0 = f0, b1 = f0 + d0/3, b2 = f1 - d1/3, b3 = f1, applied in t then
+        // in u. The patch lies inside the hull of these 16 values.
+        const double f00 = f[0], f01 = f[1], f11 = f[2], f10 = f[3];
+        const double t00 = ft[0], t01 = ft[1], t11 = ft[2], t10 = ft[3];
+        const double u00 = fu[0], u01 = fu[1], u11 = fu[2], u10 = fu[3];
+        const double m00 = ftu[0], m01 = ftu[1], m11 = ftu[2], m10 = ftu[3];
+        const double T3 = 1. / 3., N9 = 1. / 9.;
+
+        const double b[16] = {
+          f00,                                   f00 + u00 * T3,
+          f01 - u01 * T3,                        f01,
+          f00 + t00 * T3,                        f00 + t00 * T3 + u00 * T3 + m00 * N9,
+          f01 + t01 * T3 - u01 * T3 - m01 * N9,  f01 + t01 * T3,
+          f10 - t10 * T3,                        f10 - t10 * T3 + u10 * T3 - m10 * N9,
+          f11 - t11 * T3 - u11 * T3 + m11 * N9,  f11 - t11 * T3,
+          f10,                                   f10 + u10 * T3,
+          f11 - u11 * T3,                        f11
+        };
+        for (int k = 0; k < 16; k++)
+        {
+          if (b[k] < lo) lo = b[k];
+          if (b[k] > hi) hi = b[k];
+        }
+      }
+
+      // The root test accepts a normalized coordinate slightly outside [0,1]
+      // (DBL_EPSILON, redefined to 1e-9 in this file), so the surface the
+      // inversion really searches reaches marginally past the cell. The margin
+      // is orders of magnitude above that slack, and still tight enough to
+      // reject the cells this exists to reject.
+      const double span = hi - lo;
+      const double margin = 1.e-6 * span + 1.e-9 * (fabs(lo) + fabs(hi));
+      cell_T_lo_[(std::size_t)c] = lo - margin;
+      cell_T_hi_[(std::size_t)c] = hi + margin;
+    }
+
+    cell_T_lo_ptr_ = &cell_T_lo_[0];
+    cell_T_hi_ptr_ = &cell_T_hi_[0];
+  }
+
   // fetches the p, h and "property" values for the 4 points (=corners) of the actual cell
   //  idx = index in the med mesh = fnodes2phnodes[index_h + Nb_pts_h * index_p]
   // True if the 2D field of i_prop was loaded from the database. Asking for a
@@ -2640,8 +2735,16 @@ namespace NEPTUNE_EOS
     std::vector<unsigned int> &cells_containing_p = column_scratch();
     get_cells_containing_p(p, cells_containing_p);
 
+    // Cells whose interpolated T provably never reaches the target cannot
+    // hold the root, and saying so costs two contiguous doubles instead of
+    // gathering four corners across the node and property arrays
+    // (cf. build_cell_T_ranges).
+    const double *T_lo = cell_T_lo_ptr_, *T_hi = cell_T_hi_ptr_;
+
     for (auto med_cell : cells_containing_p)
     {
+      if (T_lo != nullptr && (T < T_lo[med_cell] || T > T_hi[med_cell]))
+        continue;
       ierr = get_cell_values_bicubic(med_cell, NEPTUNE::T, values, has_cross_derivative);
 
       double pcal = (p - values[0][0]) / (values[0][3] - values[0][0]);
@@ -2716,8 +2819,16 @@ namespace NEPTUNE_EOS
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
     // return first h computed
+    // Cells whose interpolated T provably never reaches the target cannot
+    // hold the root, and saying so costs two contiguous doubles instead of
+    // gathering four corners across the node and property arrays
+    // (cf. build_cell_T_ranges).
+    const double *T_lo = cell_T_lo_ptr_, *T_hi = cell_T_hi_ptr_;
+
     for (auto med_cell : cells_containing_p)
     {
+      if (T_lo != nullptr && (T < T_lo[med_cell] || T > T_hi[med_cell]))
+        continue;
       ierr = get_cell_values(med_cell, prop, values);
       pcal = (p - values[0][0]) / (values[0][2] - values[0][0]);
 
@@ -2772,8 +2883,16 @@ namespace NEPTUNE_EOS
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
     // return first h computed
+    // Cells whose interpolated T provably never reaches the target cannot
+    // hold the root, and saying so costs two contiguous doubles instead of
+    // gathering four corners across the node and property arrays
+    // (cf. build_cell_T_ranges).
+    const double *T_lo = cell_T_lo_ptr_, *T_hi = cell_T_hi_ptr_;
+
     for (auto med_cell : cells_containing_p)
     {
+      if (T_lo != nullptr && (T < T_lo[med_cell] || T > T_hi[med_cell]))
+        continue;
       ierr = get_cell_values(med_cell,prop, values);
       pcal = (p - values[0][0]) / (values[0][2] - values[0][0]);
       /* a = values[2][1] - values[2][0];

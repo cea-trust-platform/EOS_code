@@ -495,8 +495,15 @@ namespace
     // (p,T) cannot ask for T back; the rest is the same request.
     std::vector<std::string> many_pT(many.begin() + 1, many.end());
 
+    // One property from (p,T) is one h(p,T) inversion plus one interpolation,
+    // so pT1 minus ph1 is the inversion on its own -- which is the only way to
+    // attribute a change to the column scan rather than to everything else.
+    std::vector<std::string> one_pT;
+    one_pT.push_back("rho");
+
     scenario_ph(eos, "ph1", one);
     scenario_ph(eos, "phN", many);
+    scenario_pT(eos, "pT1", one_pT);
     scenario_pT(eos, "pTN", many_pT);
     scenario_scalar(eos);
 
@@ -542,6 +549,12 @@ namespace
 
   // Bit-for-bit, on purpose (cf. the file header). NaN is compared as a
   // value: a point that legitimately returns NaN must keep returning NaN.
+  //
+  // Scenarios are matched by name, not by position, so that adding one -- which
+  // is how a new cost gets isolated -- does not invalidate the reference files
+  // recorded before it existed. A scenario the reference does not know is
+  // reported and skipped; one it knows and this run did not produce is an error,
+  // since that means coverage was lost.
   bool check_dump(const std::string &path, const std::vector<Result> &results, int &nb_diff)
   {
     std::ifstream in(path.c_str());
@@ -553,7 +566,6 @@ namespace
 
     nb_diff = 0;
     bool ok = true;
-    std::size_t s = 0;
     std::string keyword, name;
     std::size_t count = 0;
 
@@ -564,33 +576,36 @@ namespace
         std::cerr << "eos_ipp_bench: malformed reference file at \"" << keyword << "\"" << std::endl;
         return false;
       }
-      while (s < results.size() && results[s].values.empty())
-        s++;
-      if (s >= results.size())
+
+      const Result *match = nullptr;
+      for (std::size_t s = 0; s < results.size(); s++)
+        if (results[s].name == name)
+          { match = &results[s]; break; }
+
+      if (match == nullptr)
       {
         std::cerr << "FAILED regression: reference has scenario \"" << name
-                  << "\" but this run produced no more" << std::endl;
+                  << "\" but this run did not produce it" << std::endl;
         return false;
       }
-      const Result &r = results[s++];
-      if (r.name != name || r.values.size() != count)
+      if (match->values.size() != count)
       {
-        std::cerr << "FAILED regression: scenario mismatch, reference \"" << name
-                  << "\" (" << count << " values) vs run \"" << r.name
-                  << "\" (" << r.values.size() << " values)" << std::endl;
+        std::cerr << "FAILED regression: scenario \"" << name << "\" has "
+                  << match->values.size() << " values, reference has " << count << std::endl;
         return false;
       }
+
       for (std::size_t k = 0; k < count; k++)
       {
         double v; int c;
         in >> v >> c;
-        const bool same_value = (v == r.values[k])
-                             || (v != v && r.values[k] != r.values[k]); // NaN == NaN here
-        if (!same_value || c != r.codes[k])
+        const bool same_value = (v == match->values[k])
+                             || (v != v && match->values[k] != match->values[k]); // NaN == NaN here
+        if (!same_value || c != match->codes[k])
         {
           if (nb_diff < 10)
             std::cerr << "FAILED regression: " << name << "[" << k << "] "
-                      << std::setprecision(17) << r.values[k] << " (code " << r.codes[k]
+                      << std::setprecision(17) << match->values[k] << " (code " << match->codes[k]
                       << ") != reference " << v << " (code " << c << ")" << std::endl;
           nb_diff++;
           ok = false;

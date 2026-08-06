@@ -574,6 +574,29 @@ namespace NEPTUNE_EOS
               //! f_mesh2r_mesh(), whose corners array it points into, and after
               //! the last thing that may reallocate a property array.
               void build_prop_plans();
+
+              //! Per-cell enclosure of the interpolated T over the whole cell, so
+              //! the h(p,T) inversions can rule a cell out without reading it.
+              //!
+              //! They scan every real cell of a p-column looking for one whose
+              //! surface crosses the target T, and each candidate costs a gather of
+              //! four corners across the node and property arrays -- about a dozen
+              //! scattered loads -- to then be rejected by arithmetic. Two
+              //! contiguous doubles answer the same question for the ones that
+              //! cannot possibly hold the root.
+              //!
+              //! The bound must enclose the surface the inversion actually solves
+              //! on. For bilinear that is the corner range, which a bilinear patch
+              //! attains exactly. For bicubic the Hermite patch overshoots its
+              //! corners, so the bound is the min/max of its 16 Bezier control
+              //! points, which contains the patch by the convex hull property --
+              //! and contains the corner range too, since the corners are among the
+              //! control points. So one bound serves both methods, which matters
+              //! because set_interpolation_method can switch after the load.
+              void build_cell_T_ranges();
+              std::vector<double> cell_T_lo_, cell_T_hi_; //!< per cell, empty when unavailable
+              const double *cell_T_lo_ptr_ = nullptr;     //!< null disables the filter
+              const double *cell_T_hi_ptr_ = nullptr;
               std::vector<EOS_Ipp_PropPlan> prop_plan_; //!< indexed by EOS_Property
               const double *node_p_ = nullptr;          //!< nodes_ph[0], per node
               const double *node_h_ = nullptr;          //!< nodes_ph[1], per node
