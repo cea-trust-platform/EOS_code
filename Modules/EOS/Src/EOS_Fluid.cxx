@@ -415,18 +415,24 @@ namespace NEPTUNE
     assert(errfield.size() == sz) ;
 
     errfield = EOS_Internal_Error::OK ;
-    ArrOfDouble pp_data(sz) ;
-    ArrOfDouble hh_data(sz) ;
-    ArrOfDouble tt_data(sz) ;
-    ArrOfDouble ss_data(sz) ;
-    EOS_Field pp("pp","p",NEPTUNE::p,pp_data) ;
-    EOS_Field hh("hh","h",NEPTUNE::h,hh_data) ;
-    EOS_Field tt("tt","T",NEPTUNE::T,tt_data) ;
-    EOS_Field ss("ss","s",NEPTUNE::s,ss_data) ;
+
+    // Four sz-long arrays used to be allocated up front, each zero-filled by
+    // ArrOfDouble's constructor, per output field and per batch: eight UObject
+    // constructions and as many destructions on top, every one of them taking
+    // the process-wide registry mutex. A twenty-field batch of 100000 points
+    // allocated and zeroed 6.4 MB, most of it never read.
+    //
+    // Only one of them is ever storage. pp and ss are always aliases of the
+    // inputs -- nothing writes through them. Of hh and tt, exactly one is an
+    // input and the other is scratch: (p,h) inverts T into tt for the
+    // d_X_d_T_p / d_X_d_p_T families, (p,T) inverts h into hh for everything
+    // else. So one array is allocated instead of four, whichever way round the
+    // pair came.
     int lp = 0 ;
     int lh = 0 ;
     int lt = 0 ;
     int ls = 0 ;
+    EOS_Field pp, hh, tt, ss ;
 
     switch(p.get_property_number())
        { case NEPTUNE::p:
@@ -467,6 +473,13 @@ namespace NEPTUNE
             break  ;
          default: break;
        }
+
+    // Whichever of h and T was not given is the one that needs storage.
+    ArrOfDouble scratch_data(sz) ;
+    if (lh == 0)
+       hh = EOS_Field("hh","h",NEPTUNE::h,scratch_data) ;
+    else if (lt == 0)
+       tt = EOS_Field("tt","T",NEPTUNE::T,scratch_data) ;
 
     if ( (lp == 1) && (lt == 1) )
        { for (int i=0; i<sz; i++)
