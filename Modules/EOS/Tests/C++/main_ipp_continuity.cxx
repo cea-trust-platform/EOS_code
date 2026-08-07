@@ -42,8 +42,21 @@
 //                  f'(M) = 3*(f(B)-f(A))/(2L) - (f'(A)+f'(B))/4 .
 //              The half-sum is the first of those with f'(A) = f'(B), i.e. the
 //              bilinear rule, so a database built for bilinear continuity is
-//              not expected to make the bicubic surface continuous. Measuring
-//              how far off it is, is the point.
+//              not expected to make the bicubic surface continuous.
+//
+// Measured, on T, the largest step between consecutive samples across the
+// junction each case is worst at:
+//
+//     continuity off : bilinear 1.464e-2   bicubic 4.53e-5
+//     continuity on  : bilinear 7.18e-5    bicubic 1.628e-2
+//
+// The forcing does not merely fail to help bicubic; it moves the jump from one
+// method to the other, and the two jumps are the same size to 11%. That is the
+// signature of the term the half-sum drops, L*(f'(A)-f'(B))/8: unforced, the
+// bilinear surface misses the node by it; forced, the bicubic surface misses
+// the coarse cell's cubic trace by it. Which is why the correction cannot be
+// baked into the database -- one stored value cannot be right for both traces
+// -- and belongs where the method is known, at load time in EOS_Ipp.
 //
 // How a jump is detected without knowing where the junctions are: sample the
 // property densely along a line, take the absolute differences between
