@@ -161,7 +161,12 @@ namespace
     double worst = 0.;
     for (int k = 1; k < nb_lines; k++)
     {
-      const double u = (double)k / (double)nb_lines;
+      // Strictly between grid lines. The base mesh has 17 nodes, so k/8 put
+      // every sweep exactly *on* a grid line (1/8 = 2/16), running along cell
+      // edges instead of across them -- a junction was never crossed, and both
+      // fixtures read the same to every digit printed. The half-step offset and
+      // a count coprime with 16 keep the lines off the grid at every level.
+      const double u = ((double)k + 0.5) / (double)nb_lines;
 
       // one sweep in h at fixed p, one in p at fixed h: a junction is only
       // crossed by a line that runs across its edge
@@ -197,7 +202,7 @@ namespace
       EOS eos("EOS_Ipp", args);
       relax(eos);
       double at_p = 0., at_h = 0.;
-      const double r = worst_jump_ratio(eos, prop, 8, at_p, at_h);
+      const double r = worst_jump_ratio(eos, prop, 37, at_p, at_h);
       if (m == 0) out.bilinear = r; else out.bicubic = r;
     }
     return out;
@@ -258,38 +263,49 @@ int main()
       const Reading c = measure("ipp_cnt_on_0_0", props[i]);
       report("continuity on ", c);
 
-      // What the algorithm claims: forcing the hanging values removes the jump
-      // the bilinear surface would otherwise have. Anything else is a
-      // regression of the feature.
-      // NOT an assertion yet, and deliberately so. The two fixtures are
-      // demonstrably different files -- the continuous one is 20 kB larger,
-      // carrying the extra nodes -- yet this metric reads the same on both.
-      // So it is not catching the junctions, and the reason is not settled.
-      // Two candidates, both worth checking before a threshold is written:
+      // Why this reported nothing before: the sweeps were placed at k/8 of the
+      // domain and the base mesh has 17 nodes, so 1/8 = 2/16 put every line
+      // exactly *on* a grid line. They ran along cell edges instead of across
+      // them, never crossed a junction, and both fixtures read the same to
+      // every digit printed. Off-grid lines separate them at once. The other
+      // candidate -- that the interpolator never reads the hanging values --
+      // is wrong: continuity does not give a cell a fifth vertex, it *splits*
+      // the coarse cell at the hanging node, and both halves take that node as
+      // a corner.
       //
-      //   - the sweep may miss them: eight lines across the domain is few, and
-      //     a junction is only crossed by a line running across its edge;
-      //   - or the interpolator may never read the hanging values.
-      //     EOS_Ipp::f_mesh2r_mesh recovers the four true corners of a polygon
-      //     with more than four vertices and keeps only those in `corners`;
-      //     get_cell_values reads nothing else. If that is what happens, the
-      //     continuity nodes reach the .med and never reach the interpolation,
-      //     and the feature has no effect on either method -- which is exactly
-      //     what this reads.
+      // What the algorithm claims, and what now holds: forcing the hanging
+      // value to the half-sum of its two supports removes the jump the
+      // bilinear surface would otherwise have. Measured, worst over cp/rho/T:
       //
-      // Turning this into a check comes after that question is answered, not
-      // before: a threshold calibrated against a metric that measures nothing
-      // would be worse than no test at all.
-      if (!(c.bilinear < nc.bilinear))
-        std::cout << "  NOTE: continuity does not reduce the bilinear jump ("
-                  << c.bilinear << " against " << nc.bilinear << ")" << std::endl;
+      //     bilinear   off 15.9  7.2  38.2   ->   on 5.2  1.5  3.1
+      //
+      // The margin below is wide because the metric is a ratio over a sampled
+      // sweep, not an identity; the effect it guards is a factor 3 to 12.
+      if (!(c.bilinear < 0.5 * nc.bilinear))
+      {
+        std::cerr << "  FAILED: continuity does not remove the bilinear jump ("
+                  << c.bilinear << " against " << nc.bilinear
+                  << ", expected at most half)" << std::endl;
+        g_failures++;
+      }
 
-      // And what it does not currently claim: the same forcing is the bilinear
-      // rule, so it has no reason to make the bicubic surface continuous. This
-      // is reported, not asserted, until the bicubic forcing exists -- at which
+      // And what the same forcing does to bicubic. The half-sum is the trace of
+      // a *bilinear* patch. On a Hermite patch the trace of an edge is a cubic
+      // set by the values and the tangential derivatives at both ends, so the
+      // forced value is off by L*(f'(A)-f'(B))/8 and the node's derivative is
+      // whatever the model returned rather than what the coarse patch traces.
+      // Forcing therefore does not merely fail to help bicubic, it introduces a
+      // jump that was not there:
+      //
+      //     bicubic    off  5.5  1.5   3.0   ->   on 15.7  5.9  41.1
+      //
+      // Reported, not asserted, until the bicubic forcing exists -- at which
       // point this becomes the assertion that proves it.
       std::cout << "  bicubic continuity gain : " << (nc.bicubic / c.bicubic)
-                << "x  (1 means the forcing does nothing for bicubic)" << std::endl;
+                << "x  (>1 helps, <1 means forcing makes bicubic worse)" << std::endl;
+      if (c.bicubic > nc.bicubic)
+        std::cout << "  NOTE: continuity makes the bicubic surface less continuous, "
+                  << "not more -- the forcing is the bilinear rule" << std::endl;
     }
   }
 
