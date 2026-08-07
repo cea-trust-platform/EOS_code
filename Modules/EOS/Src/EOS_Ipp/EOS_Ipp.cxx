@@ -1928,9 +1928,12 @@ namespace NEPTUNE_EOS
     else
       fnodes2phnodes.resize(0);
 
+    unsigned int dbg_poly = 0, dbg_maxv = 0;
     for (unsigned int i_med_cell = 0; i_med_cell < nb_cell; i_med_cell++)
     {
       unsigned int nb_node_in_cell = index_conn_ph[i_med_cell + 1] - index_conn_ph[i_med_cell];
+      if (nb_node_in_cell > 4) dbg_poly++;
+      if (nb_node_in_cell > dbg_maxv) dbg_maxv = nb_node_in_cell;
       unsigned int num_first_node = index_conn_ph[i_med_cell];
       unsigned int node_1, node_2, node_3;
       unsigned int node_0 = connect_ph[num_first_node];
@@ -1988,6 +1991,9 @@ namespace NEPTUNE_EOS
       corners[3 + 4 * i_med_cell] = node_3;
     }
 
+    if (getenv("EOS_IPP_POLY_STATS"))
+      cerr << "POLY " << med_file.aschar() << " : " << nb_cell << " cells, "
+           << dbg_poly << " with >4 vertices, max " << dbg_maxv << endl;
     locator_.finish();
 
     if (verify)
