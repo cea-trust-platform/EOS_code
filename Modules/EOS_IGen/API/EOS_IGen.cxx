@@ -478,6 +478,36 @@ namespace NEPTUNE_EOS_IGEN
          else
             { err = med.add_Connectivity_Refine_2D(mesh_name ,mesh_ph->get_med_to_node()) ;
               if (err != EOS_Error::good)   return err ;
+
+              //  Which nodes are hanging nodes, and which two nodes each one
+              //  hangs between. The interpolator needs this and cannot get it
+              //  from the mesh it reads: continuity splits the coarse cell at
+              //  the node, so the result is an ordinary conforming mesh and
+              //  nothing in the geometry still says which corner was a
+              //  junction. Written per node, -1 where there is none.
+              { const ArrOfInt& ton = mesh_ph->get_type_of_node() ;
+                const vector<ArrOfInt>& c2n = mesh_ph->get_continuity_to_node() ;
+                ArrOfInt cnt_type(nb_nc) ;  cnt_type =  0 ;
+                ArrOfInt cnt_sup0(nb_nc) ;  cnt_sup0 = -1 ;
+                ArrOfInt cnt_sup1(nb_nc) ;  cnt_sup1 = -1 ;
+                int kc = 0 ;
+                for (int i=0; i<nb_nc; i++)
+                   { cnt_type[i] = ton[i] ;
+                     if (ton[i] == 1 || ton[i] == 2)
+                        { if (kc < (int)c2n.size())
+                             { cnt_sup0[i] = c2n[kc][0] ;
+                               cnt_sup1[i] = c2n[kc][1] ;
+                             }
+                          kc++ ;
+                        }
+                   }
+                AString n_type("CNT_TYPE") , n_s0("CNT_SUP0") , n_s1("CNT_SUP1") ;
+                err = med.add_IntChamp_Noeud(mesh_name, n_type, cnt_type) ;
+                if (err == EOS_Error::good)  err = med.add_IntChamp_Noeud(mesh_name, n_s0, cnt_sup0) ;
+                if (err == EOS_Error::good)  err = med.add_IntChamp_Noeud(mesh_name, n_s1, cnt_sup1) ;
+                if (err != EOS_Error::good)  return err ;
+              }
+
               for (int i=0; i<nb_sp; i++)
                  { const char *pprop = str_properties[i].c_str() ;
                    EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;

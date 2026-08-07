@@ -308,23 +308,28 @@ int main()
         g_failures++;
       }
 
-      // And what the same forcing does to bicubic. The half-sum is the trace of
-      // a *bilinear* patch. On a Hermite patch the trace of an edge is a cubic
-      // set by the values and the tangential derivatives at both ends, so the
-      // forced value is off by L*(f'(A)-f'(B))/8 and the node's derivative is
-      // whatever the model returned rather than what the coarse patch traces.
-      // Forcing therefore does not merely fail to help bicubic, it introduces a
-      // jump that was not there:
+      // And the same for bicubic, which the database alone cannot deliver: the
+      // stored half-sum is the trace of a *bilinear* patch, and one value per
+      // node cannot also be the trace of a Hermite patch. EOS_Ipp puts the
+      // hanging nodes back on the cubic trace when it loads a database for
+      // bicubic use (cf. EOS_Ipp::retrace_hanging_nodes). Before that existed
+      // the forcing moved the jump from one method to the other:
       //
       //     bicubic    off  5.5  1.5   3.0   ->   on 15.7  5.9  41.1
       //
-      // Reported, not asserted, until the bicubic forcing exists -- at which
-      // point this becomes the assertion that proves it.
+      // and with it the junction stops contributing at all -- continuity on
+      // reads exactly what continuity off reads, to every digit, at the same
+      // place. The margin below is wide only to leave room for the sweep
+      // landing elsewhere; the effect it guards is a factor 3 to 14.
       std::cout << "  bicubic continuity gain : " << (nc.bicubic / c.bicubic)
-                << "x  (>1 helps, <1 means forcing makes bicubic worse)" << std::endl;
-      if (c.bicubic > nc.bicubic)
-        std::cout << "  NOTE: continuity makes the bicubic surface less continuous, "
-                  << "not more -- the forcing is the bilinear rule" << std::endl;
+                << "x  (1 means the junction costs the bicubic surface nothing)" << std::endl;
+      if (!(c.bicubic < 2. * nc.bicubic))
+      {
+        std::cerr << "  FAILED: continuity leaves the bicubic surface less continuous "
+                  << "than no continuity at all (" << c.bicubic << " against "
+                  << nc.bicubic << ")" << std::endl;
+        g_failures++;
+      }
     }
   }
 

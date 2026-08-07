@@ -1364,6 +1364,21 @@ namespace NEPTUNE_EOS
         return EOS_Error::error;
       }
 
+      // The hanging-node tables. Taken out before the property handling below,
+      // which sends every int champ to get_ErrChamp_Noeud -- and that asserts
+      // on the -1 marking "not a hanging node".
+      if (strncmp(name.aschar(), "CNT_", 4) == 0)
+      {
+        ArrOfInt tmp(nbcomp);
+        if (med.get_IntChamp_Noeud(name, tmp) == EOS_Error::good)
+        {
+          if      (strcmp(name.aschar(), "CNT_TYPE") == 0)  cnt_type_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP0") == 0)  cnt_sup0_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP1") == 0)  cnt_sup1_ = tmp;
+        }
+        continue;
+      }
+
       if (type == 1) // float -> properties values
       {
         ArrOfDouble xval(nbcomp);
@@ -1474,6 +1489,23 @@ namespace NEPTUNE_EOS
       {
         cerr << "Error : EOS_Med::get_Champ_Noeud_Infos" << endl;
         return EOS_Error::error;
+      }
+
+      // The hanging-node tables. They are not properties and have to be taken
+      // out before the property matching below, which sends every int champ to
+      // get_ErrChamp_Noeud -- and that asserts on the -1 marking "not a
+      // hanging node".
+      if (strncmp(name.aschar(), "CNT_", 4) == 0)
+      {
+        ArrOfInt tmp((int)nodes_ph[0].size());
+        AString cname = name;
+        if (med.get_IntChamp_Noeud(cname, tmp) == EOS_Error::good)
+        {
+          if      (strcmp(name.aschar(), "CNT_TYPE") == 0)  cnt_type_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP0") == 0)  cnt_sup0_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP1") == 0)  cnt_sup1_ = tmp;
+        }
+        continue;
       }
 
       // A property is stored as two champs: its values, named after the
@@ -2338,6 +2370,93 @@ namespace NEPTUNE_EOS
         }
       }
     }
+
+    retrace_hanging_nodes();
+  }
+
+  // What a hanging node must carry is the trace, along the edge it splits, of
+  // the patch the coarse cell on the other side builds. That trace depends on
+  // the interpolation method, and the database can only store one value per
+  // node: EOS_IGen writes the half-sum of the two ends, which is exactly the
+  // trace of a bilinear patch. On a Hermite patch the trace is the cubic set by
+  // the values *and* the tangential derivatives at both ends, so the stored
+  // value is short by L*(f'(A)-f'(B))/8 and the node's tangential derivative is
+  // whatever the model returned rather than the cubic's slope.
+  //
+  // Measured, that difference is not a detail: forcing the half-sum moved the
+  // largest step across a junction on T from 4.5e-5 to 1.6e-2, the same size as
+  // the jump an unforced bilinear surface has (cf. main_ipp_continuity.cxx).
+  //
+  // So the correction is applied here, once, to the loaded arrays, and only
+  // when this instance interpolates bicubically. Nothing on the hot path
+  // changes: get_cell_values keeps reading 4 corners and knows nothing of this.
+  void EOS_Ipp::retrace_hanging_nodes()
+  {
+    if (interp_method != BICUBIC)
+      return;
+    const int nb_node = (int)cnt_type_.size();
+    if (nb_node == 0 || (int)cnt_sup0_.size() != nb_node || (int)cnt_sup1_.size() != nb_node)
+      return;
+    if (node_p_ == nullptr || node_h_ == nullptr)
+      return;
+
+    int nb_done = 0;
+    for (int prop = 0; prop <= NEPTUNE::lastLimProperty; prop++)
+    {
+      EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+      if (!pl.has_value || !pl.has_first_derivatives)
+        continue;
+
+      double *f  = const_cast<double *>(pl.val);
+      double *dp = const_cast<double *>(pl.d_dp);
+      double *dh = const_cast<double *>(pl.d_dh);
+      if (f == nullptr || dp == nullptr || dh == nullptr)
+        continue;
+
+      // read the supports before writing, so a node leaning on another
+      // hanging node still sees what the database stored
+      std::vector<double> f0(f, f + nb_node);
+      std::vector<double> p0(dp, dp + nb_node);
+      std::vector<double> h0(dh, dh + nb_node);
+
+      for (int i = 0; i < nb_node; i++)
+      {
+        const int t = cnt_type_[i];
+        if (t != 1 && t != 2)
+          continue;
+        const int B = cnt_sup0_[i], A = cnt_sup1_[i];
+        if (A < 0 || B < 0 || A >= nb_node || B >= nb_node)
+          continue;
+
+        // type 1 splits a vertical edge, so the tangential coordinate is p
+        const double tA = (t == 1) ? node_p_[A] : node_h_[A];
+        const double tB = (t == 1) ? node_p_[B] : node_h_[B];
+        const double tM = (t == 1) ? node_p_[i] : node_h_[i];
+        const double L  = tB - tA;
+        if (!(L > 0.))
+          continue;
+
+        const std::vector<double> &dt0 = (t == 1) ? p0 : h0;
+        const double s = (tM - tA) / L;      // general s: dyadic refinement
+        const double s2 = s * s, s3 = s2 * s;   // also splits edges at quarters
+
+        const double H00 =  2.*s3 - 3.*s2 + 1., H10 =    s3 - 2.*s2 + s;
+        const double H01 = -2.*s3 + 3.*s2,      H11 =    s3 -    s2;
+        const double G00 =  6.*s2 - 6.*s,       G10 = 3.*s2 - 4.*s + 1.;
+        const double G01 = -6.*s2 + 6.*s,       G11 = 3.*s2 - 2.*s;
+
+        f[i] = H00*f0[A] + H10*L*dt0[A] + H01*f0[B] + H11*L*dt0[B];
+
+        const double slope = (G00*f0[A] + G10*L*dt0[A]
+                            + G01*f0[B] + G11*L*dt0[B]) / L;
+        if (t == 1) dp[i] = slope; else dh[i] = slope;
+        nb_done++;
+      }
+    }
+
+    if (getenv("EOS_IPP_RETRACE_STATS"))
+      cerr << "RETRACE " << med_file.aschar() << " : " << nb_done
+           << " hanging-node value(s) put back on the cubic trace" << endl;
   }
 
   // Per-cell enclosure of the interpolated T, used by the h(p,T) inversions to

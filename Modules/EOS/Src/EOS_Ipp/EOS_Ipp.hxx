@@ -518,6 +518,22 @@ namespace NEPTUNE_EOS
               // usual body against this instance's own (in that mode, unused) nodes_ph /
               // connect_ph / ... members. NULL in the historical, whole-database mode, so
               // every existing caller keeps the exact previous behaviour.
+              //! Puts every hanging node back on the cubic trace of the
+              //! coarse cell beside it. No-op unless this instance
+              //! interpolates bicubically; called at the end of
+              //! build_prop_plans, so the hot path never sees it.
+              void retrace_hanging_nodes();
+
+              //! Hanging-node tables, one entry per node, as written by
+              //! EOS_IGen (CNT_TYPE / CNT_SUP0 / CNT_SUP1). cnt_type_ is 1 for
+              //! a node splitting a vertical edge, 2 for a horizontal one, 0
+              //! otherwise; the two supports are the ends of that edge, -1
+              //! where there is none. Empty when the database predates them or
+              //! was built without continuity.
+              NEPTUNE::ArrOfInt cnt_type_;
+              NEPTUNE::ArrOfInt cnt_sup0_;
+              NEPTUNE::ArrOfInt cnt_sup1_;
+
               EOS_Ipp_TileCache *tile_cache_ = nullptr;
               //! properties, when non-empty, restricts every tile load to those fields.
               int init_tiled(AString file_name, const Strings &properties);

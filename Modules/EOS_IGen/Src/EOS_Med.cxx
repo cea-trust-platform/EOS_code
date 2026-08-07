@@ -333,6 +333,102 @@ namespace NEPTUNE
     return EOS_Error::good;
   }
 
+  /* EOS_Med::add_IntChamp_Noeud :
+   *              Add an int MED "champ" of one value per node, under its own
+   *              name. Used for the hanging-node tables, which the
+   *              interpolator needs but cannot rebuild from the geometry.
+   *
+   * AString& m_name  : mesh domain
+   * AString& c_name  : champ name, written as given
+   * ArrOfInt& v      : one value per node
+   *
+   * return : EOS_Error
+   */
+  EOS_Error EOS_Med::add_IntChamp_Noeud(AString &m_name, AString &c_name, const ArrOfInt &v)
+  {
+    med_int champ_comp_nb = 1;
+
+    char champ_name[MED_NAME_SIZE + 1];
+    char mesh_name[MED_NAME_SIZE + 1];
+    char champ_comp_nom[MED_SNAME_SIZE + 1] = MED_SNAME_BLANK;
+
+    strcpy(champ_name, c_name.aschar());
+    strcpy(mesh_name, m_name.aschar());
+    strncpy(champ_comp_nom, c_name.aschar(), (MED_SNAME_SIZE));
+    med_int nval = v.size();
+
+    if (MEDfieldCr(fid,
+                   champ_name,
+                   MED_INT32,
+                   champ_comp_nb,
+                   champ_comp_nom,
+                   MED_SNAME_BLANK,
+                   MED_SNAME_BLANK,
+                   mesh_name) < 0)
+    {
+      cerr << "EOS_Med::add_IntChamp_Noeud: Erreur a la creation du champ : " << champ_name << endl;
+      return EOS_Error::error;
+    }
+
+    med_int *val = new med_int[nval];
+    for (int i = 0; i < nval; i++)
+      val[i] = v[i];
+
+    if (MEDfieldValueWr(fid,
+                        champ_name,
+                        MED_NO_DT,
+                        MED_NO_IT,
+                        0.0,
+                        MED_NODE,
+                        MED_NONE,
+                        MED_NO_INTERLACE,
+                        champ_comp_nb,
+                        nval,
+                        (unsigned char *)val) < 0)
+    {
+      delete[] val;
+      cerr << "Erreur à l'ecriture du champ : " << champ_name << endl;
+      return EOS_Error::error;
+    }
+
+    delete[] val;
+    return EOS_Error::good;
+  }
+
+  /* EOS_Med::get_IntChamp_Noeud :
+   *              Read back a champ written by add_IntChamp_Noeud.
+   */
+  EOS_Error EOS_Med::get_IntChamp_Noeud(AString &c_name, ArrOfInt &res)
+  {
+    char champ_name[MED_NAME_SIZE + 1];
+    strcpy(champ_name, c_name.aschar());
+
+    med_int nval = res.size();
+    if (nval <= 0)  return EOS_Error::error;
+
+    med_int *val = new med_int[nval];
+    if (MEDfieldValueRd(fid,
+                        champ_name,
+                        MED_NO_DT,
+                        MED_NO_IT,
+                        MED_NODE,
+                        MED_NONE,
+                        MED_NO_INTERLACE,
+                        1,
+                        (unsigned char *)val) < 0)
+    {
+      delete[] val;
+      cerr << "EOS_Med::get_IntChamp_Noeud: Erreur a la lecture du champ : " << champ_name << endl;
+      return EOS_Error::error;
+    }
+
+    for (int i = 0; i < nval; i++)
+      res[i] = val[i];
+
+    delete[] val;
+    return EOS_Error::good;
+  }
+
   /* EOS_Med::add_Scalar_Float :
    *              Add float MED "scalar" to stored some values
    *
