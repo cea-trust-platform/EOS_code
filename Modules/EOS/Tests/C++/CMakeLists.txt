@@ -77,6 +77,18 @@ if (WITH_IPP)
   set_tests_properties(EOSTestIppTiled PROPERTIES COST        5.
                                                    ENVIRONMENT ${RUN_ENV})
 
+  # Continuity across hanging nodes: the property the local-refinement
+  # algorithm exists to guarantee (cf. Doc/Interpolator, §Continuité and the
+  # "Test de continuité" appendix, which demonstrated it on a plot and left it
+  # unchecked). Self-contained: generates its own refined fixtures.
+  message(STATUS "Add test EOSTestIppContinuity")
+  add_executable (EOSTestIppContinuity "${CMAKE_CURRENT_SOURCE_DIR}/main_ipp_continuity.cxx")
+  target_include_directories(EOSTestIppContinuity PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
+  target_link_libraries(EOSTestIppContinuity PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
+  add_test(EOSTestIppContinuity bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppContinuity 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_continuity")
+  set_tests_properties(EOSTestIppContinuity PROPERTIES COST        20.
+                                                       ENVIRONMENT ${RUN_ENV})
+
   # Performance bench and value-regression harness. Not registered as a ctest
   # test: it is a measuring instrument, run by hand around a change
   # (--dump before, --check after), and its numbers only mean something when
