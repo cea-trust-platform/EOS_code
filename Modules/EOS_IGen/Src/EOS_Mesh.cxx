@@ -25,6 +25,9 @@
 #include "EOS/Src/EOS_Ipp/EOS_Ipp.hxx"
 
 #include <math.h>
+#include <iostream>
+#include <algorithm>
+#include <vector>
 #include <fstream>
 #include <string.h>
 
@@ -33,27 +36,74 @@ using namespace NEPTUNE ;
 
 namespace
 {
-  // Next k for which node_glb_tmp[base + k*(row*sz_h + col)] holds a node,
-  // bounded by the largest cell a refinement step can produce and by the grid
-  // itself. Returns -1 when there is none, which means the walk below is no
-  // longer standing on the corner of a cell.
-  //
-  // The three scans it replaces were unbounded, and read past the end of the
-  // array as soon as the walk lost its place -- an assertion in a build with
-  // asserts on, silent corruption in one without.
-  int scan_for_node(const NEPTUNE::ArrOfInt &grid, int base, int row, int col,
-                    int sz_h, int sz_total, int k, int k_max)
+  //! One cell of a refinement grid: the (row, col) of its lower-left corner in
+  //! that grid, and its side, both in grid steps.
+  struct MeshCell
   {
-    while (k <= k_max)
-    {
-      const int idx = base + k * row * sz_h + k * col;
-      if (idx < 0 || idx >= sz_total)
-        return -1;
-      if (grid[idx] != 0)
-        return k;
-      k++;
-    }
-    return -1;
+    int row, col, side;
+  };
+
+  //! Cells of the mesh a refinement grid describes, in ascending (row, col) of
+  //! their lower-left corner.
+  //!
+  //! This replaces three copies of a walk that tried to recover the same
+  //! information by stepping through the grid: take the current position as a
+  //! cell corner, scan for the other three at a common offset, and at the end
+  //! of a row step one entry and skip empty ones along it to find the next
+  //! cell. That last rule only lands on the next row of cells while every cell
+  //! in the row has the same height, which local refinement stops guaranteeing
+  //! from level 2 on. The walk then stood on a hole or on a mid-edge node and
+  //! scanned off the end of the grid.
+  //!
+  //! There is no need to walk anything. Refining a cell writes a node at its
+  //! centre (the type-4 node, cf. add_local_nodes), and only refining does. So
+  //! a block is subdivided exactly when its centre holds a node, which is a
+  //! local test, and the decomposition follows by recursion from the cells of
+  //! the initial nb_p x nb_h grid. Cells come out in the order the walk
+  //! produced wherever the walk worked -- by lower-left corner, bottom row
+  //! first, left to right -- because the sort below is exactly what its
+  //! left-to-right, bottom-to-top progression amounted to.
+  //! True when the block [row,row+side] x [col,col+side] holds a node strictly
+  //! inside it. Nodes on its edges do not count: those are the hanging nodes a
+  //! finer neighbour put there, and they do not divide this cell.
+  bool has_interior_node(const NEPTUNE::ArrOfInt &grid, int sz_h,
+                         int row, int col, int side)
+  {
+    for (int r = row + 1; r < row + side; r++)
+      for (int c = col + 1; c < col + side; c++)
+        if (grid[r * sz_h + c] != 0)
+          return true ;
+    return false ;
+  }
+
+  void subdivide_cell(const NEPTUNE::ArrOfInt &grid, int sz_h,
+                      int row, int col, int side, std::vector<MeshCell> &out)
+  {
+    const int half = side / 2;
+    if (half >= 1 && has_interior_node(grid, sz_h, row, col, side))
+      { subdivide_cell(grid, sz_h, row,        col,        half, out) ;
+        subdivide_cell(grid, sz_h, row,        col + half, half, out) ;
+        subdivide_cell(grid, sz_h, row + half, col,        half, out) ;
+        subdivide_cell(grid, sz_h, row + half, col + half, half, out) ;
+      }
+    else
+      out.push_back(MeshCell{row, col, side}) ;
+  }
+
+  //! grid is the node grid (0 = no node), sz_h its width, and base_side the
+  //! side an unrefined cell of the initial grid has in it.
+  void collect_cells(const NEPTUNE::ArrOfInt &grid, int sz_h,
+                     int nb_base_p, int nb_base_h, int base_side,
+                     std::vector<MeshCell> &out)
+  {
+    out.clear() ;
+    for (int rp = 0; rp < nb_base_p; rp++)
+      for (int ch = 0; ch < nb_base_h; ch++)
+        subdivide_cell(grid, sz_h, rp * base_side, ch * base_side, base_side, out) ;
+
+    std::sort(out.begin(), out.end(),
+              [](const MeshCell &a, const MeshCell &b)
+              { return (a.row != b.row) ? (a.row < b.row) : (a.col < b.col) ; }) ;
   }
 }
 
@@ -291,55 +341,16 @@ namespace NEPTUNE_EOS_IGEN
          int m  = 0 ;
          int mm = 0 ;
          glb_to_mesh = -8 ;
-         while ((m < nb_mesh)  &&  (l < (sz_glb_h*sz_glb_p)))
-            { while(node_glb[l+k*sz_glb_h] == 0)
-                 k++ ;
-              while(node_glb[l+k] == 0)
-                 k++ ;
-              while(node_glb[l+k*sz_glb_h+k] == 0)
-                 k++ ;
-              
-              for (int i=0; i<k; i++)
-                 { for (int j=0; j<k; j++)
-                      glb_to_mesh[mm+i*(sz_glb_h-1)+j] = m ;
-                 }
-              l  += k ;
-              mm += k ;
-              m++ ;
-              
-              if ( ((l+1)%sz_glb_h == 0) || (node_glb[l] == 8) )
-                 { int d = 0 ;
-                   int c = 0 ;
-                   if ((l+1)%sz_glb_h == 0)  d++ ;
-                   
-                   if ((l+1)%sz_glb_h == 0)
-                      { l++   ;
-                        c = 1 ;
-                      }
-                   else if (node_glb[l]==8 && node_glb[l+1]==0)
-                      { int n = 1 ;
-                        bool test = false ;
-                        while (node_glb[l+n] == 0)
-                           { n++ ;
-                             if ((l+n)%sz_glb_h == 0)
-                                { test = true ;
-                                  break ;
-                                }
-                           }
-                        
-                        if (n>=int(pow(2,level)) || test || node_glb[l+n]==8)
-                           { l++   ;
-                             c = 1 ;
-                           }
-                      }
-                   while(node_glb[l] == 0)
-                      { l++ ;
-                        c++ ;
-                        if (l%sz_glb_h == 0)  d++ ;
-                      }
-                   mm += c - d ;
-                 }
-              k = 1 ;
+
+         std::vector<MeshCell> cells_glb ;
+         collect_cells(node_glb, sz_glb_h, nb_p-1, nb_h-1, int(pow(2,level)), cells_glb) ;
+         if ((int)cells_glb.size() != nb_mesh)
+            { refine_ok_ = false ; return ; }
+         for (m = 0; m < nb_mesh; m++)
+            { const MeshCell &c = cells_glb[m] ;
+              for (int i=0; i<c.side; i++)
+                 for (int j=0; j<c.side; j++)
+                    glb_to_mesh[(c.row+i)*(sz_glb_h-1) + c.col+j] = m ;
             }
          
          ArrOfInt test_qualities_glb((sz_glb_h-1)*(sz_glb_p-1)) ;
@@ -379,11 +390,26 @@ namespace NEPTUNE_EOS_IGEN
                  }
             }
 
-//       determination de la taille du maillage raffiné 
+//       determination de la taille du maillage raffiné
+//       Refining a cell writes the five nodes that quadrisect *each of its
+//       coarse sub-cells* (cf. the marking loop below, which walks
+//       test_qualities_glb, one entry per coarse global cell). A cell of
+//       coarse side k therefore becomes 4k^2 cells, not 4: it is refined all
+//       the way down to the current finest step, not quadrisected once.
+//       This counted +3 per refined cell regardless, which is right only when
+//       every refined cell already sits at the finest step -- true under
+//       global refinement, and true of local refinement only at the first
+//       level or two, by luck of which cells the quality criterion picks. From
+//       there nb_mesh disagreed with the mesh actually described by the nodes,
+//       and everything downstream that walks it went looking for cells that
+//       were not where it expected.
          int inc_m  = 0 ;
          int nb_tqn = test_qualities_nodes.size() ;
          for (int i=0; i<nb_tqn; i++)
-            { if (!test_qualities_nodes[i])  inc_m += 3 ;
+            { if (!test_qualities_nodes[i])
+                 { const int k = cells_glb[i].side ;
+                   inc_m += 4*k*k - 1 ;
+                 }
             }
          
          
@@ -498,134 +524,38 @@ namespace NEPTUNE_EOS_IGEN
                  }
             }
          
-         k = 1 ;
-         l = 0 ;
-         m = 0 ;
-//          affectation des maille au 4 noeuds qui l'entoure
-         const int sz_total = sz_next_h*sz_next_p ;
-         const int k_max = int(pow(2,level+1)) ; // side of a cell no step has refined
+         //  Cells of the refined mesh, and the two tables built from them:
+         //  mesh_to_node (its 4 corners) and next_to_mesh (which cell covers
+         //  each cell of the fine global grid). Both used to be recovered by
+         //  walking the grid; cf. collect_cells for why that could not work.
+         std::vector<MeshCell> cells_next ;
+         collect_cells(node_glb_tmp, sz_next_h, nb_p-1, nb_h-1, int(pow(2,level+1)), cells_next) ;
+         if ((int)cells_next.size() != nb_mesh)
+            { refine_ok_ = false ; return ; }
 
-         while (m<nb_mesh && l<(sz_next_h*sz_next_p))
-            { // The walk assumes l is the lower-left corner of a cell and that
-              // the other three sit at the same offset k. Local refinement
-              // breaks that from level 2 on -- the end-of-row advance below
-              // steps one entry and then skips empty ones along the row, which
-              // only lands on the next row of cells while every cell in the row
-              // has the same height. With mixed heights it lands mid-row, on a
-              // hole or on a mid-edge node, and the scans then ran off the end
-              // of the grid looking for a corner that is not there.
-              if (node_glb_tmp[l] == 0)
-                 { refine_ok_ = false ; return ; }
-              mesh_to_node[m][0]=l; //glb_to_node[l];
-              k = scan_for_node(node_glb_tmp, l, 1, 0, sz_next_h, sz_total, k, k_max) ;
-              if (k < 0) { refine_ok_ = false ; return ; }
-              k = scan_for_node(node_glb_tmp, l, 0, 1, sz_next_h, sz_total, k, k_max) ;
-              if (k < 0) { refine_ok_ = false ; return ; }
-              k = scan_for_node(node_glb_tmp, l, 1, 1, sz_next_h, sz_total, k, k_max) ;
-              if (k < 0) { refine_ok_ = false ; return ; }
-              
-              mesh_to_node[m][2] = l+k*sz_next_h ;   //glb_to_node[l+k*sz_next_h];
-              mesh_to_node[m][1] = l+k ;             //glb_to_node[l+k];
-              mesh_to_node[m][3] = l+k*sz_next_h+k ; //glb_to_node[l+k*sz_next_h+k];
-              
-              l += k ;
-              m++ ;
-              
-              if (((l+1)%sz_next_h == 0) || (node_glb_tmp[l] == 3) || (node_glb_tmp[l] == 8))
-                 { if ((l+1)%sz_next_h == 0)
-                      l++;
-                   else if ((node_glb_tmp[l] == 3 || node_glb_tmp[l] == 8) 
-                             && node_glb_tmp[l+1] == 0)
-                      { int n = 1 ;
-                        bool test = false ;
-                        while (node_glb_tmp[l+n] == 0)
-                           { n++ ;
-                             if ((l+n)%sz_next_h == 0)
-                                { test = true ;
-                                  break ;
-                                }
-                           }
-                        if (   (n >= int(pow(2,level+1))) || test 
-                            || (node_glb_tmp[l+n] == 3)   || (node_glb_tmp[l+n] == 8) )
-                           l++ ;
-                      }
-                   while(node_glb_tmp[l] == 0)
-                      l++ ;
-                 }
-              k = 1 ;
-            }
-   
+         ArrOfInt next_to_mesh((sz_next_h-1)*(sz_next_p-1)) ;
+
          int nb_mtn = med_to_node.size() ;
-         
          int inc_glb_m = ((sz_next_h-1)*(sz_next_p-1)) - nb_mtn ;
 //          affectation de med_to_node
          for (int i=0 ; i<inc_glb_m ; i++)
             { ArrOfInt nn(4) ;
               med_to_node.push_back(nn) ;
             }
-         
-         l  = 0 ;
-         k  = 1 ;
-         m  = 0 ;
-         mm = 0 ;
-         ArrOfInt next_to_mesh((sz_next_h-1)*(sz_next_p-1)) ;
-               
-         while ( (m < nb_mesh) && (l < (sz_next_h*sz_next_p)) )
-            { if (node_glb_tmp[l] == 0)   // cf. the walk above
-                 { refine_ok_ = false ; return ; }
-              k = scan_for_node(node_glb_tmp, l, 1, 0, sz_next_h, sz_total, k, k_max) ;
-              if (k < 0) { refine_ok_ = false ; return ; }
-              k = scan_for_node(node_glb_tmp, l, 0, 1, sz_next_h, sz_total, k, k_max) ;
-              if (k < 0) { refine_ok_ = false ; return ; }
-              k = scan_for_node(node_glb_tmp, l, 1, 1, sz_next_h, sz_total, k, k_max) ;
-              if (k < 0) { refine_ok_ = false ; return ; }
-              
-              for (int i=0; i<k; i++)
-                 { for (int j=0; j<k; j++)
-                      { next_to_mesh[mm+i*(sz_next_h-1)+j] = m ;
-                      }
-                 }
-              l  += k ;
-              mm += k ;
-              m++ ;
-              
-              if (   ((l+1)%sz_next_h == 0) || (node_glb_tmp[l] == 3)
-                  || (node_glb_tmp[l] == 8) )
-                 { int d = 0 ;
-                   int c = 0 ;
-                   if ((l+1)%sz_next_h == 0) d++ ;
-                   
-                   if ((l+1)%sz_next_h == 0)
-                      { l++ ;
-                        c = 1 ;
-                      }
-                   else if (   (node_glb_tmp[l] == 3 || node_glb_tmp[l] == 8) 
-                            && (node_glb_tmp[l+1] == 0) )
-                      { int n = 1 ;
-                         bool test = false ;
-                         while (node_glb_tmp[l+n] == 0)
-                            { n++;
-                              if ((l+n)%sz_next_h == 0)
-                                 { test = true ;
-                                   break ;
-                                 }
-                            }
-                         if (   (n >= int(pow(2,level+1))) || test 
-                             || (node_glb_tmp[l+n] == 3)   || (node_glb_tmp[l+n] == 8) )
-                            { l++ ;
-                              c = 1 ;
-                            }
-                      }
-                   while(node_glb_tmp[l] == 0)
-                      { l++ ;
-                        c++ ;
-                        if (l%sz_next_h == 0) d++ ;
-                      }
-                   mm += c-d ;
-                 }
-              k = 1 ;
+
+         for (m = 0; m < nb_mesh; m++)
+            { const MeshCell &c = cells_next[m] ;
+              const int ll = c.row * sz_next_h + c.col ;
+              mesh_to_node[m][0] = ll ;
+              mesh_to_node[m][1] = ll + c.side ;
+              mesh_to_node[m][2] = ll + c.side * sz_next_h ;
+              mesh_to_node[m][3] = ll + c.side * sz_next_h + c.side ;
+
+              for (int i=0; i<c.side; i++)
+                 for (int j=0; j<c.side; j++)
+                    next_to_mesh[(c.row+i)*(sz_next_h-1) + c.col+j] = m ;
             }
-               
+
          int nb_ntm = next_to_mesh.size() ;
          for (int i=0; i<nb_ntm; i++)
             med_to_node[i] = mesh_to_node[next_to_mesh[i]] ;
@@ -783,7 +713,9 @@ namespace NEPTUNE_EOS_IGEN
                       }
                    
                    if (test)
-                      { continuity_p[i+l] = domain[1][glb_to_node[i]] ;
+                      { if (glb_to_node[i] < 0 || glb_to_node[i+l-sz_glb_h] < 0)
+                           { refine_ok_ = false ; return ; }
+                        continuity_p[i+l] = domain[1][glb_to_node[i]] ;
                         continuity_h[i+l] = domain[0][glb_to_node[i+l-sz_glb_h]] ;
                         continuity_node[i+l] = 1 ;
                         if (continuity_node[i+(l-1)] <= 0)
@@ -812,7 +744,9 @@ namespace NEPTUNE_EOS_IGEN
                       }
                    
                    if (test)
-                      { continuity_p[i-l] = domain[1][glb_to_node[i]] ;
+                      { if (glb_to_node[i] < 0 || glb_to_node[i-l-sz_glb_h] < 0)
+                           { refine_ok_ = false ; return ; }
+                        continuity_p[i-l] = domain[1][glb_to_node[i]] ;
                         continuity_h[i-l] = domain[0][glb_to_node[i-l-sz_glb_h]] ;
                         continuity_node[i-l] = 1 ;
 
@@ -842,7 +776,9 @@ namespace NEPTUNE_EOS_IGEN
                       }
                    
                    if (test)
-                      { continuity_p[i+l*sz_glb_h] = domain[1][glb_to_node[i+l*sz_glb_h-1]] ;
+                      { if (glb_to_node[i] < 0 || glb_to_node[i+l*sz_glb_h-1] < 0)
+                           { refine_ok_ = false ; return ; }
+                        continuity_p[i+l*sz_glb_h] = domain[1][glb_to_node[i+l*sz_glb_h-1]] ;
                         continuity_h[i+l*sz_glb_h] = domain[0][glb_to_node[i]] ;
                         continuity_node[i+l*sz_glb_h] = 2 ;
 
@@ -869,7 +805,9 @@ namespace NEPTUNE_EOS_IGEN
                            }
                       }
                    if (test)
-                      { continuity_p[i-l*sz_glb_h] = domain[1][glb_to_node[i-l*sz_glb_h-1]] ;
+                      { if (glb_to_node[i] < 0 || glb_to_node[i-l*sz_glb_h-1] < 0)
+                           { refine_ok_ = false ; return ; }
+                        continuity_p[i-l*sz_glb_h] = domain[1][glb_to_node[i-l*sz_glb_h-1]] ;
                         continuity_h[i-l*sz_glb_h] = domain[0][glb_to_node[i]] ;
                         continuity_node[i-l*sz_glb_h] = 2 ;
 
