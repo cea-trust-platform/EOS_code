@@ -1935,39 +1935,59 @@ namespace NEPTUNE_EOS
       if (nb_node_in_cell > 4) dbg_poly++;
       if (nb_node_in_cell > dbg_maxv) dbg_maxv = nb_node_in_cell;
       unsigned int num_first_node = index_conn_ph[i_med_cell];
-      unsigned int node_1, node_2, node_3;
-      unsigned int node_0 = connect_ph[num_first_node];
 
-      // If the cell has more than 4 vertices, walk the vertices along the edges in
-      // trigonometric order and recognize the first corner when P becomes constant, then
-      // the second when h becomes constant, and the third when p becomes constant again
-      if (nb_node_in_cell > 4)
+      // The cell is an axis-aligned rectangle whose vertex list may also carry
+      // the hanging nodes its finer neighbours put on its edges, anywhere along
+      // them. Its four corners are then exactly the four extreme combinations
+      // of (p,h) over the list, which needs neither a winding convention nor a
+      // tolerance -- the coordinates are copied from the node arrays, so a
+      // vertex on an edge carries that edge's coordinate exactly.
+      //
+      // This used to walk the list looking for the vertex where p, then h, then
+      // p again stopped being constant. That walk stopped one vertex past the
+      // corner it was after (every vertex of the bottom edge shares its p, so
+      // the first change comes only after the corner), and its second loop
+      // tested for an increase in h while trigonometric order makes h decrease
+      // along the top edge, so on a real polygon it ran off the end of the
+      // cell. It never fired: no generator has ever emitted more than 4
+      // vertices per cell.
+      double p_min_cell = nodes_ph[0][connect_ph[num_first_node]];
+      double p_max_cell = p_min_cell;
+      double h_min_cell = nodes_ph[1][connect_ph[num_first_node]];
+      double h_max_cell = h_min_cell;
+      for (unsigned int v = 1; v < nb_node_in_cell; v++)
       {
-        unsigned int num_node_in_cell = num_first_node + 1;
-        while (nodes_ph[0][num_node_in_cell] - nodes_ph[0][num_node_in_cell - 1] < DBL_EPSILON)
-          num_node_in_cell++;
-        node_1 = connect_ph[num_node_in_cell];
-
-        while (nodes_ph[1][num_node_in_cell] - nodes_ph[1][num_node_in_cell - 1] < DBL_EPSILON)
-          num_node_in_cell++;
-        node_2 = connect_ph[num_node_in_cell];
-
-        while (nodes_ph[0][num_node_in_cell] - nodes_ph[0][num_node_in_cell - 1] < DBL_EPSILON)
-          num_node_in_cell++;
-        node_3 = connect_ph[num_node_in_cell];
+        const double pv = nodes_ph[0][connect_ph[num_first_node + v]];
+        const double hv = nodes_ph[1][connect_ph[num_first_node + v]];
+        if (pv < p_min_cell) p_min_cell = pv;
+        if (pv > p_max_cell) p_max_cell = pv;
+        if (hv < h_min_cell) h_min_cell = hv;
+        if (hv > h_max_cell) h_max_cell = hv;
       }
-      // If the cell has only 4 vertices, then they are the 4 corners of the cell
-      else
+
+      // corners are (p_min,h_min), (p_min,h_max), (p_max,h_max), (p_max,h_min)
+      unsigned int node_0 = 0, node_1 = 0, node_2 = 0, node_3 = 0;
+      bool got_0 = false, got_1 = false, got_2 = false, got_3 = false;
+      for (unsigned int v = 0; v < nb_node_in_cell; v++)
       {
-        node_1 = connect_ph[num_first_node + 1];
-        node_2 = connect_ph[num_first_node + 2];
-        node_3 = connect_ph[num_first_node + 3];
+        const unsigned int nv = connect_ph[num_first_node + v];
+        const double pv = nodes_ph[0][nv];
+        const double hv = nodes_ph[1][nv];
+        const bool lo_p = (pv == p_min_cell), hi_p = (pv == p_max_cell);
+        const bool lo_h = (hv == h_min_cell), hi_h = (hv == h_max_cell);
+        if      (lo_p && lo_h) { node_0 = nv; got_0 = true; }
+        else if (lo_p && hi_h) { node_1 = nv; got_1 = true; }
+        else if (hi_p && hi_h) { node_2 = nv; got_2 = true; }
+        else if (hi_p && lo_h) { node_3 = nv; got_3 = true; }
       }
-
-      double p_min_cell = nodes_ph[0][node_0];
-      double p_max_cell = nodes_ph[0][node_2];
-      double h_min_cell = nodes_ph[1][node_0];
-      double h_max_cell = nodes_ph[1][node_2];
+      if (!(got_0 && got_1 && got_2 && got_3))
+      {
+        cerr << "EOS_Ipp::f_mesh2r_mesh: cell " << i_med_cell << " of "
+             << med_file.aschar() << " is not an axis-aligned rectangle ("
+             << nb_node_in_cell << " vertices); the mesh cannot be used."
+             << endl;
+        return;
+      }
 
       unsigned int i_p_min = round((p_min_cell - pmin_ipp) / delta_p_f);
       unsigned int i_p_max = round((p_max_cell - pmin_ipp) / delta_p_f);
