@@ -110,6 +110,15 @@ namespace NEPTUNE_EOS_IGEN
       ArrOfDouble node_h;
       ArrOfDouble node_p_continuity;
       ArrOfDouble node_h_continuity;
+
+      //! Coordinates of the grid lines of the current global (virtual) grid:
+      //! grid_h one entry per column, grid_p one entry per row. The mesh is a
+      //! tensor product, so a node's coordinates are fixed by the grid slot it
+      //! occupies and by nothing else -- in particular they do not depend on
+      //! which neighbouring slots happen to be occupied. Refining bisects these
+      //! two arrays, which is where every node coordinate comes from.
+      ArrOfDouble grid_h;
+      ArrOfDouble grid_p;
       
       EOS_Field p;
       EOS_Field h;
