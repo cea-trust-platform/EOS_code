@@ -189,6 +189,7 @@ namespace
   struct Reading
   {
     double bilinear = 0., bicubic = 0.;
+    double bilin_p = 0., bilin_h = 0., bicub_p = 0., bicub_h = 0.;
   };
 
   Reading measure(const std::string &med, const std::string &prop)
@@ -203,16 +204,21 @@ namespace
       relax(eos);
       double at_p = 0., at_h = 0.;
       const double r = worst_jump_ratio(eos, prop, 37, at_p, at_h);
-      if (m == 0) out.bilinear = r; else out.bicubic = r;
+      if (m == 0) { out.bilinear = r; out.bilin_p = at_p; out.bilin_h = at_h; }
+      else        { out.bicubic  = r; out.bicub_p = at_p; out.bicub_h = at_h; }
     }
     return out;
   }
 
   void report(const char *label, const Reading &r)
   {
+    // where the worst jump sits matters as much as its size: it says whether
+    // the metric is looking at a junction or at something else entirely
     std::cout << "  " << label
               << " : bilinear " << r.bilinear
-              << " , bicubic " << r.bicubic << std::endl;
+              << " at (p=" << r.bilin_p << ", h=" << r.bilin_h << ")"
+              << " , bicubic " << r.bicubic
+              << " at (p=" << r.bicub_p << ", h=" << r.bicub_h << ")" << std::endl;
   }
 }
 
