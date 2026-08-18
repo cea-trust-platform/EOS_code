@@ -82,6 +82,10 @@ namespace
       << "  --repeat <n>         timed repetitions, best kept (default 3)\n"
       << "  --dump <file>        write every computed value, for a later --check\n"
       << "  --check <file>       compare every computed value against <file>, bit for bit\n"
+      << "\n"
+      << "the database is looked up under $USER_EOS_DATA/EOS_Ipp/ . ctest sets that\n"
+      << "variable per test; an interactive shell does not, and without it the load\n"
+      << "fails.\n"
       << std::endl;
   }
 
@@ -505,6 +509,39 @@ namespace
     {
       std::cerr << "eos_ipp_bench: the database reports an empty (p,h) domain" << std::endl;
       return false;
+    }
+
+    // An ordered domain is not enough to say the load worked. When the .med
+    // cannot be opened, EOS_Ipp still constructs, and the bounds it then
+    // reports are uninitialised memory -- p=[3.2e-57,5.9e-38] in the case that
+    // prompted this, which passes the test above and let the run continue to
+    // completion. It timed the fallback path, exited 0, and wrote a --dump of
+    // values no database had produced; a later --check against that file
+    // compared garbage with garbage and reported "values identical". A
+    // regression harness that cannot fail is worse than none.
+    //
+    // What actually settles it is whether the database answers anywhere inside
+    // the domain it just declared. One good value is enough: a legitimate base
+    // may well be invalid over part of its box (two-phase, out of the model's
+    // validity), but one that answers nowhere has not been loaded.
+    {
+      int nb_good = 0;
+      for (int i = 1; i <= 5 && nb_good == 0; i++)
+        for (int j = 1; j <= 5 && nb_good == 0; j++)
+        {
+          const double p = pmin_ + (pmax_ - pmin_) * (double)i / 6.;
+          const double h = hmin_ + (hmax_ - hmin_) * (double)j / 6.;
+          double v = 0.;
+          if (eos.compute("T", p, h, v) == EOS_Error::good)
+            nb_good++;
+        }
+      if (nb_good == 0)
+      {
+        std::cerr << "eos_ipp_bench: \"" << opt_.reference
+                  << "\" answers nowhere inside its own domain; it was not loaded"
+                  << std::endl;
+        return false;
+      }
     }
 
     // A representative multi-property request: the value, two of its
