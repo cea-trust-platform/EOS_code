@@ -28,7 +28,6 @@
 #include <time.h>
 #include <fstream>
 
-#define DBL_EPSILON 1e-9
 
 using namespace NEPTUNE;
 
@@ -44,8 +43,22 @@ namespace NEPTUNE_EOS_IGEN
   quality_nodes(0)
   {
     property_number = gen_property_number(prop);
-    if (!is_abs && (limit_qi < DBL_EPSILON))
-      limit_qi=INIT_DLB ;
+
+    //  A quality limit means something only if it is strictly positive; that,
+    //  and nothing else, is what tells a threshold from "no threshold". The
+    //  default INIT_DLB is negative and so reads as "no threshold" here.
+    //
+    //  This used to reset any *relative* limit below 1e-9 to INIT_DLB, i.e. to
+    //  no threshold at all -- and 1e-9 came from a DBL_EPSILON this file
+    //  #defined for itself, seven orders of magnitude above the one in
+    //  <cfloat>. Asking for a tighter tolerance than 1e-9 therefore produced a
+    //  mesh that was never refined, silently: --quality_limit=2e-9 gave two
+    //  levels of refinement and 5e-10 gave none.
+    has_limit = (limit_qi > 0.e0) ;
+    if (!has_limit && limit_qi > INIT_DLB)
+       cerr << "EOS_IGen_QI: quality limit " << limit_qi << " for property "
+            << prop << " is not strictly positive; no quality threshold applies"
+            << endl ;
   }
 
   EOS_IGen_QI::EOS_IGen_QI(const EOS_IGen_QI& right):
@@ -53,6 +66,7 @@ namespace NEPTUNE_EOS_IGEN
   property_number(right.property_number),
   type(right.type),
   limit_qi(right.limit_qi),
+  has_limit(right.has_limit),
   is_abs(right.is_abs),
   average(right.average),
   test_quality(right.test_quality),
@@ -103,7 +117,7 @@ namespace NEPTUNE_EOS_IGEN
            quality_nodes[i] = fabs((res_ipp[i]-res_eos[i])/res_eos[i]) ;
          average = average+quality_nodes[i] ;
          
-         if (quality_nodes[i]>limit_qi && limit_qi>(INIT_DLB+DBL_EPSILON) )
+         if (has_limit && quality_nodes[i] > limit_qi)
          { test_quality = false ;
            test_quality_nodes[i] = false ;
          }
@@ -118,6 +132,7 @@ namespace NEPTUNE_EOS_IGEN
     type            = right.type ;
     is_abs          = right.is_abs ;
     limit_qi        = right.limit_qi ;
+    has_limit       = right.has_limit ;
     average         = right.average ;
     test_quality    = right.test_quality ;
     quality_nodes   = right.quality_nodes ;

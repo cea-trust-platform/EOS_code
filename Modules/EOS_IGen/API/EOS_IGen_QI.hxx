@@ -78,6 +78,10 @@ namespace NEPTUNE_EOS_IGEN
        EOS_Property property_number;
        AString type ;
        double limit_qi ;
+       //! Whether limit_qi is a threshold at all. A quality limit means
+       //! something only if strictly positive; the default INIT_DLB is the
+       //! caller's way of saying there is none.
+       bool has_limit ;
        int is_abs ;
        
        double average ;
