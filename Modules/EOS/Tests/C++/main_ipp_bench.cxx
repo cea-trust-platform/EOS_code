@@ -62,6 +62,7 @@ namespace
   struct Options
   {
     std::string reference = "raffinement_local_EOS_Cathare2.med:bicubic";
+    int accuracy = 0;
     std::string model     = "EOS_Cathare2";
     std::string fluid     = "WaterLiquid";
     int         nb_points = 200000;
@@ -82,6 +83,8 @@ namespace
       << "  --repeat <n>         timed repetitions, best kept (default 3)\n"
       << "  --dump <file>        write every computed value, for a later --check\n"
       << "  --check <file>       compare every computed value against <file>, bit for bit\n"
+      << "  --accuracy <n>       also measure interpolation error against the reference\n"
+      << "                       model on an n x n grid (0, off, by default)\n"
       << "\n"
       << "the database is looked up under $USER_EOS_DATA/EOS_Ipp/ . ctest sets that\n"
       << "variable per test; an interactive shell does not, and without it the load\n"
@@ -590,6 +593,80 @@ namespace
     return true;
   }
 
+  // ------------------------------------------------------------- accuracy
+  //
+  // How close the interpolated surface actually is to the model it was built
+  // from. The bench otherwise only compares a database with itself, which
+  // catches a change but says nothing about whether the change was an
+  // improvement -- so anything meant to make the interpolation *better*
+  // (a finer mesh, the stored cross derivative, a better treatment of the
+  // validity boundary) had no way of being judged.
+  //
+  // A second EOS object holds the reference model. The interpolator is loaded
+  // separately and *without* init_model, so a point it cannot do returns an
+  // error and is skipped rather than being quietly answered by the model --
+  // which would report the model's agreement with itself as perfect accuracy.
+  void measure_accuracy(const Options &opt)
+  {
+    Strings args(1);
+    args[0] = opt.reference.c_str();
+    EOS ipp("EOS_Ipp", args);
+    relax(ipp);
+
+    EOS ref(opt.model.c_str(), opt.fluid.c_str());
+    relax(ref);
+
+    double pmin = 0., pmax = 0., hmin = 0., hmax = 0.;
+    ipp.get_p_min(pmin); ipp.get_p_max(pmax);
+    ipp.get_h_min(hmin); ipp.get_h_max(hmax);
+
+    const char *props[] = {"T", "rho", "cp"};
+    const int nb_props = 3;
+    const int n = opt.accuracy;
+
+    std::cout << std::endl
+              << "  accuracy against " << opt.model << "/" << opt.fluid
+              << " on a " << n << "x" << n << " grid" << std::endl;
+    std::cout << "  property      max rel err        rms rel err     n     skipped"
+              << std::endl;
+
+    for (int ip = 0; ip < nb_props; ip++)
+    {
+      double worst = 0., sum2 = 0., at_p = 0., at_h = 0.;
+      long nb = 0, skipped = 0;
+
+      for (int i = 1; i <= n; i++)
+        for (int j = 1; j <= n; j++)
+        {
+          const double p = pmin + (pmax - pmin) * (double)i / (double)(n + 1);
+          const double h = hmin + (hmax - hmin) * (double)j / (double)(n + 1);
+          double vi = 0., vr = 0.;
+          if (ipp.compute(props[ip], p, h, vi) != EOS_Error::good ||
+              ref.compute(props[ip], p, h, vr) != EOS_Error::good ||
+              !(vr != 0.))
+          { skipped++; continue; }
+
+          const double e = std::fabs((vi - vr) / vr);
+          if (e > worst) { worst = e; at_p = p; at_h = h; }
+          sum2 += e * e;
+          nb++;
+        }
+
+      const double rms = (nb > 0) ? std::sqrt(sum2 / (double)nb) : 0.;
+      std::cout << "  " << std::left << std::setw(10) << props[ip] << std::right
+                << std::scientific << std::setprecision(4)
+                << std::setw(15) << worst
+                << std::setw(19) << rms
+                << std::setw(8) << nb
+                << std::setw(10) << skipped << std::endl;
+      std::cout << std::defaultfloat;
+      if (nb > 0)
+        std::cout << "              worst at p=" << at_p << " h=" << at_h << std::endl;
+      std::cout << "ACCURACY " << props[ip] << " " << std::setprecision(6)
+                << worst << " " << rms << std::endl;
+    }
+  }
+
   // ------------------------------------------------------- dump / check I/O
 
   bool write_dump(const std::string &path, const std::vector<Result> &results)
@@ -689,7 +766,8 @@ int main(int argc, char **argv)
   {
     const std::string a = argv[i];
     const bool has_next = (i + 1 < argc);
-    if      (a == "--reference" && has_next) opt.reference  = argv[++i];
+    if      (a == "--accuracy"  && has_next) opt.accuracy   = atoi(argv[++i]);
+    else if (a == "--reference" && has_next) opt.reference  = argv[++i];
     else if (a == "--model"     && has_next) opt.model      = argv[++i];
     else if (a == "--fluid"     && has_next) opt.fluid      = argv[++i];
     else if (a == "--points"    && has_next) opt.nb_points  = atoi(argv[++i]);
@@ -738,6 +816,9 @@ int main(int argc, char **argv)
     std::cout << "BENCH " << bench.results()[s].name << " "
               << std::setprecision(6) << bench.results()[s].seconds << std::endl;
   std::cout << "BENCH rss_kb " << bench.load_rss_kb() << std::endl;
+
+  if (opt.accuracy > 0)
+    measure_accuracy(opt);
 
   int status = 0;
   if (!opt.dump_path.empty())
