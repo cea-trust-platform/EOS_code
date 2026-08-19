@@ -247,7 +247,15 @@ int main()
   // A threshold that has to be forced, or there is no hanging node anywhere
   // and the test would pass on an unrefined mesh without testing anything.
   const double QUALITY_LIMIT = 2.e-9;
-  const int LEVEL_MAX = 2;
+  // 4, where this stopped at 2 for as long as refinement could not get past
+  // that: a cell coarser than one grid step was refined into cells whose
+  // corners held no node, and the continuity placement then put nodes on no
+  // cell edge (cf. EOS_Mesh::add_local_nodes and add_continuity_nodes). Two
+  // levels only ever refine cells already at the finest step, so the junctions
+  // this measures were all of one shape. At 4 the mesh carries cells of three
+  // different sides side by side, which is where a hanging node stops sitting
+  // at the middle of the edge it splits.
+  const int LEVEL_MAX = 4;
 
   std::cout << "generating fixtures (this refines, so it takes a moment)" << std::endl;
   const bool ok_nc = generate("ipp_cnt_off", "ipp_cnt_off.eosmm", false, LEVEL_MAX, QUALITY_LIMIT);
@@ -260,9 +268,10 @@ int main()
   }
   if (!ok_c)
   {
-    // Refinement with continuity nodes is known not to survive past a couple of
-    // levels (cf. EOS_Mesh::add_continuity_nodes). Say so rather than reporting
-    // a continuity result that was never measured.
+    // Say so rather than reporting a continuity result that was never
+    // measured. add_continuity_nodes checks the mesh it built against the cell
+    // decomposition and refuses it rather than writing out one that does not
+    // hold together, so this is the shape a placement defect takes here.
     std::cerr << "FAILED: could not generate the continuous fixture -- "
               << "add_continuity_nodes could not build this mesh" << std::endl;
     g_failures++;

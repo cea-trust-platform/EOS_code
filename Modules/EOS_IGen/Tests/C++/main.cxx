@@ -188,15 +188,23 @@ int main()
 	      exit(Err);
 	    }
 	    
-	    // 2e-6, where this asked for 1.2e-4 until now. The unrefined 4x4 mesh
-	    // is already accurate to 5.9e-6 on T with Cathare2 and 2.7e-6 with
-	    // either Refprop, so a limit twenty to forty times looser than that
-	    // was satisfied at every cell centre and nothing was ever subdivided:
-	    // the fixture named "raffinement local" came out byte-identical to
-	    // the unrefined one, and the suite never exercised local refinement
-	    // through it. Below the tightest of the three, all three now split
-	    // 16 cells into 64.
-	    obj_igen.set_quality("T","centre",0, 2.e-6);
+	    // 1e-7, where this asked for 1.2e-4 until now and 2e-6 since. The
+	    // unrefined 4x4 mesh is already accurate to 5.9e-6 on T with Cathare2
+	    // and 2.7e-6 with either Refprop, so the original limit was satisfied
+	    // at every cell centre and nothing was ever subdivided: the fixture
+	    // named "raffinement local" came out byte-identical to the unrefined
+	    // one. 2e-6 bought one round of subdivision, which is still not what
+	    // this fixture is for -- one round only ever refines cells that are
+	    // already at the finest step, and every defect local refinement has
+	    // had lived in refining a cell coarser than that.
+	    //
+	    // 1e-7 is the loosest limit that drives all three methods to three
+	    // rounds. Measured against the code as it stood before this branch
+	    // touched EOS_Mesh: at 3e-7 it builds the mesh without complaint, and
+	    // at 1e-7 it stops with "a continuity node at row 2 column 17 lies on
+	    // no cell edge". So this is the point at which the fixture starts
+	    // holding the ground that was just fixed.
+	    obj_igen.set_quality("T","centre",0, 1.e-7);
 
 	    Err = obj_igen.make_local_refine();
 	    if (Err!=good)
@@ -242,15 +250,23 @@ int main()
 	      exit(Err);
 	    }
 	    
-	    // 2e-6, where this asked for 1.2e-4 until now. The unrefined 4x4 mesh
-	    // is already accurate to 5.9e-6 on T with Cathare2 and 2.7e-6 with
-	    // either Refprop, so a limit twenty to forty times looser than that
-	    // was satisfied at every cell centre and nothing was ever subdivided:
-	    // the fixture named "raffinement local" came out byte-identical to
-	    // the unrefined one, and the suite never exercised local refinement
-	    // through it. Below the tightest of the three, all three now split
-	    // 16 cells into 64.
-	    obj_igen.set_quality("T","centre",0, 2.e-6);
+	    // 1e-7, where this asked for 1.2e-4 until now and 2e-6 since. The
+	    // unrefined 4x4 mesh is already accurate to 5.9e-6 on T with Cathare2
+	    // and 2.7e-6 with either Refprop, so the original limit was satisfied
+	    // at every cell centre and nothing was ever subdivided: the fixture
+	    // named "raffinement local" came out byte-identical to the unrefined
+	    // one. 2e-6 bought one round of subdivision, which is still not what
+	    // this fixture is for -- one round only ever refines cells that are
+	    // already at the finest step, and every defect local refinement has
+	    // had lived in refining a cell coarser than that.
+	    //
+	    // 1e-7 is the loosest limit that drives all three methods to three
+	    // rounds. Measured against the code as it stood before this branch
+	    // touched EOS_Mesh: at 3e-7 it builds the mesh without complaint, and
+	    // at 1e-7 it stops with "a continuity node at row 2 column 17 lies on
+	    // no cell edge". So this is the point at which the fixture starts
+	    // holding the ground that was just fixed.
+	    obj_igen.set_quality("T","centre",0, 1.e-7);
 
 	    Err = obj_igen.make_local_refine(false);
 	    if (Err!=good)
