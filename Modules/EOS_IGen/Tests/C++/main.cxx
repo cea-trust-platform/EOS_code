@@ -188,7 +188,15 @@ int main()
 	      exit(Err);
 	    }
 	    
-	    obj_igen.set_quality("T","centre",0, 0.00012);
+	    // 2e-6, where this asked for 1.2e-4 until now. The unrefined 4x4 mesh
+	    // is already accurate to 5.9e-6 on T with Cathare2 and 2.7e-6 with
+	    // either Refprop, so a limit twenty to forty times looser than that
+	    // was satisfied at every cell centre and nothing was ever subdivided:
+	    // the fixture named "raffinement local" came out byte-identical to
+	    // the unrefined one, and the suite never exercised local refinement
+	    // through it. Below the tightest of the three, all three now split
+	    // 16 cells into 64.
+	    obj_igen.set_quality("T","centre",0, 2.e-6);
 
 	    Err = obj_igen.make_local_refine();
 	    if (Err!=good)
@@ -234,7 +242,15 @@ int main()
 	      exit(Err);
 	    }
 	    
-	    obj_igen.set_quality("T","centre",0, 0.00012);
+	    // 2e-6, where this asked for 1.2e-4 until now. The unrefined 4x4 mesh
+	    // is already accurate to 5.9e-6 on T with Cathare2 and 2.7e-6 with
+	    // either Refprop, so a limit twenty to forty times looser than that
+	    // was satisfied at every cell centre and nothing was ever subdivided:
+	    // the fixture named "raffinement local" came out byte-identical to
+	    // the unrefined one, and the suite never exercised local refinement
+	    // through it. Below the tightest of the three, all three now split
+	    // 16 cells into 64.
+	    obj_igen.set_quality("T","centre",0, 2.e-6);
 
 	    Err = obj_igen.make_local_refine(false);
 	    if (Err!=good)
