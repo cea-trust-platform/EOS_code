@@ -1345,6 +1345,15 @@ namespace NEPTUNE_EOS
     // int vectorsz = nb_champ/2;
     int vectorsz = nb_champ / 2 + 1;
     all_prop_val.resize(vectorsz);
+    // node_err2mesh_err() and node_err2segm_err() append to all_err_val and
+    // hand err_cell_ph / err_segm_* a field built over the element they just
+    // pushed. Sizing the vector without reserving means every push_back past
+    // that size reallocates, and each reallocation leaves every field made
+    // before it pointing at freed storage -- the error codes then read back as
+    // whatever is there now. The selective overload below reserves for exactly
+    // this reason and says so; this one never did, so the damage came and went
+    // with the number of properties a database happened to carry.
+    all_err_val.reserve((std::size_t)vectorsz + (std::size_t)nb_champ);
     all_err_val.resize(vectorsz);
     
     val_prop_properties.resize(NEPTUNE::lastLimProperty +1);
