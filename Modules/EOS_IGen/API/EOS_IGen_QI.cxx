@@ -39,7 +39,6 @@ namespace NEPTUNE_EOS_IGEN
   type(tp),
   limit_qi(limit),
   is_abs(abs),
-  average(0.0),
   quality_nodes(0)
   {
     property_number = gen_property_number(prop);
@@ -68,7 +67,6 @@ namespace NEPTUNE_EOS_IGEN
   limit_qi(right.limit_qi),
   has_limit(right.has_limit),
   is_abs(right.is_abs),
-  average(right.average),
   test_quality(right.test_quality),
   quality_nodes(right.quality_nodes)
   {
@@ -115,14 +113,11 @@ namespace NEPTUNE_EOS_IGEN
            quality_nodes[i] = fabs(res_ipp[i]-res_eos[i]) ;
          else
            quality_nodes[i] = fabs((res_ipp[i]-res_eos[i])/res_eos[i]) ;
-         average = average+quality_nodes[i] ;
-         
          if (has_limit && quality_nodes[i] > limit_qi)
          { test_quality = false ;
            test_quality_nodes[i] = false ;
          }
        }
-    average = average / res_ipp.size() ;
   }
   
   
@@ -133,7 +128,6 @@ namespace NEPTUNE_EOS_IGEN
     is_abs          = right.is_abs ;
     limit_qi        = right.limit_qi ;
     has_limit       = right.has_limit ;
-    average         = right.average ;
     test_quality    = right.test_quality ;
     quality_nodes   = right.quality_nodes ;
 

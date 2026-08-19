@@ -1121,9 +1121,11 @@ namespace NEPTUNE_EOS_IGEN
                                 qualities[i].get_property().aschar(),
                                 x_eos);
               
-              ArrOfInt ierr(sz) ;
-              EOS_Error_Field err_ipp(ierr) ;
-              EOS_Error_Field err_eos(ierr) ;
+              //  One array each: an EOS_Error_Field is a view, so sharing one
+              //  meant the second compute overwrote the first's errors.
+              ArrOfInt ierr_ipp(sz), ierr_eos(sz) ;
+              EOS_Error_Field err_ipp(ierr_ipp) ;
+              EOS_Error_Field err_eos(ierr_eos) ;
 
               obj_Ipp->compute(nodes[1], nodes[0], res_ipp, err_ipp) ;
               fluid->compute(nodes[1], nodes[0], res_eos, err_eos) ;
@@ -1162,9 +1164,11 @@ namespace NEPTUNE_EOS_IGEN
                                 qualities[i].get_property().aschar(),
                                 x_eos) ; 
               
-              ArrOfInt ierr(sz) ;
-              EOS_Error_Field err_ipp(ierr) ;
-              EOS_Error_Field err_eos(ierr) ;
+              //  One array each: an EOS_Error_Field is a view, so sharing one
+              //  meant the second compute overwrote the first's errors.
+              ArrOfInt ierr_ipp(sz), ierr_eos(sz) ;
+              EOS_Error_Field err_ipp(ierr_ipp) ;
+              EOS_Error_Field err_eos(ierr_eos) ;
               
               obj_Ipp->compute(nodes[0], res_ipp, err_ipp) ;
               fluid->compute(nodes[0], res_eos, err_eos)   ;

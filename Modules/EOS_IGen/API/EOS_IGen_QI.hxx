@@ -84,7 +84,6 @@ namespace NEPTUNE_EOS_IGEN
        bool has_limit ;
        int is_abs ;
        
-       double average ;
        bool test_quality ;
        ArrOfDouble quality_nodes ;
        

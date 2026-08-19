@@ -28,6 +28,7 @@
 #include "EOS_IGen/API/EOS_IGen_QI.hxx"
 
 #include <iostream>
+#include <string>
 
 using namespace NEPTUNE;
 using namespace NEPTUNE_EOS_IGEN;
@@ -53,6 +54,42 @@ namespace
     EOS_IGen_QI qi("T", "centre", limit, is_abs);
     qi.make_quality(f_ipp, f_eos, ok);
     return ok[0] == 0;
+  }
+
+  //! Runs two criteria in turn over the same three cells, as
+  //! EOS_IGen::compute_qualities does, and returns which cells came out
+  //! rejected. `swap` runs them the other way round.
+  //!
+  //! Cell 0 fails the first criterion only, cell 1 the second only, cell 2
+  //! neither, so the union is the only answer that can be right.
+  std::string two_criteria(bool swap)
+  {
+    ArrOfDouble ipp_a(3), ipp_b(3), eos(3);
+    eos[0] = eos[1] = eos[2] = 1000.;
+    ipp_a[0] = eos[0] * (1. + 1.e-2);   // way over criterion A
+    ipp_a[1] = eos[1] * (1. + 1.e-8);   // under both
+    ipp_a[2] = eos[2] * (1. + 1.e-8);
+    ipp_b[0] = eos[0] * (1. + 1.e-8);
+    ipp_b[1] = eos[1] * (1. + 1.e-2);   // way over criterion B
+    ipp_b[2] = eos[2] * (1. + 1.e-8);
+
+    EOS_Field fa("T", "T", NEPTUNE::T, ipp_a);
+    EOS_Field fb("rho", "rho", NEPTUNE::rho, ipp_b);
+    EOS_Field fe_a("T", "T", NEPTUNE::T, eos);
+    EOS_Field fe_b("rho", "rho", NEPTUNE::rho, eos);
+
+    ArrOfInt ok(3);
+    ok = 1;
+    EOS_IGen_QI qa("T", "centre", 1.e-4, 0);
+    EOS_IGen_QI qb("rho", "centre", 1.e-4, 0);
+    if (swap)
+      { qb.make_quality(fb, fe_b, ok); qa.make_quality(fa, fe_a, ok); }
+    else
+      { qa.make_quality(fa, fe_a, ok); qb.make_quality(fb, fe_b, ok); }
+
+    std::string r;
+    for (int i = 0; i < 3; i++)  r += (ok[i] == 0) ? 'R' : 'k';
+    return r;
   }
 
   void check(const char *what, bool got, bool want)
@@ -95,6 +132,15 @@ int main()
   // read the same way rather than as "refine everything"
   check("no limit given -> keep", rejects(-9999.9, 0, 1.e30), false);
   check("limit 0        -> keep", rejects(0., 0, 1.e30), false);
+
+  // Several quality properties at once. EOS_IGen::set_quality appends to a
+  // list and compute_qualities runs every entry over the same per-cell verdict
+  // array, so a cell has to end up refined when *any* property fails there and
+  // the answer must not depend on the order they were given in. That holds
+  // because make_quality only ever writes a rejection and never clears one --
+  // which is easy to undo by accident, hence these two.
+  check("two properties, in order  -> union", two_criteria(false) == "RRk", true);
+  check("two properties, swapped   -> union", two_criteria(true)  == "RRk", true);
 
   if (g_failures == 0)
     std::cout << std::endl << "EOSIGenQILimitTest: all checks passed" << std::endl;
