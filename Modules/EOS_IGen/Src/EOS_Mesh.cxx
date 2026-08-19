@@ -341,6 +341,20 @@ namespace
     }
 
     if (verbose)
+       { //  how many distinct rectangles the split cells amount to, against the
+         //  one MED entry per fine grid cell they are written as
+         long distinct = 0 ;
+         std::vector<int> vs, hs ;
+         for (int m=0; m<(int)cells.size(); m++)
+            { cell_splits(node_glb, sz_h, cells[m], vs, hs) ;
+              distinct += (long)(vs.size()+1) * (long)(hs.size()+1) ;
+            }
+         const long fine = (long)(n/sz_h - 1) * (long)(sz_h - 1) ;
+         std::cerr << "  [check] level " << level << ": " << distinct
+                   << " distinct rectangles written as " << fine << " MED cells ("
+                   << (double)fine/(double)distinct << "x)" << std::endl ;
+       }
+    if (verbose)
        std::cerr << "  [check] level " << level << ": " << cells.size() << " cells, "
             << n_type[1] << " type-1, " << n_type[2] << " type-2, " << n_type[3]
             << " type-3 continuity nodes; " << bad_corner << " corner holes, "
@@ -575,7 +589,6 @@ namespace NEPTUNE_EOS_IGEN
        { //  création d'un maillage global pour la qualité 
          //  => détermination des mailles accolées plus facil
          int sz_glb_h = pow(2,level)*nb_h - (pow(2,level)-1) ;
-         int sz_glb_p = pow(2,level)*nb_p - (pow(2,level)-1) ;
             
          int k = 1 ;
          int m = 0 ;
@@ -757,16 +770,6 @@ namespace NEPTUNE_EOS_IGEN
                    << nb_mesh << "; refinement stopped" << endl ;
               refine_ok_ = false ; return ; }
 
-         ArrOfInt next_to_mesh((sz_next_h-1)*(sz_next_p-1)) ;
-
-         int nb_mtn = med_to_node.size() ;
-         int inc_glb_m = ((sz_next_h-1)*(sz_next_p-1)) - nb_mtn ;
-//          affectation de med_to_node
-         for (int i=0 ; i<inc_glb_m ; i++)
-            { ArrOfInt nn(4) ;
-              med_to_node.push_back(nn) ;
-            }
-
          for (m = 0; m < nb_mesh; m++)
             { const MeshCell &c = cells_next[m] ;
               const int ll = c.row * sz_next_h + c.col ;
@@ -774,16 +777,8 @@ namespace NEPTUNE_EOS_IGEN
               mesh_to_node[m][1] = ll + c.side ;
               mesh_to_node[m][2] = ll + c.side * sz_next_h ;
               mesh_to_node[m][3] = ll + c.side * sz_next_h + c.side ;
-
-              for (int i=0; i<c.side; i++)
-                 for (int j=0; j<c.side; j++)
-                    next_to_mesh[(c.row+i)*(sz_next_h-1) + c.col+j] = m ;
             }
 
-         int nb_ntm = next_to_mesh.size() ;
-         for (int i=0; i<nb_ntm; i++)
-            med_to_node[i] = mesh_to_node[next_to_mesh[i]] ;
-         
          int nb_metn = mesh_to_node.size() ;
          for (int i=0; i<nb_metn; i++)
             { for (int j=0; j<4; j++)
@@ -798,11 +793,10 @@ namespace NEPTUNE_EOS_IGEN
          
 //         sans continuite 
          if (! cont)
-            { nb_mtn = med_to_node.size() ;
-              for (int i=0; i<nb_mtn; i++)
-                 { for (int j=0; j<4; j++)
-                      med_to_node[i][j] = glb_to_node[med_to_node[i][j]] ;
-                 }
+            { //  One MED cell per mesh cell. This wrote one per cell of the
+              //  fine global grid, each repeating the connectivity of the mesh
+              //  cell covering it, so a cell of side k was written k^2 times.
+              med_to_node = mesh_to_node ;
               set_domain_continuity_ph(p, h) ;
               type_of_node.resize(nb_node) ;
             }
@@ -872,8 +866,6 @@ namespace NEPTUNE_EOS_IGEN
   void EOS_Mesh::add_continuity_nodes(int level)
   {
     const int sz_glb_h = pow(2,level+1)*nb_h - (pow(2,level+1)-1) ;
-    const int sz_glb_p = pow(2,level+1)*nb_p - (pow(2,level+1)-1) ;
-    const int sz_glb_m = (sz_glb_p-1) * (sz_glb_h-1) ;
     const int nb_ng    = node_glb.size() ;
 
 //     The decomposition the mesh actually has, and where each slot sits in it.
@@ -964,17 +956,19 @@ namespace NEPTUNE_EOS_IGEN
          continuity_to_node.push_back(nn) ;
        }
 
-//     MED connectivity. Each cell of the fine global grid is written with the
-//     corners of the rectangle of its own cell's split grid that contains it,
-//     so a split cell is written as the several rectangles it was cut into and
-//     an unsplit one repeats its four corners. This used to be a rewrite of
-//     the coarse cell's corners, done per fine cell and able to move at most
-//     two of the four, kept across levels in med_correction and replayed on
-//     the next grid; the split grid gives it directly.
+//     MED connectivity: one cell per rectangle the mesh is actually made of.
+//     A cell with splits contributes the rectangles it was cut into, one
+//     without them contributes itself.
+//
+//     This wrote one MED cell per cell of the fine global grid, each repeating
+//     the connectivity of the rectangle covering it, so a rectangle spanning
+//     k by l fine cells was written k*l times. On the 17x17 WaterLiquid tile
+//     that is 65536 cells written for 5646 rectangles at level 3, and the
+//     factor doubles with every level. The reader has never needed them: it
+//     takes each cell's bounding box in virtual-grid coordinates and hands
+//     that to the locator, so it was being given the same box over and over
+//     under different cell numbers.
     med_to_node.clear() ;
-    for (int i=0; i<sz_glb_m; i++)
-       { ArrOfInt nn(4) ; med_to_node.push_back(nn) ; }
-
     std::vector<int> xs, ys ;
     for (int m=0; m<(int)cells.size(); m++)
        { const MeshCell &c = cells[m] ;
@@ -983,19 +977,15 @@ namespace NEPTUNE_EOS_IGEN
          xs.insert(xs.begin(), c0) ; xs.push_back(c0+sd) ;
          ys.insert(ys.begin(), r0) ; ys.push_back(r0+sd) ;
 
-         int jb = 0 ;
-         for (int c=c0; c<c0+sd; c++)
-            { while (xs[jb+1] <= c)  jb++ ;
-              int ib = 0 ;
-              for (int r=r0; r<r0+sd; r++)
-                 { while (ys[ib+1] <= r)  ib++ ;
-                   ArrOfInt &nn = med_to_node[r*(sz_glb_h-1) + c] ;
-                   nn[0] = glb_to_node[ ys[ib]  *sz_glb_h + xs[jb]  ] ;
-                   nn[1] = glb_to_node[ ys[ib]  *sz_glb_h + xs[jb+1]] ;
-                   nn[2] = glb_to_node[ ys[ib+1]*sz_glb_h + xs[jb]  ] ;
-                   nn[3] = glb_to_node[ ys[ib+1]*sz_glb_h + xs[jb+1]] ;
-                 }
-            }
+         for (int ib=0; ib+1<(int)ys.size(); ib++)
+            for (int jb=0; jb+1<(int)xs.size(); jb++)
+               { ArrOfInt nn(4) ;
+                 nn[0] = glb_to_node[ ys[ib]  *sz_glb_h + xs[jb]  ] ;
+                 nn[1] = glb_to_node[ ys[ib]  *sz_glb_h + xs[jb+1]] ;
+                 nn[2] = glb_to_node[ ys[ib+1]*sz_glb_h + xs[jb]  ] ;
+                 nn[3] = glb_to_node[ ys[ib+1]*sz_glb_h + xs[jb+1]] ;
+                 med_to_node.push_back(nn) ;
+               }
        }
 
     EOS_Field p("Pressure", "p", NEPTUNE::p, node_p_continuity) ;
