@@ -30,8 +30,6 @@
 #include <vector>
 using std::vector;
 
-#define DBL_EPSILON 1e-9
-
 using namespace NEPTUNE;
 
 namespace NEPTUNE_EOS_IGEN

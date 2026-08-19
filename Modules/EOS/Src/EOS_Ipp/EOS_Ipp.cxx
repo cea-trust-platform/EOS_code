@@ -30,7 +30,17 @@
 #include <iostream> // for std::cerr
 #include <string>
 #include <vector>
-#define DBL_EPSILON 1e-9
+// How far outside a boundary a point may be and still count as on it. Used on
+// two different things: on p and h in their own units, where 1e-9 is far below
+// anything the data resolves and the test is an equality in all but name, and
+// on the unit-square coordinates of the inversion, where it is a genuine
+// tolerance. Both readings want the same number, so they share one.
+//
+// This was called DBL_EPSILON, redefining the one in <cfloat> seven orders of
+// magnitude coarser for the whole translation unit. Two other files did the
+// same; one of them, EOS_IGen_QI.cxx, silently turned every quality limit
+// tighter than 1e-9 into no limit at all before it was found.
+#define IPP_BOUND_TOL 1e-9
 
 namespace
 {
@@ -2265,7 +2275,7 @@ namespace NEPTUNE_EOS
   // mesh that does not tile its bounding box)
   int EOS_Ipp::get_cellidx(double &p, double &h) const
   {
-    // Signed on purpose. check_ph_bounds admits a point up to DBL_EPSILON
+    // Signed on purpose. check_ph_bounds admits a point up to IPP_BOUND_TOL
     // below hmin_ipp / pmin_ipp, which makes these quotients slightly
     // negative; converted straight to unsigned they wrapped to ~4e9 and the
     // lookup below read far outside fnodes2phnodes.
@@ -2587,7 +2597,7 @@ namespace NEPTUNE_EOS
       }
 
       // The root test accepts a normalized coordinate slightly outside [0,1]
-      // (DBL_EPSILON, redefined to 1e-9 in this file), so the surface the
+      // (IPP_BOUND_TOL, 1e-9), so the surface the
       // inversion really searches reaches marginally past the cell. The margin
       // is orders of magnitude above that slack, and still tight enough to
       // reject the cells this exists to reject.
@@ -2976,7 +2986,7 @@ namespace NEPTUNE_EOS
   // 1D Hermite evaluation in t along the two edges u=0 and u=1. Written in
   // monomial form this is a cubic equation in u, solved in closed form
   // (cf. cubic_real_roots); a root is accepted when it lies in [0,1] with the
-  // same boundary tolerance (DBL_EPSILON) as the bilinear inversion, and the
+  // same boundary tolerance (IPP_BOUND_TOL) as the bilinear inversion, and the
   // first (smallest) valid root of the first matching cell is returned, as in
   // the bilinear version. Degenerate cells in u (saturation plateau: T almost
   // independent of h) yield no isolated root and are skipped -- the bilinear
@@ -3040,7 +3050,7 @@ namespace NEPTUNE_EOS
       for (int k = 0; k < nb_roots; k++)
       {
         double hcal = uroots[k];
-        if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
+        if (((hcal > 0.0) || (fabs(hcal) < IPP_BOUND_TOL)) && ((hcal < 1.0) || (fabs(hcal - 1.) < IPP_BOUND_TOL)))
         {
           // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
           res = hcal * (values[1][1] - values[1][0]) + values[1][0];
@@ -3105,7 +3115,7 @@ namespace NEPTUNE_EOS
 
       hcal = (T - (b * pcal + d)) / (a + c * pcal);
 
-      if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
+      if (((hcal > 0.0) || (fabs(hcal) < IPP_BOUND_TOL)) && ((hcal < 1.0) || (fabs(hcal - 1.) < IPP_BOUND_TOL)))
       {
         // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
         res = hcal * (values[1][1] - values[1][0]) + values[1][0];
@@ -3163,7 +3173,7 @@ namespace NEPTUNE_EOS
 
 
       hcal = (T - (b * pcal + d)) / (a + c * pcal);
-      if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
+      if (((hcal > 0.0) || (fabs(hcal) < IPP_BOUND_TOL)) && ((hcal < 1.0) || (fabs(hcal - 1.) < IPP_BOUND_TOL)))
       {
         // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
         res = hcal * (values[1][1] - values[1][0]) + values[1][0];
@@ -3302,16 +3312,16 @@ namespace NEPTUNE_EOS
     if (std::isnan(h))
       return OUT_OF_BOUNDS;
 
-    if ((fabs(h - hmin_ipp)) > DBL_EPSILON)
-    //if ((fabs(h - hmin)) > DBL_EPSILON)
+    if ((fabs(h - hmin_ipp)) > IPP_BOUND_TOL)
+    //if ((fabs(h - hmin)) > IPP_BOUND_TOL)
     {
       if (h < hmin_ipp)
       //if (h < hmin)
         return OUT_OF_BOUNDS;
     }
 
-    if ((fabs(h - hmax_ipp) > DBL_EPSILON))
-    //if ((fabs(h - hmax) > DBL_EPSILON))
+    if ((fabs(h - hmax_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(h - hmax) > IPP_BOUND_TOL))
     {
       // if ((h > hmax_ipp))
       if ((h > hmax_ipp))
@@ -3324,16 +3334,16 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::check_p_bounds_ph(double p) const
   {
-    if ((fabs(p - pmin_ipp) > DBL_EPSILON))
-    //if ((fabs(p - pmin) > DBL_EPSILON))
+    if ((fabs(p - pmin_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(p - pmin) > IPP_BOUND_TOL))
     {
       if ((p < pmin_ipp))
       //if ((p < pmin))
         return OUT_OF_BOUNDS;
     }
 
-    if ((fabs(p - pmax_ipp) > DBL_EPSILON))
-    //if ((fabs(p - pmax) > DBL_EPSILON))
+    if ((fabs(p - pmax_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(p - pmax) > IPP_BOUND_TOL))
     {
       if ((p > pmax_ipp))
       //if ((p > pmax))
@@ -3347,8 +3357,8 @@ namespace NEPTUNE_EOS
   {
     double max;
 
-    if ((fabs(p - pmin_ipp) > DBL_EPSILON))
-    //if ((fabs(p - pmin) > DBL_EPSILON))
+    if ((fabs(p - pmin_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(p - pmin) > IPP_BOUND_TOL))
     {
       if ((p < pmin_ipp))
       //if ((p < pmin))
@@ -3361,7 +3371,7 @@ namespace NEPTUNE_EOS
     else
       max = pmax_ipp;
       //max = pmax;
-    if ((fabs(p - max) > DBL_EPSILON))
+    if ((fabs(p - max) > IPP_BOUND_TOL))
     {
       if ((p > max))
         return OUT_OF_BOUNDS;

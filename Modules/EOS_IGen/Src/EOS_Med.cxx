@@ -21,7 +21,6 @@
 
 #include <string.h>
 #include "EOS_Med.hxx"
-#define DBL_EPSILON 1e-9
 
 namespace NEPTUNE
 {
