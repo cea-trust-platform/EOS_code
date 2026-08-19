@@ -2103,6 +2103,46 @@ namespace NEPTUNE_EOS
   {
     int nb_cell = index_conn_ph.size() - 1;
 
+    // A cell takes the worst error of its corners, so one invalid node marks
+    // every cell that touches it and the invalid region is one cell wider than
+    // the nodes say. Whether that costs anything depends on there being any
+    // invalid node at all, which a domain the generator has already pulled
+    // back to a valid box will not have. EOS_IPP_ERRCOUNT reports the count so
+    // the question can be settled by measurement on a given database.
+    if (getenv("EOS_IPP_ERRCOUNT") != NULL)
+    {
+      int nb_node = err_nodes_prop_ph.size(), bad_node = 0, bad_cell = 0;
+      for (int i = 0; i < nb_node; i++)
+        if (err_nodes_prop_ph[i].get_code() != EOS_Internal_Error::OK)
+          bad_node++;
+      for (int j = 0; j < nb_cell; j++)
+      {
+        const int idx = index_conn_ph[j], np = index_conn_ph[j + 1] - idx;
+        for (int nb = 0; nb < np; nb++)
+          if (err_nodes_prop_ph[connect_ph[idx + nb]].get_code() != EOS_Internal_Error::OK)
+            { bad_cell++; break; }
+      }
+      cerr << "  [errcount] " << err_nodes_prop_ph.get_name()
+           << " : " << bad_node << "/" << nb_node << " nodes invalid, "
+           << bad_cell << "/" << nb_cell << " cells thereby marked";
+      if (bad_node > 0 && nodes_ph.size() > 1 && nodes_ph[0].size() >= nb_node)
+      {
+        double p0 = 0., p1 = 0., h0 = 0., h1 = 0.;
+        bool first = true;
+        for (int i = 0; i < nb_node; i++)
+        {
+          if (err_nodes_prop_ph[i].get_code() == EOS_Internal_Error::OK) continue;
+          if (first) { p0 = p1 = nodes_ph[0][i]; h0 = h1 = nodes_ph[1][i]; first = false; }
+          if (nodes_ph[0][i] < p0) p0 = nodes_ph[0][i];
+          if (nodes_ph[0][i] > p1) p1 = nodes_ph[0][i];
+          if (nodes_ph[1][i] < h0) h0 = nodes_ph[1][i];
+          if (nodes_ph[1][i] > h1) h1 = nodes_ph[1][i];
+        }
+        cerr << ", over p=[" << p0 << "," << p1 << "] h=[" << h0 << "," << h1 << "]";
+      }
+      cerr << endl;
+    }
+
     ArrOfInt err(nb_cell);
     all_err_val.push_back(err);
     EOS_Error_Field errf(all_err_val[all_err_val.size() - 1]);
