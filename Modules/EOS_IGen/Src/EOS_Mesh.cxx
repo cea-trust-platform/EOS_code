@@ -90,6 +90,29 @@ namespace
       out.push_back(MeshCell{row, col, side}) ;
   }
 
+  //! Grid index of the first node reached from `from` by repeated `step`, or
+  //! -1 if the search leaves [lo,hi] first. `lean_on_continuity` also accepts a
+  //! continuity node, as a node placed at this level may rest on one placed at
+  //! the previous one.
+  //!
+  //! The two supports of a continuity node used to be taken as symmetric, at
+  //! +l and -l for the single l that the forward scan stopped at. That holds
+  //! only where the node splits its edge in half. From level 3 on, dyadic
+  //! refinement also puts nodes at the quarter points of an edge, whose
+  //! supports sit at different distances; the backward index was then simply
+  //! wrong, and near a boundary it was negative.
+  int support_index(const NEPTUNE::ArrOfInt &node_glb,
+                    const NEPTUNE::ArrOfInt &continuity_node,
+                    int from, int step, int lo, int hi,
+                    bool lean_on_continuity)
+  {
+    for (int idx = from + step; idx >= lo && idx <= hi; idx += step)
+      { if (node_glb[idx] != 0) return idx ;
+        if (lean_on_continuity && continuity_node[idx] > 0) return idx ;
+      }
+    return -1 ;
+  }
+
   //! grid is the node grid (0 = no node), sz_h its width, and base_side the
   //! side an unrefined cell of the initial grid has in it.
   void collect_cells(const NEPTUNE::ArrOfInt &grid, int sz_h,
@@ -712,10 +735,8 @@ namespace NEPTUNE_EOS_IGEN
                       }
                    
                    if (test)
-                      { if (glb_to_node[i] < 0 || glb_to_node[i+l-sz_glb_h] < 0)
-                           { refine_ok_ = false ; return ; }
-                        continuity_p[i+l] = domain[1][glb_to_node[i]] ;
-                        continuity_h[i+l] = domain[0][glb_to_node[i+l-sz_glb_h]] ;
+                      { continuity_p[i+l] = grid_p[(i+l) / sz_glb_h] ;
+                        continuity_h[i+l] = grid_h[(i+l) % sz_glb_h] ;
                         continuity_node[i+l] = 1 ;
                         if (continuity_node[i+(l-1)] <= 0)
                            { if (continuity_node[i+(l-1)] == -2)
@@ -723,7 +744,7 @@ namespace NEPTUNE_EOS_IGEN
                              else
                                 continuity_node[i+(l-1)] = -1 ;
                              
-                             continuity_p[i+(l-1)] = domain[1][glb_to_node[i]] ;
+                             continuity_p[i+(l-1)] = grid_p[(i+(l-1)) / sz_glb_h] ;
                            }
                       }
                  }
@@ -743,10 +764,8 @@ namespace NEPTUNE_EOS_IGEN
                       }
                    
                    if (test)
-                      { if (glb_to_node[i] < 0 || glb_to_node[i-l-sz_glb_h] < 0)
-                           { refine_ok_ = false ; return ; }
-                        continuity_p[i-l] = domain[1][glb_to_node[i]] ;
-                        continuity_h[i-l] = domain[0][glb_to_node[i-l-sz_glb_h]] ;
+                      { continuity_p[i-l] = grid_p[(i-l) / sz_glb_h] ;
+                        continuity_h[i-l] = grid_h[(i-l) % sz_glb_h] ;
                         continuity_node[i-l] = 1 ;
 
                         if (continuity_node[i-(l-1)] <= 0)
@@ -755,7 +774,7 @@ namespace NEPTUNE_EOS_IGEN
                              else
                                 continuity_node[i-(l-1)] = -1 ;
                              
-                             continuity_p[i-(l-1)] = domain[1][glb_to_node[i]] ;
+                             continuity_p[i-(l-1)] = grid_p[(i-(l-1)) / sz_glb_h] ;
                            }
                       }
                  }
@@ -775,10 +794,8 @@ namespace NEPTUNE_EOS_IGEN
                       }
                    
                    if (test)
-                      { if (glb_to_node[i] < 0 || glb_to_node[i+l*sz_glb_h-1] < 0)
-                           { refine_ok_ = false ; return ; }
-                        continuity_p[i+l*sz_glb_h] = domain[1][glb_to_node[i+l*sz_glb_h-1]] ;
-                        continuity_h[i+l*sz_glb_h] = domain[0][glb_to_node[i]] ;
+                      { continuity_p[i+l*sz_glb_h] = grid_p[(i+l*sz_glb_h) / sz_glb_h] ;
+                        continuity_h[i+l*sz_glb_h] = grid_h[(i+l*sz_glb_h) % sz_glb_h] ;
                         continuity_node[i+l*sz_glb_h] = 2 ;
 
                         if (continuity_node[i+(l-1)*sz_glb_h] <= 0)
@@ -787,7 +804,7 @@ namespace NEPTUNE_EOS_IGEN
                              else
                                 continuity_node[i+(l-1)*sz_glb_h] = -2 ;
                              
-                             continuity_h[i+(l-1)*sz_glb_h] = domain[0][glb_to_node[i]];
+                             continuity_h[i+(l-1)*sz_glb_h] = grid_h[(i+(l-1)*sz_glb_h) % sz_glb_h] ;
                            }
                       }
                  }
@@ -804,10 +821,8 @@ namespace NEPTUNE_EOS_IGEN
                            }
                       }
                    if (test)
-                      { if (glb_to_node[i] < 0 || glb_to_node[i-l*sz_glb_h-1] < 0)
-                           { refine_ok_ = false ; return ; }
-                        continuity_p[i-l*sz_glb_h] = domain[1][glb_to_node[i-l*sz_glb_h-1]] ;
-                        continuity_h[i-l*sz_glb_h] = domain[0][glb_to_node[i]] ;
+                      { continuity_p[i-l*sz_glb_h] = grid_p[(i-l*sz_glb_h) / sz_glb_h] ;
+                        continuity_h[i-l*sz_glb_h] = grid_h[(i-l*sz_glb_h) % sz_glb_h] ;
                         continuity_node[i-l*sz_glb_h] = 2 ;
 
                         if (continuity_node[i-(l-1)*sz_glb_h] <= 0)
@@ -816,7 +831,7 @@ namespace NEPTUNE_EOS_IGEN
                              else
                                 continuity_node[i-(l-1)*sz_glb_h] = -2 ;
                              
-                             continuity_h[i-(l-1)*sz_glb_h]=domain[0][glb_to_node[i]];
+                             continuity_h[i-(l-1)*sz_glb_h] = grid_h[(i-(l-1)*sz_glb_h) % sz_glb_h] ;
                            }
                       }
                  }
@@ -922,6 +937,32 @@ namespace NEPTUNE_EOS_IGEN
        { for (int j=0; j<4; j++)
            med_to_node[i][j] = glb_to_node[med_to_node[i][j]] ;
        }
+//     Which cell edge each grid slot lies strictly inside, and that edge's two
+//     ends. This is the same decomposition the refinement itself walks, so the
+//     supports of a hanging node are read off it rather than guessed by
+//     scanning outwards -- a scan cannot tell the end of an edge from the next
+//     node along, and at this depth the two stop being the same thing.
+    std::vector<int> edge_a(nb_ng, -1), edge_b(nb_ng, -1), edge_kind(nb_ng, 0) ;
+    { const int base_side = (sz_glb_h - 1) / (nb_h - 1) ;
+      std::vector<MeshCell> cells ;
+      collect_cells(node_glb, sz_glb_h, nb_p-1, nb_h-1, base_side, cells) ;
+      for (int m=0; m<(int)cells.size(); m++)
+         { const MeshCell &c = cells[m] ;
+           const int r0=c.row, c0=c.col, sd=c.side ;
+           for (int t=1; t<sd; t++)
+              { int q ;
+                q = (r0+t)*sz_glb_h + c0 ;
+                if (edge_a[q]<0) { edge_a[q]= r0*sz_glb_h+c0 ;     edge_b[q]=(r0+sd)*sz_glb_h+c0 ;     edge_kind[q]=1 ; }
+                q = (r0+t)*sz_glb_h + c0+sd ;
+                if (edge_a[q]<0) { edge_a[q]= r0*sz_glb_h+c0+sd ;  edge_b[q]=(r0+sd)*sz_glb_h+c0+sd ;  edge_kind[q]=1 ; }
+                q = r0*sz_glb_h + c0+t ;
+                if (edge_a[q]<0) { edge_a[q]= r0*sz_glb_h+c0 ;     edge_b[q]= r0*sz_glb_h+c0+sd ;      edge_kind[q]=2 ; }
+                q = (r0+sd)*sz_glb_h + c0+t ;
+                if (edge_a[q]<0) { edge_a[q]=(r0+sd)*sz_glb_h+c0 ; edge_b[q]=(r0+sd)*sz_glb_h+c0+sd ;  edge_kind[q]=2 ; }
+              }
+         }
+    }
+
 //     affectation des noeuds de continuite aux noeuds permettant le calcul des proprietes
     for (int i=0; i<inc_ct; i++)
        { ArrOfInt nn(2) ;
@@ -934,30 +975,40 @@ namespace NEPTUNE_EOS_IGEN
     for (int i=0; i<nb_cn; i++)
        { if ( (continuity_node[i]>0) && (node_glb[i] == 0) )
             { if     ( (continuity_node[i] == 1) || (continuity_node[i] == 7) )
-                 { int l = 1 ;
-//                 si nouveau noeud de continuite il peut s'appuyer sur un ancien noeud => 2eme condition
-                   while( (node_glb[i+l*sz_glb_h] == 0)  && !(continuity_node[i+l*sz_glb_h]>0 && continuity_node[i] == 1) )
-                     l++ ;
-                   continuity_to_node[k][0] = glb_to_node[i+l*sz_glb_h] ;
-                   continuity_to_node[k][1] = glb_to_node[i-l*sz_glb_h] ;
+                 { //  on a vertical edge: the supports are its two ends
+                   const int up = edge_b[i], down = edge_a[i] ;
+                   if (edge_kind[i] != 1 || glb_to_node[up] < 0 || glb_to_node[down] < 0)
+                      { cerr << "EOS_Mesh::add_continuity_nodes: a continuity node at row "
+                             << i/sz_glb_h << " column " << i%sz_glb_h
+                             << " lies on no cell edge; the mesh cannot be made continuous" << endl ;
+                        refine_ok_ = false ; return ; }
+                   continuity_to_node[k][0] = glb_to_node[up]   ;
+                   continuity_to_node[k][1] = glb_to_node[down] ;
                    k++ ;
                  }
               else if ( (continuity_node[i] == 2) || (continuity_node[i] == 8) )
-                 { int l = 1 ;
-//                 si nouveau noeud de continuite il peut s'appuyer sur un ancien noeud => 2eme condition
-                   while( (node_glb[i+l] == 0)  && !(continuity_node[i+l]>0 && continuity_node[i] == 2) )
-                      l++ ;
-                   continuity_to_node[k][0] = glb_to_node[i+l] ;
-                   continuity_to_node[k][1] = glb_to_node[i-l] ;
+                 { //  on a horizontal edge: the supports are its two ends
+                   const int right = edge_b[i], left = edge_a[i] ;
+                   if (edge_kind[i] != 2 || glb_to_node[right] < 0 || glb_to_node[left] < 0)
+                      { cerr << "EOS_Mesh::add_continuity_nodes: a continuity node at row "
+                             << i/sz_glb_h << " column " << i%sz_glb_h
+                             << " lies on no cell edge; the mesh cannot be made continuous" << endl ;
+                        refine_ok_ = false ; return ; }
+                   continuity_to_node[k][0] = glb_to_node[right] ;
+                   continuity_to_node[k][1] = glb_to_node[left]  ;
                    k++ ;
                  }
               else if ( (continuity_node[i] == 3) || (continuity_node[i] == 9) )
-                 { int l = 1 ;
-//                 1 des 2 noeuds est continuite
-                   while( (node_glb[i+l] == 0)  && (continuity_node[i+l] <= 0) )
-                      l++ ;
-                   continuity_to_node[m][0] = glb_to_node[i+l] ;
-                   continuity_to_node[m][1] = glb_to_node[i-l] ;
+                 { //  node at a cell centre: interpolated at constant p, so
+                   //  between its left and right neighbours
+                   const int row_lo = (i/sz_glb_h)*sz_glb_h ;
+                   const int row_hi = row_lo + sz_glb_h - 1 ;
+                   const int right = support_index(node_glb, continuity_node, i,  1, row_lo, row_hi, true) ;
+                   const int left  = support_index(node_glb, continuity_node, i, -1, row_lo, row_hi, true) ;
+                   if (m < 0 || right < 0 || left < 0 || glb_to_node[right] < 0 || glb_to_node[left] < 0)
+                      { refine_ok_ = false ; return ; }
+                   continuity_to_node[m][0] = glb_to_node[right] ;
+                   continuity_to_node[m][1] = glb_to_node[left]  ;
                    m-- ;
                  }
             }
