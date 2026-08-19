@@ -553,13 +553,8 @@ namespace NEPTUNE_EOS_IGEN
          int sz_glb_h = pow(2,level)*nb_h - (pow(2,level)-1) ;
          int sz_glb_p = pow(2,level)*nb_p - (pow(2,level)-1) ;
             
-         //  affectation des maille global au maille reel
-         ArrOfInt glb_to_mesh((sz_glb_h-1)*(sz_glb_p-1)) ;
-         int l  = 0 ;
-         int k  = 1 ;
-         int m  = 0 ;
-         int mm = 0 ;
-         glb_to_mesh = -8 ;
+         int k = 1 ;
+         int m = 0 ;
 
          std::vector<MeshCell> cells_glb ;
          collect_cells(node_glb, sz_glb_h, nb_p-1, nb_h-1, int(pow(2,level)), cells_glb) ;
@@ -568,50 +563,6 @@ namespace NEPTUNE_EOS_IGEN
                    << " describes " << cells_glb.size() << " cells where the mesh counts "
                    << nb_mesh << "; refinement stopped" << endl ;
               refine_ok_ = false ; return ; }
-         for (m = 0; m < nb_mesh; m++)
-            { const MeshCell &c = cells_glb[m] ;
-              for (int i=0; i<c.side; i++)
-                 for (int j=0; j<c.side; j++)
-                    glb_to_mesh[(c.row+i)*(sz_glb_h-1) + c.col+j] = m ;
-            }
-         
-         ArrOfInt test_qualities_glb((sz_glb_h-1)*(sz_glb_p-1)) ;
-         int nb_tqg = test_qualities_glb.size() ;
-
-         for (int i=0; i<nb_tqg; i++)
-            { int m = glb_to_mesh[i] ;
-              test_qualities_glb[i] = test_qualities_nodes[m] ;
-            }
-         
-         
-//       determination du nb de noeuds du maillage raffiné 
-         int inc_sz = 0 ; 
-         if (!test_qualities_glb[0])  inc_sz = inc_sz + 5 ;
-         for (int m=1; m<nb_tqg; m++)
-            { if (!test_qualities_glb[m])
-                 { if (m < sz_glb_h-1)
-                      { if (!test_qualities_glb[m-1])
-                           inc_sz = inc_sz + 4 ;
-                        else
-                           inc_sz = inc_sz + 5 ;
-                      }
-                   else if  (m%(sz_glb_h-1) == 0)
-                      { if (!test_qualities_glb[m-(sz_glb_h-1)])
-                           inc_sz = inc_sz + 4 ;
-                        else
-                           inc_sz = inc_sz + 5 ;
-                      }
-                   else
-                      { if (!test_qualities_glb[m-1] && !test_qualities_glb[m-(sz_glb_h-1)])
-                           inc_sz = inc_sz + 3 ;
-                        else if (!test_qualities_glb[m-1] || !test_qualities_glb[m-(sz_glb_h-1)])
-                           inc_sz = inc_sz + 4 ;
-                        else
-                           inc_sz = inc_sz + 5 ;
-                      }
-                 }
-            }
-
 //       determination de la taille du maillage raffiné
 //       Refining a cell writes the five nodes that quadrisect *each of its
 //       coarse sub-cells* (cf. the marking loop below, which walks
@@ -677,17 +628,35 @@ namespace NEPTUNE_EOS_IGEN
               if ((i+1)%(sz_glb_h) == 0)  k++ ;
             }
          
-         k = 0 ;
-         for (int m=0; m<nb_tqg; m++)
-            { if (!test_qualities_glb[m])
-                 { node_glb_tmp[m+k+1]             = 2 ;
-                   node_glb_tmp[m+k+sz_next_h]     = 3 ;
-                   node_glb_tmp[m+k+sz_next_h+1]   = 4 ;
-                   node_glb_tmp[m+k+sz_next_h+2]   = 3 ;
-                   node_glb_tmp[m+k+2*sz_next_h+1] = 2 ;
-                 }
-              k++ ;
-              if ((m+1)%(sz_glb_h-1) == 0) k += sz_next_h+1 ;
+//          Refining a cell fills the whole sub-grid it spans in the next grid.
+//          This used to stamp five nodes -- the four edge midpoints and the
+//          centre -- around every *global unit cell* the refined cell covers,
+//          which leaves out every slot at an even row and an even column. A
+//          cell of side 1 has none of those inside it, so nothing showed; a
+//          cell of side k has (k-1)^2 in its interior and 2(k-1) more inside
+//          its edges, and they were never created. Those slots are corners of
+//          the cells the refinement claims to have made, so the mesh came out
+//          with cells whose corners hold no node at all: 330 of them on the
+//          17x17 WaterLiquid tile at level 2, none at level 1, which is why
+//          this stayed hidden until refinement went deep enough to refine a
+//          cell coarser than one unit.
+         for (int mc = 0; mc < nb_mesh; mc++)
+            { if (test_qualities_nodes[mc])  continue ;
+              const MeshCell &c = cells_glb[mc] ;
+              const int r0 = 2*c.row, c0 = 2*c.col, sd = 2*c.side ;
+              for (int a=0; a<=sd; a++)
+                 for (int b=0; b<=sd; b++)
+                    { const int q = (r0+a)*sz_next_h + c0+b ;
+                      if (node_glb_tmp[q] != 0)  continue ;
+//                    The tag records the role the node is created in, which is
+//                    what the continuity pass reads to find hanging nodes: 3 on
+//                    a vertical edge, 2 on a horizontal one, 1 at a corner.
+                      if      (b == 0 || b == sd)        node_glb_tmp[q] = 3 ;
+                      else if (a == 0 || a == sd)        node_glb_tmp[q] = 2 ;
+                      else if ((a & 1) && !(b & 1))      node_glb_tmp[q] = 3 ;
+                      else if (!(a & 1) && (b & 1))      node_glb_tmp[q] = 2 ;
+                      else                               node_glb_tmp[q] = 1 ;
+                    }
             }
          
 //          reafectation de noeuds reel dans le maillage global
@@ -708,7 +677,14 @@ namespace NEPTUNE_EOS_IGEN
            
          int nb_ngt = node_glb_tmp.size() ;
 
-         nb_node = nb_node + inc_sz ;
+//          The refined mesh has exactly the nodes the grid now holds. This was
+//          a running total kept by a rule that added 3, 4 or 5 per refined
+//          global unit cell depending on whether its left and lower neighbours
+//          were refined too -- a count of the stamp above that shared no code
+//          with it, and that the stamp has now outgrown.
+         nb_node = 0 ;
+         for (int i=0; i<(int)node_glb_tmp.size(); i++)
+            if (node_glb_tmp[i] != 0)  nb_node++ ;
          nb_mesh = nb_mesh + inc_m  ;
 
 //          Coordinates of every node of the refined mesh, taken from the grid
