@@ -28,6 +28,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <vector>
+#include <string>
+#include <utility>
+#include <cstdlib>
 #include <algorithm>
 #include <cmath>
 
@@ -35,6 +38,39 @@ namespace NEPTUNE_EOS_IGEN
 {
   namespace
   {
+    //! Splits "T:1e-7,rho,cp:5e-8" into (property, limit) pairs, an entry with
+    //! no colon taking `fallback`. Returns false on an empty or malformed
+    //! entry rather than dropping it: a criterion that quietly went missing is
+    //! a database refined on less than was asked for, and nothing downstream
+    //! would ever say so.
+    bool parse_quality_list(const std::string &spec, double fallback,
+                            std::vector<std::pair<std::string, double> > &out)
+    {
+      out.clear();
+      if (spec.empty())  return false;
+      std::size_t i = 0;
+      while (true)
+      {
+        std::size_t j = spec.find(',', i);
+        const bool last = (j == std::string::npos);
+        if (last)  j = spec.size();
+        const std::string item = spec.substr(i, j - i);
+        if (item.empty())  return false;
+        const std::size_t c = item.find(':');
+        if (c == std::string::npos)
+          out.push_back(std::make_pair(item, fallback));
+        else
+        {
+          const std::string name = item.substr(0, c), lim = item.substr(c + 1);
+          if (name.empty() || lim.empty())  return false;
+          out.push_back(std::make_pair(name, std::atof(lim.c_str())));
+        }
+        if (last)  break;
+        i = j + 1;
+      }
+      return !out.empty();
+    }
+
     // T-range spanning the 4 corners of [p0,p1]x[h0,h1] under 'source',
     // widened by a small safety margin (EOS_IGen's own inversions/
     // interpolations near a box's edge are less accurate than at its
@@ -380,8 +416,26 @@ namespace NEPTUNE_EOS_IGEN
           continue;
         }
 
-        igen.set_quality(prm.quality_property.c_str(), prm.quality_type.c_str(),
-                         prm.quality_is_abs, prm.quality_limit);
+        { //  Several properties may drive the refinement at once. EOS_IGen keeps
+          //  a list of criteria and marks a cell for subdivision when *any* of
+          //  them fails there, so the mesh comes out fine enough for all of
+          //  them and the order they are given in does not matter
+          //  (cf. EOSIGenQILimitTest).
+          //
+          //  Only one was ever passed on, so a database refined on T was then
+          //  read for rho and cp too, and those came out several times less
+          //  accurate on that mesh for no reason but not having been asked for.
+          std::vector<std::pair<std::string, double> > crit;
+          if (!parse_quality_list(prm.quality_property, prm.quality_limit, crit))
+          {
+            record_failure(prm, job, w.ip, w.ih, "bad --quality_property list");
+            worker_err = EOS_Error::error;
+            continue;
+          }
+          for (std::size_t c = 0; c < crit.size(); c++)
+            igen.set_quality(crit[c].first.c_str(), prm.quality_type.c_str(),
+                             prm.quality_is_abs, crit[c].second);
+        }
 
         // Refinement, when a threshold was asked for. compute_qualities() only
         // evaluates the criterion; refining is make_local_refine()'s job, and
