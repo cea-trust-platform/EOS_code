@@ -84,6 +84,16 @@ namespace NEPTUNE_EOS_IGEN
         
         EOS_Error make_properties(EOS_Med& med) ;
         EOS_Error compute_properties(EOS_Field& field, EOS_Error_Field& error) ;
+
+        //! Cross derivative d2X/dp.dh at every node, obtained by differencing
+        //! the [dX/dP]h field along h over the mesh's own nodes.
+        void compute_cross_derivative(const EOS_Field& d_dp, const EOS_Error_Field& e_dp,
+                                      EOS_Field& d2, EOS_Error_Field& e_d2) const ;
+
+        //! Writes every property of `props`, plus for each one whose [dX/dP]h
+        //! is there the cross derivative derived from it.
+        EOS_Error write_properties(EOS_Med& med, AString& mesh_name,
+                                   const vector<string>& props, int nb_nc) ;
         
         EOS_Error write_med()               ;
         EOS_Error write_tempory_med()       ;

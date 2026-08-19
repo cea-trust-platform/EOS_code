@@ -457,23 +457,15 @@ namespace NEPTUNE_EOS_IGEN
          ArrOfInt nerr(nb_nc) ;
          EOS_Error_Field err_field(nerr) ;
 
-         int nb_sp = str_properties.size() ;
          if (!refine)
             { err = med.add_Connectivity_NoRef_2D(mesh_name, mesh_ph->get_nb_mesh(), 
                                                   mesh_ph->get_nb_h()-1) ;
               if (err != EOS_Error::good)   return err ;
-              for (int i=0; i<nb_sp; i++)
-                 { const char *pprop = str_properties[i].c_str() ;
-                   EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
-
-                   fluid->compute(mesh_ph->get_domain_continuity()[1], 
-                                  mesh_ph->get_domain_continuity()[0], field, err_field) ;
-                   err = med.add_Champ_Noeud(mesh_name,field) ;
-
-                   AString err_name = pprop ;
-                   err = med.add_ErrChamp_Noeud(mesh_name, err_name, err_field) ;
-                   if (err != EOS_Error::good)  return err ;
-                 }
+              //  compute_properties is fluid->compute plus the continuity
+              //  forcing, and an unrefined mesh has no continuity node for the
+              //  forcing to touch, so the two branches can share one writer.
+              err = write_properties(med, mesh_name, str_properties, nb_nc) ;
+              if (err != EOS_Error::good)  return err ;
             }
          else
             { err = med.add_Connectivity_Refine_2D(mesh_name ,mesh_ph->get_med_to_node()) ;
@@ -508,17 +500,8 @@ namespace NEPTUNE_EOS_IGEN
                 if (err != EOS_Error::good)  return err ;
               }
 
-              for (int i=0; i<nb_sp; i++)
-                 { const char *pprop = str_properties[i].c_str() ;
-                   EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
-
-                   err = compute_properties(field, err_field) ;
-                   err = med.add_Champ_Noeud(mesh_name,field) ;
-
-                   AString err_name = pprop ;
-                   err = med.add_ErrChamp_Noeud(mesh_name, err_name, err_field) ;
-                   if (err != EOS_Error::good)  return err ;
-                 }
+              err = write_properties(med, mesh_name, str_properties, nb_nc) ;
+              if (err != EOS_Error::good)  return err ;
             }
        }
     
@@ -679,6 +662,166 @@ namespace NEPTUNE_EOS_IGEN
     return EOS_Error::good ;
   }
   
+  //  The bicubic Hermite patch wants d2X/dp.dh at each corner. Without it
+  //  EOS_Ipp estimates the twist from one-sided differences of the four
+  //  corners of a single cell -- an O(h) approximation inside an O(h^4)
+  //  scheme, so it can dominate the error the scheme was chosen for.
+  //
+  //  The models will not supply it. All fifteen cross derivatives exist in
+  //  thermprop and EOS_Fluid implements every one of them generically, but
+  //  EOS_Cathare2::compute routes every (p,h) request to Cathare's own
+  //  dispatcher and only falls back to EOS_Fluid when the *input pair* is not
+  //  one it handles. A property Cathare does not know therefore answers
+  //  NOT_IMPLEMENTED instead of reaching the generic version, is_implemented
+  //  drops it, and no cross derivative was ever written.
+  //
+  //  So it is built here instead, by differencing the [dX/dP]h field along h.
+  //  Nodes are numbered over the occupied grid slots in row-major order, so a
+  //  row is a contiguous run of indices at one pressure, ordered by increasing
+  //  h: the neighbours are simply the surrounding indices with the same p.
+  //  Differencing over the mesh's own nodes rather than at some relative
+  //  epsilon keeps the stencil where the data is, and follows local refinement
+  //  for free.
+  //
+  //  Two things the stencil has to avoid. Continuity nodes are skipped: their
+  //  value is forced to the trace of the neighbouring cell, not taken from the
+  //  model, and differencing through one would spread that forcing into a
+  //  quantity meant to approximate the model. And a neighbour the model could
+  //  not compute ends the search on that side rather than being stepped over,
+  //  which is what keeps the validity boundary from leaking inwards: the node
+  //  falls back to a one-sided difference, and to an error only if neither
+  //  side is usable.
+  void EOS_IGen::compute_cross_derivative(const EOS_Field& d_dp, const EOS_Error_Field& e_dp,
+                                          EOS_Field& d2, EOS_Error_Field& e_d2) const
+  {
+    const int sz = d_dp.size() ;
+    const EOS_Field& node_p = mesh_ph->get_domain_continuity()[1] ;
+    const EOS_Field& node_h = mesh_ph->get_domain_continuity()[0] ;
+    const ArrOfInt& ton = mesh_ph->get_type_of_node() ;
+    const bool has_types = ((int)ton.size() == sz) ;
+
+    for (int i=0; i<sz; i++)
+       { int L = -1, L2 = -1, R = -1, R2 = -1 ;
+
+         if (e_dp[i].get_code() == EOS_Internal_Error::OK)
+            { for (int j=i-1; j>=0 && node_p[j] == node_p[i]; j--)
+                 { if (has_types && ton[j] != 0)  continue ;
+                   if (e_dp[j].get_code() != EOS_Internal_Error::OK)  break ;
+                   if (L < 0)  L = j ; else { L2 = j ; break ; }
+                 }
+              for (int j=i+1; j<sz && node_p[j] == node_p[i]; j++)
+                 { if (has_types && ton[j] != 0)  continue ;
+                   if (e_dp[j].get_code() != EOS_Internal_Error::OK)  break ;
+                   if (R < 0)  R = j ; else { R2 = j ; break ; }
+                 }
+            }
+
+         double r = 0.e0 ;
+         EOS_Internal_Error ierr = EOS_Internal_Error::OK ;
+
+         if (L >= 0 && R >= 0)
+            { //  three points, unequally spaced wherever refinement changes step
+              const double a = node_h[i] - node_h[L] ;
+              const double b = node_h[R] - node_h[i] ;
+              if (a > 0.e0 && b > 0.e0)
+                 r = -b/(a*(a+b)) * d_dp[L]
+                   + (b-a)/(a*b)  * d_dp[i]
+                   +  a/(b*(a+b)) * d_dp[R] ;
+              else
+                 ierr = EOS_Internal_Error::EOS_BAD_COMPUTE ;
+            }
+         else if (R >= 0)
+            { //  edge of the domain, or of the valid region: lean on two points
+              //  from the one side there is. The two-point difference that
+              //  stood here is first order, and it showed -- the worst error
+              //  over the whole domain sat in the last row of cells in h,
+              //  where this branch is the one that runs.
+              const double b = node_h[R] - node_h[i] ;
+              if (b <= 0.e0)
+                 ierr = EOS_Internal_Error::EOS_BAD_COMPUTE ;
+              else if (R2 >= 0 && node_h[R2] > node_h[R])
+                 { const double c = node_h[R2] - node_h[R] ;
+                   r = -(2.e0*b+c)/(b*(b+c)) * d_dp[i]
+                     +      (b+c)/(b*c)      * d_dp[R]
+                     -        b/(c*(b+c))    * d_dp[R2] ;
+                 }
+              else
+                 r = (d_dp[R] - d_dp[i]) / b ;
+            }
+         else if (L >= 0)
+            { const double a = node_h[i] - node_h[L] ;
+              if (a <= 0.e0)
+                 ierr = EOS_Internal_Error::EOS_BAD_COMPUTE ;
+              else if (L2 >= 0 && node_h[L2] < node_h[L])
+                 { const double c = node_h[L] - node_h[L2] ;
+                   r =  (2.e0*a+c)/(a*(a+c)) * d_dp[i]
+                     -      (a+c)/(a*c)      * d_dp[L]
+                     +        a/(c*(a+c))    * d_dp[L2] ;
+                 }
+              else
+                 r = (d_dp[i] - d_dp[L]) / a ;
+            }
+         else
+            //  nothing usable in this row: keep whatever went wrong upstream
+            ierr = (e_dp[i].get_code() != EOS_Internal_Error::OK)
+                     ? e_dp[i] : EOS_Internal_Error::EOS_BAD_COMPUTE ;
+
+         d2[i] = r ;
+         e_d2.set(i, ierr) ;
+       }
+  }
+
+  EOS_Error EOS_IGen::write_properties(EOS_Med& med, AString& mesh_name,
+                                       const vector<string>& props, int nb_nc)
+  {
+    EOS_Error err = EOS_Error::good ;
+    const int nb_sp = props.size() ;
+
+    for (int i=0; i<nb_sp; i++)
+       { const char *pprop = props[i].c_str() ;
+
+         ArrOfDouble xv(nb_nc) ;
+         ArrOfInt    nv(nb_nc) ;
+         EOS_Error_Field ev(nv) ;
+         EOS_Field field(pprop, pprop, gen_property_number(pprop), xv) ;
+
+         compute_properties(field, ev) ;
+         err = med.add_Champ_Noeud(mesh_name, field) ;
+         if (err != EOS_Error::good)  return err ;
+         AString err_name = pprop ;
+         err = med.add_ErrChamp_Noeud(mesh_name, err_name, ev) ;
+         if (err != EOS_Error::good)  return err ;
+
+         //  [dX/dP]h is the one field the cross derivative can be built from;
+         //  when this property is it, derive d2X/dPdh and write that too. The
+         //  name is reconstructed rather than looked up in props: the cross
+         //  derivatives are not in that list, is_implemented having dropped
+         //  them.
+         const string &nm = props[i] ;
+         if (nm.size() > 7 && nm.compare(0, 2, "[d") == 0
+             && nm.compare(nm.size()-5, 5, "/dP]h") == 0)
+            { const string base = nm.substr(2, nm.size()-7) ;
+              const string nm_d2 = "[d2" + base + "/dPdh]" ;
+              const EOS_Property p_d2 = gen_property_number(nm_d2.c_str()) ;
+              if (p_d2 >= 0)
+                 { ArrOfDouble x2(nb_nc) ;
+                   ArrOfInt    n2(nb_nc) ;
+                   EOS_Error_Field e2(n2) ;
+                   EOS_Field f2(nm_d2.c_str(), nm_d2.c_str(), p_d2, x2) ;
+
+                   compute_cross_derivative(field, ev, f2, e2) ;
+
+                   err = med.add_Champ_Noeud(mesh_name, f2) ;
+                   if (err != EOS_Error::good)  return err ;
+                   AString err_name2 = nm_d2.c_str() ;
+                   err = med.add_ErrChamp_Noeud(mesh_name, err_name2, e2) ;
+                   if (err != EOS_Error::good)  return err ;
+                 }
+            }
+       }
+    return EOS_Error::good ;
+  }
+
   EOS_Error EOS_IGen::compute_properties(EOS_Field& field, EOS_Error_Field& err_field)
   { int sz = mesh_ph->get_nb_node() + mesh_ph->get_nb_continuity() ;
     
