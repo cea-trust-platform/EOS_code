@@ -200,6 +200,41 @@ namespace NEPTUNE_EOS
        return EOS_Fluid::compute(in, out, err) ;
   }
 
+  // The pilot computes a batch of output fields in one flash, and refuses the
+  // whole batch as NOT_IMPLEMENTED as soon as one field names a property it
+  // does not know -- including the fields it does know, which is what the
+  // "\todo : all unknown properties should be computed by EOS instead of
+  // return EOS_Error::error" in CATHARE2::calc2_ph is about.
+  //
+  // EOS_Fluid knows how to build some of those from properties the pilot does
+  // have: the Prandtl number from mu, cp and lambda, the derivatives of sigma,
+  // pr and gamma, and every cross derivative d2X/dp.dh. Measured at
+  // p=1e7, h=5e5 on WaterLiquid, going through it raises what this model will
+  // deliver from 45 properties to 69.
+  //
+  // It has to be entered by the single-field overload, explicitly qualified.
+  // EOS_Fluid::compute over an EOS_Fields delegates each field to the *virtual*
+  // single-field compute, which lands straight back here and recurses until the
+  // stack runs out. The single-field one dispatches on the output property to
+  // compute_<prop>_ph, whose default re-enters the model exactly once before
+  // its own guard stops it.
+  //
+  // Nothing changes for a batch the pilot accepts, which is every batch on the
+  // hot path: this runs only after it has already refused one.
+  EOS_Error EOS_Cathare2::compute_through_base(const EOS_Field& in1, const EOS_Field& in2,
+                                               EOS_Fields& out, EOS_Error_Field& err) const
+  { ArrOfInt err_array(in1.size()) ;
+    EOS_Error_Field err_one(err_array) ;
+    EOS_Error worst = EOS_Error::good ;
+    const int nb = out.size() ;
+    for (int i=0; i<nb; i++)
+       { EOS_Error ei = EOS_Fluid::compute(in1, in2, out[i], err_one) ;
+         worst = worst_generic_error(worst, ei) ;
+         err.set_worst_error(err_one) ;
+       }
+    return worst ;
+  }
+
   EOS_Error EOS_Cathare2::compute (const EOS_Field& in1, const EOS_Field& in2, 
                                    EOS_Fields& out, EOS_Error_Field& err) const 
   { CATHARE2::CATHARE2 * local_pilot;
@@ -219,6 +254,8 @@ namespace NEPTUNE_EOS
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
          local_pilot->calc2_ph(in1, in2, out, err_tmp);
+         if (err_tmp.find_worst_error().get_code() == EOS_Internal_Error::NOT_IMPLEMENTED)
+            return compute_through_base(in1, in2, out, err) ;
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }
@@ -227,6 +264,8 @@ namespace NEPTUNE_EOS
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
          local_pilot->calc2_ph(in2, in1, out, err_tmp);
+         if (err_tmp.find_worst_error().get_code() == EOS_Internal_Error::NOT_IMPLEMENTED)
+            return compute_through_base(in1, in2, out, err) ;
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }
@@ -235,6 +274,8 @@ namespace NEPTUNE_EOS
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
          local_pilot->calc2_pt(in1, in2, out, err_tmp);
+         if (err_tmp.find_worst_error().get_code() == EOS_Internal_Error::NOT_IMPLEMENTED)
+            return compute_through_base(in1, in2, out, err) ;
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        } 
@@ -243,6 +284,8 @@ namespace NEPTUNE_EOS
          local_pilot->verify(in2, err_tmp, phase);
          err.set_worst_error(err_tmp);
          local_pilot->calc2_pt(in2, in1, out, err_tmp);
+         if (err_tmp.find_worst_error().get_code() == EOS_Internal_Error::NOT_IMPLEMENTED)
+            return compute_through_base(in1, in2, out, err) ;
          err.set_worst_error(err_tmp);
          return err.find_worst_error().generic_error();
        }
