@@ -368,7 +368,10 @@ namespace NEPTUNE_EOS_IGEN
          std::vector<MeshCell> cells_glb ;
          collect_cells(node_glb, sz_glb_h, nb_p-1, nb_h-1, int(pow(2,level)), cells_glb) ;
          if ((int)cells_glb.size() != nb_mesh)
-            { refine_ok_ = false ; return ; }
+            { cerr << "EOS_Mesh::add_local_nodes: the node grid at level " << level
+                   << " describes " << cells_glb.size() << " cells where the mesh counts "
+                   << nb_mesh << "; refinement stopped" << endl ;
+              refine_ok_ = false ; return ; }
          for (m = 0; m < nb_mesh; m++)
             { const MeshCell &c = cells_glb[m] ;
               for (int i=0; i<c.side; i++)
@@ -553,7 +556,10 @@ namespace NEPTUNE_EOS_IGEN
          std::vector<MeshCell> cells_next ;
          collect_cells(node_glb_tmp, sz_next_h, nb_p-1, nb_h-1, int(pow(2,level+1)), cells_next) ;
          if ((int)cells_next.size() != nb_mesh)
-            { refine_ok_ = false ; return ; }
+            { cerr << "EOS_Mesh::add_local_nodes: the refined node grid describes "
+                   << cells_next.size() << " cells where the count kept by the refinement says "
+                   << nb_mesh << "; refinement stopped" << endl ;
+              refine_ok_ = false ; return ; }
 
          ArrOfInt next_to_mesh((sz_next_h-1)*(sz_next_p-1)) ;
 
@@ -1006,7 +1012,10 @@ namespace NEPTUNE_EOS_IGEN
                    const int right = support_index(node_glb, continuity_node, i,  1, row_lo, row_hi, true) ;
                    const int left  = support_index(node_glb, continuity_node, i, -1, row_lo, row_hi, true) ;
                    if (m < 0 || right < 0 || left < 0 || glb_to_node[right] < 0 || glb_to_node[left] < 0)
-                      { refine_ok_ = false ; return ; }
+                      { cerr << "EOS_Mesh::add_continuity_nodes: no support found for the"
+                             << " cell-centre continuity node at row " << i/sz_glb_h
+                             << " column " << i%sz_glb_h << "; refinement stopped" << endl ;
+                        refine_ok_ = false ; return ; }
                    continuity_to_node[m][0] = glb_to_node[right] ;
                    continuity_to_node[m][1] = glb_to_node[left]  ;
                    m-- ;
