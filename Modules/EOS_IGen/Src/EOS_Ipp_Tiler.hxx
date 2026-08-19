@@ -59,6 +59,13 @@ namespace NEPTUNE_EOS_IGEN
     //! mesh. Left at the sentinel for compatibility; set it to ask for actual
     //! refinement.
     double quality_limit = -9999.9;
+
+    //! Whether to accept a domain smaller than the one requested. The database
+    //! is built over the T box spanned by the 4 corners of the requested (p,h)
+    //! box; a corner outside the model's validity contributes nothing, so the
+    //! result can be a small fraction of what was asked for. That is refused by
+    //! default, since it is not visible in the output otherwise.
+    bool allow_domain_shrink = false;
     //! Whether the refinement inserts continuity nodes on the hanging edges it
     //! creates (EOS_IGen::make_local_refine's argument). True matches the
     //! "raffinement_local" reference databases, false the

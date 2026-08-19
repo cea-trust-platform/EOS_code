@@ -96,6 +96,11 @@ namespace
       "                                  refinement creates (default 1)\n\n"
       "running:\n"
       "  --jobs=N                        generate N tiles at a time (default 1)\n"
+      "  --allow_domain_shrink           accept a domain smaller than the one requested. Corners\n"
+      "                                  of the (p,h) box outside the model's validity contribute\n"
+      "                                  nothing to the T range the database is built over, so the\n"
+      "                                  result can be a fraction of what was asked for; refused\n"
+      "                                  by default\n"
       "  --skip_existing                 leave already generated tiles alone, to resume a run\n"
       "  --allow_partial                 write a manifest even if some tiles failed; the grid\n"
       "                                  then has holes, recorded as MISSING lines\n"
@@ -208,6 +213,7 @@ int main(int argc, char **argv)
   prm.quality_limit    = arg_d(argc, argv, "quality_limit", -9999.9);
   prm.refine_continuity = arg_i(argc, argv, "refine_continuity", 1) != 0;
   prm.allow_partial     = has_flag(argc, argv, "allow_partial");
+  prm.allow_domain_shrink = has_flag(argc, argv, "allow_domain_shrink");
   prm.nb_jobs       = arg_i(argc, argv, "jobs", 1);
   prm.skip_existing = has_flag(argc, argv, "skip_existing");
   prm.dry_run       = has_flag(argc, argv, "dry_run");

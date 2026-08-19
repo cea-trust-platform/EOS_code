@@ -38,15 +38,26 @@ namespace NEPTUNE_EOS_IGEN
     // T-range spanning the 4 corners of [p0,p1]x[h0,h1] under 'source',
     // widened by a small safety margin (EOS_IGen's own inversions/
     // interpolations near a box's edge are less accurate than at its
-    // center). Returns false if none of the 4 corners could be evaluated.
+    // center). Returns false if none of the 4 corners could be evaluated,
+    // and reports through nb_bad how many of them could not.
+    //
+    // nb_bad is not a detail. The database is built over a *T* box: this
+    // range is what reaches set_extremum, and EOS_IGen then recomputes the
+    // enthalpies from it. A corner that fails simply does not contribute, so
+    // a box with corners outside the model's validity silently yields the
+    // T-range of whatever corners survived -- asking for p=[1e5,2e7],
+    // h=[1e5,3e6] gave back h=[84423,115664], T=[293,297]. A four-kelvin band
+    // where a domain twenty-five times larger was requested, announced as
+    // "wrote 1 tile(s)".
     bool corner_T_range(EOS &source, double p0, double p1, double h0, double h1,
-                         double &Tmin, double &Tmax)
+                         double &Tmin, double &Tmax, int &nb_bad)
     {
       const double ps[2] = {p0, p1};
       const double hs[2] = {h0, h1};
       Tmin = 1e300;
       Tmax = -1e300;
       bool any_ok = false;
+      nb_bad = 0;
       for (double p : ps)
         for (double h : hs)
         {
@@ -57,6 +68,8 @@ namespace NEPTUNE_EOS_IGEN
             Tmax = std::max(Tmax, T);
             any_ok = true;
           }
+          else
+            nb_bad++;
         }
       if (!any_ok)
         return false;
@@ -201,10 +214,32 @@ namespace NEPTUNE_EOS_IGEN
     relax(source);
 
     double Tmin_global, Tmax_global;
-    if (!corner_T_range(source, prm.pmin, prm.pmax, prm.hmin, prm.hmax, Tmin_global, Tmax_global))
+    int nb_bad_global = 0;
+    if (!corner_T_range(source, prm.pmin, prm.pmax, prm.hmin, prm.hmax,
+                        Tmin_global, Tmax_global, nb_bad_global))
     {
       cerr << "EOS_Ipp_Tiler: could not evaluate T(p,h) at the global domain corners" << endl;
       return EOS_Error::error;
+    }
+    if (nb_bad_global > 0)
+    {
+      // The surviving corners still give a T range, so generation would go on
+      // and produce a database over a domain nobody asked for. Say what was
+      // requested and what it would become, and stop -- unless the caller has
+      // said that is what they want.
+      cerr << "EOS_Ipp_Tiler: " << nb_bad_global << " of the 4 corners of the requested domain"
+           << " p=[" << prm.pmin << "," << prm.pmax << "]"
+           << " h=[" << prm.hmin << "," << prm.hmax << "]"
+           << " lie outside " << prm.method << "/" << prm.reference << endl;
+      cerr << "  the database would instead cover T=[" << Tmin_global << "," << Tmax_global
+           << "], which is not the domain that was asked for." << endl;
+      if (!prm.allow_domain_shrink)
+      {
+        cerr << "  refusing to write it. Narrow the requested domain, or pass"
+             << " allow_domain_shrink (--allow_domain_shrink) to accept this one." << endl;
+        return EOS_Error::error;
+      }
+      cerr << "  allow_domain_shrink is set, generating over the reduced domain." << endl;
     }
     double pcrit = 0., hcrit = 0., tcrit = 0.;
     source.get_p_crit(pcrit);
@@ -245,7 +280,8 @@ namespace NEPTUNE_EOS_IGEN
       // (cf. EOS_Ipp_TileIndex). Abandoning the whole database for it threw
       // away every tile that would have generated perfectly.
       double Tmin, Tmax;
-      if (!corner_T_range(source, bp0, bp1, bh0, bh1, Tmin, Tmax))
+      int nb_bad_tile = 0;
+      if (!corner_T_range(source, bp0, bp1, bh0, bh1, Tmin, Tmax, nb_bad_tile))
       {
         cerr << "EOS_Ipp_Tiler: tile (" << ip << "," << ih
              << ") skipped: T(p,h) cannot be evaluated at its corners" << endl;
