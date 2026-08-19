@@ -122,7 +122,8 @@ namespace
   //! and 2 when it lies strictly inside a *horizontal* one, with `edge_a` and
   //! `edge_b` the two ends of that edge, `edge_side` the side of the cell it
   //! belongs to and `edge_cell` that cell. It is 0 when the slot is inside
-  //! neither, which includes every cell corner. `centre` marks a cell centre.
+  //! neither, which includes every cell corner. `cross` marks a slot where a
+  //! horizontal split of a cell meets a vertical one.
   //!
   //! A slot can be strictly inside an edge of two cells at once -- the two that
   //! share it. When their sides differ the coarser cell is the one that has to
@@ -131,18 +132,34 @@ namespace
   struct SlotMap
   {
     std::vector<int>  edge_a, edge_b, edge_kind, edge_side, edge_cell ;
-    std::vector<char> centre ;
+    std::vector<char> cross ;
   };
 
-  void map_slots(int nb_slots, int sz_h, const std::vector<MeshCell> &cells,
-                 SlotMap &out)
+  //! The columns and rows a cell is split along: the interior slots of its
+  //! edges that carry a real node, which a finer neighbour put there.
+  void cell_splits(const NEPTUNE::ArrOfInt &node_glb, int sz_h, const MeshCell &c,
+                   std::vector<int> &vs, std::vector<int> &hs)
+  {
+    vs.clear() ; hs.clear() ;
+    const int r0=c.row, c0=c.col, sd=c.side ;
+    for (int t=1; t<sd; t++)
+       { if (   node_glb[ r0    *sz_h + c0+t] != 0
+             || node_glb[(r0+sd)*sz_h + c0+t] != 0 )  vs.push_back(c0+t) ;
+         if (   node_glb[(r0+t)*sz_h + c0]    != 0
+             || node_glb[(r0+t)*sz_h + c0+sd] != 0 )  hs.push_back(r0+t) ;
+       }
+  }
+
+  void map_slots(const NEPTUNE::ArrOfInt &node_glb, int nb_slots, int sz_h,
+                 const std::vector<MeshCell> &cells, SlotMap &out)
   {
     out.edge_a.assign(nb_slots, -1) ;
     out.edge_b.assign(nb_slots, -1) ;
     out.edge_kind.assign(nb_slots, 0) ;
     out.edge_side.assign(nb_slots, 0) ;
     out.edge_cell.assign(nb_slots, -1) ;
-    out.centre.assign(nb_slots, 0) ;
+    out.cross.assign(nb_slots, 0) ;
+    std::vector<int> vs, hs ;
 
     for (int m=0; m<(int)cells.size(); m++)
        { const MeshCell &c = cells[m] ;
@@ -166,7 +183,10 @@ namespace
                  { out.edge_a[q] = (r0+sd)*sz_h+c0 ; out.edge_b[q] = (r0+sd)*sz_h+c0+sd ;
                    out.edge_kind[q] = 2 ; out.edge_side[q] = sd ; out.edge_cell[q] = m ; }
             }
-         if (sd >= 2)  out.centre[(r0+sd/2)*sz_h + c0+sd/2] = 1 ;
+         cell_splits(node_glb, sz_h, c, vs, hs) ;
+         for (int b=0; b<(int)hs.size(); b++)
+            for (int a=0; a<(int)vs.size(); a++)
+               out.cross[hs[b]*sz_h + vs[a]] = 1 ;
        }
   }
 
@@ -196,8 +216,12 @@ namespace
   //! both:
   //!
   //!  - soundness: a continuity node of type 1 (resp. 2) lies strictly inside
-  //!    a vertical (resp. horizontal) cell edge, and a type 3 lies at a cell
-  //!    centre. Nothing else is a position the mesh has room for;
+  //!    a vertical (resp. horizontal) cell edge, and a type 3 lies where a
+  //!    horizontal split crosses a vertical one. Nothing else is a position
+  //!    the mesh has room for. A crossing is the cell's centre only when the
+  //!    cell has exactly one split each way, which is why looking for the
+  //!    centre was too strict: a cell whose neighbour is two levels finer has
+  //!    three vertical splits and its crossings sit at the quarter points.
   //!  - completeness: the far end of every split line carries a node, real or
   //!    continuity. A split whose far end is empty cannot close.
   //!
@@ -221,7 +245,7 @@ namespace
          if (kind == 0)  continue ;
          n_type[kind]++ ;
          bool ok ;
-         if (kind == 3)  ok = (map.centre[i] != 0) ;
+         if (kind == 3)  ok = (map.cross[i] != 0) ;
          else            ok = (map.edge_kind[i] == kind) ;
          if (!ok)
             { bad_sound++ ;
@@ -229,7 +253,7 @@ namespace
                  std::cerr << "  [check] unsound: continuity node type " << kind
                       << " at row " << i/sz_h << " column " << i%sz_h
                       << " sits on edge_kind " << (int)map.edge_kind[i]
-                      << " centre " << (int)map.centre[i] << std::endl ;
+                      << " cross " << (int)map.cross[i] << std::endl ;
             }
        }
 
@@ -808,400 +832,177 @@ namespace NEPTUNE_EOS_IGEN
     
   }
   
+  //! Places the continuity nodes a locally refined mesh needs, and rewires the
+  //! MED connectivity so that every cell written out is a rectangle whose four
+  //! corners are nodes.
+  //!
+  //! A cell is *split* by every real node lying strictly inside one of its
+  //! edges -- a hanging node its finer neighbour put there. The split runs
+  //! across the cell perpendicular to that edge. A cell with splits therefore
+  //! becomes a grid of rectangles, and each hanging node is a corner of the
+  //! two that meet at it. That fixes exactly which nodes have to exist:
+  //!
+  //!   - the far end of every split, on the opposite edge: type 1 where it
+  //!     lands on a vertical edge, type 2 on a horizontal one;
+  //!   - every crossing of a horizontal split with a vertical one: type 3.
+  //!
+  //! Where the mesh has no node there already, a continuity node is created.
+  //! Types 1 and 2 carry the two ends of the edge they split as supports,
+  //! higher coordinate first, which is what forces their value -- a half-sum
+  //! for the bilinear reading, the cubic trace for the bicubic one
+  //! (cf. EOS_Ipp::retrace_hanging_nodes). Type 3 lies inside the cell, not on
+  //! an edge, so it has no junction to match and keeps the model's own value.
+  //!
+  //! This used to be a scan: from a node tagged as a mid-edge one at creation,
+  //! step outwards until something that looked like the far side turned up,
+  //! and place a node there. The scan could only ever place one node per edge
+  //! and one crossing per cell, both at a fixed offset from the node it
+  //! started at, so a cell with hanging nodes on two edges, or with a
+  //! neighbour two levels finer, came out with continuity nodes sitting on no
+  //! edge at all and splits closing on nothing -- 11 and 72 respectively on
+  //! the 17x17 WaterLiquid tile at level 2. It also read those creation tags
+  //! to find its starting points, and a node's role changes as the mesh
+  //! refines around it while its tag does not.
+  //!
+  //! Nothing is carried over from the previous level. Which nodes a split
+  //! demands is a function of the decomposition as it now stands, so it is
+  //! derived again each time. The old code carried its placements forward one
+  //! level as types 7, 8 and 9 and zeroed them at the end of the next, which
+  //! dropped any that were still needed two levels on.
   void EOS_Mesh::add_continuity_nodes(int level)
   {
-    int sz_prec_h = pow(2,level)*nb_h - (pow(2,level)-1) ;
-    int sz_prec_p = pow(2,level)*nb_p - (pow(2,level)-1) ;
-    int sz_prec   = sz_prec_h * sz_prec_p ;
-    
-    int sz_glb_h = pow(2,level+1)*nb_h - (pow(2,level+1)-1) ;
-    int sz_glb_p = pow(2,level+1)*nb_p - (pow(2,level+1)-1) ;
-    int sz_glb_m = (sz_glb_p-1) * (sz_glb_h-1) ;
-    
-    ArrOfInt prec_to_glb(sz_prec) ;
-    int k = 0 ;
-    for (int i=0; i<sz_prec; i++)
-       { prec_to_glb[i] = 2*i+k*(sz_glb_h-1) ;
-         if ((i+1)%(sz_prec_h) == 0)  k++ ;
-       }
-    
-    int nb_ng = node_glb.size() ;
-        
-//     vecteur de correspondance des noeuds reel au maillage global
-    ArrOfInt glb_to_node(nb_ng,-1) ;
-    k = 0 ;
-    for (int i=0; i<nb_ng; i++)
-       { if (node_glb[i] != 0)
-            { glb_to_node[i] = k ;
-              k++;
-            }
-       }
-    
-//     placement des noeuds existant (continuite et reel) dans le nouveau maillage
-    int nb_mc = med_correction.size() ;
+    const int sz_glb_h = pow(2,level+1)*nb_h - (pow(2,level+1)-1) ;
+    const int sz_glb_p = pow(2,level+1)*nb_p - (pow(2,level+1)-1) ;
+    const int sz_glb_m = (sz_glb_p-1) * (sz_glb_h-1) ;
+    const int nb_ng    = node_glb.size() ;
 
-    for (int i=0; i<nb_mc; i++)
-       { for (int j=0 ; j<4; j++)
-            { med_correction[i][j] = prec_to_glb[med_correction[i][j]] ;
-              new_correction[i][j] = prec_to_glb[new_correction[i][j]] ;
-            }
-       }
-    k = 0 ;
-    vector<ArrOfInt> mesh_to_glb ;
-    for (int i=0; i<sz_glb_m; i++)
-       { ArrOfInt nn(4) ;
-         nn[0] = i+k            ;
-         nn[1] = i+k+1          ;
-         nn[2] = i+k+sz_glb_h   ;
-         nn[3] = i+k+sz_glb_h+1 ;
-         mesh_to_glb.push_back(nn) ;
-         
-         if ((i+k+2)%sz_glb_h==0)  k++ ;
-       }
-    for (int i=0; i<sz_glb_m ; i++)
-       { for (int j=0; j<nb_mc; j++)
-            { if (   (med_to_node[i][0] == med_correction[j][0]) && (med_to_node[i][3] == med_correction[j][3])
-                  && (mesh_to_glb[i][0] >= new_correction[j][0]) && (mesh_to_glb[i][3] <= new_correction[j][3])
-                  && ((mesh_to_glb[i][2] >= new_correction[j][2] &&  mesh_to_glb[i][1] >  new_correction[j][1]) 
-                  || (mesh_to_glb[i][2] <  new_correction[j][2]  &&  mesh_to_glb[i][1] <= new_correction[j][1])) )
-                 { med_to_node[i] = new_correction[j] ;
-                   break ;
-                 }
-            }
-       } 
-//     determination de la continuite
-    ArrOfDouble continuity_p(nb_ng) ;
-    ArrOfDouble continuity_h(nb_ng) ;
-    
-    k = 0 ;
-    for (int i=0; i<sz_prec; i++)
-       { if (node_glb[prec_to_glb[i]] > 0)
-            k++ ;
-         else if (continuity_node[i] > 4)
-            { continuity_h[prec_to_glb[i]] = domain_continuity[0][k] ;
-              continuity_p[prec_to_glb[i]] = domain_continuity[1][k] ;
-              k++ ;
-            }
-       }
-
-
-    ArrOfInt continuity_node_tmp(nb_ng);
-    k = 0 ;
-    int nb_cn = continuity_node.size() ;
-    for (int i=0; i<nb_cn; i++)
-       { if (continuity_node[i] != 0)  continuity_node_tmp[2*i+k*(sz_glb_h-1)] = continuity_node[i] ;
-         if ((i+1)%(sz_prec_h)  == 0)  k++ ;
-       }
-    continuity_node.resize(nb_ng) ;
-    continuity_node = continuity_node_tmp ;
-//      Ajout au maillage global des nouveau noeuds de continuité 
-//      et affectation des valeurs h et p
-    for (int i=sz_glb_h; i<nb_ng; i++)
-       { if ( (node_glb[i] == 8) && (i%sz_glb_h != 0) && ((i+1)%sz_glb_h != 0) )
-            { if (node_glb[i+1] == 0)
-                 { int l = 2 ;
-                   bool test = true ;
-                   while (   (node_glb[i+l-sz_glb_h] != 1) 
-                          && (node_glb[i+l+sz_glb_h] != 1)
-                          && (continuity_node[i+l-sz_glb_h] < 4) 
-                          && (continuity_node[i+l+sz_glb_h] < 4) )
-                      { l++ ;
-                        if ( (float(l) > (pow(2,level))) || (continuity_node[i+l] > 3) )
-                           { test = false ;
-                             break ;
-                           }
-                      }
-                   
-                   if (test)
-                      { continuity_p[i+l] = grid_p[(i+l) / sz_glb_h] ;
-                        continuity_h[i+l] = grid_h[(i+l) % sz_glb_h] ;
-                        continuity_node[i+l] = 1 ;
-                        if (continuity_node[i+(l-1)] <= 0)
-                           { if (continuity_node[i+(l-1)] == -2)
-                                continuity_node[i+(l-1)] = 3 ;
-                             else
-                                continuity_node[i+(l-1)] = -1 ;
-                             
-                             continuity_p[i+(l-1)] = grid_p[(i+(l-1)) / sz_glb_h] ;
-                           }
-                      }
-                 }
-
-              else if (node_glb[i-1] == 0)
-                 { int l = 2 ;
-                   bool test = true ;
-                   while (   (node_glb[i-l-sz_glb_h] != 1)
-                          && (node_glb[i-l+sz_glb_h] != 1)
-                          && (continuity_node[i-l-sz_glb_h] < 4)
-                          && (continuity_node[i-l+sz_glb_h] < 4) )
-                      { l++ ;
-                        if ((float(l) > (pow(2,level))) || (continuity_node[i-l] > 3) )
-                           { test = false ;
-                             break ;
-                           }
-                      }
-                   
-                   if (test)
-                      { continuity_p[i-l] = grid_p[(i-l) / sz_glb_h] ;
-                        continuity_h[i-l] = grid_h[(i-l) % sz_glb_h] ;
-                        continuity_node[i-l] = 1 ;
-
-                        if (continuity_node[i-(l-1)] <= 0)
-                           { if (continuity_node[i-(l-1)] == -2)
-                                continuity_node[i-(l-1)] =  3 ;
-                             else
-                                continuity_node[i-(l-1)] = -1 ;
-                             
-                             continuity_p[i-(l-1)] = grid_p[(i-(l-1)) / sz_glb_h] ;
-                           }
-                      }
-                 }
-            }
-
-         if ( (node_glb[i] == 9) && (i < (nb_ng-sz_glb_h)) )
-            { if (node_glb[i+sz_glb_h] == 0)
-                 { int l = 2 ;
-                   bool test = true ;
-                   while (   (node_glb[i+l*sz_glb_h-1] != 1)       && (node_glb[i+l*sz_glb_h+1] != 1)
-                          && (continuity_node[i+l*sz_glb_h-1] <4 ) && (continuity_node[i+l*sz_glb_h+1] < 4) )
-                      { l++ ;
-                        if ( (float(l) > (pow(2,level))) || (continuity_node[i+l*sz_glb_h] > 3) )
-                           { test = false ;
-                             break ;
-                           }
-                      }
-                   
-                   if (test)
-                      { continuity_p[i+l*sz_glb_h] = grid_p[(i+l*sz_glb_h) / sz_glb_h] ;
-                        continuity_h[i+l*sz_glb_h] = grid_h[(i+l*sz_glb_h) % sz_glb_h] ;
-                        continuity_node[i+l*sz_glb_h] = 2 ;
-
-                        if (continuity_node[i+(l-1)*sz_glb_h] <= 0)
-                           { if (continuity_node[i+(l-1)*sz_glb_h] == -1)
-                                continuity_node[i+(l-1)*sz_glb_h] =  3 ;
-                             else
-                                continuity_node[i+(l-1)*sz_glb_h] = -2 ;
-                             
-                             continuity_h[i+(l-1)*sz_glb_h] = grid_h[(i+(l-1)*sz_glb_h) % sz_glb_h] ;
-                           }
-                      }
-                 }
-
-              else if (node_glb[i-sz_glb_h] == 0)
-                 { int l = 2 ;
-                   bool test = true ;
-                   while (   (node_glb[i-l*sz_glb_h-1] != 1)       && (node_glb[i-l*sz_glb_h+1] != 1)
-                          && (continuity_node[i-l*sz_glb_h-1] < 4) && (continuity_node[i-l*sz_glb_h+1] < 4) )
-                      { l++ ;
-                        if ( (float(l) > (pow(2,level))) || (continuity_node[i-l*sz_glb_h] > 3) )
-                           { test = false ;
-                             break ;
-                           }
-                      }
-                   if (test)
-                      { continuity_p[i-l*sz_glb_h] = grid_p[(i-l*sz_glb_h) / sz_glb_h] ;
-                        continuity_h[i-l*sz_glb_h] = grid_h[(i-l*sz_glb_h) % sz_glb_h] ;
-                        continuity_node[i-l*sz_glb_h] = 2 ;
-
-                        if (continuity_node[i-(l-1)*sz_glb_h] <= 0)
-                           { if (continuity_node[i-(l-1)*sz_glb_h] == -1)
-                                continuity_node[i-(l-1)*sz_glb_h] =  3 ;
-                             else
-                                continuity_node[i-(l-1)*sz_glb_h] = -2 ;
-                             
-                             continuity_h[i-(l-1)*sz_glb_h] = grid_h[(i-(l-1)*sz_glb_h) % sz_glb_h] ;
-                           }
-                      }
-                 }
-            }
-       }
-
-    
-    node_p_continuity.resize(nb_node+nb_continuity) ;
-    node_h_continuity.resize(nb_node+nb_continuity) ;
-    k = node_p_continuity.size() ;
-    int l = 0 ;
-    int inc_ct = 0 ;
-    for (int i=0; i<nb_ng; i++)
-       { if ( (continuity_node[i] > 0) && (glb_to_node[i] < 0) )
-            { if (continuity_node[i] < 4)
-                 { k++ ;
-                   nb_continuity++ ;
-                   node_h_continuity.resize(k) ;
-                   node_p_continuity.resize(k) ;
-                 }
-              
-              node_h_continuity[l] = continuity_h[i] ;
-              node_p_continuity[l] = continuity_p[i] ;
-              l++ ;
-              if (continuity_node[i] < 4)  inc_ct++ ;
-            }
-
-         else if(glb_to_node[i] >= 0)
-            { node_h_continuity[l] = domain[0][glb_to_node[i]] ;
-              node_p_continuity[l] = domain[1][glb_to_node[i]] ;
-              l++ ;
-            }
-       }
-    k = 0 ;
-    type_of_node.resize(nb_node + nb_continuity) ;
-    for (int i=0; i<nb_ng; i++)
-       { if ( (continuity_node[i]>0) || (node_glb[i]>0) )
-            { glb_to_node[i] = k ;
-              if (node_glb[i] != 0)                                               // noeuds reels
-                 type_of_node[k] = 0 ;
-              else if ( (continuity_node[i] == 1) || (continuity_node[i] == 7) )  // noeuds de continuite a p cst
-                 type_of_node[k] = 1 ;
-              else if ( (continuity_node[i] == 2) || (continuity_node[i] == 8) )  // noeuds de continuite a h cst
-                 type_of_node[k] = 2 ;
-              else if ( (continuity_node[i] == 3) || (continuity_node[i] == 9) )  // noeuds de continuite au centre des mailles
-                 type_of_node[k] = 3 ;
-              k++ ;
-            }
-       }
-//     validation des noeuds de continuite
-    vector<ArrOfInt> new_to_node ; 
-    for (int i=0; i<sz_glb_m; i++)
-       new_to_node.push_back(med_to_node[i]) ;
-    
-    for (int i=0; i<sz_glb_m; i++)
-       { ArrOfInt n ;
-         int m = 0 ;
-         for (int j=0; j<4; j++)
-            { if (mesh_to_glb[i][j] != new_to_node[i][j])
-                 { if (   (continuity_node[mesh_to_glb[i][j]] > 0 && continuity_node[mesh_to_glb[i][j]] < 4) 
-                       || (node_glb[mesh_to_glb[i][j]] == 8) || (node_glb[mesh_to_glb[i][j]] == 9) )
-                      { new_to_node[i][j] = mesh_to_glb[i][j] ;
-                        m++ ;
-                        n.resize(m) ;
-                        n[m-1] = j ;
-                      }
-                 }
-            }
-         if (n.size()>0 && n.size()<3)
-            { for (int j=0; j<n.size(); j++)
-                 { int r = med_to_node[i][n[j]]-new_to_node[i][n[j]] ;
-                   int t = 0 ;
-                   if      ((n[j] == 0 && abs(r) >= sz_glb_h) || (n[j] == 3 && abs(r) <  sz_glb_h))
-                      t = 1 ;
-                   else if ((n[j] == 0 && abs(r) <  sz_glb_h) || (n[j] == 3 && abs(r) >= sz_glb_h))
-                      t = 2 ;
-                   else if ((n[j] == 1 && abs(r) >= sz_glb_h) || (n[j] == 2 && abs(r) <  sz_glb_h))
-                      t = 0 ;
-                   else if ((n[j] == 1 && abs(r) <  sz_glb_h) || (n[j] == 2 && abs(r) >= sz_glb_h))
-                      t = 3 ;
-                   
-                   if (   (continuity_node[new_to_node[i][n[j]]] > 0 && continuity_node[new_to_node[i][n[j]]] < 4)
-                       && (node_glb[med_to_node[i][t]-r] == 8 || node_glb[med_to_node[i][t]-r] == 9) )
-                      new_to_node[i][t] = med_to_node[i][t]-r ;
-                   else if ( (continuity_node[med_to_node[i][t]-r] > 0 && continuity_node[med_to_node[i][t]-r] < 4)
-                        && (node_glb[new_to_node[i][n[j]]] == 8 || node_glb[new_to_node[i][n[j]]] == 9))
-                      new_to_node[i][t] = med_to_node[i][t] - r ;
-                   else
-                      new_to_node[i][n[j]] = med_to_node[i][n[j]] ;
-                 }
-            }
-       }
-    for (int i=0; i<sz_glb_m; i++)
-       { if ( (med_to_node[i][0] != new_to_node[i][0]) || (med_to_node[i][3] != new_to_node[i][3]) )
-            { med_correction.push_back(med_to_node[i]) ;
-              new_correction.push_back(new_to_node[i]) ;
-            }
-         med_to_node[i] = new_to_node[i] ;
-       }
-    
-    int nb_mtn = med_to_node.size() ;
-    for (int i=0; i<nb_mtn; i++)
-       { for (int j=0; j<4; j++)
-           med_to_node[i][j] = glb_to_node[med_to_node[i][j]] ;
-       }
-//     Which cell edge each grid slot lies strictly inside, and that edge's two
-//     ends. This is the same decomposition the refinement itself walks, so the
-//     supports of a hanging node are read off it rather than guessed by
-//     scanning outwards -- a scan cannot tell the end of an edge from the next
-//     node along, and at this depth the two stop being the same thing.
-    SlotMap slots ;
+//     The decomposition the mesh actually has, and where each slot sits in it.
     std::vector<MeshCell> cells ;
+    SlotMap slots ;
     { const int base_side = (sz_glb_h - 1) / (nb_h - 1) ;
       collect_cells(node_glb, sz_glb_h, nb_p-1, nb_h-1, base_side, cells) ;
-      map_slots(nb_ng, sz_glb_h, cells, slots) ;
+      map_slots(node_glb, nb_ng, sz_glb_h, cells, slots) ;
     }
-    const std::vector<int> &edge_a = slots.edge_a ;
-    const std::vector<int> &edge_b = slots.edge_b ;
-    const std::vector<int> &edge_kind = slots.edge_kind ;
-    check_continuity_nodes(node_glb, continuity_node, sz_glb_h, slots, cells, level) ;
 
-//     affectation des noeuds de continuite aux noeuds permettant le calcul des proprietes
-    for (int i=0; i<inc_ct; i++)
-       { ArrOfInt nn(2) ;
+//     Where each cell is split, and the nodes those splits demand.
+    continuity_node.resize(nb_ng) ;
+    continuity_node = 0 ;
+    std::vector<int> vs, hs ;
+    for (int m=0; m<(int)cells.size(); m++)
+       { const MeshCell &c = cells[m] ;
+         const int r0=c.row, c0=c.col, sd=c.side ;
+         cell_splits(node_glb, sz_glb_h, c, vs, hs) ;
+
+         for (int a=0; a<(int)vs.size(); a++)
+            { const int lo = r0*sz_glb_h + vs[a], hi = (r0+sd)*sz_glb_h + vs[a] ;
+              if (node_glb[lo] == 0)  continuity_node[lo] = 2 ;
+              if (node_glb[hi] == 0)  continuity_node[hi] = 2 ;
+            }
+         for (int b=0; b<(int)hs.size(); b++)
+            { const int lf = hs[b]*sz_glb_h + c0, rt = hs[b]*sz_glb_h + c0+sd ;
+              if (node_glb[lf] == 0)  continuity_node[lf] = 1 ;
+              if (node_glb[rt] == 0)  continuity_node[rt] = 1 ;
+            }
+         for (int b=0; b<(int)hs.size(); b++)
+            for (int a=0; a<(int)vs.size(); a++)
+               { const int q = hs[b]*sz_glb_h + vs[a] ;
+                 if (node_glb[q] == 0)  continuity_node[q] = 3 ;
+               }
+       }
+
+    if (check_continuity_nodes(node_glb, continuity_node, sz_glb_h, slots, cells, level) != 0)
+       { cerr << "EOS_Mesh::add_continuity_nodes: the continuity nodes placed at level "
+              << level << " do not match the mesh they are meant to close; refinement stopped"
+              << endl ;
+         refine_ok_ = false ; return ;
+       }
+
+//     Node numbering over the mesh and its continuity nodes together, in grid
+//     slot order, which is the order every table below and the MED file use.
+    ArrOfInt glb_to_node(nb_ng, -1) ;
+    int nb_all = 0 ;
+    for (int i=0; i<nb_ng; i++)
+       { if (node_glb[i] != 0 || continuity_node[i] > 0)
+            { glb_to_node[i] = nb_all ;  nb_all++ ; }
+       }
+    nb_continuity = nb_all - nb_node ;
+
+//     Coordinates. A node's position is fixed by the grid slot it occupies, so
+//     the real ones are read back from the domain the refinement built and the
+//     continuity ones straight off the grid lines.
+    node_h_continuity.resize(nb_all) ;
+    node_p_continuity.resize(nb_all) ;
+    type_of_node.resize(nb_all) ;
+    { int k = 0 ;
+      for (int i=0; i<nb_ng; i++)
+         { if (node_glb[i] != 0)
+              { node_h_continuity[k] = grid_h[i % sz_glb_h] ;
+                node_p_continuity[k] = grid_p[i / sz_glb_h] ;
+                type_of_node[k] = 0 ;
+                k++ ;
+              }
+           else if (continuity_node[i] > 0)
+              { node_h_continuity[k] = grid_h[i % sz_glb_h] ;
+                node_p_continuity[k] = grid_p[i / sz_glb_h] ;
+                type_of_node[k] = continuity_node[i] ;
+                k++ ;
+              }
+         }
+    }
+
+//     One entry per hanging node, in node order, holding the two ends of the
+//     edge it splits with the higher coordinate first. EOS_IGen walks the
+//     type-1 and type-2 nodes in that order and reads this alongside.
+    continuity_to_node.clear() ;
+    for (int i=0; i<nb_ng; i++)
+       { if (node_glb[i] != 0)  continue ;
+         const int t = continuity_node[i] ;
+         if (t != 1 && t != 2)  continue ;
+         ArrOfInt nn(2) ;
+         nn[0] = glb_to_node[slots.edge_b[i]] ;
+         nn[1] = glb_to_node[slots.edge_a[i]] ;
          continuity_to_node.push_back(nn) ;
        }
-    k = 0 ;
-//     m pour ne pas faire un tableau de "continuity_to_node" de la taille du maillage
-    int m = continuity_to_node.size() - 1 ;
-    nb_cn = continuity_node.size() ;
-    for (int i=0; i<nb_cn; i++)
-       { if ( (continuity_node[i]>0) && (node_glb[i] == 0) )
-            { if     ( (continuity_node[i] == 1) || (continuity_node[i] == 7) )
-                 { //  on a vertical edge: the supports are its two ends
-                   const int up = edge_b[i], down = edge_a[i] ;
-                   if (edge_kind[i] != 1 || glb_to_node[up] < 0 || glb_to_node[down] < 0)
-                      { cerr << "EOS_Mesh::add_continuity_nodes: a continuity node at row "
-                             << i/sz_glb_h << " column " << i%sz_glb_h
-                             << " lies on no cell edge; the mesh cannot be made continuous" << endl ;
-                        refine_ok_ = false ; return ; }
-                   continuity_to_node[k][0] = glb_to_node[up]   ;
-                   continuity_to_node[k][1] = glb_to_node[down] ;
-                   k++ ;
-                 }
-              else if ( (continuity_node[i] == 2) || (continuity_node[i] == 8) )
-                 { //  on a horizontal edge: the supports are its two ends
-                   const int right = edge_b[i], left = edge_a[i] ;
-                   if (edge_kind[i] != 2 || glb_to_node[right] < 0 || glb_to_node[left] < 0)
-                      { cerr << "EOS_Mesh::add_continuity_nodes: a continuity node at row "
-                             << i/sz_glb_h << " column " << i%sz_glb_h
-                             << " lies on no cell edge; the mesh cannot be made continuous" << endl ;
-                        refine_ok_ = false ; return ; }
-                   continuity_to_node[k][0] = glb_to_node[right] ;
-                   continuity_to_node[k][1] = glb_to_node[left]  ;
-                   k++ ;
-                 }
-              else if ( (continuity_node[i] == 3) || (continuity_node[i] == 9) )
-                 { //  node at a cell centre: interpolated at constant p, so
-                   //  between its left and right neighbours
-                   const int row_lo = (i/sz_glb_h)*sz_glb_h ;
-                   const int row_hi = row_lo + sz_glb_h - 1 ;
-                   const int right = support_index(node_glb, continuity_node, i,  1, row_lo, row_hi, true) ;
-                   const int left  = support_index(node_glb, continuity_node, i, -1, row_lo, row_hi, true) ;
-                   if (m < 0 || right < 0 || left < 0 || glb_to_node[right] < 0 || glb_to_node[left] < 0)
-                      { cerr << "EOS_Mesh::add_continuity_nodes: no support found for the"
-                             << " cell-centre continuity node at row " << i/sz_glb_h
-                             << " column " << i%sz_glb_h << "; refinement stopped" << endl ;
-                        refine_ok_ = false ; return ; }
-                   continuity_to_node[m][0] = glb_to_node[right] ;
-                   continuity_to_node[m][1] = glb_to_node[left]  ;
-                   m-- ;
+
+//     MED connectivity. Each cell of the fine global grid is written with the
+//     corners of the rectangle of its own cell's split grid that contains it,
+//     so a split cell is written as the several rectangles it was cut into and
+//     an unsplit one repeats its four corners. This used to be a rewrite of
+//     the coarse cell's corners, done per fine cell and able to move at most
+//     two of the four, kept across levels in med_correction and replayed on
+//     the next grid; the split grid gives it directly.
+    med_to_node.clear() ;
+    for (int i=0; i<sz_glb_m; i++)
+       { ArrOfInt nn(4) ; med_to_node.push_back(nn) ; }
+
+    std::vector<int> xs, ys ;
+    for (int m=0; m<(int)cells.size(); m++)
+       { const MeshCell &c = cells[m] ;
+         const int r0=c.row, c0=c.col, sd=c.side ;
+         cell_splits(node_glb, sz_glb_h, c, xs, ys) ;
+         xs.insert(xs.begin(), c0) ; xs.push_back(c0+sd) ;
+         ys.insert(ys.begin(), r0) ; ys.push_back(r0+sd) ;
+
+         int jb = 0 ;
+         for (int c=c0; c<c0+sd; c++)
+            { while (xs[jb+1] <= c)  jb++ ;
+              int ib = 0 ;
+              for (int r=r0; r<r0+sd; r++)
+                 { while (ys[ib+1] <= r)  ib++ ;
+                   ArrOfInt &nn = med_to_node[r*(sz_glb_h-1) + c] ;
+                   nn[0] = glb_to_node[ ys[ib]  *sz_glb_h + xs[jb]  ] ;
+                   nn[1] = glb_to_node[ ys[ib]  *sz_glb_h + xs[jb+1]] ;
+                   nn[2] = glb_to_node[ ys[ib+1]*sz_glb_h + xs[jb]  ] ;
+                   nn[3] = glb_to_node[ ys[ib+1]*sz_glb_h + xs[jb+1]] ;
                  }
             }
        }
 
-    nb_cn = continuity_node.size() ;
-    for (int i=0; i<nb_cn; i++)
-       { if      (continuity_node[i] == 1)
-            continuity_node[i] = 7 ;
-         else if (continuity_node[i] == 2)
-            continuity_node[i] = 8 ;
-         else if (continuity_node[i] == 3)
-            continuity_node[i] = 9 ;
-         else
-            continuity_node[i] = 0 ;
-       }
     EOS_Field p("Pressure", "p", NEPTUNE::p, node_p_continuity) ;
     EOS_Field h("Enthalpy", "h", NEPTUNE::h, node_h_continuity) ;
     set_domain_continuity_ph(p, h) ;
-
   }
-  
+
   const EOS_Mesh& EOS_Mesh::operator=(const EOS_Mesh& right)
   { exist     = right.exist     ;
     delta_h   = right.delta_h   ;

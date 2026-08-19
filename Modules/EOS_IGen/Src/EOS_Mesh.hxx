@@ -138,9 +138,6 @@ namespace NEPTUNE_EOS_IGEN
       vector<ArrOfInt> mesh_to_node;
       vector<ArrOfInt> med_to_node;
       vector<ArrOfInt> continuity_to_node;
-      
-      vector<ArrOfInt> med_correction;
-      vector<ArrOfInt> new_correction;
    };
 }
 
