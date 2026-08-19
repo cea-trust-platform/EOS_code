@@ -30,6 +30,8 @@
 #include <vector>
 #include <fstream>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 using namespace NEPTUNE_EOS ;
 using namespace NEPTUNE ;
@@ -113,6 +115,61 @@ namespace
     return -1 ;
   }
 
+  //! Where a slot of the refined grid sits with respect to the cells, read off
+  //! the same quadtree decomposition the refinement itself walks.
+  //!
+  //! `edge_kind` is 1 when the slot lies strictly inside a *vertical* cell edge
+  //! and 2 when it lies strictly inside a *horizontal* one, with `edge_a` and
+  //! `edge_b` the two ends of that edge, `edge_side` the side of the cell it
+  //! belongs to and `edge_cell` that cell. It is 0 when the slot is inside
+  //! neither, which includes every cell corner. `centre` marks a cell centre.
+  //!
+  //! A slot can be strictly inside an edge of two cells at once -- the two that
+  //! share it. When their sides differ the coarser cell is the one that has to
+  //! be made continuous, the finer one already carrying a real node there, so
+  //! the longer edge wins.
+  struct SlotMap
+  {
+    std::vector<int>  edge_a, edge_b, edge_kind, edge_side, edge_cell ;
+    std::vector<char> centre ;
+  };
+
+  void map_slots(int nb_slots, int sz_h, const std::vector<MeshCell> &cells,
+                 SlotMap &out)
+  {
+    out.edge_a.assign(nb_slots, -1) ;
+    out.edge_b.assign(nb_slots, -1) ;
+    out.edge_kind.assign(nb_slots, 0) ;
+    out.edge_side.assign(nb_slots, 0) ;
+    out.edge_cell.assign(nb_slots, -1) ;
+    out.centre.assign(nb_slots, 0) ;
+
+    for (int m=0; m<(int)cells.size(); m++)
+       { const MeshCell &c = cells[m] ;
+         const int r0=c.row, c0=c.col, sd=c.side ;
+         for (int t=1; t<sd; t++)
+            { int q ;
+              q = (r0+t)*sz_h + c0 ;
+              if (out.edge_side[q] < sd)
+                 { out.edge_a[q] = r0*sz_h+c0 ;      out.edge_b[q] = (r0+sd)*sz_h+c0 ;
+                   out.edge_kind[q] = 1 ; out.edge_side[q] = sd ; out.edge_cell[q] = m ; }
+              q = (r0+t)*sz_h + c0+sd ;
+              if (out.edge_side[q] < sd)
+                 { out.edge_a[q] = r0*sz_h+c0+sd ;   out.edge_b[q] = (r0+sd)*sz_h+c0+sd ;
+                   out.edge_kind[q] = 1 ; out.edge_side[q] = sd ; out.edge_cell[q] = m ; }
+              q = r0*sz_h + c0+t ;
+              if (out.edge_side[q] < sd)
+                 { out.edge_a[q] = r0*sz_h+c0 ;      out.edge_b[q] = r0*sz_h+c0+sd ;
+                   out.edge_kind[q] = 2 ; out.edge_side[q] = sd ; out.edge_cell[q] = m ; }
+              q = (r0+sd)*sz_h + c0+t ;
+              if (out.edge_side[q] < sd)
+                 { out.edge_a[q] = (r0+sd)*sz_h+c0 ; out.edge_b[q] = (r0+sd)*sz_h+c0+sd ;
+                   out.edge_kind[q] = 2 ; out.edge_side[q] = sd ; out.edge_cell[q] = m ; }
+            }
+         if (sd >= 2)  out.centre[(r0+sd/2)*sz_h + c0+sd/2] = 1 ;
+       }
+  }
+
   //! grid is the node grid (0 = no node), sz_h its width, and base_side the
   //! side an unrefined cell of the initial grid has in it.
   void collect_cells(const NEPTUNE::ArrOfInt &grid, int sz_h,
@@ -127,6 +184,145 @@ namespace
     std::sort(out.begin(), out.end(),
               [](const MeshCell &a, const MeshCell &b)
               { return (a.row != b.row) ? (a.row < b.row) : (a.col < b.col) ; }) ;
+  }
+
+  //! The invariant the continuity nodes exist to satisfy, checked against the
+  //! cell decomposition rather than against the code that placed them.
+  //!
+  //! A cell bordered by finer ones is *split* through each real node sitting
+  //! strictly inside one of its edges, perpendicular to that edge, so that
+  //! every cell stays a four-cornered rectangle and the hanging node is a
+  //! corner of both halves. That leaves two things to be true, and this checks
+  //! both:
+  //!
+  //!  - soundness: a continuity node of type 1 (resp. 2) lies strictly inside
+  //!    a vertical (resp. horizontal) cell edge, and a type 3 lies at a cell
+  //!    centre. Nothing else is a position the mesh has room for;
+  //!  - completeness: the far end of every split line carries a node, real or
+  //!    continuity. A split whose far end is empty cannot close.
+  //!
+  //! Returns the number of violations; prints them when EOS_MESH_CHECK is set.
+  int check_continuity_nodes(const NEPTUNE::ArrOfInt &node_glb,
+                             const NEPTUNE::ArrOfInt &continuity_node,
+                             int sz_h, const SlotMap &map,
+                             const std::vector<MeshCell> &cells,
+                             int level)
+  {
+    const bool verbose = (getenv("EOS_MESH_CHECK") != NULL) ;
+    const int  n       = node_glb.size() ;
+    int bad_sound = 0, bad_complete = 0, shown = 0 ;
+    int n_type[4] = {0,0,0,0} ;
+
+    for (int i=0; i<n; i++)
+       { const int t = continuity_node[i] ;
+         if (t <= 0 || node_glb[i] != 0)  continue ;
+         const int kind = (t == 1 || t == 7) ? 1 : (t == 2 || t == 8) ? 2 :
+                          (t == 3 || t == 9) ? 3 : 0 ;
+         if (kind == 0)  continue ;
+         n_type[kind]++ ;
+         bool ok ;
+         if (kind == 3)  ok = (map.centre[i] != 0) ;
+         else            ok = (map.edge_kind[i] == kind) ;
+         if (!ok)
+            { bad_sound++ ;
+              if (verbose && shown++ < 12)
+                 std::cerr << "  [check] unsound: continuity node type " << kind
+                      << " at row " << i/sz_h << " column " << i%sz_h
+                      << " sits on edge_kind " << (int)map.edge_kind[i]
+                      << " centre " << (int)map.centre[i] << std::endl ;
+            }
+       }
+
+    //  Every corner of every cell carries a node. Nothing downstream can hold
+    //  together without this: a cell whose corner slot is empty has no value
+    //  to interpolate from there, and both the cell count and the continuity
+    //  placement will still look consistent while it is false.
+    shown = 0 ;
+    int bad_corner = 0 ;
+    for (int m=0; m<(int)cells.size(); m++)
+       { const MeshCell &c = cells[m] ;
+         const int corners[4] = { c.row*sz_h + c.col,
+                                  c.row*sz_h + c.col + c.side,
+                                  (c.row+c.side)*sz_h + c.col,
+                                  (c.row+c.side)*sz_h + c.col + c.side } ;
+         for (int e=0; e<4; e++)
+            { if (node_glb[corners[e]] != 0)  continue ;
+              bad_corner++ ;
+              if (verbose && shown++ < 12)
+                 std::cerr << "  [check] hole: the cell at row " << c.row << " column "
+                           << c.col << " side " << c.side << " has no node at its corner row "
+                           << corners[e]/sz_h << " column " << corners[e]%sz_h << std::endl ;
+            }
+       }
+
+    shown = 0 ;
+    for (int m=0; m<(int)cells.size(); m++)
+       { const MeshCell &c = cells[m] ;
+         const int r0=c.row, c0=c.col, sd=c.side ;
+         for (int t=1; t<sd; t++)
+            { //  a real node strictly inside one of this cell's edges splits it
+              const int probe[4] = { (r0+t)*sz_h + c0, (r0+t)*sz_h + c0+sd,
+                                     r0*sz_h + c0+t,   (r0+sd)*sz_h + c0+t } ;
+              for (int e=0; e<4; e++)
+                 { const int q = probe[e] ;
+                   if (node_glb[q] == 0)             continue ;
+                   if (map.edge_side[q] != sd)       continue ;  // a finer cell owns it
+                   const int far = (e < 2) ? (r0+t)*sz_h + (e == 0 ? c0+sd : c0)
+                                           : (e == 2 ? r0+sd : r0)*sz_h + c0+t ;
+                   if (node_glb[far] != 0 || continuity_node[far] > 0)  continue ;
+                   bad_complete++ ;
+                   if (verbose && shown++ < 12)
+                      std::cerr << "  [check] incomplete: split through row " << q/sz_h
+                           << " column " << q%sz_h << " of the cell at row " << r0
+                           << " column " << c0 << " side " << sd
+                           << " has nothing at row " << far/sz_h
+                           << " column " << far%sz_h << std::endl ;
+                 }
+            }
+       }
+
+    //  EOS_MESH_DUMP="level,row0,row1,col0,col1" prints that window of the grid:
+    //  digits are node_glb, letters a/b/c the continuity types 1/2/3, and
+    //  upper case a corner of a cell, so the decomposition is readable at once.
+    { const char *w = getenv("EOS_MESH_DUMP") ;
+      int wl, r0, r1, c0, c1 ;
+      if (w != NULL && sscanf(w, "%d,%d,%d,%d,%d", &wl, &r0, &r1, &c0, &c1) == 5 && wl == level)
+         { std::vector<char> corner(n, 0) ;
+           for (int m=0; m<(int)cells.size(); m++)
+              { const MeshCell &c = cells[m] ;
+                corner[c.row*sz_h+c.col] = 1 ;
+                corner[c.row*sz_h+c.col+c.side] = 1 ;
+                corner[(c.row+c.side)*sz_h+c.col] = 1 ;
+                corner[(c.row+c.side)*sz_h+c.col+c.side] = 1 ;
+              }
+           std::cerr << "  [dump] rows " << r0 << ".." << r1 << " cols " << c0 << ".." << c1 << std::endl ;
+           for (int r=r1; r>=r0; r--)
+              { std::cerr << "  [dump] " ;
+                std::cerr.width(4) ; std::cerr << r << " " ;
+                for (int c=c0; c<=c1; c++)
+                   { const int q = r*sz_h + c ;
+                     char ch = '.' ;
+                     if      (node_glb[q] != 0)        ch = '0' + node_glb[q] ;
+                     else if (continuity_node[q] > 0)  ch = 'a' + ((continuity_node[q]-1) % 3) ;
+                     else if (continuity_node[q] < 0)  ch = '-' ;
+                     if (corner[q] && ch == '.')       ch = '+' ;
+                     std::cerr << ch ;
+                   }
+                std::cerr << std::endl ;
+              }
+           std::cerr << "  [dump]      " ;
+           for (int c=c0; c<=c1; c++)  std::cerr << (c%10) ;
+           std::cerr << std::endl ;
+         }
+    }
+
+    if (verbose)
+       std::cerr << "  [check] level " << level << ": " << cells.size() << " cells, "
+            << n_type[1] << " type-1, " << n_type[2] << " type-2, " << n_type[3]
+            << " type-3 continuity nodes; " << bad_corner << " corner holes, "
+            << bad_sound << " unsound, " << bad_complete << " unclosed splits" << std::endl ;
+
+    return bad_corner + bad_sound + bad_complete ;
   }
 }
 
@@ -948,26 +1144,16 @@ namespace NEPTUNE_EOS_IGEN
 //     supports of a hanging node are read off it rather than guessed by
 //     scanning outwards -- a scan cannot tell the end of an edge from the next
 //     node along, and at this depth the two stop being the same thing.
-    std::vector<int> edge_a(nb_ng, -1), edge_b(nb_ng, -1), edge_kind(nb_ng, 0) ;
+    SlotMap slots ;
+    std::vector<MeshCell> cells ;
     { const int base_side = (sz_glb_h - 1) / (nb_h - 1) ;
-      std::vector<MeshCell> cells ;
       collect_cells(node_glb, sz_glb_h, nb_p-1, nb_h-1, base_side, cells) ;
-      for (int m=0; m<(int)cells.size(); m++)
-         { const MeshCell &c = cells[m] ;
-           const int r0=c.row, c0=c.col, sd=c.side ;
-           for (int t=1; t<sd; t++)
-              { int q ;
-                q = (r0+t)*sz_glb_h + c0 ;
-                if (edge_a[q]<0) { edge_a[q]= r0*sz_glb_h+c0 ;     edge_b[q]=(r0+sd)*sz_glb_h+c0 ;     edge_kind[q]=1 ; }
-                q = (r0+t)*sz_glb_h + c0+sd ;
-                if (edge_a[q]<0) { edge_a[q]= r0*sz_glb_h+c0+sd ;  edge_b[q]=(r0+sd)*sz_glb_h+c0+sd ;  edge_kind[q]=1 ; }
-                q = r0*sz_glb_h + c0+t ;
-                if (edge_a[q]<0) { edge_a[q]= r0*sz_glb_h+c0 ;     edge_b[q]= r0*sz_glb_h+c0+sd ;      edge_kind[q]=2 ; }
-                q = (r0+sd)*sz_glb_h + c0+t ;
-                if (edge_a[q]<0) { edge_a[q]=(r0+sd)*sz_glb_h+c0 ; edge_b[q]=(r0+sd)*sz_glb_h+c0+sd ;  edge_kind[q]=2 ; }
-              }
-         }
+      map_slots(nb_ng, sz_glb_h, cells, slots) ;
     }
+    const std::vector<int> &edge_a = slots.edge_a ;
+    const std::vector<int> &edge_b = slots.edge_b ;
+    const std::vector<int> &edge_kind = slots.edge_kind ;
+    check_continuity_nodes(node_glb, continuity_node, sz_glb_h, slots, cells, level) ;
 
 //     affectation des noeuds de continuite aux noeuds permettant le calcul des proprietes
     for (int i=0; i<inc_ct; i++)
