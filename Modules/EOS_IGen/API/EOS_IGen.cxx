@@ -793,17 +793,27 @@ namespace NEPTUNE_EOS_IGEN
          if (err != EOS_Error::good)  return err ;
 
          //  [dX/dP]h is the one field the cross derivative can be built from;
-         //  when this property is it, derive d2X/dPdh and write that too. The
-         //  name is reconstructed rather than looked up in props: the cross
-         //  derivatives are not in that list, is_implemented having dropped
-         //  them.
+         //  when this property is it, and the model does not supply d2X/dPdh
+         //  itself, derive it here and write that too.
+         //
+         //  The model supplying it is new. EOS_Cathare2 used to route every
+         //  (p,h) request to Cathare's own dispatcher and reach EOS_Fluid only
+         //  when the *input pair* was one Cathare did not handle, so a cross
+         //  derivative answered NOT_IMPLEMENTED, is_implemented dropped it, and
+         //  this was the only way any got written. Now that it chains per
+         //  property, the cross derivatives are in props -- and for a while
+         //  both paths wrote them, under the same name, four times per field
+         //  per database, with whichever landed last silently winning.
          const string &nm = props[i] ;
          if (nm.size() > 7 && nm.compare(0, 2, "[d") == 0
              && nm.compare(nm.size()-5, 5, "/dP]h") == 0)
             { const string base = nm.substr(2, nm.size()-7) ;
               const string nm_d2 = "[d2" + base + "/dPdh]" ;
               const EOS_Property p_d2 = gen_property_number(nm_d2.c_str()) ;
-              if (p_d2 >= 0)
+              bool model_has_it = false ;
+              for (int j=0; j<nb_sp; j++)
+                 if (props[j] == nm_d2)  { model_has_it = true ; break ; }
+              if (p_d2 >= 0 && !model_has_it)
                  { ArrOfDouble x2(nb_nc) ;
                    ArrOfInt    n2(nb_nc) ;
                    EOS_Error_Field e2(n2) ;
