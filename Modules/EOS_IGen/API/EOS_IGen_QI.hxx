@@ -50,7 +50,12 @@ namespace NEPTUNE_EOS_IGEN
  */
   class EOS_IGen_QI
   { public:
-       EOS_IGen_QI(const char* const prop,const char* const tp, double limit, int abs) ;
+       //! nb_sub is how finely a cell is probed by the "centre" criterion:
+       //! nb_sub x nb_sub points spread over the cell, at the centres of the
+       //! sub-cells of a nb_sub x nb_sub division. 1 is the single centre
+       //! point, which is what this always did.
+       EOS_IGen_QI(const char* const prop,const char* const tp, double limit, int abs,
+                   int nb_sub = 1) ;
        EOS_IGen_QI(const EOS_IGen_QI&) ;
        ~EOS_IGen_QI() ;
        
@@ -63,6 +68,9 @@ namespace NEPTUNE_EOS_IGEN
        int get_is_abs() const ;
        bool get_test_quality() const ;
        double get_limit_qi() const ;
+       int get_nb_sub() const ;
+       //! How many sample points this criterion wants per mesh cell.
+       int samples_per_cell() const ;
        
        const ArrOfDouble& get_quality_nodes() const ;
     
@@ -83,6 +91,7 @@ namespace NEPTUNE_EOS_IGEN
        //! caller's way of saying there is none.
        bool has_limit ;
        int is_abs ;
+       int nb_sub ;
        
        bool test_quality ;
        ArrOfDouble quality_nodes ;

@@ -434,7 +434,8 @@ namespace NEPTUNE_EOS_IGEN
           }
           for (std::size_t c = 0; c < crit.size(); c++)
             igen.set_quality(crit[c].first.c_str(), prm.quality_type.c_str(),
-                             prm.quality_is_abs, crit[c].second);
+                             prm.quality_is_abs, crit[c].second,
+                             prm.quality_subsampling);
         }
 
         // Refinement, when a threshold was asked for. compute_qualities() only
@@ -587,7 +588,8 @@ namespace NEPTUNE_EOS_IGEN
     out << "MESH " << prm.nb_node_p << " " << prm.nb_node_h << " " << prm.level_max << " "
         << prm.halo_fraction << "\n";
     out << "QUALITY " << prm.quality_property << " " << prm.quality_type << " "
-        << prm.quality_is_abs << " " << prm.quality_limit << "\n";
+        << prm.quality_is_abs << " " << prm.quality_limit << " "
+        << prm.quality_subsampling << "\n";
     out << "GLOBAL " << prm.pmin << " " << prm.pmax << " " << prm.hmin << " " << prm.hmax << " "
         << Tmin_global << " " << Tmax_global << " " << pcrit << " " << hcrit << " " << tcrit << "\n";
     out << "GRID " << prm.nb_p_tiles << " " << prm.nb_h_tiles << "\n";

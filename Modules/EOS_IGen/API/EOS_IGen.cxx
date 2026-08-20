@@ -983,8 +983,8 @@ namespace NEPTUNE_EOS_IGEN
  * int is_abs              : flag for relatif or absolute quality
  */
   void EOS_IGen::set_quality(const char* const property, const char* const type,
-                             int const is_abs, double const limit_qi)
-  { EOS_IGen_QI qi(property, type, limit_qi, is_abs) ;
+                             int const is_abs, double const limit_qi, int const nb_sub)
+  { EOS_IGen_QI qi(property, type, limit_qi, is_abs, nb_sub) ;
     qualities.push_back(qi) ;
   }
   
@@ -1096,7 +1096,7 @@ namespace NEPTUNE_EOS_IGEN
             { EOS_Fields nodes(2) ;
               int sz ;
               if      (qualities[i].get_type() == "centre")
-                 sz = mesh_ph->get_nb_mesh() ;
+                 sz = mesh_ph->get_nb_mesh() * qualities[i].samples_per_cell() ;
               else if (qualities[i].get_type() == "node")
                  sz = mesh_ph->get_nb_node() ;
               else
@@ -1142,7 +1142,7 @@ namespace NEPTUNE_EOS_IGEN
             { EOS_Fields nodes(1) ;
               int sz;
               if      (qualities[i].get_type() == "centre")
-                 sz = mesh_p->get_nb_mesh() ;
+                 sz = mesh_p->get_nb_mesh() * qualities[i].samples_per_cell() ;
               else if (qualities[i].get_type() == "node")
                  sz = mesh_p->get_nb_node() ;
               else

@@ -91,6 +91,12 @@ namespace
       "                                  refined when any of them fails there (default \"rho\")\n"
       "  --quality_type=TYPE             quality criterion (default \"centre\")\n"
       "  --quality_is_abs=0|1            absolute rather than relative criterion (default 1)\n"
+      "  --quality_subsampling=N         probe each cell at NxN points instead of at its\n"
+      "                                  centre alone (default 1). The criterion bounds the\n"
+      "                                  error only where it looks, and one point per cell\n"
+      "                                  leaves a Hermite patch free to be wrong between\n"
+      "                                  them. Costs N^2 model calls at generation, nothing\n"
+      "                                  at run time\n"
       "  --quality_limit=X               refine until the criterion is below X. EOS_IGen's\n"
       "                                  default is a sentinel under which the test always\n"
       "                                  passes, so without this no cell is ever refined and\n"
@@ -213,6 +219,7 @@ int main(int argc, char **argv)
   prm.quality_property = arg_s(argc, argv, "quality_property", "rho");
   prm.quality_type     = arg_s(argc, argv, "quality_type", "centre");
   prm.quality_is_abs   = arg_i(argc, argv, "quality_is_abs", 1);
+  prm.quality_subsampling = arg_i(argc, argv, "quality_subsampling", 1);
   prm.quality_limit    = arg_d(argc, argv, "quality_limit", -9999.9);
   prm.refine_continuity = arg_i(argc, argv, "refine_continuity", 1) != 0;
   prm.allow_partial     = has_flag(argc, argv, "allow_partial");

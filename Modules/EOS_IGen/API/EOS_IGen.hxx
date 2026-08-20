@@ -68,8 +68,11 @@ namespace NEPTUNE_EOS_IGEN
         void set_file_med_name() ;
         void make_header(AString& header) ; 
         
+        //! nb_sub probes each cell at nb_sub x nb_sub points instead of at its
+        //! centre alone. 1 is the historical single-point criterion.
         void set_quality(const char* const property, const char* const type, 
-                         int const is_abs, double const limit_qi=-9999.9) ;
+                         int const is_abs, double const limit_qi=-9999.9,
+                         int const nb_sub=1) ;
         
         EOS_Error make_mesh(int nb_mesh_p, int nb_mesh_h, int level_max=-1)    ;
         EOS_Error make_mesh_ph(int nb_mesh_p, int nb_mesh_h, int level_max=-1) ;

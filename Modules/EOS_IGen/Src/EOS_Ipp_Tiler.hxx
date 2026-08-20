@@ -52,6 +52,9 @@ namespace NEPTUNE_EOS_IGEN
     std::string quality_property = "rho";
     std::string quality_type = "centre";
     int quality_is_abs = 1;
+    //! How many points per cell the "centre" criterion probes: nb x nb. 1 is
+    //! the cell centre alone, which is all it ever looked at.
+    int quality_subsampling = 1;
     //! Threshold the refinement is driven against. EOS_IGen's own default
     //! (-9999.9) is a sentinel meaning "no threshold", under which the quality
     //! test always passes and no cell is ever refined -- which made level_max

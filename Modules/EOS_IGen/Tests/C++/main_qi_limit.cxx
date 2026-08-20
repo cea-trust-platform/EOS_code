@@ -92,6 +92,33 @@ namespace
     return r;
   }
 
+  //! With nb_sub > 1 a cell is probed at several points and fails if any of
+  //! them does. Runs two cells of four samples each: the first has one bad
+  //! sample among three good ones, the second has none.
+  std::string subsampled(int nb_sub, int bad_sample)
+  {
+    const int spc = nb_sub * nb_sub;
+    const int n = 2 * spc;
+    ArrOfDouble ipp(n), eos(n);
+    for (int i = 0; i < n; i++)
+    {
+      eos[i] = 1000.;
+      ipp[i] = eos[i] * (1. + 1.e-8);          // comfortably inside the limit
+    }
+    if (bad_sample >= 0 && bad_sample < spc)
+      ipp[bad_sample] = eos[bad_sample] * (1. + 1.e-2);   // one bad sample, cell 0
+
+    EOS_Field f_ipp("T", "T", NEPTUNE::T, ipp);
+    EOS_Field f_eos("T", "T", NEPTUNE::T, eos);
+    ArrOfInt ok(2);
+    ok = 1;
+    EOS_IGen_QI qi("T", "centre", 1.e-4, 0, nb_sub);
+    qi.make_quality(f_ipp, f_eos, ok);
+    std::string r;
+    for (int i = 0; i < 2; i++)  r += (ok[i] == 0) ? 'R' : 'k';
+    return r;
+  }
+
   void check(const char *what, bool got, bool want)
   {
     if (got == want)
@@ -132,6 +159,16 @@ int main()
   // read the same way rather than as "refine everything"
   check("no limit given -> keep", rejects(-9999.9, 0, 1.e30), false);
   check("limit 0        -> keep", rejects(0., 0, 1.e30), false);
+
+  // Sub-sampling: a cell is refined if any of its sample points fails, and the
+  // samples of one cell have to stay attached to that cell. Getting the fold
+  // wrong by one would refine a neighbour instead, which no accuracy figure
+  // would ever show as anything but noise.
+  check("nb_sub=1, sample 0 bad  -> first cell only", subsampled(1, 0) == "Rk", true);
+  check("nb_sub=3, sample 0 bad  -> first cell only", subsampled(3, 0) == "Rk", true);
+  check("nb_sub=3, sample 4 bad  -> first cell only", subsampled(3, 4) == "Rk", true);
+  check("nb_sub=3, sample 8 bad  -> first cell only", subsampled(3, 8) == "Rk", true);
+  check("nb_sub=3, no bad sample -> neither cell",    subsampled(3, -1) == "kk", true);
 
   // Several quality properties at once. EOS_IGen::set_quality appends to a
   // list and compute_qualities runs every entry over the same per-cell verdict

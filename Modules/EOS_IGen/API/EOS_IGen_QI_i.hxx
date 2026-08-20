@@ -46,6 +46,14 @@ namespace NEPTUNE_EOS_IGEN
   { return is_abs ;
   }
   
+  inline int EOS_IGen_QI::get_nb_sub() const
+  { return nb_sub ;
+  }
+  
+  inline int EOS_IGen_QI::samples_per_cell() const
+  { return (type == "centre") ? nb_sub*nb_sub : 1 ;
+  }
+  
   inline bool EOS_IGen_QI::get_test_quality() const
   { return test_quality ;
   }
