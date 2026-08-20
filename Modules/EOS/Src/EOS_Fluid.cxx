@@ -1699,6 +1699,15 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
+//  Specific internal energy, u = h - p/rho. Asked of the model first, exactly
+//  as before, so a model that has its own u keeps answering with it and no
+//  value already in a database moves. Only when the model has none is the
+//  definition used -- which needs rho and nothing else, so it costs one extra
+//  property lookup and works for every model that has a density.
+//
+//  This default did nothing but ask the model and report NOT_IMPLEMENTED when
+//  it would not answer, which for EOS_Cathare2 meant u, its two derivatives
+//  and its cross derivative were absent from every database built from it.
   EOS_Internal_Error EOS_Fluid::compute_u_ph(double p, double h, double& r) const
   { static int loop = 0 ;
   #ifdef _OPENMP
@@ -1713,11 +1722,15 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
          loop = 0 ;
-         return ferr[0] ;
+         if (ferr[0].generic_error() < EOS_Error::bad)  return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
-    loop = 0 ;
+
+    double rho ;
+    EOS_Internal_Error ierr = compute_rho_ph(p, h, rho) ;
+    if (ierr.generic_error() >= EOS_Error::bad)  return ierr ;
+    if (rho == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    r = h - p/rho ;
+    return ierr ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_s_ph(double p, double h, double& r) const
@@ -2368,10 +2381,26 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
     return ierrm ;
   }
 
+//  From u = h - p/rho, at constant h:  du/dp = -1/rho + (p/rho^2) drho/dp .
+//  Exact wherever the model has rho and its derivative, which is cheaper and
+//  closer than differencing u, and these values go straight into a bicubic
+//  patch. Falls back to the difference when the derivative of rho is missing.
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_p_h_ph(double p, double h, double& r) const
   { EOS_Internal_Error ierrm, ierrp ;
     r = 0.e0 ;
     if (p == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+
+    { double rho, drho ;
+      EOS_Internal_Error e1 = compute_rho_ph(p, h, rho) ;
+      if (e1.generic_error() < EOS_Error::bad && rho != 0.e0)
+         { EOS_Internal_Error e2 = compute_d_rho_d_p_h_ph(p, h, drho) ;
+           if (e2.generic_error() < EOS_Error::bad)
+              { r = -1.e0/rho + (p/(rho*rho)) * drho ;
+                return e2 ;
+              }
+         }
+    }
+
     double vm = p*(1.e0-epsilon) ;
     double vp = p*(1.e0+epsilon) ;
     double rm, rp ;
@@ -2384,10 +2413,23 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
     return ierrm ;
   }
 
+//  And at constant p:  du/dh = 1 + (p/rho^2) drho/dh .
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_h_p_ph(double p, double h, double& r) const
   { EOS_Internal_Error ierrm, ierrp ;
     r = 0.e0 ;
     if (p == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+
+    { double rho, drho ;
+      EOS_Internal_Error e1 = compute_rho_ph(p, h, rho) ;
+      if (e1.generic_error() < EOS_Error::bad && rho != 0.e0)
+         { EOS_Internal_Error e2 = compute_d_rho_d_h_p_ph(p, h, drho) ;
+           if (e2.generic_error() < EOS_Error::bad)
+              { r = 1.e0 + (p/(rho*rho)) * drho ;
+                return e2 ;
+              }
+         }
+    }
+
     double vm = h*(1.e0-epsilon) ;
     double vp = h*(1.e0+epsilon) ;
     double rm, rp ;
