@@ -1735,6 +1735,12 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
 
   EOS_Internal_Error EOS_Fluid::compute_s_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  //  The guard has to be per thread, as it is in the other twenty-eight of
+  //  these: it is set around a call back into the model, and one thread
+  //  clearing it while another is inside would let that other one recurse.
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
