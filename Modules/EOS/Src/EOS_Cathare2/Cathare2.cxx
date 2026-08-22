@@ -1548,6 +1548,20 @@ namespace CATHARE2
   }
 
 
+  //! Queue dst so that it aliases the data of src, unless it already does.
+  //! In the steady regime neither the size nor the source pointers move from
+  //! one call to the next, so every alias can be left exactly as it is and
+  //! the whole batch collapses to nothing.
+  static inline void alias_if_needed(std::vector<ArrOfDouble*>& vec,
+                                     std::vector<const double*>& vecPtr,
+                                     std::vector<int>& vecSize,
+                                     ArrOfDouble& dst, const ArrOfDouble& src, int sz)
+  { if (dst.size() == sz && dst.get_ptr() == src.get_ptr()) return ;
+    vec.push_back(&dst) ;
+    vecSize.push_back(sz) ;
+    vecPtr.push_back(src.get_ptr()) ;
+  }
+
   void CATHARE2::rezise_eos_fields(int sz, domain mode) 
   { ZoneScopedN("CATHARE2::resize_eos_fields");
    
@@ -1862,57 +1876,55 @@ namespace CATHARE2
         // Le pointeur l2tsdpvv est utilise pour d2_T_sat_d_p_d_p que l'on ait
         // ou non des incondensables (notamment pour H20, pour Na, pas ce pb)
         //En attente de correction dans cathare : on devrait avoir l2tsp1 dans CATHARe2_Water.cxx
-        vec.push_back(&l2tsdpvv);
-        vecSize.push_back(sz);
-        vecPtr.push_back(l2tsp1.get_ptr());
+        alias_if_needed(vec, vecPtr, vecSize, l2tsdpvv, l2tsp1, sz);
       }
 
       if ( (mode == vapor) || (mode == unknown) ) 
       {
          if(nincon == 0){
-           vec.push_back(&ltspv); vecSize.push_back(sz); vecPtr.push_back(ltsp.get_ptr()); 
-           vec.push_back(&ltspvv); vecSize.push_back(sz); vecPtr.push_back(ltsp1.get_ptr());
-           vec.push_back(&lhlsv); vecSize.push_back(sz); vecPtr.push_back(lhlsp.get_ptr());
-           vec.push_back(&lhlsvv); vecSize.push_back(sz); vecPtr.push_back(lhlsp1.get_ptr());
-           vec.push_back(&lcplsv); vecSize.push_back(sz); vecPtr.push_back(lcplsp.get_ptr());
-           vec.push_back(&lclsvv); vecSize.push_back(sz); vecPtr.push_back(lclsp1.get_ptr());
-           vec.push_back(&lrlsv); vecSize.push_back(sz); vecPtr.push_back(lrlsp.get_ptr());
-           vec.push_back(&lrlsvv); vecSize.push_back(sz); vecPtr.push_back(lrlsp1.get_ptr());
-           vec.push_back(&lhlsvsc); vecSize.push_back(sz); vecPtr.push_back(lhlspsc.get_ptr());
-           vec.push_back(&lhlsvsc1); vecSize.push_back(sz); vecPtr.push_back(lhlspsc1.get_ptr());
-           vec.push_back(&lhlsvsc2); vecSize.push_back(sz); vecPtr.push_back(lhlspsc2.get_ptr());
-           vec.push_back(&lhlsvsc3); vecSize.push_back(sz); vecPtr.push_back(lhlspsc3.get_ptr());
-           vec.push_back(&lhvsv); vecSize.push_back(sz); vecPtr.push_back(lhvsp.get_ptr());
-           vec.push_back(&lhvsvv); vecSize.push_back(sz); vecPtr.push_back(lhvsp1.get_ptr());
-           vec.push_back(&lcpvsv); vecSize.push_back(sz); vecPtr.push_back(lcpvsp.get_ptr());
-           vec.push_back(&lcvsvv); vecSize.push_back(sz); vecPtr.push_back(lcvsp1.get_ptr());
-           vec.push_back(&lrvsv); vecSize.push_back(sz); vecPtr.push_back(lrvsp.get_ptr());
-           vec.push_back(&lrvsvv); vecSize.push_back(sz); vecPtr.push_back(lrvsp1.get_ptr());
-           vec.push_back(&lhvsvsc); vecSize.push_back(sz); vecPtr.push_back(lhvspsc.get_ptr());
-           vec.push_back(&lhvsvsc1); vecSize.push_back(sz); vecPtr.push_back(lhvspsc1.get_ptr());
-           vec.push_back(&lhvsvsc2); vecSize.push_back(sz); vecPtr.push_back(lhvspsc2.get_ptr());
-           vec.push_back(&lsipv); vecSize.push_back(sz); vecPtr.push_back(lsi1.get_ptr());
-           vec.push_back(&lpv); vecSize.push_back(sz); vecPtr.push_back(lp.get_ptr());
-           vec.push_back(&lhv); vecSize.push_back(sz); vecPtr.push_back(lhg.get_ptr());
-           vec.push_back(&lrv); vecSize.push_back(sz); vecPtr.push_back(lrg.get_ptr());
-           vec.push_back(&lrv1); vecSize.push_back(sz); vecPtr.push_back(lrg1.get_ptr());
-           vec.push_back(&lrv3); vecSize.push_back(sz); vecPtr.push_back(lrg3.get_ptr());
-           vec.push_back(&ltgpv); vecSize.push_back(sz); vecPtr.push_back(ltg1.get_ptr());
-           vec.push_back(&ltghv); vecSize.push_back(sz); vecPtr.push_back(ltg3.get_ptr());
-           //vec.push_back(&lrvpv); vecSize.push_back(sz); vecPtr.push_back(lrg1.get_ptr());
-           //vec.push_back(&lrvhv); vecSize.push_back(sz); vecPtr.push_back(lrg3.get_ptr());
-           vec.push_back(&lcpv); vecSize.push_back(sz); vecPtr.push_back(lcpg.get_ptr());
-           //vec.push_back(&lcpvpv); vecSize.push_back(sz); vecPtr.push_back(lcpg1.get_ptr());
-           //vec.push_back(&lcpvhv); vecSize.push_back(sz); vecPtr.push_back(lcpg3.get_ptr());
-           vec.push_back(&lhfv); vecSize.push_back(sz); vecPtr.push_back(lhf.get_ptr());
-           vec.push_back(&lhfvv); vecSize.push_back(sz); vecPtr.push_back(lhf1.get_ptr());
-           vec.push_back(&lhvpv); vecSize.push_back(sz); vecPtr.push_back(lhg1.get_ptr());
-           vec.push_back(&ltlav); vecSize.push_back(sz); vecPtr.push_back(ltlag.get_ptr());
-           vec.push_back(&ltmuv); vecSize.push_back(sz); vecPtr.push_back(ltmug.get_ptr());
-           vec.push_back(&llavpv); vecSize.push_back(sz); vecPtr.push_back(llagpv.get_ptr());
-           vec.push_back(&llavtg); vecSize.push_back(sz); vecPtr.push_back(llagtg.get_ptr());
-           vec.push_back(&lmuvpv); vecSize.push_back(sz); vecPtr.push_back(lmugpv.get_ptr());
-           vec.push_back(&lmuvtg); vecSize.push_back(sz); vecPtr.push_back(lmugtg.get_ptr());
+           alias_if_needed(vec, vecPtr, vecSize, ltspv, ltsp, sz); 
+           alias_if_needed(vec, vecPtr, vecSize, ltspvv, ltsp1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhlsv, lhlsp, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhlsvv, lhlsp1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lcplsv, lcplsp, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lclsvv, lclsp1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lrlsv, lrlsp, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lrlsvv, lrlsp1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhlsvsc, lhlspsc, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhlsvsc1, lhlspsc1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhlsvsc2, lhlspsc2, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhlsvsc3, lhlspsc3, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhvsv, lhvsp, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhvsvv, lhvsp1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lcpvsv, lcpvsp, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lcvsvv, lcvsp1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lrvsv, lrvsp, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lrvsvv, lrvsp1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhvsvsc, lhvspsc, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhvsvsc1, lhvspsc1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhvsvsc2, lhvspsc2, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lsipv, lsi1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lpv, lp, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhv, lhg, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lrv, lrg, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lrv1, lrg1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lrv3, lrg3, sz);
+           alias_if_needed(vec, vecPtr, vecSize, ltgpv, ltg1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, ltghv, ltg3, sz);
+           //alias_if_needed(vec, vecPtr, vecSize, lrvpv, lrg1, sz);
+           //alias_if_needed(vec, vecPtr, vecSize, lrvhv, lrg3, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lcpv, lcpg, sz);
+           //alias_if_needed(vec, vecPtr, vecSize, lcpvpv, lcpg1, sz);
+           //alias_if_needed(vec, vecPtr, vecSize, lcpvhv, lcpg3, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhfv, lhf, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhfvv, lhf1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lhvpv, lhg1, sz);
+           alias_if_needed(vec, vecPtr, vecSize, ltlav, ltlag, sz);
+           alias_if_needed(vec, vecPtr, vecSize, ltmuv, ltmug, sz);
+           alias_if_needed(vec, vecPtr, vecSize, llavpv, llagpv, sz);
+           alias_if_needed(vec, vecPtr, vecSize, llavtg, llagtg, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lmuvpv, lmugpv, sz);
+           alias_if_needed(vec, vecPtr, vecSize, lmuvtg, lmugtg, sz);
          }
       }
       ArrOfDouble::set_ptr_all(vec, vecPtr, vecSize);
