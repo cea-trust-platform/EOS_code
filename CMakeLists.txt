@@ -408,11 +408,14 @@ if (APPLE)
   set(CMAKE_Fortran_FLAGS "-Wall -ffixed-line-length-none -Wno-unused-label")
 endif()
 
-SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC ")
+# -DNDEBUG belongs in the release flags : without it every assert() stays
+# live in the shipped library, and ArrOf<T>::operator[] alone runs three of
+# them on each element access.
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIC ")
 SET(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fPIC ")
-SET(CMAKE_C_FLAGS_RELEASE "-O2 -fPIC ")
+SET(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG -fPIC ")
 SET(CMAKE_C_FLAGS_DEBUG "-g -O0 -fPIC ")
-SET(CMAKE_Fortran_FLAGS_RELEASE "-O2 -fPIC ")
+SET(CMAKE_Fortran_FLAGS_RELEASE "-O2 -DNDEBUG -fPIC ")
 SET(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -fPIC ")
 
 if (USE_OPENMP)
