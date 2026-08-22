@@ -129,3 +129,10 @@ if (USE_OPENMP)
   set_tests_properties(EOSTest_OpenMP PROPERTIES ENVIRONMENT ${RUN_ENV}
                                                  COST        5.)
 endif()
+
+
+# (add executable EOSBench : performance benchmark, not part of ctest)
+message(STATUS "Add benchmark EOSBench")
+add_executable (EOSBench EXCLUDE_FROM_ALL "${CMAKE_CURRENT_SOURCE_DIR}/main_bench.cxx")
+target_include_directories(EOSBench PRIVATE ${EOS_BINARY_DIR}/Modules)
+target_link_libraries(EOSBench PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
