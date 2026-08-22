@@ -53,9 +53,14 @@ namespace NEPTUNE
   {
   }
 
+  // data stays a view on the caller's array, which is the whole point of
+  // EOS_Error_Field(ArrOfInt&). library_codes does not: this object owns it,
+  // so a copy must own its own. Aliasing it left every copy that outlived the
+  // original pointing at freed memory.
   EOS_Error_Field::EOS_Error_Field(const EOS_Error_Field &f):
-     UObject(), data(f.data.size(), &f.data[0]),
-     library_codes(f.library_codes.size(), &f.library_codes[0]),
+     UObject(),
+     data(f.data.size(), f.data.size() ? &f.data[0] : (const int*) 0),
+     library_codes(f.library_codes),
      name(f.name)
   {
   }
