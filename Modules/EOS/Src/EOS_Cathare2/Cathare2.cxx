@@ -113,12 +113,12 @@ namespace CATHARE2
            T_max = xtgp + tabsk_fluid;
            break;
        }
-    int partial_error = ok ;
     EOS_Property prop = in.get_property_number() ;
     {
     ZoneScopedN("CATHARE2::verify for loop");
     for (int i=0; i<in.size(); i++) 
-       { switch(prop)
+       { int partial_error = ok ;   // per point: an error must not carry over
+         switch(prop)
             { case NEPTUNE::p:
                  if (in[i] < P_min)  partial_error = P_below_min ;
                  if (in[i] > P_max)  partial_error = P_above_max ;
