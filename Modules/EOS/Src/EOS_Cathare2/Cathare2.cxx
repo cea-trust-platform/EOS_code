@@ -1603,7 +1603,7 @@ namespace CATHARE2
     if (ld2tg.size() != sz) vec.push_back(&ld2tg);
     if (ld3tg.size() != sz) vec.push_back(&ld3tg);
     if (ltl21.size() != sz) vec.push_back(&ltl21);
-    if (ltg31.size() != sz) vec.push_back(&ltl21);
+    if (ltg31.size() != sz) vec.push_back(&ltg31);
     if (lptemp.size() != sz) vec.push_back(&lptemp);
     if (lro7.size() != sz) vec.push_back(&lro7);
     if (lro73.size() != sz) vec.push_back(&lro73);
