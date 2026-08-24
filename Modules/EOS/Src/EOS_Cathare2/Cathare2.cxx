@@ -113,33 +113,45 @@ namespace CATHARE2
            T_max = xtgp + tabsk_fluid;
            break;
        }
-    EOS_Property prop = in.get_property_number() ;
+    // The property being checked does not change from one point to the next,
+    // so pick the bounds and the two error codes once instead of running a
+    // switch inside the loop.
+    const EOS_Property prop = in.get_property_number() ;
+    double lo, hi ;
+    int    code_below, code_above ;
+    switch(prop)
+       { case NEPTUNE::p :
+            lo = P_min ; hi = P_max ; code_below = P_below_min ; code_above = P_above_max ; break ;
+         case NEPTUNE::T :
+            lo = T_min ; hi = T_max ; code_below = T_below_min ; code_above = T_above_max ; break ;
+         case NEPTUNE::h :
+            lo = h_min ; hi = h_max ; code_below = h_below_min ; code_above = h_above_max ; break ;
+         default :
+            // nothing to check for this property: every point is fine
+            errfield = EOS_Internal_Error::OK ;
+            return EOS_Error::good ;
+       }
+
+    // Track the worst error while writing it, rather than walking the whole
+    // field again afterwards with find_worst_error().
+    EOS_Internal_Error worst = EOS_Internal_Error::OK ;
+    const int sz = in.size() ;
     {
     ZoneScopedN("CATHARE2::verify for loop");
-    for (int i=0; i<in.size(); i++) 
+    for (int i=0; i<sz; i++)
        { int partial_error = ok ;   // per point: an error must not carry over
-         switch(prop)
-            { case NEPTUNE::p:
-                 if (in[i] < P_min)  partial_error = P_below_min ;
-                 if (in[i] > P_max)  partial_error = P_above_max ;
-                 break ;
-              case NEPTUNE::T:
-                 if (in[i] < T_min)  partial_error = T_below_min ;
-                 if (in[i] > T_max)  partial_error = T_above_max ;
-                 break ;
-              case NEPTUNE::h:
-                 if (in[i] < h_min)  partial_error = h_below_min ;
-                 if (in[i] > h_max)  partial_error = h_above_max ;
-                 break ;
-              default:
-                 break ;
-            }
-                  
-         errfield.set(i, partial_error==ok ? EOS_Internal_Error::OK : EOS_Internal_Error(partial_error, EOS_Error::bad));
-         //errfield.set(i,convert_eos_error(partial_error)) ; //old version
+         const double v = in[i] ;
+         if (v < lo)  partial_error = code_below ;
+         if (v > hi)  partial_error = code_above ;
+
+         const EOS_Internal_Error e = (partial_error == ok)
+                                    ? EOS_Internal_Error::OK
+                                    : EOS_Internal_Error(partial_error, EOS_Error::bad) ;
+         errfield.set(i, e) ;
+         worst = worst_internal_error(worst, e) ;
        }
     }
-    return errfield.find_worst_error().generic_error() ;
+    return worst.generic_error() ;
   }
 
   int CATHARE2::map_eos_field(const EOS_Field& f, domain mode)
