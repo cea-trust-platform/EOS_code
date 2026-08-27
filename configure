@@ -89,7 +89,8 @@ Options to install plugins:
 
   --with-coolprop
   --with-libcoolprop
-
+  --with-doc-sphinx                     add Sphinx HTML documentation
+  --without-doc-sphinx                  do not add Sphinx documentation (default)
 Some influential environment variables:
   CXX                                   force the c++ compiler
   CC                                    force the c compiler
