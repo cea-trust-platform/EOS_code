@@ -1949,7 +1949,9 @@ namespace CATHARE2
     if (lfluid != 100003) 
        { if (ltl.size() == nsca) ltl -= tabsk;
          if (ltg.size() == nsca) ltg -= tabsk;
-         if (ltsp.size() == nsca) ltsp -= tabsk;
+         // ltsp is an input in the Tsat space only ; anywhere else it is an
+         // output, possibly aliased to a caller array nothing has written yet.
+         if (typ_ths == TH_space::Tsat && ltsp.size() == nsca) ltsp -= tabsk;
        }
   }
 
