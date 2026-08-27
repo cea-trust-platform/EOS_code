@@ -1985,7 +1985,9 @@ namespace CATHARE2
        { ferr = EOS_Internal_Error::NOT_IMPLEMENTED ;
          return EOS_Error::error ;
        }
-    preconvert_eos_fields() ;
+    // No temperature comes in here : ltl, ltg and ltsp are outputs only, and
+    // still uninitialised, so converting them to Celsius reads undefined values.
+    // preconvert_eos_fields() ;
     rezise_eos_fields(nsca, saturated) ;
 
     int ill, ivstat, ivalue = 0 ;
@@ -2093,7 +2095,8 @@ namespace CATHARE2
        { ferr = EOS_Internal_Error::NOT_IMPLEMENTED ;
          return EOS_Error::error ;
        }
-    preconvert_eos_fields() ;
+    // Same as calc2_p : the inputs are p and h, no temperature among them.
+    // preconvert_eos_fields() ;
     rezise_eos_fields(nsca, phase) ;
 
     if (phase == unknown) lhg = lhl = lh ;
