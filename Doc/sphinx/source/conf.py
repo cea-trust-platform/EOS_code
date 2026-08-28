@@ -39,8 +39,23 @@ breathe_show_include = False
 
 # Lancement automatique de doxygen si le XML est absent (utile pour
 # Read the Docs ou un premier « make html » sans passer par le Makefile).
-if not os.path.isdir(os.path.join(os.path.dirname(__file__), "doxygen", "xml")):
-    subprocess.run(["doxygen", "Doxyfile"], cwd=os.path.dirname(__file__) or ".")
+_here = os.path.dirname(__file__) or "."
+_index = os.path.join(_here, "doxygen", "xml", "index.xml")
+
+
+def _xml_is_usable():
+    """Vrai si l'index doxygen existe et référence au moins un symbole."""
+    try:
+        with open(_index, encoding="utf-8") as f:
+            return "<compound" in f.read()
+    except OSError:
+        return False
+
+
+# Un index vide (doxygen lancé avec de mauvais chemins d'entrée) est aussi
+# invalide qu'un index absent : dans les deux cas on relance doxygen.
+if not _xml_is_usable():
+    subprocess.run(["doxygen", "Doxyfile"], cwd=_here)
 
 # -- Sortie HTML ---------------------------------------------------------------
 

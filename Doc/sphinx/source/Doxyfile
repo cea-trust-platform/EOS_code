@@ -1,16 +1,16 @@
 # Doxyfile pour la génération XML consommée par Breathe/Sphinx.
-# Exécuter depuis Doc/sphinx :  doxygen Doxyfile
+# Exécuter depuis Doc/sphinx/source :  doxygen Doxyfile
 
 PROJECT_NAME           = "EOS"
 OUTPUT_DIRECTORY       = doxygen
 CREATE_SUBDIRS         = NO
 
 # --- Entrées -----------------------------------------------------------------
-INPUT                  = ../../Modules/EOS/API \
-                         ../../Modules/EOS/Src/EOS_Mixing.hxx \
-                         ../../Modules/EOS_IGen/API \
-                         ../../Modules/Functions/API \
-                         ../../Modules/Language/API
+INPUT                  = ../../../Modules/EOS/API \
+                         ../../../Modules/EOS/Src/EOS_Mixing.hxx \
+                         ../../../Modules/EOS_IGen/API \
+                         ../../../Modules/Functions/API \
+                         ../../../Modules/Language/API
 FILE_PATTERNS          = *.hxx
 EXCLUDE_PATTERNS       = *_i.hxx
 RECURSIVE              = NO
