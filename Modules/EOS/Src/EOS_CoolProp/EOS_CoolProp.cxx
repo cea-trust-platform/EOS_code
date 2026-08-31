@@ -169,28 +169,37 @@ namespace NEPTUNE_EOS
 
   //! Internal function to compute values from CoolProp
   //TODO: Switch directly to ABstractState instead of using the handle
-  static inline double
-  _update_and_compute_from_pair(long                   handle_,
-                                const double           in1,
+  double  EOS_CoolProp::_update_and_compute_from_pair(const double           in1,
                                 const double           in2,
                                 CoolProp::input_pairs  input_pair_key,
                                 CoolProp::parameters   output_key,
-                                long&                  errcode)
+                                long&                  errcode) const
   {
     double retval = -99999.;
     errcode = 0;
     char message_buffer[512];
 
-    AbstractState_update(handle_,
-                         (long)input_pair_key,
-                         in1, in2,
-                         &errcode, message_buffer, 511);
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return retval;
-    }
 
-    retval = AbstractState_keyed_output(handle_,
+    const bool same_state = (cached_pair_ == (long)input_pair_key)
+                        && (cached_in1_  == in1)
+                        && (cached_in2_  == in2);
+
+
+    if (!same_state)
+    {
+      AbstractState_update(abstract_state_handle_,
+                          (long)input_pair_key,
+                          in1, in2,
+                          &errcode, message_buffer, 511);
+      if (errcode != 0) {
+        print_error_message_(message_buffer);
+        return retval;
+      }
+      cached_pair_ = (long)input_pair_key;
+      cached_in1_  = in1;
+      cached_in2_  = in2;
+    }
+    retval = AbstractState_keyed_output(abstract_state_handle_,
                                         (long)output_key,
                                         &errcode,
                                         message_buffer,
@@ -823,7 +832,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    pr = _update_and_compute_from_pair(abstract_state_handle_,
+    pr = _update_and_compute_from_pair(
                                        h, p,
                                        CoolProp::HmassP_INPUTS,
                                        CoolProp::iPrandtl,
@@ -841,7 +850,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    pr = _update_and_compute_from_pair(abstract_state_handle_,
+    pr = _update_and_compute_from_pair(
                                        p, T,
                                        CoolProp::PT_INPUTS,
                                        CoolProp::iPrandtl,
@@ -859,8 +868,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    h = _update_and_compute_from_pair(abstract_state_handle_,
-                                      p, T,
+    h = _update_and_compute_from_pair(p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iHmass,
                                       err_);
@@ -877,8 +885,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    T = _update_and_compute_from_pair(abstract_state_handle_,
-                                      h, p,
+    T = _update_and_compute_from_pair(h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iT,
                                       err_);
@@ -896,8 +903,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    double cv = _update_and_compute_from_pair(abstract_state_handle_,
-                                              h, p,
+    double cv = _update_and_compute_from_pair(h, p,
                                               CoolProp::HmassP_INPUTS,
                                               CoolProp::iCvmass, err_);
 
@@ -922,8 +928,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    double cv = _update_and_compute_from_pair(abstract_state_handle_,
-                                              p, T,
+    double cv = _update_and_compute_from_pair(p, T,
                                               CoolProp::PT_INPUTS,
                                               CoolProp::iCvmass, err_);
 
@@ -947,7 +952,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iDmass,
@@ -965,7 +970,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iDmass,
@@ -983,7 +988,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iUmass,
@@ -1001,7 +1006,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iUmass,
@@ -1019,7 +1024,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iSmass,
@@ -1037,7 +1042,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iSmass,
@@ -1055,7 +1060,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iviscosity,
@@ -1073,7 +1078,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iviscosity,
@@ -1091,7 +1096,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iconductivity,
@@ -1109,7 +1114,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iconductivity,
@@ -1127,7 +1132,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iCpmass,
@@ -1145,7 +1150,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iCpmass,
@@ -1163,7 +1168,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iCvmass,
@@ -1181,7 +1186,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iCvmass,
@@ -1199,7 +1204,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
     (void)T;
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, sat_quality_,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::isurface_tension,
@@ -1217,7 +1222,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
     (void)h;//h not used
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, sat_quality_,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::isurface_tension,
@@ -1235,7 +1240,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::ispeed_sound,
@@ -1253,7 +1258,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::ispeed_sound,
@@ -1271,7 +1276,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iGmass,
@@ -1289,7 +1294,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iGmass,
@@ -1307,7 +1312,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iGmass,
@@ -1325,7 +1330,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iGmass,
@@ -1343,7 +1348,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, T,
                                       CoolProp::PT_INPUTS,
                                       CoolProp::iisobaric_expansion_coefficient,
@@ -1361,7 +1366,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       h, p,
                                       CoolProp::HmassP_INPUTS,
                                       CoolProp::iisobaric_expansion_coefficient,
@@ -1379,7 +1384,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, 0.,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::iDmass,
@@ -1397,7 +1402,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       0., T,
                                       CoolProp::QT_INPUTS,
                                       CoolProp::iDmass,
@@ -1415,7 +1420,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, 1.,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::iDmass,
@@ -1433,7 +1438,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       1., T,
                                       CoolProp::QT_INPUTS,
                                       CoolProp::iDmass,
@@ -1451,7 +1456,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, 0.,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::iHmass,
@@ -1469,7 +1474,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       0., T,
                                       CoolProp::QT_INPUTS,
                                       CoolProp::iHmass,
@@ -1487,7 +1492,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, 1.,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::iHmass,
@@ -1505,7 +1510,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       1., T,
                                       CoolProp::QT_INPUTS,
                                       CoolProp::iHmass,
@@ -1523,7 +1528,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, 0.,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::iCpmass,
@@ -1541,7 +1546,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       0., T,
                                       CoolProp::QT_INPUTS,
                                       CoolProp::iCpmass,
@@ -1559,7 +1564,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, 1.,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::iCpmass,
@@ -1577,7 +1582,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       1., T,
                                       CoolProp::QT_INPUTS,
                                       CoolProp::iCpmass,
@@ -1595,7 +1600,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       p, sat_quality_,
                                       CoolProp::PQ_INPUTS,
                                       CoolProp::iT,
@@ -1613,7 +1618,7 @@ namespace NEPTUNE_EOS
   {
     long err_ = 0;
 
-    r = _update_and_compute_from_pair(abstract_state_handle_,
+    r = _update_and_compute_from_pair(
                                       sat_quality_, T,
                                       CoolProp::QT_INPUTS,
                                       CoolProp::iP,
