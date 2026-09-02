@@ -22,6 +22,7 @@
 
 namespace LANGUAGE_KERNEL
 {
+
   template <class T> 
   inline Vdata<T>::
   Vdata() : 
@@ -326,12 +327,33 @@ namespace LANGUAGE_KERNEL
     p = m.p;
     data = m.data;
   }
+
+template <class T>
+inline void Vdata<T>::set_view(int s, const T* ptr)
+{
+    if (owner && data)
+        delete[] data;
+
+    sz = s;
+    data = (T*)ptr;
+    owner = 0;
+}
+
   template <class T> 
   inline ArrOf<T>& ArrOf<T>::
   set_ptr(int nsz, const T* ptr)
   {
-    detach();
-    attach(ArrOf<T>(nsz, ptr));
+    if (p && p->ref_count == 1)
+    {
+      p->set_view(nsz, ptr);   // réutilise le Vdata en place, pas de new/delete
+      data = p->data;
+    }
+    else
+    {
+      detach();
+      p = new Vdata<T>(nsz, ptr);
+      data = p->data;
+    }
     return *this;
   }
   template <class T> 
