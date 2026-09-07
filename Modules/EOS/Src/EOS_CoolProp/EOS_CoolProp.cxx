@@ -178,7 +178,13 @@ namespace NEPTUNE_EOS
     double retval = -99999.;
     errcode = 0;
     char message_buffer[512];
-
+    AbstractState_specify_phase(abstract_state_handle_,
+                                handle_phase_.aschar(),
+                                &errcode, message_buffer, 511);
+    if (errcode != 0) {
+      print_error_message_(message_buffer);
+      return retval;
+    }
 
     const bool same_state = (cached_pair_ == (long)input_pair_key)
                         && (cached_in1_  == in1)
