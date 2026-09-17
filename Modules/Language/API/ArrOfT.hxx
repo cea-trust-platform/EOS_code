@@ -28,6 +28,7 @@ namespace LANGUAGE_KERNEL
     Vdata(int);
     Vdata(int, const T* );
     ~Vdata();
+    void set_view(int s, const T* ptr);
     int add_one_ref();
     int supr_one_ref();
     int   sz;

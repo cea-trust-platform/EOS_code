@@ -116,13 +116,13 @@ namespace NEPTUNE
 
   int EOS_Field::reset_data_ptr(ArrOfDouble &x)
   {
-    data = ArrOfDouble(x.size(), &x[0]);
+    data.set_ptr(x.size(), &x[0]);
     return good;
   }
 
   int EOS_Field::reset_data_ptr(int nsz, double* ptr)
   {
-    data = ArrOfDouble(nsz, ptr) ;
+    data.set_ptr(nsz,ptr);
     return good;
   }
 
