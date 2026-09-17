@@ -1,4 +1,5 @@
 #include "EOS_py.hxx"
+#include "Language/API/UObject.hxx"
 
 #include <stdexcept>
 #include <string>
@@ -124,6 +125,10 @@ std::string EOS_py::describe() const {
     oss << (*eos_);  // appelle operator<< qui est surchargé par fluid_description
 
     return oss.str();
+}
+
+void EOS_py::fluids_available() {
+    std::cout<<Types_Info::instance()<<std::endl;
 }
 
 double EOS_py::call_getter(

@@ -26,7 +26,7 @@ public:
         std::vector<std::string> str_out
     );
     std::string describe() const;
-
+    static void fluids_available(); 
 
     double get_p_crit() const;
     double get_h_crit() const;
