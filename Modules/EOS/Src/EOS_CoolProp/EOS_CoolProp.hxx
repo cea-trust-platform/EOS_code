@@ -73,6 +73,10 @@ namespace NEPTUNE_EOS
     int init(const Strings&, const Strings&);
     int init(const Strings&, const Strings&, const double, const double, const double, const double) ;
  
+    void _update_state(double in1, double in2,
+                       CoolProp::input_pairs input_pair_key,
+                       long& errcode) const;
+    void _invalidate_state_cache() const;
     double _update_and_compute_from_pair(double in1, double in2,
                                       CoolProp::input_pairs input_pair_key,
                                       CoolProp::parameters  output_key,

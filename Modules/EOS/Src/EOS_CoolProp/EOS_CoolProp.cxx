@@ -167,6 +167,58 @@ namespace NEPTUNE_EOS
   // ---------------------------------------------------------------------------
   // ---------------------------------------------------------------------------
 
+  //! Set the state of the CoolProp handle to (in1, in2)
+  /*!
+   * Every AbstractState_update on abstract_state_handle_ must go through this
+   * function : it is the only one allowed to touch the cache (cached_pair_,
+   * cached_in1_, cached_in2_), which has to describe the state actually held
+   * by the handle.
+   */
+  void EOS_CoolProp::_update_state(const double           in1,
+                                   const double           in2,
+                                   CoolProp::input_pairs  input_pair_key,
+                                   long&                  errcode) const
+  {
+    errcode = 0;
+    char message_buffer[512];
+    AbstractState_specify_phase(abstract_state_handle_,
+                                handle_phase_.aschar(),
+                                &errcode, message_buffer, 511);
+    if (errcode != 0) {
+      print_error_message_(message_buffer);
+      return;
+    }
+
+    const bool same_state = (cached_pair_ == (long)input_pair_key)
+                        && (cached_in1_  == in1)
+                        && (cached_in2_  == in2);
+
+    if (same_state)
+      return;
+
+    // The state of the handle is undefined if the update fails
+    _invalidate_state_cache();
+
+    AbstractState_update(abstract_state_handle_,
+                        (long)input_pair_key,
+                        in1, in2,
+                        &errcode, message_buffer, 511);
+    if (errcode != 0) {
+      print_error_message_(message_buffer);
+      return;
+    }
+    cached_pair_ = (long)input_pair_key;
+    cached_in1_  = in1;
+    cached_in2_  = in2;
+  }
+
+  void EOS_CoolProp::_invalidate_state_cache() const
+  {
+    cached_pair_ = -1;
+    cached_in1_  = std::numeric_limits<double>::quiet_NaN();
+    cached_in2_  = std::numeric_limits<double>::quiet_NaN();
+  }
+
   //! Internal function to compute values from CoolProp
   //TODO: Switch directly to ABstractState instead of using the handle
   double  EOS_CoolProp::_update_and_compute_from_pair(const double           in1,
@@ -176,35 +228,12 @@ namespace NEPTUNE_EOS
                                 long&                  errcode) const
   {
     double retval = -99999.;
-    errcode = 0;
     char message_buffer[512];
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode, message_buffer, 511);
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
+
+    _update_state(in1, in2, input_pair_key, errcode);
+    if (errcode != 0)
       return retval;
-    }
 
-    const bool same_state = (cached_pair_ == (long)input_pair_key)
-                        && (cached_in1_  == in1)
-                        && (cached_in2_  == in2);
-
-
-    if (!same_state)
-    {
-      AbstractState_update(abstract_state_handle_,
-                          (long)input_pair_key,
-                          in1, in2,
-                          &errcode, message_buffer, 511);
-      if (errcode != 0) {
-        print_error_message_(message_buffer);
-        return retval;
-      }
-      cached_pair_ = (long)input_pair_key;
-      cached_in1_  = in1;
-      cached_in2_  = in2;
-    }
     retval = AbstractState_keyed_output(abstract_state_handle_,
                                         (long)output_key,
                                         &errcode,
@@ -505,6 +534,7 @@ namespace NEPTUNE_EOS
 
     long errcode = 0;
     char message_buffer[512];
+    _invalidate_state_cache();
     abstract_state_handle_ = AbstractState_factory(backend_.aschar(),
                                                    fluid_name_.aschar(),
                                                    &errcode,
@@ -1881,16 +1911,8 @@ namespace NEPTUNE_EOS
     long errcode = 0;
     char message_buffer[512];
 
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
+    _update_state(h, p, CoolProp::HmassP_INPUTS, errcode);
+    if (errcode != 0) return COMPUTE_ERROR_;
 
     r = AbstractState_first_partial_deriv(abstract_state_handle_,
                                              (long)CoolProp::iT,
@@ -1916,16 +1938,8 @@ namespace NEPTUNE_EOS
     long errcode = 0;
     char message_buffer[512];
 
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
+    _update_state(h, p, CoolProp::HmassP_INPUTS, errcode);
+    if (errcode != 0) return COMPUTE_ERROR_;
 
     r = AbstractState_first_partial_deriv(abstract_state_handle_,
                                              (long)CoolProp::iT,
@@ -2417,16 +2431,8 @@ namespace NEPTUNE_EOS
     long errcode = 0;
     char message_buffer[512];
 
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
+    _update_state(p, T, CoolProp::PT_INPUTS, errcode);
+    if (errcode != 0) return COMPUTE_ERROR_;
 
     r = AbstractState_first_partial_deriv(abstract_state_handle_,
                                              (long)CoolProp::iHmass,
@@ -2452,16 +2458,8 @@ namespace NEPTUNE_EOS
     long errcode = 0;
     char message_buffer[512];
 
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
+    _update_state(p, T, CoolProp::PT_INPUTS, errcode);
+    if (errcode != 0) return COMPUTE_ERROR_;
 
     r = AbstractState_first_partial_deriv(abstract_state_handle_,
                                              (long)CoolProp::iHmass,
