@@ -24,7 +24,7 @@
 #include <sstream>
 using std::istringstream ;
 using std::ostringstream ;
-
+#include "DataStructures.h"
 #include "EOS/API/EOS.hxx"
 #include "EOS/API/EOS_Fluid.hxx"
 #include "EOS/API/EOS_Field.hxx"
@@ -36,7 +36,7 @@ using std::ostringstream ;
 #include "Language/API/RegisterType.hxx"
 #include "Language/API/Types_Info.hxx"
 #include "system/arch.h"
-
+#include <limits>
 using namespace NEPTUNE ;
 
 namespace NEPTUNE_EOS
@@ -72,7 +72,11 @@ namespace NEPTUNE_EOS
     int init(const Strings&);
     int init(const Strings&, const Strings&);
     int init(const Strings&, const Strings&, const double, const double, const double, const double) ;
-
+ 
+    double _update_and_compute_from_pair(double in1, double in2,
+                                      CoolProp::input_pairs input_pair_key,
+                                      CoolProp::parameters  output_key,
+                                      long& errcode) const;
     //! Compute calculations from fields
     /*!
      * \param[in] in input field. Currently supported are : P
@@ -292,6 +296,9 @@ namespace NEPTUNE_EOS
     AString fluid_name_; //!< Name of fluid
     AString fluid_name_phase_ ; //!< Name of fluid with phase
 
+    mutable long   cached_pair_ = -1;
+    mutable double cached_in1_  = std::numeric_limits<double>::quiet_NaN();
+    mutable double cached_in2_  = std::numeric_limits<double>::quiet_NaN();
   private:
     double molar_mass_; // Molar mass (kg/mol)
     static int type_Id;
