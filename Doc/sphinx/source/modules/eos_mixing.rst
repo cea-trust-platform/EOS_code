@@ -22,8 +22,7 @@ répondre à la question suivante : connaissant la pression totale :math:`p`,
 l'enthalpie massique du mélange :math:`h` et les fractions massiques
 :math:`c_0, c_1, \dots`, quelles sont la température, la masse volumique, la
 pression partielle de vapeur et les propriétés de transport du gaz, ainsi que
-leurs dérivées par rapport à :math:`p`, :math:`h` et :math:`c_i` ? C'est le
-service que rend la classe :cpp:class:`NEPTUNE_EOS::EOS_Mixing`.
+leurs dérivées par rapport à :math:`p`, :math:`h` et :math:`c_i` ? C'est l'utilité de la classe :cpp:class:`NEPTUNE_EOS::EOS_Mixing`.
 
 Par convention, le composant d'indice 0 est le **fluide principal**, celui qui
 peut condenser (la vapeur d'eau dans la quasi-totalité des usages), et les
@@ -473,14 +472,6 @@ discussion de [Poling2001]_, section 10-6).
 Le coefficient de diffusion suit la même corrélation de Fuller que dans le
 mode générique (mêmes constantes 0,0143 et 1,75).
 
-.. todo::
-
-   La note de conception CATHARE2 décrivant le traitement des incondensables
-   (routines ``FHVAPA``/``FHGASA``/``FHDIGA``) n'est pas référencée dans le
-   dépôt. La référence publique la plus proche est [Bestion1990]_, qui
-   présente les lois de fermeture du code mais pas le détail des lois de
-   mélange. À compléter par la référence interne exacte.
-
 Mode ``Cathare`` : délégation au greffon CATHARE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -756,13 +747,3 @@ Références
 .. [Blanc1908] A. Blanc, « Recherches sur les mobilités des ions dans les
    gaz », *Journal de Physique Théorique et Appliquée*, vol. 7, p. 825-839,
    1908.
-
-.. [Bestion1990] D. Bestion, « The physical closure laws in the CATHARE
-   code », *Nuclear Engineering and Design*, vol. 124, n° 3, p. 229-245, 1990.
-
-.. todo::
-
-   Références à confirmer sur pièce : la pagination exacte de [Dalton1802]_
-   (l'essai IV est généralement cité p. 595-602 du volume 5) et celle de
-   [Blanc1908]_. L'édition de [Cengel]_ n'est volontairement pas précisée, la
-   numérotation du chapitre variant d'une édition à l'autre.

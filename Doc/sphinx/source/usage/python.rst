@@ -773,22 +773,4 @@ les valeurs passées à EOS et rendues par lui sont en J/kg.
 Pour qui préfère une interface graphique à un script, l':ref:`IHM <eos-ihm>`
 offre les mêmes tracés sans écrire de code.
 
-Exemples exécutés et notebooks de référence
--------------------------------------------
 
-Les exemples de cette page sur un fluide CATHARE2 (création, point, tableaux,
-saturation, erreurs), sur l'interpolateur construit à partir de CATHARE2 et
-sur ``EOS_Mixing_py`` ont été exécutés contre l'installation courante, et les
-sorties recopiées telles quelles. Ceux qui font appel à REFPROP 9 (génération
-avec raffinement, tableau comparatif, tracé de la vapeur) reprennent les
-sorties enregistrées dans les notebooks ; les tracés n'ont pas été rejoués.
-
-Les notebooks d'origine vont plus loin que cette page, notamment sur la
-convergence de l'erreur avec la taille du maillage :
-
-* ``documentation_api_python_interpolateur.ipynb`` — tour complet de l'API et
-  de ses pièges ;
-* ``eos_py_demo_interpolateur.ipynb`` — maillages régulier, raffiné global et
-  raffiné local, comparaison bilinéaire / bicubique ;
-* ``eos_py_demo_mixing.ipynb`` — mélange vapeur-air ;
-* ``eos_py_demo_plots.ipynb`` — tracés et export pandas.
