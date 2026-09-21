@@ -100,6 +100,8 @@ namespace NEPTUNE_EOS_IGEN
         
         EOS_Error write_med()               ;
         EOS_Error write_tempory_med()       ;
+        //! Writes the temporary MED and reloads the interpolator built on it.
+        EOS_Error refresh_tempory_med()     ;
         EOS_Error write_index(bool tempory) ;
         
         const AString& get_method() const    ;
@@ -149,6 +151,8 @@ namespace NEPTUNE_EOS_IGEN
         vector<EOS_IGen_QI> qualities ;
         bool test_qualities ;
         bool refine ;
+        //! The mesh or the criteria changed since the temporary MED was written.
+        bool tempory_med_stale ;
 
         vector<string> list_propi     ;
         vector<string> list_propi_sat ;

@@ -34,9 +34,11 @@ namespace NEPTUNE_EOS_IGEN
   method("unknown"),
   reference("unknown"),
   memory_max(-1),
+  obj_Ipp(nullptr),
   IGen_handler(),
   test_qualities(false),
-  refine(false)
+  refine(false),
+  tempory_med_stale(false)
   { mesh_ph = new EOS_Mesh() ;
     mesh_p  = new EOS_Mesh() ;
   }
@@ -55,10 +57,12 @@ namespace NEPTUNE_EOS_IGEN
   mesh_p(right.mesh_p),
   mesh_ph(right.mesh_ph),
   fluid(right.fluid),
-  IGen_handler(right.IGen_handler),
+  obj_Ipp(nullptr),     // not shared: refresh_tempory_med deletes it, so
+  IGen_handler(right.IGen_handler),   // each copy builds its own when it needs one
   qualities(right.qualities),
   test_qualities(right.test_qualities),
-  refine(right.refine)
+  refine(right.refine),
+  tempory_med_stale(true)
   {
   }
         
@@ -66,9 +70,11 @@ namespace NEPTUNE_EOS_IGEN
   method(meth),
   reference(ref),
   memory_max(-1),
+  obj_Ipp(nullptr),
   IGen_handler(),
   test_qualities(false),
-  refine(false)
+  refine(false),
+  tempory_med_stale(false)
   { mesh_ph = new EOS_Mesh() ;
     mesh_p  = new EOS_Mesh() ;
   }
@@ -148,18 +154,17 @@ namespace NEPTUNE_EOS_IGEN
 
     set_mesh_ph(nb_node_p, nb_node_h, level_max) ;
     set_mesh_p(nb_node_p, level_max) ;
-    err = write_tempory_med() ;
-    if (err != EOS_Error::good)
-       { cerr<< "Error EOS_IGen::make_mesh : no temporary MED file writed" <<endl ;
-         return err ;
-       }
+    //  The temporary MED is not written here any more: what it has to carry
+    //  depends on the quality criteria, which are set after the mesh is made
+    //  (cf. refresh_tempory_med). The index only needs its name and the data path.
+    set_tempory_med_name() ;
+    if (strlen(path_environement.aschar()) == 0)  set_path_environement() ;
+    tempory_med_stale = true ;
     err = write_index(true) ;
     if (err != EOS_Error::good)
        { cerr<< "Error EOS_IGen::make_mesh : no index.eos file writed" <<endl ;
          return err ;
        }
-       
-    set_obj_Ipp() ;
     
     return good ;
   }
@@ -212,18 +217,17 @@ namespace NEPTUNE_EOS_IGEN
        }
 
     set_mesh_ph(nb_node_p, nb_node_h, level_max) ;
-    err = write_tempory_med() ;
-    if (err != EOS_Error::good)
-       { cerr<< "Error EOS_IGen::make_mesh_ph : no temporary MED file writed" <<endl ;
-         return err ;
-       }
+    //  The temporary MED is not written here any more: what it has to carry
+    //  depends on the quality criteria, which are set after the mesh is made
+    //  (cf. refresh_tempory_med). The index only needs its name and the data path.
+    set_tempory_med_name() ;
+    if (strlen(path_environement.aschar()) == 0)  set_path_environement() ;
+    tempory_med_stale = true ;
     err = write_index(true) ;
     if (err != EOS_Error::good)
        { cerr<< "Error EOS_IGen::make_mesh_ph : no index.eos file writed" <<endl ;
          return err ;
        }
-       
-    set_obj_Ipp() ;
        
     return EOS_Error::good ;
   }
@@ -240,18 +244,17 @@ namespace NEPTUNE_EOS_IGEN
     set_fluid() ;
         
     set_mesh_p(nb_node_p, level_max) ;
-    err = write_tempory_med() ;
-    if (err != EOS_Error::good)
-       { cerr<< "Error EOS_IGen::make_mesh_p : no temporary MED file writed" <<endl ;
-         return err ;
-       }
+    //  The temporary MED is not written here any more: what it has to carry
+    //  depends on the quality criteria, which are set after the mesh is made
+    //  (cf. refresh_tempory_med). The index only needs its name and the data path.
+    set_tempory_med_name() ;
+    if (strlen(path_environement.aschar()) == 0)  set_path_environement() ;
+    tempory_med_stale = true ;
     err = write_index(true) ;
     if (err != EOS_Error::good)
        { cerr<< "Error EOS_IGen::make_mesh_p : no index.eos file writed" <<endl ;
          return err ;
        }
-
-    set_obj_Ipp() ;
     
     return EOS_Error::good ;
   }
@@ -354,6 +357,23 @@ namespace NEPTUNE_EOS_IGEN
   }
 
   
+//  The temporary MED is what compute_qualities interpolates in, to compare
+//  with the model. It used to be rewritten, in full, as soon as the mesh
+//  changed: by make_mesh, before any criterion was known, and after every
+//  refinement round. It is now only marked stale there and written here, on
+//  the way into compute_qualities -- so a mesh that is never qualified never
+//  pays for one, and by then the criteria say what it has to carry.
+  EOS_Error EOS_IGen::refresh_tempory_med()
+  { EOS_Error err = write_tempory_med() ;
+    if (err != EOS_Error::good)  return err ;
+
+    delete obj_Ipp ;
+    set_obj_Ipp() ;
+    tempory_med_stale = false ;
+    return EOS_Error::good ;
+  }
+
+
 /* make_header en prevision de se servir du header 
  * pour recreer la bdd.
  * pour l'instant header limite a 200c dc erreur
@@ -986,6 +1006,7 @@ namespace NEPTUNE_EOS_IGEN
                              int const is_abs, double const limit_qi, int const nb_sub)
   { EOS_IGen_QI qi(property, type, limit_qi, is_abs, nb_sub) ;
     qualities.push_back(qi) ;
+    tempory_med_stale = true ;
   }
   
   
@@ -1077,6 +1098,14 @@ namespace NEPTUNE_EOS_IGEN
  */
   EOS_Error EOS_IGen::compute_qualities()
   { test_qualities = true ;
+
+    if (tempory_med_stale)
+       { EOS_Error err = refresh_tempory_med() ;
+         if (err != EOS_Error::good)
+            { cerr << "Error EOS_IGen::compute_qualities : no temporary MED file writed" <<endl ;
+              return err ;
+            }
+       }
 
     int nb_q = qualities.size() ;
     for (int i=0; i<nb_q; i++)
@@ -1216,14 +1245,7 @@ namespace NEPTUNE_EOS_IGEN
          
          if (test_level_p && test_level_ph)  break ;
          
-         err = write_tempory_med() ;
-         if (err != EOS_Error::good)
-            { cerr << "Error EOS_IGen::make_global_refine : no temporary MED file writed" <<endl ;
-              return err ;
-            }
-         
-         delete obj_Ipp ;
-         set_obj_Ipp() ;
+         tempory_med_stale = true ;
 
          err = compute_qualities() ;
          if (err != good)
@@ -1278,14 +1300,7 @@ namespace NEPTUNE_EOS_IGEN
          
          if (test_level_p && test_level_ph)  break ;
          refine = true ;
-         err = write_tempory_med() ;
-         if (err != EOS_Error::good)
-            { cerr << "Error EOS_IGen::make_local_refine : no temporary MED file writed" <<endl ;
-              return err ;
-            }
-         
-         delete obj_Ipp ;
-         set_obj_Ipp() ;
+         tempory_med_stale = true ;
 
          err = compute_qualities() ;
          if (err != EOS_Error::good)
@@ -1319,6 +1334,11 @@ namespace NEPTUNE_EOS_IGEN
     
     fluid     = right.fluid     ;
     qualities = right.qualities ;
+
+    //  Not shared, cf. the copy constructor.
+    delete obj_Ipp ;
+    obj_Ipp = nullptr ;
+    tempory_med_stale = true ;
     
     return *this ;
   }
