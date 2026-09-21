@@ -210,9 +210,18 @@ int main()
   //         (correct) h. So this block runs only when a real thermodynamic
   //         plugin is available (matching how the other Ipp tests in this
   //         same directory already gate their Refprop9/Cathare2 use).
-#ifdef WITH_PLUGIN_REFPROP_9
+  //
+  //         Cathare2 when it is there, Refprop9 otherwise. What is checked is
+  //         the tile dispatch of the inversion, which does not depend on the
+  //         model behind the nodes, and the ten databases below are 2250
+  //         nodes to fill: about 100 s with Refprop9, a few with Cathare2.
+#if defined(WITH_PLUGIN_CATHARE2) || defined(WITH_PLUGIN_REFPROP_9)
   {
+#ifdef WITH_PLUGIN_CATHARE2
+    const std::string rp_method = "EOS_Cathare2";
+#else
     const std::string rp_method = "EOS_Refprop9";
+#endif
     const std::string rp_reference = "WaterLiquid";
     // Comfortably inside the subcooled-liquid region across the whole box
     // (T_sat(p) here is well above any sampled T, cf. the Ts array below):
@@ -246,7 +255,7 @@ int main()
     if (generate_tiled_database(rp_mono_prm, "eos_ipp_tiled_test_rp_mono.eosmm") != EOS_Error::good ||
         generate_tiled_database(rp_tiled_prm, "eos_ipp_tiled_test_rp.eosmm") != EOS_Error::good)
     {
-      std::cerr << "FAILED: could not generate the Refprop9 mono/tiled databases for the h_pT check" << std::endl;
+      std::cerr << "FAILED: could not generate the " << rp_method << " mono/tiled databases for the h_pT check" << std::endl;
       ++g_failures;
     }
     else
@@ -307,12 +316,12 @@ int main()
           if (et == EOS_Error::good && em == EOS_Error::good)
           {
             ++nb_both_good;
-            check_close("h_pT value (Refprop9)", h_tiled, h_mono, 1e-3);
+            check_close("h_pT value", h_tiled, h_mono, 1e-3);
           }
           ++nb_checked;
         }
 
-      std::cout << "h_pT (Refprop9): tiled succeeded on " << nb_tiled_good << "/" << nb_rp
+      std::cout << "h_pT (" << rp_method << "): tiled succeeded on " << nb_tiled_good << "/" << nb_rp
                 << " point(s), " << nb_both_good << " directly comparable to the monolithic reference."
                 << std::endl;
       if (nb_tiled_good < 2)
@@ -328,7 +337,7 @@ int main()
     }
   }
 #else
-  std::cout << "(WITH_PLUGIN_REFPROP_9 not available: skipping the h(p,T) inversion check)" << std::endl;
+  std::cout << "(neither WITH_PLUGIN_CATHARE2 nor WITH_PLUGIN_REFPROP_9 available: skipping the h(p,T) inversion check)" << std::endl;
 #endif
 
   // ---- 6. out-of-bounds point: rejected the same way in both modes.
