@@ -432,6 +432,42 @@ set (CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # Documentation, tests
 # --------------------
 #
+# WITH_DOC_SPHINX
+option (WITH_DOC_SPHINX "Build documentation with Sphinx" OFF)
+message(STATUS "Option WITH_DOC_SPHINX : ${WITH_DOC_SPHINX}")
+if (WITH_DOC_SPHINX)
+
+  # Python interpreter
+  if (USER_PYTHON_EXECUTABLE)
+    message(STATUS "Python executable specified by user : ${USER_PYTHON_EXECUTABLE}")
+    set(Python3_EXECUTABLE ${USER_PYTHON_EXECUTABLE})
+  else ()
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  endif ()
+
+  if (NOT EXISTS ${Python3_EXECUTABLE})
+    message(FATAL_ERROR "Python executable not found : ${Python3_EXECUTABLE}")
+  endif ()
+
+  # Check Sphinx availability
+  execute_process(
+    COMMAND ${Python3_EXECUTABLE} -m sphinx --version
+    RESULT_VARIABLE SPHINX_STATUS
+    OUTPUT_QUIET
+    ERROR_QUIET
+  )
+
+  if (NOT SPHINX_STATUS EQUAL 0)
+    message(FATAL_ERROR
+      "Sphinx is required to build documentation.\n"
+      "Please activate a Python environment and install it with:\n"
+      "  pip install sphinx breathe sphinx-rtd-theme\n"
+      "Or disable documentation with --without-doc-sphinx"
+    )
+  endif ()
+
+endif (WITH_DOC_SPHINX)
+
 add_subdirectory(Doc)
 add_subdirectory(Modules)
 
@@ -590,6 +626,7 @@ if (WITH_IPP)
           FILES_MATCHING  PATTERN "*.cxx" PATTERN "*Test*" PATTERN "output*"
           PATTERN "CMake*" EXCLUDE PATTERN "*.cmake" EXCLUDE)
 endif (WITH_IPP)
+
 #
 # GUI files
 set(EOS_GUI_SRC ${CMAKE_SOURCE_DIR}/Modules/EOS_IHM/qt)
