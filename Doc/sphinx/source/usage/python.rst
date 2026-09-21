@@ -139,7 +139,7 @@ Python et le calcul thermodynamique. La figure
              les objets de la bibliothèque qu'elle pilote.
 
    digraph python_classes {
-       rankdir=LR;
+       rankdir=TB;
        node [shape=record, fontname="Helvetica", fontsize=10,
              style=filled, fillcolor="#eef3fa"];
        edge [fontname="Helvetica", fontsize=9];
@@ -519,16 +519,25 @@ contrôlée au centre des mailles, reste sous :math:`1{,}2\cdot10^{-4}`.
       * mesh      : built
 
 Pendant le raffinement, la bibliothèque journalise sa progression sur la
-sortie standard ; sur cet exemple le maillage passe de 25 à 72 puis 137
-nœuds, contre 25, 81 puis 289 avec ``make_global_refine()`` qui découpe
-uniformément toutes les mailles. Sans ``level_max`` (valeur −1), aucun
-raffinement n'est possible et le maillage reste régulier. L'argument ``cont``
-de ``make_local_refine`` commande l'ajout des nœuds de continuité entre
-mailles de niveaux différents ; il n'y a pas de raison de le désactiver en
-usage normal. L'enchaînement imposé est ``set_extremum``, ``make_mesh``, puis
-éventuellement ``set_quality`` et un raffinement, enfin ``write_med`` : les
-classes le vérifient et lèvent par exemple ``EOS_IGen_py::make_mesh: call
-set_extremum() first``.
+sortie standard ; dans le notebook ``eos_py_demo_interpolateur`` le maillage
+passe ainsi de 25 à 72 puis 137 nœuds, contre 25, 81 puis 289 avec
+``make_global_refine()`` qui découpe uniformément toutes les mailles.
+
+L'argument ``level_max`` de ``make_mesh`` borne le nombre de passes. Sa valeur
+par défaut, −1, ne signifie pas « aucun raffinement » comme le laisse
+entendre le commentaire d'``EOS_py.hxx``, mais « aucune borne » : sans appel à
+``make_*_refine`` le maillage reste bien sûr régulier, mais un raffinement
+lancé avec ``level_max=-1`` et un seuil trop serré ne s'arrêterait qu'à
+l'épuisement de la mémoire. On donne donc toujours ``level_max`` quand on
+raffine. L'argument ``cont`` de ``make_local_refine`` commande l'ajout des
+nœuds de continuité entre mailles de niveaux différents ; il n'y a pas de
+raison de le désactiver en usage normal. Un seuil négatif ou nul dans
+``set_quality`` désactive le rejet des mailles. L'enchaînement imposé est
+``set_extremum``, ``make_mesh``, puis éventuellement ``set_quality`` et un
+raffinement, enfin ``write_med`` : les classes le vérifient et lèvent par
+exemple ``EOS_IGen_py::make_mesh: call set_extremum() first``.
+``set_list_properties`` peut être appelé avant ou après ``make_mesh``, du
+moment qu'il précède le raffinement et l'écriture.
 
 Relire une table et choisir la méthode d'interpolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -611,10 +620,17 @@ comparaison à 400 points et trois maillages construits sur REFPROP 9 :
      - 3,7e-02
 
 À maillage égal, le bicubique gagne deux à quatre ordres de grandeur. Le
-dernier cas fait exception : le raffinement local y est piloté par un critère
-de qualité évalué en bilinéaire, et l'erreur maximale est dominée par les
-mailles voisines des nœuds pendants, sur lesquelles le bicubique n'apporte
-rien.
+dernier cas fait exception, et il faut le lire avec prudence : ces chiffres
+ont été enregistrés à une époque où le critère de qualité du raffinement
+local était évalué en bilinéaire, si bien que le maillage obtenu était adapté
+à l'erreur bilinéaire. Le générateur contrôle aujourd'hui l'erreur de la
+méthode effectivement utilisée à la lecture (voir :ref:`eos-igen`).
+
+.. todo::
+
+   Rejouer la comparaison « raffinement local » du notebook
+   ``eos_py_demo_interpolateur`` avec le code actuel et mettre à jour la
+   dernière ligne du tableau.
 
 Un interpolateur a trois restrictions par rapport à un fluide ordinaire : il
 ne connaît que le plan ``("p", "h")``, il ne sait rendre que les propriétés

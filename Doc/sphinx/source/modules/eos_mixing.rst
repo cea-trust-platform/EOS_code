@@ -564,35 +564,28 @@ derrière ces quelques lignes.
 
 .. graphviz::
    :caption: Séquence de composition puis de calcul d'un mélange (mode
-             ``WithPerfectGas``). Les colonnes sont, de gauche à droite, le
-             code client, la façade du mélange, l'objet ``EOS_Mixing`` et les
-             façades des composants.
+             ``WithPerfectGas``). Chaque étape est préfixée par l'acteur qui
+             l'exécute : code client (vert), objet ``EOS_Mixing`` (bleu),
+             composants (jaune).
 
    digraph mixing_sequence {
-       rankdir=LR;
-       node [shape=box, fontname="Helvetica", fontsize=10,
-             style=filled, fillcolor="#eef3fa"];
+       rankdir=TB;
+       node [shape=box, fontname="Helvetica", fontsize=10, style=filled];
        edge [fontname="Helvetica", fontsize=9];
 
-       subgraph cluster_client { label="Client"; color="#bbbbbb";
-           c1 [label="1. EOS vapeur, azote\nEOS melange(\"EOS_Mixing\")"];
-           c2 [label="2. melange.set_components(tab, n)"];
-           c3 [label="6. melange.compute(entrees, sorties, err)"];
-       }
-       subgraph cluster_mix { label="EOS_Mixing"; color="#bbbbbb";
-           m1 [label="3. set_compute_mode()\ntable_name() de chaque composant"];
-           m2 [label="4. set_mixing_reference_state()"];
-           m3 [label="7. compute_perfect_gas()"];
-           m4 [label="8. compute_pv_hv_ph() : Newton (pv, hv)"];
-           m5 [label="10. lois de mélange, dérivées,\nrecopie dans sorties"];
-       }
-       subgraph cluster_comp { label="Composants"; color="#bbbbbb";
-           v1 [label="5. incondensables :\nset_reference_state(href, 0, Tref, pref)"];
-           v2 [label="9. vapeur : compute(pv, hv)\nincondensables : compute_cp_pT, compute_h_pT,\ncompute_lambda_pT, compute_mu_pT"];
-       }
-       c1 -> c2 -> m1 -> m2 -> v1;
-       v1 -> c3 [style=dashed, label="retour"];
-       c3 -> m3 -> m4 -> v2 -> m5;
+       c1 [fillcolor="#e8f5e2", label="1. [client] EOS vapeur(...), azote(...) ; EOS melange(\"EOS_Mixing\")"];
+       c2 [fillcolor="#e8f5e2", label="2. [client] melange.set_components(tab, n)"];
+       m1 [fillcolor="#eef3fa", label="3. [EOS_Mixing] set_compute_mode()\ntable_name() de chaque composant"];
+       m2 [fillcolor="#eef3fa", label="4. [EOS_Mixing] set_mixing_reference_state()"];
+       v1 [fillcolor="#fff6d6", label="5. [incondensables] set_reference_state(href, 0, Tref, pref)"];
+       c3 [fillcolor="#e8f5e2", label="6. [client] melange.compute(entrees, sorties, err)"];
+       m3 [fillcolor="#eef3fa", label="7. [EOS_Mixing] compute_perfect_gas()\ncontrôle des champs d'entrée"];
+       m4 [fillcolor="#eef3fa", label="8. [EOS_Mixing] compute_pv_hv_ph() : Newton sur (pv, hv)"];
+       v2 [fillcolor="#fff6d6", label="9. [composants] vapeur : compute(pv, hv)\nincondensables : compute_cp_pT, compute_h_pT,\ncompute_lambda_pT, compute_mu_pT"];
+       m5 [fillcolor="#eef3fa", label="10. [EOS_Mixing] lois de mélange, dérivées,\nrecopie dans les champs de sortie"];
+
+       c1 -> c2 -> m1 -> m2 -> v1 -> c3 -> m3 -> m4 -> v2 -> m5;
+       v2 -> m4 [style=dashed, label="jusqu'à convergence"];
    }
 
 Les étapes 3 à 5 n'ont lieu qu'une fois. L'étape 5 n'est exécutée que si le
