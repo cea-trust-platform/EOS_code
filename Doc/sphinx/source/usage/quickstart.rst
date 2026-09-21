@@ -126,23 +126,23 @@ sémantique du champ d'erreurs).
 Python
 ------
 
-L'API Python est générée par SWIG (module ``eos_py``, répertoire
-``Modules/EOS/PyAPI``) et suit fidèlement l'API C++ :
+L'API Python (module ``eos_py``, répertoire ``Modules/EOS/PyAPI``) n'est pas
+un calque de l'API C++ : elle expose une classe ``EOS_py`` qui travaille sur
+des listes et signale les erreurs par des exceptions.
 
 .. code-block:: python
 
    import eos_py
 
-   fluide = eos_py.EOS("EOS_Cathare2", "WaterLiquid")
+   fluide = eos_py.EOS_py("EOS_Cathare2", "WaterLiquid")
+   print(fluide.describe())
 
-   # calcul au point
-   cr, T = fluide.compute_T_ph(155.e5, 1.2e6)
+   # T et rho en deux points du plan (p, h)
+   res = fluide.compute("p", "h", [155.e5, 150.e5], [1.2e6, 1.3e6], ["T", "rho"])
+   T0, rho0 = res[0]
 
-   # informations
-   print(fluide.fluid_name(), fluide.table_name(), fluide.version_name())
-
-Un exemple complet (calculs par champs, affichage tabulé) se trouve dans
-``Modules/EOS/Tests/Python/test_eos_py.py``.
+Installation, calculs par tableaux, saturation, interpolateur et mélanges
+sont traités dans :doc:`python`.
 
 Fortran 77
 ----------

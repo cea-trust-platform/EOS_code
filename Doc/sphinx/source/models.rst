@@ -52,7 +52,7 @@ fluide et la phase. Exemple : ``EOS("EOS_Cathare2", "WaterVapor")``.
        (``NAK_pre_configure.sh``).
    * - ``EOS_Ipp``
      - Interpolateur EOS
-     - Lecture de tables d'interpolation ``.ipp`` générées par
+     - Lecture de tables d'interpolation (fichiers MED) générées par
        :doc:`EOS_IGen <modules/eos_igen>` ; évaluation très rapide d'une
        méthode coûteuse.
    * - ``EOS_Mixing``
@@ -108,21 +108,26 @@ configuration.
 EOS_Ipp (interpolateur)
 -----------------------
 
-``EOS_Ipp`` évalue des tables d'interpolation 1D/2D (fichiers ``.ipp``,
-répertoire de données ``Modules/EOS/Data/EOS_Ipp``) générées au préalable
-par le module :doc:`EOS_IGen <modules/eos_igen>` à partir de n'importe
-quelle autre méthode. Intérêt : remplacer une méthode coûteuse (REFPROP…)
-par une évaluation rapide à précision contrôlée. Les méthodes
-``EOS::init_model``, ``EOS::compute_Ipp_error`` et
-``EOS::compute_Ipp_sat_error`` permettent respectivement d'initialiser le
-modèle interpolé et d'estimer l'erreur d'interpolation champ par champ.
+``EOS_Ipp`` évalue des tables d'interpolation (fichiers MED rangés dans le
+sous-répertoire ``EOS_Ipp`` du répertoire de données) générées au préalable
+par le module EOS_IGen à partir de n'importe quelle autre méthode. Intérêt :
+remplacer une méthode coûteuse (REFPROP…) par une évaluation rapide à
+précision contrôlée, en interpolation bilinéaire ou bicubique.
+
+.. code-block:: c++
+
+   EOS eau("EOS_Ipp", "<nom de la table>");
+   eau.init_model("EOS_Refprop10", "WaterLiquid");  // secours hors table, facultatif
+
+Génération, méthodes d'interpolation, réglages et exemple complet :
+:doc:`modules/eos_igen`.
 
 EOS_Mixing (mélanges)
 ---------------------
 
 ``EOS_Mixing`` (``Modules/EOS/Src/EOS_Mixing.hxx``) traite un mélange
 constitué d'un **fluide principal** (typiquement la vapeur) et de **gaz
-incondensables**. Mise en œuvre :
+incondensables**, sous les hypothèses de Dalton :
 
 .. code-block:: c++
 
@@ -133,20 +138,13 @@ incondensables**. Mise en œuvre :
    EOS* composants[2] = { &vapeur, &azote };
    melange.set_components(composants, 2);
 
-Les compositions sont décrites soit par les champs de concentration
-``c_0 … c_4`` passés aux surcharges dédiées des méthodes ``compute_*``
-(``compute_T_ph(p, h, T, c_0, c_1, …)``), soit par les fractions volumiques
-``set_alpha``. Les dérivées par rapport aux concentrations
-(``compute_d_<x>_d_c_<i>_ph_ph``) sont disponibles. En interne, la classe
-choisit l'algorithme de mélange adapté à la méthode du fluide principal
-(``compute_cathare_mix``, ``compute_cathare2_mix``,
-``compute_perfect_gas``).
-
-Les accesseurs « provisoires » ``EOS::get_prxr``, ``get_prxcp``,
-``get_prxm``, ``get_prxl0`` …, exposés par la façade, fournissent aux
-algorithmes de mélange les constantes du gaz (constante spécifique,
-:math:`c_p`, masse molaire, coefficients des lois de conductivité et de
-viscosité).
+La composition est décrite par les champs de fractions massiques
+``c_0 … c_5`` ajoutés aux champs d'entrée de ``compute`` ; seule l'interface
+par champs est opérationnelle pour un mélange. Selon la nature des
+composants, la classe choisit l'un de ses trois algorithmes
+(``compute_cathare_mix``, ``compute_cathare2_mix``, ``compute_perfect_gas``).
+Modèles, équations, propriétés disponibles et références bibliographiques :
+:doc:`modules/eos_mixing`.
 
 Documentation de référence
 --------------------------

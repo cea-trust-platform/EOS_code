@@ -67,7 +67,7 @@ Organisation des sources
    │   ├── EOS_CoolProp/       #   couplage CoolProp
    │   ├── EOS_Flica4/         #   corrélations FLICA4
    │   ├── EOS_Hitec/          #   greffon sel fondu HITEC
-   │   ├── EOS_Ipp/            #   interpolateur (lecture .ipp)
+   │   ├── EOS_Ipp/            #   interpolateur (lecture des tables .med)
    │   ├── EOS_Mixing.{hxx,cxx}#   mélanges
    │   ├── EOS_Nak/            #   greffon NaK
    │   ├── EOS_PerfectGas/     #   gaz parfait

@@ -29,6 +29,7 @@ analytique, un gaz raidi (*stiffened gas*), ou encore un interpolateur généré
    usage/properties
    usage/fields
    usage/errors
+   usage/python
 
 .. toctree::
    :maxdepth: 2
@@ -36,6 +37,7 @@ analytique, un gaz raidi (*stiffened gas*), ou encore un interpolateur généré
 
    modules/eos
    models
+   modules/eos_mixing
    modules/language
    modules/functions
    modules/eos_igen

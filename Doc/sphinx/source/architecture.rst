@@ -22,7 +22,7 @@ SWIG) et ``Data/`` (données) :
        ├── Common/             # utilitaires partagés (fxdr, func…)
        ├── Functions/          # évaluateur de fonctions analytiques
        ├── EOS/                # cœur : API EOS + méthodes thermodynamiques
-       ├── EOS_IGen/           # générateur de tables d'interpolation (.ipp)
+       ├── EOS_IGen/           # générateur de tables d'interpolation (.med)
        ├── EOS_IHM/            # IHM graphique Qt/Python + wrapper SWIG
        └── system/             # intégration système
 
@@ -47,7 +47,6 @@ Dépendances entre modules
        "EOS"       -> "Functions";
        "EOS_IGen"  -> "EOS";
        "EOS_IHM"   -> "EOS";
-       "EOS_IHM"   -> "EOS_IGen";
    }
 
 Le cœur : module EOS
@@ -123,9 +122,9 @@ Interfaces de liaison
 * **Fortran 77** : ``Language/API/F77Language.hxx`` et les tests
   ``Modules/*/Tests/F77`` montrent l'appel des mêmes services depuis le
   Fortran.
-* **Python** : ``Modules/EOS/PyAPI`` (``EOS_py.i``) expose l'API via SWIG ;
-  le module s'importe avec ``import eos_py`` (voir
-  ``Modules/EOS/Tests/Python/test_eos_py.py``).
+* **Python** : ``Modules/EOS/PyAPI`` (``EOS_py.i``) expose via SWIG un module
+  ``eos_py`` de haut niveau (classes ``EOS_py``, ``EOS_IGen_py``,
+  ``EOS_Mixing_py``) ; voir :doc:`usage/python`.
 * **IHM** : ``Modules/EOS_IHM`` fournit une application PyQt de tracé des
-  propriétés et un wrapper C++/SWIG dédié (``eosihm.i``), avec export MED
-  optionnel.
+  propriétés et un module SWIG dédié (``eosihm``), avec export MED
+  optionnel ; voir :doc:`modules/eos_ihm`.
