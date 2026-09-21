@@ -31,7 +31,19 @@ EOS_BINARY_DIR=$BINARY_DIR/../..
 ROOT_BINARY_DIR=$EOS_BINARY_DIR/../..
 
 #Is there anything to do ?
-if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop9WaterVapor_pt.val ]; then exit 0; fi
+# The generated Fortran depends on ENABLE_OPENMP: with it on, the plugin's
+# COMMON blocks are made threadprivate and THREAD_NUM_RP9() returns
+# omp_get_thread_num(), which is what EOS_Refprop9::callSetupInitial() relies
+# on to replicate them per thread. Skipping on the presence of a test fixture
+# alone meant that turning OpenMP on in an existing build tree left the
+# openmp=0 sources in place while everything was compiled with -fopenmp: every
+# thread then reported itself as thread 0, the per-thread addresses were never
+# filled in, and the first memcpy over them segfaulted. So the mode is stamped
+# and the work is redone when it changes.
+STAMP=$BINARY_DIR/.pre_configure_mode
+WANTED="openmp=$ENABLE_OPENMP"
+if [ -f $EOS_BINARY_DIR/Tests/C++/Refprop9WaterVapor_pt.val ] \
+   && [ -f "$STAMP" ] && [ "$(cat "$STAMP")" = "$WANTED" ]; then exit 0; fi
 
 # ----------------------------------------
 # Sanity Check
@@ -169,4 +181,9 @@ else
 fi
 
 # ----------------------------------------
+# Records what this run was configured for, so the guard above can tell a
+# rerun that needs redoing from one that does not.
+mkdir -p $BINARY_DIR
+echo "openmp=$ENABLE_OPENMP" > $BINARY_DIR/.pre_configure_mode
+
 exit 0

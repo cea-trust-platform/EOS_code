@@ -20,16 +20,138 @@
  */
 
 #include "EOS_Ipp.hxx"
+#include "EOS_Ipp_TileCache.hxx"
+#include "EOS_Ipp_BicubicProps.hxx"
 #include "EOS/API/EOS.hxx"
 #include "EOS/API/EOS_Field.hxx"
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Config.hxx"
+#include <cmath>
 #include <fstream>
-#include <iostream> // pour std::cerr
-#include <set>
+#include <iostream> // for std::cerr
 #include <string>
 #include <vector>
-#define DBL_EPSILON 1e-9
+// How far outside a boundary a point may be and still count as on it. Used on
+// two different things: on p and h in their own units, where 1e-9 is far below
+// anything the data resolves and the test is an equality in all but name, and
+// on the unit-square coordinates of the inversion, where it is a genuine
+// tolerance. Both readings want the same number, so they share one.
+//
+// This was called DBL_EPSILON, redefining the one in <cfloat> seven orders of
+// magnitude coarser for the whole translation unit. Two other files did the
+// same; one of them, EOS_IGen_QI.cxx, silently turned every quality limit
+// tighter than 1e-9 into no limit at all before it was found.
+#define IPP_BOUND_TOL 1e-9
+
+namespace
+{
+  // Real roots of c3*x^3 + c2*x^2 + c1*x + c0 = 0, returned in ascending order.
+  // Used by the bicubic h(p,T) inversion (the per-cell equation T(p,h) = T is
+  // cubic in h at fixed p).
+  //
+  // Closed form (Cardano, trigonometric method for the three-real-root case);
+  // a leading coefficient is treated as zero when negligible w.r.t. the largest
+  // coefficient magnitude, degrading gracefully to the quadratic/linear case
+  // (the linear case is exactly the bilinear inversion equation). A fully
+  // degenerate equation (all coefficients negligible: e.g. saturation plateau
+  // where T does not depend on h) reports no isolated root. Each closed-form
+  // root is polished by a residual-guarded Newton step to reduce roundoff.
+  // Returns the number of real roots stored in roots[] (0 to 3).
+  int cubic_real_roots(double c3, double c2, double c1, double c0, double roots[3])
+  {
+    double scale = fabs(c3);
+    if (fabs(c2) > scale) scale = fabs(c2);
+    if (fabs(c1) > scale) scale = fabs(c1);
+    if (fabs(c0) > scale) scale = fabs(c0);
+    if (scale <= 0.)
+      return 0;
+    const double eps_coef = 1.e-12 * scale;
+
+    int nb = 0;
+    if (fabs(c3) <= eps_coef)
+    {
+      if (fabs(c2) <= eps_coef)
+      {
+        // Linear equation: c1*x + c0 = 0
+        if (fabs(c1) <= eps_coef)
+          return 0; // constant equation: no isolated root
+        roots[nb++] = -c0 / c1;
+      }
+      else
+      {
+        // Quadratic equation: numerically stable form avoiding cancellation
+        double disc = c1 * c1 - 4. * c2 * c0;
+        if (disc < 0.)
+          return 0;
+        double sq = sqrt(disc);
+        double q = -0.5 * (c1 + (c1 >= 0. ? sq : -sq));
+        roots[nb++] = q / c2;
+        roots[nb++] = (fabs(q) > 0.) ? c0 / q : q / c2;
+      }
+    }
+    else
+    {
+      // General cubic: normalize to monic form, then depress with x = y - a/3
+      double a = c2 / c3, b = c1 / c3, c = c0 / c3;
+      double pdep = b - a * a / 3.;
+      double qdep = 2. * a * a * a / 27. - a * b / 3. + c;
+      double shift = -a / 3.;
+      double delta = 0.25 * qdep * qdep + pdep * pdep * pdep / 27.;
+
+      if (delta > 0.)
+      {
+        // One real root (Cardano)
+        double sq = sqrt(delta);
+        roots[nb++] = cbrt(-0.5 * qdep + sq) + cbrt(-0.5 * qdep - sq) + shift;
+      }
+      else if (pdep < 0.)
+      {
+        // Three real roots (possibly repeated): trigonometric method
+        double r = 2. * sqrt(-pdep / 3.);
+        double arg = 3. * qdep / (pdep * r);
+        if (arg > 1.) arg = 1.;
+        if (arg < -1.) arg = -1.;
+        double theta = acos(arg) / 3.;
+        const double two_pi_3 = 2. * M_PI / 3.;
+        roots[nb++] = r * cos(theta) + shift;
+        roots[nb++] = r * cos(theta - two_pi_3) + shift;
+        roots[nb++] = r * cos(theta + two_pi_3) + shift;
+      }
+      else
+      {
+        // delta <= 0 with pdep >= 0 forces pdep = qdep = 0: triple root
+        roots[nb++] = shift;
+      }
+    }
+
+    // Newton polish (kept only if it reduces the residual)
+    for (int i = 0; i < nb; i++)
+    {
+      double x = roots[i];
+      double fx = ((c3 * x + c2) * x + c1) * x + c0;
+      double dfx = (3. * c3 * x + 2. * c2) * x + c1;
+      if (fabs(dfx) > 0.)
+      {
+        double xn = x - fx / dfx;
+        double fxn = ((c3 * xn + c2) * xn + c1) * xn + c0;
+        if (fabs(fxn) < fabs(fx))
+          roots[i] = xn;
+      }
+    }
+
+    // Ascending order (at most 3 values)
+    for (int i = 0; i < nb - 1; i++)
+      for (int j = i + 1; j < nb; j++)
+        if (roots[j] < roots[i])
+        {
+          double tmp = roots[i];
+          roots[i] = roots[j];
+          roots[j] = tmp;
+        }
+
+    return nb;
+  }
+}
 
 namespace NEPTUNE_EOS
 {
@@ -64,11 +186,15 @@ namespace NEPTUNE_EOS
     return tablename;
   }
 
-  EOS_Ipp::EOS_Ipp() : r1_val(20, std::vector<double>(30, 0.0)),
-                       r2_val(20, std::vector<double>(30, 0.0)),
-                       nodes(3),
+  // r1_val / r2_val start empty and are sized by compute_() to the batch it is
+  // actually given. They used to be born 20x30 and indexed by [property][point]
+  // without a check, so any batch above 30 points or 20 properties wrote past
+  // them -- and a tiled database paid those 4800 doubles once per resident
+  // tile, for a debug path a tile never takes.
+  EOS_Ipp::EOS_Ipp() : nodes(3),
                        med_file("none"),
                        save_bound(0),
+                       interp_method(BILINEAR),
                        nodes_ph(2),
                        nodes_sat(1),
                        nodes_lim(1),
@@ -90,6 +216,30 @@ namespace NEPTUNE_EOS
     {
       delete obj_fluid;
     }
+
+    // Same idea for the fallback: points quietly served by the reference model
+    // are the difference between "the interpolator is slow" and "the
+    // interpolator is barely being used", and nothing else says which.
+    if (nb_fallback_points_ > 0 && getenv("EOS_IPP_FALLBACK_STATS") != nullptr)
+      cerr << "EOS_Ipp fallback [" << med_file.aschar() << "] : "
+           << nb_fallback_points_ << " point(s) computed by the reference model" << endl;
+
+    // Opt-in one-line report: without it, a run whose tile budget is far too
+    // small for its access pattern just looks slow, with nothing pointing at
+    // the cache. nb_loads far above nb_resident is the signature.
+    if (tile_cache_ != nullptr && getenv("EOS_IPP_TILE_CACHE_STATS") != nullptr)
+    {
+      const std::size_t mb = 1024u * 1024u;
+      cerr << "EOS_Ipp tile cache [" << med_file.aschar() << "] : "
+           << tile_cache_->nb_resident() << " tile(s) resident ("
+           << tile_cache_->resident_bytes() / mb << " MB";
+      if (tile_cache_->budget_bytes() > 0)
+        cerr << " of " << tile_cache_->budget_bytes() / mb << " MB budget";
+      cerr << "), " << tile_cache_->nb_loads() << " load(s), "
+           << tile_cache_->nb_evictions() << " eviction(s)" << endl;
+    }
+
+    delete tile_cache_;
   }
 
   static RegisteredClass &EOS_Ipp_create()
@@ -117,11 +267,175 @@ namespace NEPTUNE_EOS
     return (Types_Info::instance())[type_Id];
   }
 
+  // Extracts an optional ":bicubic"/":bilinear" suffix appended to the file name
+  // (e.g. "raffinement_local_Cathare2:bicubic"), so callers can pick the
+  // interpolation method through the usual EOS("EOS_Ipp", "...") factory string.
+  // By default , the interpolation method is BICUBIC.
+  namespace
+  {
+    // "512MB" / "2GB" / "1048576" (plain number = bytes) -> bytes, 0 if unparsable.
+    std::size_t parse_byte_size(const std::string &text)
+    {
+      char *end = nullptr;
+      const double value = strtod(text.c_str(), &end);
+      if (end == text.c_str() || !(value > 0.))
+        return 0;
+
+      std::string unit(end);
+      for (char &c : unit)
+        c = (char)toupper((unsigned char)c);
+
+      double scale = 1.;
+      if (unit == "K" || unit == "KB")      scale = 1024.;
+      else if (unit == "M" || unit == "MB") scale = 1024. * 1024.;
+      else if (unit == "G" || unit == "GB") scale = 1024. * 1024. * 1024.;
+      else if (!unit.empty())               return 0;
+
+      return (std::size_t)(value * scale);
+    }
+  }
+
+  void EOS_Ipp::extract_init_options(AString &file_name)
+  {
+    interp_method = BICUBIC;
+
+    // Defaults from the environment, so a budget can be imposed on a host code
+    // that hard-codes its reference name. An explicit option overrides them.
+    if (const char *env = getenv("EOS_IPP_TILE_CACHE"))
+    {
+      const std::size_t bytes = parse_byte_size(env);
+      if (bytes > 0)
+        tile_cache_bytes_ = bytes;
+      else
+        cerr << "EOS_Ipp::init : cannot parse EOS_IPP_TILE_CACHE=\"" << env
+             << "\" (expected e.g. 512MB), ignored" << endl;
+    }
+
+    std::string full(file_name.aschar());
+    const std::size_t first = full.find(':');
+    if (first == std::string::npos)
+      return;
+
+    const std::string bare = full.substr(0, first);
+    std::string rest = full.substr(first + 1);
+
+    while (!rest.empty())
+    {
+      const std::size_t sep = rest.find(':');
+      const std::string option = rest.substr(0, sep);
+      rest = (sep == std::string::npos) ? std::string() : rest.substr(sep + 1);
+      if (option.empty())
+        continue;
+
+      if (option == "bicubic")
+        interp_method = BICUBIC;
+      else if (option == "bilinear")
+        interp_method = BILINEAR;
+      else if (option.compare(0, 6, "cache=") == 0)
+      {
+        const std::size_t bytes = parse_byte_size(option.substr(6));
+        if (bytes > 0)
+          tile_cache_bytes_ = bytes;
+        else
+          cerr << "EOS_Ipp::init : cannot parse option \"" << option
+               << "\" (expected e.g. cache=512MB), ignored" << endl;
+      }
+      else if (option.compare(0, 6, "tiles=") == 0)
+      {
+        const long n = atol(option.substr(6).c_str());
+        if (n > 0)
+          tile_cache_tiles_ = (std::size_t)n;
+        else
+          cerr << "EOS_Ipp::init : cannot parse option \"" << option
+               << "\" (expected e.g. tiles=64), ignored" << endl;
+      }
+      else
+        cerr << "EOS_Ipp::init : unknown option \"" << option << "\" in reference name \""
+             << full << "\", ignored" << endl;
+    }
+
+    file_name = AString(bare.c_str());
+  }
+
+  std::size_t EOS_Ipp::approximate_footprint_bytes() const
+  {
+    // Each array below is a Language object with its own allocation, header
+    // and registry slot on top of its payload. Counting the payload alone
+    // understated a loaded tile's real resident size by about 3x, which for a
+    // memory budget is the dangerous direction to be wrong in, so a constant
+    // per-array term is added. Measured against the process RSS over 100
+    // resident tiles this brings the estimate from 3.1x low to 1.3x low, the
+    // remainder being allocator fragmentation that belongs to no tile in
+    // particular. It is an estimate, not an allocator query: expect a tiled
+    // database to sit somewhat above the byte budget it was given, not below.
+    const std::size_t PER_ARRAY_OVERHEAD = 96;
+    std::size_t bytes = sizeof(EOS_Ipp);
+    std::size_t nb_arrays = 0;
+
+    for (int i = 0; i < nodes_ph.size(); i++)
+      { bytes += (std::size_t)nodes_ph[i].size() * sizeof(double); nb_arrays++; }
+    for (int i = 0; i < nodes_sat.size(); i++)
+      { bytes += (std::size_t)nodes_sat[i].size() * sizeof(double); nb_arrays++; }
+    for (int i = 0; i < nodes_lim.size(); i++)
+      { bytes += (std::size_t)nodes_lim[i].size() * sizeof(double); nb_arrays++; }
+    for (int i = 0; i < val_prop_properties.size(); i++)
+      { bytes += (std::size_t)val_prop_properties[i].size() * sizeof(double); nb_arrays++; }
+
+    bytes += (std::size_t)(corners.size() + fnodes2phnodes.size()
+                           + fnodes2pnodes.size() + fnodes2pnodes_lim.size()
+                           + connect_ph.size() + index_conn_ph.size()
+                           + connect_sat.size() + connect_lim.size()) * sizeof(int);
+    nb_arrays += 8;
+
+    bytes += (std::size_t)(n_p_ph.size() + n_h_ph.size() + n_p_satlim.size()) * sizeof(double);
+    nb_arrays += 3;
+
+    for (const ArrOfDouble &a : all_prop_val)
+      { bytes += (std::size_t)a.size() * sizeof(double); nb_arrays++; }
+    for (const ArrOfInt &a : all_err_val)
+      { bytes += (std::size_t)a.size() * sizeof(int); nb_arrays++; }
+
+    // The per-cell / per-segment error fields, one array per loaded property.
+    for (const EOS_Error_Field *f : err_cell_ph)
+      if (f) { bytes += (std::size_t)f->size() * sizeof(int); nb_arrays++; }
+    for (const EOS_Error_Field *f : err_segm_sat)
+      if (f) { bytes += (std::size_t)f->size() * sizeof(int); nb_arrays++; }
+    for (const EOS_Error_Field *f : err_segm_lim)
+      if (f) { bytes += (std::size_t)f->size() * sizeof(int); nb_arrays++; }
+
+    // The r1_val/r2_val scratch grids are per instance, so on a tiled database
+    // they would be paid once per resident tile. They are empty unless
+    // compute_() was called, which for a tile it never is, but they are still
+    // counted: an instance that does take that path should see its cost.
+    for (const std::vector<double> &row : r1_val)
+      bytes += row.capacity() * sizeof(double) + sizeof(std::vector<double>);
+    for (const std::vector<double> &row : r2_val)
+      bytes += row.capacity() * sizeof(double) + sizeof(std::vector<double>);
+
+    // Pointer/handle vectors kept alongside the payload.
+    bytes += (err_cell_ph.capacity() + err_segm_sat.capacity() + err_segm_lim.capacity())
+             * sizeof(void *);
+
+    return bytes + nb_arrays * PER_ARRAY_OVERHEAD;
+  }
+
+  bool EOS_Ipp::get_tile_cache_stats(std::size_t &nb_resident, std::size_t &nb_loads,
+                                      std::size_t &nb_evictions, std::size_t &resident_bytes) const
+  {
+    if (tile_cache_ == nullptr)
+      return false;
+
+    nb_resident    = tile_cache_->nb_resident();
+    nb_loads       = tile_cache_->nb_loads();
+    nb_evictions   = tile_cache_->nb_evictions();
+    resident_bytes = tile_cache_->resident_bytes();
+    return true;
+  }
+
   int EOS_Ipp::init(const Strings &strings)
   {
     AString desc_err;
     FluidStr = AString("unknown");
-    EOS_Error errM;
     int sz = strings.size();
     if (sz != 1)
     {
@@ -132,17 +446,35 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
     }
 
-    // directory {DATA}/EOS_Ipp : med_file
+    // directory {DATA}/EOS_Ipp : med_file (or tiled-database manifest)
     AString &file_name = strings[0];
+    extract_init_options(file_name);
     if (iret_eos_data_dir)
       return EOS_Error::error;
-    med_file = eos_data_dir.c_str();
-    med_file += "/EOS_Ipp/";
-    med_file += file_name;
+
+    if (EOS_Ipp_TileIndex::is_manifest(std::string(file_name.aschar())))
+      return init_tiled(file_name, Strings());
+
+    AString path = eos_data_dir.c_str();
+    path += "/EOS_Ipp/";
+    path += file_name;
+    return load_from_med_path(path);
+  }
+
+  // Historical, eager, whole-database loading body of init(const Strings&),
+  // factored out so EOS_Ipp_TileCache can reuse it, unmodified, to load one
+  // tile of a tiled database (cf. init()'s ".eosmm" manifest detection).
+  EOS_Error EOS_Ipp::load_from_med_path(const AString &full_med_path, const Strings &properties)
+  {
+    EOS_Error errM;
+    med_file = full_med_path;
 
     // get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med
+    AString base_name = full_med_path;
+    char *raw = base_name.aschar();
+    char *slash = strrchr(raw, '/');
     char *save_pt;
-    method = strtok_r(file_name.aschar(), ".", &save_pt);
+    method = strtok_r(slash ? slash + 1 : raw, ".", &save_pt);
     reference = strtok_r(NULL, ".", &save_pt);
 
     if (method == "eos_igen_qi")
@@ -158,7 +490,7 @@ namespace NEPTUNE_EOS
     {
       cerr << "Error : Open med file" << endl;
       cerr << "Error : EOS_Med::read_File" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
@@ -167,7 +499,7 @@ namespace NEPTUNE_EOS
     if (errM != EOS_Error::good)
     {
       cerr << "Error : EOS_Med::read_header" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
     AString hh = strtok(header.aschar(), ":");
@@ -177,15 +509,20 @@ namespace NEPTUNE_EOS
     errM = load_med_nodes(med);
     if (errM != EOS_Error::good)
     {
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
-    errM = load_med_champ(med);
+    // Reading the property fields is what a .med load actually spends its time
+    // in (MEDfieldValueAdvancedRd and MEDfilterClose dominate the profile), so
+    // an explicit property list is worth honouring: it is the difference
+    // between paying for every field a tile carries and paying for the ones
+    // the host code asked for.
+    errM = (properties.size() > 0) ? load_med_champ(med, properties) : load_med_champ(med);
     if (errM != EOS_Error::good)
     {
       cerr << "Error : EOS_Ipp::load_med_champ" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
@@ -195,16 +532,75 @@ namespace NEPTUNE_EOS
     {
       cerr << "Error : Close med file" << endl;
       cerr << "Error : EOS_Med::close_File" << endl;
-      cerr << "Error : EOS_Ipp::init" << endl;
+      cerr << "Error : EOS_Ipp::load_from_med_path" << endl;
       return errM;
     }
 
     // pretraitements (2D)
     if (index_conn_ph.size() != 0)
       f_mesh2r_mesh();
-    
+
     if( connect_sat.size() != 0)
       f_mesh1r_mesh();
+
+    // Last, so it can point at corners and at every property array in their
+    // final position (cf. build_prop_plans).
+    build_prop_plans();
+    build_cell_T_ranges(); // needs the plans it has just built
+    return EOS_Error::ok;
+  }
+
+  // Tiled-database ("streaming") mode: file_name refers to an ".eosmm"
+  // manifest instead of a single .med file. Rather than loading a whole
+  // database eagerly like load_from_med_path(), this builds an
+  // EOS_Ipp_TileCache that lazily loads only the (p,h) tiles later actually
+  // queried through compute_prop_ph/compute_prop_p/compute_h_pT -- cf. the
+  // guards at the top of those three methods, the only places tile_cache_
+  // is consulted. The global (p,h,T) bounds are read from the manifest so
+  // that get_p_min()/get_p_max()/... (unchanged, they just read pmin/pmax/
+  // ...) keep reporting the domain of the whole tiled database, not of
+  // whichever tile happened to be loaded last.
+  int EOS_Ipp::init_tiled(AString file_name, const Strings &properties)
+  {
+    AString path = eos_data_dir.c_str();
+    path += "/EOS_Ipp/";
+    path += file_name;
+
+    med_file = path; // so error messages and the cache report name the database
+
+    std::vector<std::string> wanted;
+    wanted.reserve((std::size_t)properties.size());
+    for (int k = 0; k < properties.size(); k++)
+      wanted.push_back(std::string(properties[k].aschar()));
+
+    const std::string suffix = (interp_method == BICUBIC) ? "bicubic" : "bilinear";
+    tile_cache_ = new EOS_Ipp_TileCache(std::string(path.aschar()), suffix,
+                                        tile_cache_bytes_, tile_cache_tiles_, wanted);
+    if (!tile_cache_->is_valid())
+    {
+      cerr << "Error : EOS_Ipp::init : invalid tiled database manifest " << path.aschar() << endl;
+      delete tile_cache_;
+      tile_cache_ = nullptr;
+      return EOS_Error::error;
+    }
+
+    const EOS_Ipp_TileIndex &idx = tile_cache_->index();
+    pmin = idx.pmin();
+    pmax = idx.pmax();
+    hmin = idx.hmin();
+    hmax = idx.hmax();
+    tmin = idx.tmin();
+    tmax = idx.tmax();
+    pcrit = idx.pcrit();
+    hcrit = idx.hcrit();
+    tcrit = idx.tcrit();
+    pmin_ipp = pmin_cpt = pmin;
+    pmax_ipp = pmax_cpt = pmax;
+    hmin_ipp = hmin_cpt = hmin;
+    hmax_ipp = hmax_cpt = hmax;
+    tmin_ipp = tmin_cpt = tmin;
+    tmax_ipp = tmax_cpt = tmax;
+
     return EOS_Error::ok;
   }
 
@@ -241,6 +637,15 @@ namespace NEPTUNE_EOS
     med_file += "/EOS_Ipp/";
     // file : med_file
     AString &file_name = strings[0];
+    extract_init_options(file_name);
+
+    // A ".eosmm" manifest selects the tiled path here too, so a tiled database
+    // can be opened for a subset of properties just like a single-file one --
+    // where it matters more, the saving being paid on every tile load rather
+    // than once.
+    if (EOS_Ipp_TileIndex::is_manifest(std::string(file_name.aschar())))
+      return init_tiled(file_name, values);
+
     med_file += file_name;
 
     // get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med
@@ -286,6 +691,11 @@ namespace NEPTUNE_EOS
 
     if( connect_sat.size() != 0)
       f_mesh1r_mesh();
+
+    // Last, so it can point at corners and at every property array in their
+    // final position (cf. build_prop_plans).
+    build_prop_plans();
+    build_cell_T_ranges(); // needs the plans it has just built
     return EOS_Error::ok;
   }
 
@@ -308,12 +718,31 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
+  // Grows the compute_() debug grids to hold nb_prop x nb_pts, keeping
+  // whatever they already had. Only ever called from compute_(), which is a
+  // debug path: an EOS_Ipp that never takes it keeps them empty.
+  void EOS_Ipp::resize_debug_grids(int nb_prop, int nb_pts) const
+  {
+    if ((int)r1_val.size() < nb_prop)
+    {
+      r1_val.resize((std::size_t)nb_prop);
+      r2_val.resize((std::size_t)nb_prop);
+    }
+    for (int i = 0; i < nb_prop; i++)
+    {
+      if ((int)r1_val[(std::size_t)i].size() < nb_pts)
+        r1_val[(std::size_t)i].resize((std::size_t)nb_pts, 0.);
+      if ((int)r2_val[(std::size_t)i].size() < nb_pts)
+        r2_val[(std::size_t)i].resize((std::size_t)nb_pts, 0.);
+    }
+  }
+
   EOS_Error EOS_Ipp::compute_(const EOS_Field &pp,
                               const EOS_Field &hh,
                               EOS_Fields &r,
                               EOS_Error_Field &errfield) const
   {
-    if (save_bound == 1) // a ne faire qu'une seule fois
+    if (save_bound == 1) // to be done only once
     {
       hmin_cpt = 100000.;
       hmax_cpt = 0.;
@@ -347,21 +776,23 @@ namespace NEPTUNE_EOS
         hmax_cpt = max(hmax_cpt, hh.get_data()[pts]);
       }
     }
-    // std::vector<std::vector<double>> r1_val; // defined with size 20*30
-    // std::vector<std::vector<double>> r2_val; // defined with size 20*30
+    // Sized to the batch actually received. These were fixed at 20x30 and
+    // indexed by [property][point] with no check, so a batch of more than 30
+    // points -- which is any real one -- wrote past the end of every row.
+    resize_debug_grids(r.size(), pp.size());
 
-    // EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield); // debug : la calcul tourne t'il tjr ?
+    // EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield); // debug: does the computation still run?
     EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
-    // Remplissage de r1_val et r2_val
+    // Filling r1_val and r2_val
     for (int pts = 0; pts < pp.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
-        r1_val[prop][pts] = r[prop].get_data()[pts]; // debug : la calcul tourne t'il tjr ?
+        r1_val[prop][pts] = r[prop].get_data()[pts]; // debug: does the computation still run?
     // EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
     EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield);
     for (int pts = 0; pts < pp.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
         r2_val[prop][pts] = r[prop].get_data()[pts];
-    // calcul de l'erreur pour chaque prop et pts et renvoie du max
+    // compute the error for each prop and pts, and return the max
     double err_ipp_rp = 0;
     int propmax = 0;
     if (err == EOS_Error::good && err2 == EOS_Error::good)
@@ -390,7 +821,7 @@ namespace NEPTUNE_EOS
           propmax = prop;
         }
       }
-      std::cout << " Number of prop :  " << r.size() << " Number of calcul : " << pp.size() << endl;
+      std::cout << " Number of prop :  " << r.size() << " Number of computations : " << pp.size() << endl;
       std::cout << "The error is " << err_ipp_rp << " for " << r[propmax].get_property_name() << endl;
     }
     else
@@ -406,7 +837,7 @@ namespace NEPTUNE_EOS
                               EOS_Error_Field &errfield) const
   {
 
-    // Affichage des bornes à chaque calcul
+    // Displaying the bounds at each calculation
     std::cout << "The min and max of the calculations are:" << endl;
     std::cout << "pmin: " << pmin_cpt << endl;
     std::cout << "pmax: " << pmax_cpt << endl;
@@ -416,8 +847,10 @@ namespace NEPTUNE_EOS
       pmin_cpt = min(pmin_cpt, p.get_data()[pts]);
       pmax_cpt = max(pmax_cpt, p.get_data()[pts]);
     }
+    resize_debug_grids(r.size(), p.size()); // cf. the (p,h) overload above
+
     EOS_Error err = EOS_Fluid::compute(p, r, errfield);
-    // Remplissage de r1_val et r2_val
+    // Filling r1_val and r2_val
     for (int pts = 0; pts < p.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
         r1_val[prop][pts] = r[prop].get_data()[pts];
@@ -425,7 +858,7 @@ namespace NEPTUNE_EOS
     for (int pts = 0; pts < p.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
         r2_val[prop][pts] = r[prop].get_data()[pts];
-    // calcul de l'erreur pour chaque prop et pts et renvoie du max
+    // compute the error for each prop and pts, and return the max
     double err_ipp_rp = 0;
     int propmax = 0;
     for (int prop = 0; prop < r.size(); prop++)
@@ -444,25 +877,288 @@ namespace NEPTUNE_EOS
     return err2;
   }
 
+  // Tiled mode: computes the batch with its points regrouped by tile, so each
+  // tile is used for all of its points in one go instead of being revisited
+  // as the batch wanders across the (p,h) plane.
+  //
+  // Only the *order* changes -- the permuted fields go through exactly the
+  // same EOS_Fluid::compute dispatch, and results are scattered back -- so
+  // every property kind keeps working and every value is unchanged.
+  //
+  // Worth doing only when the batch touches more tiles than the budget can
+  // hold: otherwise every tile stays resident anyway and the permutation is
+  // pure cost. Returns false when it decided not to, leaving the caller to
+  // run the batch as it came.
+  bool EOS_Ipp::compute_tiled_regrouped(const EOS_Field &pp, const EOS_Field &hh,
+                                         EOS_Fields &r, EOS_Error_Field &errfield,
+                                         EOS_Error &result) const
+  {
+    const int sz = pp.size();
+    const int nb_tiles = tile_cache_->index().nb_tiles();
+    if (sz < 2 || nb_tiles < 2)
+      return false;
+
+    // Which tile each point falls in; nb_tiles is the bucket for the points
+    // that fall outside the tiled domain, which must keep their place in the
+    // batch so their error code still lands on the right index.
+    std::vector<int> bucket((std::size_t)sz);
+    std::vector<int> count((std::size_t)nb_tiles + 1, 0);
+    int nb_distinct = 0;
+    for (int i = 0; i < sz; i++)
+    {
+      const int tile_id = tile_cache_->index().locate(pp[i], hh[i]);
+      const int b = (tile_id < 0) ? nb_tiles : tile_id;
+      bucket[(std::size_t)i] = b;
+      if (count[(std::size_t)b]++ == 0)
+        nb_distinct++;
+    }
+
+    // Skip the reordering only when the batch is known to fit: an unknown
+    // capacity (nothing loaded yet, so no idea what a tile costs) means
+    // regrouping, because the two mistakes are not symmetric. Regrouping a
+    // batch that would have fitted was measured at worst a couple of percent,
+    // and often slightly faster for the locality; not regrouping one that
+    // does not fit costs two orders of magnitude.
+    const std::size_t capacity = tile_cache_->estimated_capacity_tiles();
+    if (capacity != 0 && (std::size_t)nb_distinct <= capacity)
+      return false;
+
+    // Counting sort: tile ids are dense and small, so this is one more pass.
+    std::vector<int> offset((std::size_t)nb_tiles + 2, 0);
+    for (int b = 0; b <= nb_tiles; b++)
+      offset[(std::size_t)b + 1] = offset[(std::size_t)b] + count[(std::size_t)b];
+    std::vector<int> order((std::size_t)sz);
+    {
+      std::vector<int> cursor(offset);
+      for (int i = 0; i < sz; i++)
+        order[(std::size_t)cursor[(std::size_t)bucket[(std::size_t)i]]++] = i;
+    }
+
+    ArrOfDouble p_sorted(sz), h_sorted(sz);
+    for (int k = 0; k < sz; k++)
+    {
+      p_sorted[k] = pp[order[(std::size_t)k]];
+      h_sorted[k] = hh[order[(std::size_t)k]];
+    }
+    EOS_Field p_field(pp.get_property_title().aschar(), pp.get_property_name().aschar(),
+                      pp.get_property_number(), p_sorted);
+    EOS_Field h_field(hh.get_property_title().aschar(), hh.get_property_name().aschar(),
+                      hh.get_property_number(), h_sorted);
+
+    const int nb_out = r.size();
+    std::vector<ArrOfDouble> out_data((std::size_t)nb_out);
+    EOS_Fields out(nb_out);
+    for (int f = 0; f < nb_out; f++)
+    {
+      out_data[(std::size_t)f].resize(sz);
+      out[f] = EOS_Field(r[f].get_property_title().aschar(), r[f].get_property_name().aschar(),
+                         r[f].get_property_number(), out_data[(std::size_t)f]);
+    }
+    ArrOfInt err_data(sz);
+    EOS_Error_Field err_sorted(err_data);
+
+    result = EOS_Fluid::compute(p_field, h_field, out, err_sorted);
+
+    for (int k = 0; k < sz; k++)
+    {
+      const int i = order[(std::size_t)k];
+      for (int f = 0; f < nb_out; f++)
+        r[f][i] = out[f][k];
+      errfield.set(i, err_sorted[k]);
+    }
+    return true;
+  }
+
+  // True when this batch is a (p,T) request worth inverting h once for, and
+  // fills p_field/T_field with the two inputs in a known order.
+  //
+  // EOS_Fluid::compute loops over the output fields on the outside and the
+  // points on the inside, and its single-field overload re-derives h(p,T) for
+  // every one of them. Asking a (p,T) batch for rho, cp, mu, lambda and two
+  // derivatives therefore runs the inversion six times per point -- and on
+  // this class an inversion is not a formula but a scan of every cell in the
+  // p-column, twice over when the saturation check has to scan as well.
+  //
+  // Declining is deliberate in two cases. With fewer than two outputs there is
+  // nothing to share, so the historical path stays bit-identical. And when h
+  // itself is among the outputs, EOS_Fluid handles it through a branch that
+  // only exists while lt == 1 (it returns the inversion straight into the
+  // result field); handing it a (p,h) pair instead would make it report
+  // NOT_IMPLEMENTED. That request is a one-field request in practice, i.e.
+  // exactly the case with nothing to gain.
+  bool EOS_Ipp::hoistable_h_pT(const EOS_Field &pp, const EOS_Field &hh,
+                               const EOS_Fields &r,
+                               const EOS_Field *&p_field, const EOS_Field *&T_field) const
+  {
+    if (r.size() < 2)
+      return false;
+
+    const int a = pp.get_property_number();
+    const int b = hh.get_property_number();
+    if (a == NEPTUNE::p && b == NEPTUNE::T)      { p_field = &pp; T_field = &hh; }
+    else if (a == NEPTUNE::T && b == NEPTUNE::p) { p_field = &hh; T_field = &pp; }
+    else
+      return false;
+
+    for (int f = 0; f < r.size(); f++)
+      if (r[f].get_property_number() == NEPTUNE::h)
+        return false;
+
+    return true;
+  }
+
+  // Said once per process, not once per failing batch. There is nothing the
+  // caller can do differently on the second occurrence, and a solver that
+  // touches the edge of the domain every timestep printed this on every one
+  // of them.
+  static void warn_no_reference_model()
+  {
+    static bool said = false;
+    if (said)
+      return;
+    said = true;
+    cerr << "EOS_Ipp: some points could not be interpolated and no reference model is "
+         << "attached to fall back on; call init_model() if you want them computed."
+         << endl;
+  }
+
+  // Whole-batch fallback, kept as an escape hatch: EOS_IPP_FALLBACK=batch
+  // restores the historical behaviour of handing the entire batch to the
+  // reference model as soon as one point fails.
+  static bool fallback_whole_batch()
+  {
+    static const bool whole = []() {
+      const char *env = getenv("EOS_IPP_FALLBACK");
+      return env != nullptr && std::string(env) == "batch";
+    }();
+    return whole;
+  }
+
+  // Recomputes with the reference model only the points the interpolator could
+  // not answer.
+  //
+  // This used to hand the whole batch over the moment a single point failed,
+  // which has two problems. The cost is the obvious one: one point out of
+  // domain in a batch of 100000 made the reference model run 100000 times, so
+  // the interpolator ended up slower than the model it exists to replace,
+  // having paid for both. The other is that it made a point's result depend on
+  // its neighbours in the batch -- the same (p,h) returned an interpolated
+  // value or a reference one depending on whether some unrelated point in the
+  // same array happened to be out of bounds.
+  //
+  // hh is null for the 1D (p) overload. The compaction is the one
+  // compute_tiled_regrouped already uses, minus the sorting.
+  EOS_Error EOS_Ipp::fallback_failed_points(const EOS_Field &pp, const EOS_Field *hh,
+                                            EOS_Fields &r, EOS_Error_Field &errfield) const
+  {
+    const int sz = pp.size();
+    std::vector<int> bad;
+    for (int i = 0; i < sz; i++)
+      if (errfield[i].generic_error() != EOS_Error::good)
+        bad.push_back(i);
+
+    if (bad.empty())
+      return errfield.find_worst_error().generic_error();
+
+    const int nb = (int)bad.size();
+    ArrOfDouble p_bad(nb), h_bad(nb);
+    for (int k = 0; k < nb; k++)
+    {
+      p_bad[k] = pp[bad[(std::size_t)k]];
+      if (hh != nullptr)
+        h_bad[k] = (*hh)[bad[(std::size_t)k]];
+    }
+    EOS_Field p_field(pp.get_property_title().aschar(), pp.get_property_name().aschar(),
+                      pp.get_property_number(), p_bad);
+
+    const int nb_out = r.size();
+    std::vector<ArrOfDouble> out_data((std::size_t)nb_out);
+    EOS_Fields out(nb_out);
+    for (int f = 0; f < nb_out; f++)
+    {
+      out_data[(std::size_t)f].resize(nb);
+      out[f] = EOS_Field(r[f].get_property_title().aschar(), r[f].get_property_name().aschar(),
+                         r[f].get_property_number(), out_data[(std::size_t)f]);
+    }
+    ArrOfInt err_bad_data(nb);
+    EOS_Error_Field err_bad(err_bad_data);
+
+    if (hh != nullptr)
+    {
+      EOS_Field h_field(hh->get_property_title().aschar(), hh->get_property_name().aschar(),
+                        hh->get_property_number(), h_bad);
+      obj_fluid->compute(p_field, h_field, out, err_bad);
+    }
+    else
+      obj_fluid->compute(p_field, out, err_bad);
+
+    for (int k = 0; k < nb; k++)
+    {
+      const int i = bad[(std::size_t)k];
+      for (int f = 0; f < nb_out; f++)
+        r[f][i] = out[f][k];
+      errfield.set(i, err_bad[k]);
+    }
+
+    nb_fallback_points_ += (std::size_t)nb;
+    return errfield.find_worst_error().generic_error();
+  }
+
   EOS_Error EOS_Ipp::compute(const EOS_Field &pp,
                              const EOS_Field &hh,
                              EOS_Fields &r,
                              EOS_Error_Field &errfield) const
   {
-    EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield);
+    EOS_Error err;
+
+    const EOS_Field *p_field = nullptr;
+    const EOS_Field *T_field = nullptr;
+    if (hoistable_h_pT(pp, hh, r, p_field, T_field))
+    {
+      // One inversion per point, then the whole batch as an ordinary (p,h)
+      // request. A point whose inversion failed carries a NaN h out of
+      // compute_h_pT, which check_ph_bounds rejects downstream exactly as it
+      // did when each output field inverted for itself -- so a failed point
+      // still leaves its result untouched and still reports the inversion
+      // error, which is folded back in below.
+      const int sz = pp.size();
+      ArrOfDouble h_data(sz);
+      ArrOfInt invert_codes(sz);
+      EOS_Error_Field invert_err(invert_codes);
+      for (int i = 0; i < sz; i++)
+        invert_err.set(i, compute_h_pT((*p_field)[i], (*T_field)[i], h_data[i]));
+
+      EOS_Field h_field("h", "h", NEPTUNE::h, h_data);
+
+      // In tiled mode this also makes the regrouping meaningful for the first
+      // time: it keys on locate(p, h), and until now a (p,T) batch handed it a
+      // temperature to look up as an enthalpy.
+      if (tile_cache_ != nullptr && compute_tiled_regrouped(*p_field, h_field, r, errfield, err))
+        ; // errfield already set by the regrouped run
+      else
+        err = EOS_Fluid::compute(*p_field, h_field, r, errfield);
+
+      errfield.set_worst_error(invert_err);
+      err = worst_generic_error(err, invert_err.find_worst_error().generic_error());
+    }
+    else if (tile_cache_ != nullptr && compute_tiled_regrouped(pp, hh, r, errfield, err))
+    {
+      if (err == EOS_Error::good)
+        return err;
+    }
+    else
+      err = EOS_Fluid::compute(pp, hh, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
-        std::cout << "Error detected : " << err << " ;";
-        std::cout << "for the pair (" << pp.get_data()[0] << "," << hh.get_data()[0] << ") " << std::endl;
-        //r.print_On(std::cout);
       if (obj_fluid == nullptr)
       {
-        std::cerr << "Error: The interpolator fluid is not initialized. To continue the calculation, call the function init_model(). " << std::endl;
+        warn_no_reference_model();
         return err;
       }
-      err = obj_fluid->compute(pp, hh, r, errfield);
+      err = fallback_whole_batch() ? obj_fluid->compute(pp, hh, r, errfield)
+                                   : fallback_failed_points(pp, &hh, r, errfield);
     }
-    // errfield = EOS_Internal_Error::OK; 
+    // errfield = EOS_Internal_Error::OK;
     return err;
   }
 
@@ -473,20 +1169,18 @@ namespace NEPTUNE_EOS
     EOS_Error err = EOS_Fluid::compute(p, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
-      std::cout <<" Erreur EOS : " << err; 
-      std::cout << "The point p= (" << p.get_data() << "), Did not produce a valid calculation. " << std::endl;
-      r.print_On(std::cout);
       if (obj_fluid == nullptr)
       {
-        std::cerr << "Error: The interpolator fluid is not initialized. To continue the calculation, call the function init_model().  " << std::endl;
+        warn_no_reference_model();
         return err;
       }
-      err = obj_fluid->compute(p, r, errfield);
+      err = fallback_whole_batch() ? obj_fluid->compute(p, r, errfield)
+                                   : fallback_failed_points(p, nullptr, r, errfield);
     }
     return err;
   }
 
-  // load de tous les champs
+  // load all fields
   EOS_Error EOS_Ipp::load_med_nodes(EOS_Med &med)
   {
     EOS_Error errM;
@@ -501,7 +1195,7 @@ namespace NEPTUNE_EOS
       return errM;
     }
 
-    // pour chaque maillage get des infos
+    // for each mesh, get info
     int nb_ns = names.size();
     for (int i = 0; i < nb_ns; i++)
     {
@@ -583,7 +1277,7 @@ namespace NEPTUNE_EOS
     return EOS_Error::good;
   }
 
-  // load de tous les champs (== toutes les proprietes presentes)
+  // load all fields (== all present properties)
   EOS_Error EOS_Ipp::load_med_champ(EOS_Med &med)
   {
     EOS_Error errM;
@@ -601,10 +1295,19 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
     }
 
-    // correction jp mars 2012 : pourquoi nb_champ/2 ??
+    // correction jp march 2012: why nb_champ/2 ??
     // int vectorsz = nb_champ/2;
     int vectorsz = nb_champ / 2 + 1;
     all_prop_val.resize(vectorsz);
+    // node_err2mesh_err() and node_err2segm_err() append to all_err_val and
+    // hand err_cell_ph / err_segm_* a field built over the element they just
+    // pushed. Sizing the vector without reserving means every push_back past
+    // that size reallocates, and each reallocation leaves every field made
+    // before it pointing at freed storage -- the error codes then read back as
+    // whatever is there now. The selective overload below reserves for exactly
+    // this reason and says so; this one never did, so the damage came and went
+    // with the number of properties a database happened to carry.
+    all_err_val.reserve((std::size_t)vectorsz + (std::size_t)nb_champ);
     all_err_val.resize(vectorsz);
     
     val_prop_properties.resize(NEPTUNE::lastLimProperty +1);
@@ -622,6 +1325,21 @@ namespace NEPTUNE_EOS
       {
         cerr << "Error : EOS_Med::get_Champ_Noeud_Infos" << endl;
         return EOS_Error::error;
+      }
+
+      // The hanging-node tables. Taken out before the property handling below,
+      // which sends every int champ to get_ErrChamp_Noeud -- and that asserts
+      // on the -1 marking "not a hanging node".
+      if (strncmp(name.aschar(), "CNT_", 4) == 0)
+      {
+        ArrOfInt tmp(nbcomp);
+        if (med.get_IntChamp_Noeud(name, tmp) == EOS_Error::good)
+        {
+          if      (strcmp(name.aschar(), "CNT_TYPE") == 0)  cnt_type_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP0") == 0)  cnt_sup0_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP1") == 0)  cnt_sup1_ = tmp;
+        }
+        continue;
       }
 
       if (type == 1) // float -> properties values
@@ -678,17 +1396,17 @@ namespace NEPTUNE_EOS
       }
     }
 
- //  std::cout << "Nom de p : " << NEPTUNE::get_property_name(NEPTUNE::p) << "\n";
-   // std::cout << "Nom de h : " << NEPTUNE::get_property_name(NEPTUNE::h) << "\n";
-    //std::cout << "Nom de T : " << NEPTUNE::get_property_name(NEPTUNE::T) << "\n";
-    //std::cout << "Nom inconnu : " << NEPTUNE::get_property_name(42) << "\n";
+ //  std::cout << "Name of p: " << NEPTUNE::get_property_name(NEPTUNE::p) << "\n";
+   // std::cout << "Name of h: " << NEPTUNE::get_property_name(NEPTUNE::h) << "\n";
+    //std::cout << "Name of T: " << NEPTUNE::get_property_name(NEPTUNE::T) << "\n";
+    //std::cout << "Unknown name: " << NEPTUNE::get_property_name(42) << "\n";
      // std::cout << "size ph: " << val_prop_properties.size() << "\n";
 
 
     return EOS_Error::good;
   }
 
-  // load selectif : uniquement les champs demandes par l'user
+  // selective load: only the fields requested by the user
   EOS_Error EOS_Ipp::load_med_champ(EOS_Med &med, const Strings &properties)
   {
     EOS_Error errM;
@@ -702,6 +1420,23 @@ namespace NEPTUNE_EOS
 
     int nb_ps = properties.size();
 
+    // Same sizing as the load-everything overload: these are indexed by
+    // EOS_Property below and by every later compute_*, so they must span the
+    // whole property range whatever subset is actually read. Without this the
+    // first val_prop_properties[prop] assigned here tripped EOS_Fields'
+    // "index<n" assertion, which is why this overload -- and with it the
+    // two-argument init(Strings, Strings) -- could not be used at all.
+    // Reserved, not just sized: node_err2mesh_err() appends to all_err_val and
+    // hands err_cell_ph a field built over the element it just pushed, so a
+    // reallocation would leave every field created before it pointing at freed
+    // storage -- which showed up as error codes read back negative.
+    all_prop_val.reserve((std::size_t)nb_champ);
+    all_err_val.reserve((std::size_t)nb_champ);
+    val_prop_properties.resize(NEPTUNE::lastLimProperty + 1);
+    err_segm_sat.resize(NEPTUNE::lastLimProperty + 1);
+    err_cell_ph.resize(NEPTUNE::lastLimProperty + 1);
+    err_segm_lim.resize(NEPTUNE::lastLimProperty + 1);
+
     for (int i = 0; i < nb_champ; i++)
     {
       AString name;
@@ -711,7 +1446,7 @@ namespace NEPTUNE_EOS
       errM = med.get_Champ_Noeud_Infos(i, name, type, nbcomp, m_ass);
 
       char namecov[PROPNAME_MSIZE];
-      eostp_strcov(name.aschar(), namecov); // namecov : base alphanumérical property
+      eostp_strcov(name.aschar(), namecov); // namecov : base alphanumerical property
 
       if (errM != EOS_Error::good)
       {
@@ -719,57 +1454,96 @@ namespace NEPTUNE_EOS
         return EOS_Error::error;
       }
 
-      if (type == 1) // float -> properties values
-      {              // get property values ?
-        int j = 0;
-        int found = 0;
-        while (j < nb_ps && !found)
+      // The hanging-node tables. They are not properties and have to be taken
+      // out before the property matching below, which sends every int champ to
+      // get_ErrChamp_Noeud -- and that asserts on the -1 marking "not a
+      // hanging node".
+      if (strncmp(name.aschar(), "CNT_", 4) == 0)
+      {
+        ArrOfInt tmp((int)nodes_ph[0].size());
+        AString cname = name;
+        if (med.get_IntChamp_Noeud(cname, tmp) == EOS_Error::good)
         {
-          if (eostp_strcmp(properties[j].aschar(), namecov) == 0)
-            found = 1;
-          j++;
+          if      (strcmp(name.aschar(), "CNT_TYPE") == 0)  cnt_type_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP0") == 0)  cnt_sup0_ = tmp;
+          else if (strcmp(name.aschar(), "CNT_SUP1") == 0)  cnt_sup1_ = tmp;
         }
-
-        if (found)
-        {
-          ArrOfDouble xval(nbcomp);
-          all_prop_val.push_back(xval);
-          EOS_Property prop = gen_property_number(namecov);
-          EOS_Field res(namecov, namecov,prop, all_prop_val[all_prop_val.size() - 1]);
-          med.get_Champ_Noeud(name, res);
-          val_prop_properties[prop] = res;
-
+        continue;
       }
 
-      else
-      { // get property values ?
-        int j = 0;
-        int found = 0;
-        while (j < nb_ps && !found)
-        {
-          if (eostp_strcmp(properties[j].aschar(), namecov) == 0)
-            found = 1;
-          j++;
-        }
+      // A property is stored as two champs: its values, named after the
+      // property, and its per-node error codes, named "IE <property>". The
+      // selection has to recognize both as belonging to the same property --
+      // matching the raw name only ever selected the value champ, so every
+      // property loaded this way ended up without the err_cell_ph entry its
+      // interpolation needs, and computing it returned nothing.
+      AString base_name = name;
+      if (type != 1 && name[0] == 'I' && name[1] == 'E')
+      { // "IE propname" --> "propname"
+        base_name.remove(0);
+        base_name.remove(0);
+        base_name.remove(0);
+      }
+      char basecov[PROPNAME_MSIZE];
+      eostp_strcov(base_name.aschar(), basecov);
 
-        if (found)
-        {
-          ArrOfInt err(nbcomp);
-          EOS_Error_Field errf(err);
+      int j = 0;
+      int found = 0;
+      while (j < nb_ps && !found)
+      {
+        if (eostp_strcmp(properties[j].aschar(), basecov) == 0)
+          found = 1;
+        j++;
+      }
+      if (!found)
+        continue;
 
-          med.get_ErrChamp_Noeud(name, errf);
-         
-          errf.set_name(namecov);
-          EOS_Property prop = gen_property_number(namecov);
-          if (m_ass == "ph_domain")
-            node_err2mesh_err(prop,errf);
-          else if (m_ass == "sat_domain")
-            node_err2segm_err(prop,errf, 0);
-          else if (m_ass == "lim_domain")
-            node_err2segm_err(prop, errf, 1);
+      // A champ whose name maps to no known EOS_Property cannot be indexed
+      // into val_prop_properties/err_cell_ph at all; say so rather than
+      // scribbling outside them.
+      {
+        const EOS_Property prop = gen_property_number(base_name.aschar());
+        if (prop < 0 || prop > NEPTUNE::lastLimProperty)
+        {
+          cerr << "EOS_Ipp::load_med_champ : requested property \"" << base_name.aschar()
+               << "\" is not a known EOS property, ignored" << endl;
+          continue;
         }
       }
-    }
+
+      // The error branch used to be nested as the "else" of "if (found)"
+      // *inside* "if (type == 1)", so it only ever ran for a value champ that
+      // had not been selected -- i.e. never usefully at all.
+      if (type == 1) // float -> property values
+      {
+        ArrOfDouble xval(nbcomp);
+        all_prop_val.push_back(xval);
+        EOS_Property prop = gen_property_number(base_name.aschar());
+        EOS_Field res(basecov, basecov, prop, all_prop_val[all_prop_val.size() - 1]);
+        med.get_Champ_Noeud(name, res);
+        val_prop_properties[prop] = res;
+      }
+      else // int -> per-node error codes for that property
+      {
+        ArrOfInt err(nbcomp);
+        EOS_Error_Field errf(err);
+
+        errM = med.get_ErrChamp_Noeud(name, errf);
+        if (errM != EOS_Error::good)
+        {
+          cerr << "EOS_Med::get_ErrChamp_Noeud" << endl;
+          return EOS_Error::error;
+        }
+
+        errf.set_name(base_name.aschar());
+        EOS_Property prop = gen_property_number(base_name.aschar());
+        if (m_ass == "ph_domain")
+          node_err2mesh_err(prop, errf);
+        else if (m_ass == "sat_domain")
+          node_err2segm_err(prop, errf, 0);
+        else if (m_ass == "lim_domain")
+          node_err2segm_err(prop, errf, 1);
+      }
     }
     return EOS_Error::good;
   }
@@ -880,50 +1654,20 @@ namespace NEPTUNE_EOS
     return err;
   }
 
-  void EOS_Ipp::linear_interpolator(double p, double &res) const
+  double EOS_Ipp::linear_interpolator(double p, const EOS_Ipp_CellData &segmval) const
   {
     // nodes
-    //  fields[0] = 2 valeurs en p
-    //  fields[1] = 2 valeurs de la propriete
-    //  p = valeur p du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[1]
+    //  fields[0] = 2 p values
+    //  fields[1] = 2 property values
+    //  p = p value of the point to interpolate
+    //  res = interpolation result for the property (prop_name is in fields[1]
 
-    // Formule interpolation
+    // Interpolation formula
     // f(p*) = C1f1 + C2f2
-    // avec :   C1,C2 : valeur à calculer
+    // with :   C1,C2 : value to compute
     //                          C1 = 1-p*
     //                          C2 = p*
-    //                  f1,f2 : valeur de la propriete en C1 et C2
-    //                  p* = (p-p1)/(p2-p1)
-
-    double C1, C2;
-    double pcal;
-
-    // EOS_Fields nodes2 = *nodes;
-    EOS_Fields nodes2(3);
-
-    pcal = (p - nodes2[0].get_data().get_value_at(0)) /
-           (nodes2[0].get_data().get_value_at(1) - nodes2[0].get_data().get_value_at(0));
-    C1 = 1.e0 - pcal;
-    C2 = pcal;
-
-    res = C1 * nodes[1][0] + C2 * nodes[1][1];
-  }
-
-  double EOS_Ipp::linear_interpolator(double p, EOS_Fields &segmval) const
-  {
-    // nodes
-    //  fields[0] = 2 valeurs en p
-    //  fields[1] = 2 valeurs de la propriete
-    //  p = valeur p du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[1]
-
-    // Formule interpolation
-    // f(p*) = C1f1 + C2f2
-    // avec :   C1,C2 : valeur à calculer
-    //                          C1 = 1-p*
-    //                          C2 = p*
-    //                  f1,f2 : valeur de la propriete en C1 et C2
+    //                  f1,f2 : property value at C1 and C2
     //                  p* = (p-p1)/(p2-p1)
 
     double res;
@@ -943,18 +1687,18 @@ namespace NEPTUNE_EOS
   {
 
     // nodes
-    //  fields[0] = 4 valeurs en p
-    //  fields[1] = 4 valeurs en h
-    //  fields[2] = 4 valeurs de la propriete (pour chaque point)
-    //  p = valeur p du point à interpoler
-    //  h = valeur h du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[2]
+    //  fields[0] = 4 p values
+    //  fields[1] = 4 h values
+    //  fields[2] = 4 property values (one per point)
+    //  p = p value of the point to interpolate
+    //  h = h value of the point to interpolate
+    //  res = interpolation result for the property (prop_name is in fields[2]
 
-    // Formule interpolation
-    //  f(h*,p*) = somme(Cifi)
-    //  avec :    i = 1,...,4 == noeud
-    //                   fi = valeur de la propriete au noeud i
-    //                   Ci = à calculer
+    // Interpolation formula
+    //  f(h*,p*) = sum(Cifi)
+    //  with :    i = 1,...,4 == node
+    //                   fi = property value at node i
+    //                   Ci = to compute
     //                           C4 = h*p*
     //                           C3 = p* - C4
     //                           C2 = h* - C4
@@ -976,21 +1720,21 @@ namespace NEPTUNE_EOS
     res = (C1 * nodes[2][0]) + (C2 * nodes[2][1]) + (C3 * nodes[2][2]) + (C4 * nodes[2][3]);
   }
 */
-  double EOS_Ipp::bilinear_interpolator(double p, double h, EOS_Fields &cellval) const
+  double EOS_Ipp::bilinear_interpolator(double p, double h, const EOS_Ipp_CellData &cellval) const
   {
     // nodes
-    //  fields[0] = 4 valeurs en p
-    //  fields[1] = 4 valeurs en h
-    //  fields[2] = 4 valeurs de la propriete (pour chaque point)
-    //  p = valeur p du point à interpoler
-    //  h = valeur h du point à interpoler
-    //  res = resultat de l'interpolation pour la propriete (prop_name se trouve dans fields[2]
+    //  fields[0] = 4 p values
+    //  fields[1] = 4 h values
+    //  fields[2] = 4 property values (one per point)
+    //  p = p value of the point to interpolate
+    //  h = h value of the point to interpolate
+    //  res = interpolation result for the property (prop_name is in fields[2]
 
-    // Formule interpolation
-    //  f(h*,p*) = somme(Cifi)
-    //  avec :    i = 1,...,4 == noeud
-    //                   fi = valeur de la propriete au noeud i
-    //                   Ci = à calculer
+    // Interpolation formula
+    //  f(h*,p*) = sum(Cifi)
+    //  with :    i = 1,...,4 == node
+    //                   fi = property value at node i
+    //                   Ci = to compute
     //                           C4 = h*p*
     //                           C3 = p* - C4
     //                           C2 = h* - C4
@@ -1014,10 +1758,108 @@ namespace NEPTUNE_EOS
 
     return res;
   }
+
+  void EOS_Ipp::bicubic_patch_data(const EOS_Ipp_CellData &cellval, bool has_cross_derivative,
+                                    double f[4], double ft[4], double fu[4], double ftu[4]) const
+  {
+    // cellval rows (4 corners each, same corner ordering as bilinear_interpolator):
+    //   [0] = p           [1] = h
+    //   [2] = f  (property value)
+    //   [3] = d f/dp |h   (property first derivative, at constant h)
+    //   [4] = d f/dh |p   (property first derivative, at constant p)
+    //   [5] = d2 f/dp.dh  (stored cross derivative, only read if has_cross_derivative)
+    //
+    // Corners in local unit-square coordinates (t=pcal, u=hcal):
+    //   node0=(0,0)  node1=(0,1)  node2=(1,1)  node3=(1,0)
+    //
+    // The physical derivatives are scaled to the unit square
+    // (d/dt = d/dp * dp, d/du = d/dh * dh). When the true cross derivative
+    // d2f/dp.dh is available from the database (EOS_IGen), it is used directly.
+    // Otherwise it is approximated locally (from the same 4 corners) as the
+    // average of the two available one-sided finite differences of df/dp and
+    // df/dh across the cell -- an approximation (not the exact mixed partial)
+    // but one that requires no extra data and converges as the mesh is refined.
+
+    double dp = cellval[0][3] - cellval[0][0];
+    double dh = cellval[1][1] - cellval[1][0];
+
+    for (unsigned short i = 0; i < 4; i++)
+    {
+      f[i] = cellval[2][i];
+      ft[i] = cellval[3][i] * dp;
+      fu[i] = cellval[4][i] * dh;
+    }
+
+    if (has_cross_derivative)
+    {
+      // d2F/dt.du = d2f/dp.dh * dp * dh
+      for (unsigned short i = 0; i < 4; i++)
+        ftu[i] = cellval[5][i] * dp * dh;
+    }
+    else
+    {
+      // Local twist estimate (see note above)
+      ftu[0] = 0.5 * ((ft[1] - ft[0]) + (fu[3] - fu[0]));
+      ftu[1] = 0.5 * ((ft[1] - ft[0]) + (fu[2] - fu[1]));
+      ftu[2] = 0.5 * ((ft[2] - ft[3]) + (fu[2] - fu[1]));
+      ftu[3] = 0.5 * ((ft[2] - ft[3]) + (fu[3] - fu[0]));
+    }
+  }
+
+  double EOS_Ipp::bicubic_interpolator(double p, double h, const EOS_Ipp_CellData &cellval,
+                                        bool has_cross_derivative) const
+  {
+    // Bicubic (tensor-product cubic Hermite) patch : matches f, df/dp and df/dh
+    // exactly at the 4 corners (cf. bicubic_patch_data for the patch data and
+    // the handling of the cross derivative).
+
+    // Patch data in unit-square coordinates: corners 0=(0,0), 1=(0,1), 2=(1,1), 3=(1,0)
+    double f[4], ft[4], fu[4], ftu[4];
+    bicubic_patch_data(cellval, has_cross_derivative, f, ft, fu, ftu);
+    return bicubic_evaluate(p, h, cellval, f, ft, fu, ftu);
+  }
+
+  // Evaluation on a patch that has already been extracted. Separate from
+  // bicubic_interpolator so a caller holding the patch of the cell it last
+  // touched can skip rebuilding it: the patch is a property of the cell and
+  // the field, not of the point being asked for.
+  double EOS_Ipp::bicubic_evaluate(double p, double h, const EOS_Ipp_CellData &cellval,
+                                    const double f[4], const double ft[4],
+                                    const double fu[4], const double ftu[4]) const
+  {
+    double p0 = cellval[0][0], p3 = cellval[0][3];
+    double h0 = cellval[1][0], h1 = cellval[1][1];
+
+    double pcal = (p - p0) / (p3 - p0);
+    double hcal = (h - h0) / (h1 - h0);
+
+    // Cubic Hermite basis functions on [0,1]: H0/H1 for values, K0/K1 for slopes
+    double t = pcal, t2 = t * t, t3 = t2 * t;
+    double u = hcal, u2 = u * u, u3 = u2 * u;
+
+    double Ht0 = 2. * t3 - 3. * t2 + 1.;
+    double Ht1 = -2. * t3 + 3. * t2;
+    double Kt0 = t3 - 2. * t2 + t;
+    double Kt1 = t3 - t2;
+
+    double Hu0 = 2. * u3 - 3. * u2 + 1.;
+    double Hu1 = -2. * u3 + 3. * u2;
+    double Ku0 = u3 - 2. * u2 + u;
+    double Ku1 = u3 - u2;
+
+    double res = Ht0 * Hu0 * f[0] + Ht0 * Hu1 * f[1] + Ht1 * Hu1 * f[2] + Ht1 * Hu0 * f[3]
+               + Kt0 * Hu0 * ft[0] + Kt0 * Hu1 * ft[1] + Kt1 * Hu1 * ft[2] + Kt1 * Hu0 * ft[3]
+               + Ht0 * Ku0 * fu[0] + Ht0 * Ku1 * fu[1] + Ht1 * Ku1 * fu[2] + Ht1 * Ku0 * fu[3]
+               + Kt0 * Ku0 * ftu[0] + Kt0 * Ku1 * ftu[1] + Kt1 * Ku1 * ftu[2] + Kt1 * Ku0 * ftu[3];
+
+    return res;
+  }
+
   void EOS_Ipp::f_mesh1r_mesh()
   {
     unsigned int nb_p_nodes = round((pmax_ipp - pmin_ipp) /  delta_p_f);
     fnodes2pnodes.resize(nb_p_nodes);
+    fnodes2pnodes = -1; // cf. f_mesh2r_mesh: an uncovered slot must not read as segment 0
 
     int nb_segm = connect_sat.size() / 2;
 
@@ -1033,6 +1875,7 @@ namespace NEPTUNE_EOS
       }
     }
     fnodes2pnodes_lim.resize(nb_p_nodes);
+    fnodes2pnodes_lim = -1;
 
     nb_segm = connect_lim.size() / 2;
 
@@ -1048,10 +1891,10 @@ namespace NEPTUNE_EOS
       }
     }
   }
-  // correspondance noeud fictif avec 1 noeud du polygone
-  // On stocke la valeur de l'index pour pouvoir retrouver polygone dans connect_ph
-  //(besoin des 4 noeuds pour les interpolations)
-  // facon de faire à revoir peu robuste (Cf. condition d'enregistrement de fnodes2phnodes[l])
+  // correspondence between a fictitious node and 1 node of the polygon
+  // The index value is stored to be able to retrieve the polygon in connect_ph
+  // (the 4 nodes are needed for interpolation)
+  // this approach should be revisited, not very robust (cf. condition for storing fnodes2phnodes[l])
   void EOS_Ipp::f_mesh2r_mesh()
   {
     unsigned int nb_cell = index_conn_ph.size() - 1;
@@ -1060,69 +1903,199 @@ namespace NEPTUNE_EOS
     unsigned int nb_h_nodes = round((hmax_ipp - hmin_ipp) / delta_h_f);
     unsigned int nb_p_nodes = round((pmax_ipp - pmin_ipp) / delta_p_f);
 
-    fnodes2phnodes.resize(nb_h_nodes * nb_p_nodes);
+    locator_.begin(nb_p_nodes, nb_h_nodes);
 
+    // EOS_IPP_VERIFY_LOCATOR builds the flat table this used to rely on as
+    // well, and compares the two over every virtual cell once the mesh is in
+    // (cf. verify_locator). It is the only exhaustive check available -- the
+    // virtual grid is finite, so "same answer everywhere" is provable rather
+    // than sampled -- and it costs the very memory the locator exists to save,
+    // so it is opt-in.
+    const bool verify = (getenv("EOS_IPP_VERIFY_LOCATOR") != nullptr);
+    if (verify)
+    {
+      fnodes2phnodes.resize(nb_h_nodes * nb_p_nodes);
+      // ArrOfInt zero-fills, so any virtual cell no real cell covers used to
+      // read back as cell 0 -- a corner of the domain, returned as a perfectly
+      // valid answer for a point that is in fact nowhere.
+      fnodes2phnodes = -1;
+    }
+    else
+      fnodes2phnodes.resize(0);
+
+    unsigned int dbg_poly = 0, dbg_maxv = 0;
     for (unsigned int i_med_cell = 0; i_med_cell < nb_cell; i_med_cell++)
     {
       unsigned int nb_node_in_cell = index_conn_ph[i_med_cell + 1] - index_conn_ph[i_med_cell];
+      if (nb_node_in_cell > 4) dbg_poly++;
+      if (nb_node_in_cell > dbg_maxv) dbg_maxv = nb_node_in_cell;
       unsigned int num_first_node = index_conn_ph[i_med_cell];
-      unsigned int node_1, node_2, node_3;
-      unsigned int node_0 = connect_ph[num_first_node];
 
-      // Si plus de 4 sommets dans la maille, on parcourt les sommets de long des arêtes dans le
-      // sens trigo et on reconnait le premier coin quand P devient constant, puis le deuxième quand
-      // h devient constant, et le troisième quand p redevient constant
-      if (nb_node_in_cell > 4)
+      // The cell is an axis-aligned rectangle whose vertex list may also carry
+      // the hanging nodes its finer neighbours put on its edges, anywhere along
+      // them. Its four corners are then exactly the four extreme combinations
+      // of (p,h) over the list, which needs neither a winding convention nor a
+      // tolerance -- the coordinates are copied from the node arrays, so a
+      // vertex on an edge carries that edge's coordinate exactly.
+      //
+      // This used to walk the list looking for the vertex where p, then h, then
+      // p again stopped being constant. That walk stopped one vertex past the
+      // corner it was after (every vertex of the bottom edge shares its p, so
+      // the first change comes only after the corner), and its second loop
+      // tested for an increase in h while trigonometric order makes h decrease
+      // along the top edge, so on a real polygon it ran off the end of the
+      // cell. It never fired: no generator has ever emitted more than 4
+      // vertices per cell.
+      double p_min_cell = nodes_ph[0][connect_ph[num_first_node]];
+      double p_max_cell = p_min_cell;
+      double h_min_cell = nodes_ph[1][connect_ph[num_first_node]];
+      double h_max_cell = h_min_cell;
+      for (unsigned int v = 1; v < nb_node_in_cell; v++)
       {
-        unsigned int num_node_in_cell = num_first_node + 1;
-        while (nodes_ph[0][num_node_in_cell] - nodes_ph[0][num_node_in_cell - 1] < DBL_EPSILON)
-          num_node_in_cell++;
-        node_1 = connect_ph[num_node_in_cell];
-
-        while (nodes_ph[1][num_node_in_cell] - nodes_ph[1][num_node_in_cell - 1] < DBL_EPSILON)
-          num_node_in_cell++;
-        node_2 = connect_ph[num_node_in_cell];
-
-        while (nodes_ph[0][num_node_in_cell] - nodes_ph[0][num_node_in_cell - 1] < DBL_EPSILON)
-          num_node_in_cell++;
-        node_3 = connect_ph[num_node_in_cell];
+        const double pv = nodes_ph[0][connect_ph[num_first_node + v]];
+        const double hv = nodes_ph[1][connect_ph[num_first_node + v]];
+        if (pv < p_min_cell) p_min_cell = pv;
+        if (pv > p_max_cell) p_max_cell = pv;
+        if (hv < h_min_cell) h_min_cell = hv;
+        if (hv > h_max_cell) h_max_cell = hv;
       }
-      // Si la maille n'a que 4 sommets, alors ce sont les 4 angles de la maille
-      else
+
+      // corners are (p_min,h_min), (p_min,h_max), (p_max,h_max), (p_max,h_min)
+      unsigned int node_0 = 0, node_1 = 0, node_2 = 0, node_3 = 0;
+      bool got_0 = false, got_1 = false, got_2 = false, got_3 = false;
+      for (unsigned int v = 0; v < nb_node_in_cell; v++)
       {
-        node_1 = connect_ph[num_first_node + 1];
-        node_2 = connect_ph[num_first_node + 2];
-        node_3 = connect_ph[num_first_node + 3];
+        const unsigned int nv = connect_ph[num_first_node + v];
+        const double pv = nodes_ph[0][nv];
+        const double hv = nodes_ph[1][nv];
+        const bool lo_p = (pv == p_min_cell), hi_p = (pv == p_max_cell);
+        const bool lo_h = (hv == h_min_cell), hi_h = (hv == h_max_cell);
+        if      (lo_p && lo_h) { node_0 = nv; got_0 = true; }
+        else if (lo_p && hi_h) { node_1 = nv; got_1 = true; }
+        else if (hi_p && hi_h) { node_2 = nv; got_2 = true; }
+        else if (hi_p && lo_h) { node_3 = nv; got_3 = true; }
       }
-
-      double p_min_cell = nodes_ph[0][node_0];
-      double p_max_cell = nodes_ph[0][node_2];
-      double h_min_cell = nodes_ph[1][node_0];
-      double h_max_cell = nodes_ph[1][node_2];
+      if (!(got_0 && got_1 && got_2 && got_3))
+      {
+        cerr << "EOS_Ipp::f_mesh2r_mesh: cell " << i_med_cell << " of "
+             << med_file.aschar() << " is not an axis-aligned rectangle ("
+             << nb_node_in_cell << " vertices); the mesh cannot be used."
+             << endl;
+        return;
+      }
 
       unsigned int i_p_min = round((p_min_cell - pmin_ipp) / delta_p_f);
       unsigned int i_p_max = round((p_max_cell - pmin_ipp) / delta_p_f);
       unsigned int i_h_min = round((h_min_cell - hmin_ipp) / delta_h_f);
       unsigned int i_h_max = round((h_max_cell - hmin_ipp) / delta_h_f);
 
-      for (unsigned int i_p = i_p_min; i_p < i_p_max; i_p++)
-      {
-        for (unsigned int i_h = i_h_min; i_h < i_h_max; i_h++)
-        {
-          fnodes2phnodes[i_h + nb_h_nodes * i_p] = i_med_cell;
-        }
-      }
+      // The cell's box in virtual-grid coordinates, handed to the locator
+      // instead of being painted cell by cell into a flat table
+      // (cf. EOS_Ipp_CellLocator for what that table cost).
+      locator_.add_cell((int)i_med_cell, (long)i_p_min, (long)i_p_max,
+                        (long)i_h_min, (long)i_h_max);
+
+      if (verify)
+        for (unsigned int i_p = i_p_min; i_p < i_p_max; i_p++)
+          for (unsigned int i_h = i_h_min; i_h < i_h_max; i_h++)
+            fnodes2phnodes[i_h + nb_h_nodes * i_p] = i_med_cell;
 
       corners[0 + 4 * i_med_cell] = node_0;
       corners[1 + 4 * i_med_cell] = node_1;
       corners[2 + 4 * i_med_cell] = node_2;
       corners[3 + 4 * i_med_cell] = node_3;
     }
+
+    if (getenv("EOS_IPP_POLY_STATS"))
+      cerr << "POLY " << med_file.aschar() << " : " << nb_cell << " cells, "
+           << dbg_poly << " with >4 vertices, max " << dbg_maxv << endl;
+    locator_.finish();
+
+    if (verify)
+    {
+      verify_locator(nb_p_nodes, nb_h_nodes);
+      fnodes2phnodes.resize(0); // the comparison is done; do not keep paying for it
+    }
+  }
+
+  // Compares the locator against the flat table on every cell of the virtual
+  // grid, which is the whole of its input domain: this proves equality rather
+  // than sampling it. Only run under EOS_IPP_VERIFY_LOCATOR, since it needs
+  // the table the locator replaces.
+  void EOS_Ipp::verify_locator(unsigned int nb_p_nodes, unsigned int nb_h_nodes) const
+  {
+    std::size_t nb_diff = 0;
+    long first_ip = -1, first_ih = -1;
+    int first_old = 0, first_new = 0;
+
+    for (unsigned int ip = 0; ip < nb_p_nodes; ip++)
+      for (unsigned int ih = 0; ih < nb_h_nodes; ih++)
+      {
+        const int old_cell = fnodes2phnodes[(int)(ih + nb_h_nodes * ip)];
+        const int new_cell = locator_.locate_index((long)ip, (long)ih);
+        if (old_cell != new_cell)
+        {
+          if (nb_diff == 0)
+          { first_ip = (long)ip; first_ih = (long)ih; first_old = old_cell; first_new = new_cell; }
+          ++nb_diff;
+        }
+      }
+
+    const std::size_t nb_virtual = (std::size_t)nb_p_nodes * (std::size_t)nb_h_nodes;
+    cerr << "EOS_Ipp locator check [" << med_file.aschar() << "] : "
+         << nb_virtual << " virtual cells, " << locator_.nb_nodes() << " tree nodes, depth "
+         << locator_.depth() << ", " << locator_.footprint_bytes() / 1024 << " kB against "
+         << nb_virtual * sizeof(int) / 1024 << " kB : ";
+    if (nb_diff == 0)
+      cerr << "identical" << endl;
+    else
+      cerr << nb_diff << " DIFFERENCE(S), first at (ip=" << first_ip << ",ih=" << first_ih
+           << ") table=" << first_old << " locator=" << first_new << endl;
   }
 
   void EOS_Ipp::node_err2mesh_err(EOS_Property prop,EOS_Error_Field &err_nodes_prop_ph)
   {
     int nb_cell = index_conn_ph.size() - 1;
+
+    // A cell takes the worst error of its corners, so one invalid node marks
+    // every cell that touches it and the invalid region is one cell wider than
+    // the nodes say. Whether that costs anything depends on there being any
+    // invalid node at all, which a domain the generator has already pulled
+    // back to a valid box will not have. EOS_IPP_ERRCOUNT reports the count so
+    // the question can be settled by measurement on a given database.
+    if (getenv("EOS_IPP_ERRCOUNT") != NULL)
+    {
+      int nb_node = err_nodes_prop_ph.size(), bad_node = 0, bad_cell = 0;
+      for (int i = 0; i < nb_node; i++)
+        if (err_nodes_prop_ph[i].get_code() != EOS_Internal_Error::OK)
+          bad_node++;
+      for (int j = 0; j < nb_cell; j++)
+      {
+        const int idx = index_conn_ph[j], np = index_conn_ph[j + 1] - idx;
+        for (int nb = 0; nb < np; nb++)
+          if (err_nodes_prop_ph[connect_ph[idx + nb]].get_code() != EOS_Internal_Error::OK)
+            { bad_cell++; break; }
+      }
+      cerr << "  [errcount] " << err_nodes_prop_ph.get_name()
+           << " : " << bad_node << "/" << nb_node << " nodes invalid, "
+           << bad_cell << "/" << nb_cell << " cells thereby marked";
+      if (bad_node > 0 && nodes_ph.size() > 1 && nodes_ph[0].size() >= nb_node)
+      {
+        double p0 = 0., p1 = 0., h0 = 0., h1 = 0.;
+        bool first = true;
+        for (int i = 0; i < nb_node; i++)
+        {
+          if (err_nodes_prop_ph[i].get_code() == EOS_Internal_Error::OK) continue;
+          if (first) { p0 = p1 = nodes_ph[0][i]; h0 = h1 = nodes_ph[1][i]; first = false; }
+          if (nodes_ph[0][i] < p0) p0 = nodes_ph[0][i];
+          if (nodes_ph[0][i] > p1) p1 = nodes_ph[0][i];
+          if (nodes_ph[1][i] < h0) h0 = nodes_ph[1][i];
+          if (nodes_ph[1][i] > h1) h1 = nodes_ph[1][i];
+        }
+        cerr << ", over p=[" << p0 << "," << p1 << "] h=[" << h0 << "," << h1 << "]";
+      }
+      cerr << endl;
+    }
 
     ArrOfInt err(nb_cell);
     all_err_val.push_back(err);
@@ -1190,7 +2163,11 @@ namespace NEPTUNE_EOS
       for (int j = 0; j < nb_segm; j++)
       {
         idx = connect_lim[k];
-        idx2 = connect_lim[k];
+        // idx2 read connect_lim[k], i.e. the same node as idx, so a segment
+        // whose right node was bad was folded into "as good as its left node"
+        // and reported valid. Compare with the saturation branch above, which
+        // has always used k and k+1.
+        idx2 = connect_lim[k + 1];
         ierr1 = err_nodes_prop_p[idx];
         ierr2 = err_nodes_prop_p[idx2];
         errf.set(j, worst_internal_error(ierr1, ierr2));
@@ -1200,74 +2177,476 @@ namespace NEPTUNE_EOS
     }
   }
 
-  // renvoie le numéro de la cellule réelle contenant (p, h)
+  // The last cell compute_prop_ph interpolated in, on this thread
+  // (cf. EOS_Ipp_CellCache).
+  //
+  // thread_local rather than a member of EOS_Ipp, which is what it looks like
+  // it should be. A loaded tile's EOS_Ipp is shared by every
+  // EOS_Ipp_TileCache holding that tile resident (cf. EOS_Ipp_TileStore), and
+  // those caches belong to different threads: the whole reason sharing is safe
+  // is that a loaded tile is immutable under concurrent compute_* calls. A
+  // mutable member would have quietly taken that away. Keyed on the instance
+  // too, because one thread alternates between the tiles of a tiled database.
+  static EOS_Ipp_CellCache &cell_cache()
+  {
+    static thread_local EOS_Ipp_CellCache cache;
+    return cache;
+  }
+
+  // The cell list of the last p-column an h(p,T) inversion scanned, on this
+  // thread. Same storage rules as cell_cache().
+  //
+  // Building that list means walking the column's virtual rows, jumping cell
+  // by cell, with a lookup-table read and two indirections per cell -- a cost
+  // per point that no filter on the cells themselves can remove, and which the
+  // measurements after the T-range filter showed to be what both interpolation
+  // methods had converged onto. A batch's points do not each land in their own
+  // column: a solver's neighbouring cells share one, and the two inversions
+  // compute_h_pT runs for a single point (the root, then the saturation check)
+  // always do.
+  //
+  // Reentrancy: the reference handed out stays valid for the caller's whole
+  // scan because no inversion runs another one inside its loop -- compute_h_pT
+  // calls them one after the other, never nested.
+  static EOS_Ipp_ColumnCache &column_cache()
+  {
+    static thread_local EOS_Ipp_ColumnCache cache;
+    return cache;
+  }
+
+  // returns the number of the actual cell containing (p, h), or -1 when the
+  // point falls on no real cell (outside the meshed region, or in a hole of a
+  // mesh that does not tile its bounding box)
   int EOS_Ipp::get_cellidx(double &p, double &h) const
   {
-    unsigned int ih, ip;
-    ih = (unsigned int)((h - hmin_ipp) / delta_h_f);
-    ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // Signed on purpose. check_ph_bounds admits a point up to IPP_BOUND_TOL
+    // below hmin_ipp / pmin_ipp, which makes these quotients slightly
+    // negative; converted straight to unsigned they wrapped to ~4e9 and the
+    // lookup below read far outside fnodes2phnodes.
+    long ih = (long)((h - hmin_ipp) / delta_h_f);
+    long ip = (long)((p - pmin_ipp) / delta_p_f);
 
     // if h or p respectively equal to hmax_ipp or pmax_ipp
-    if (ip == nb_p_virtual)
+    if (ip == (long)nb_p_virtual)
       ip--;
-    if (ih == nb_h_virtual)
+    if (ih == (long)nb_h_virtual)
       ih--;
 
-    int i = nb_h_virtual * ip + ih;
+    if (ip < 0 || ih < 0 || ip >= (long)nb_p_virtual || ih >= (long)nb_h_virtual)
+      return -1;
 
-    return fnodes2phnodes[i];
+    return locator_.locate_index(ip, ih);
+  }
+
+  unsigned int EOS_Ipp::virtual_p_index(double p) const
+  {
+    unsigned int ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // if p equal to pmax_ipp (cf. get_cellidx)
+    if (ip == nb_p_virtual)
+      ip--;
+    return ip;
+  }
+
+  // Returns the real (med) cells whose p-range contains p, in ascending h
+  // order -- the cell list scanned by the h(p,T) inversions (compute_h_l_pT,
+  // compute_h_v_pT, compute_h_pT_bicubic).
+  //
+  // This used to walk the column's virtual rows, reading the flat table and
+  // jumping over each cell it found by looking up that cell's top edge: two
+  // indirections per cell on top of the table read. The locator descends its
+  // own structure instead, visiting only the nodes that span the column, and
+  // yields the same cells in the same order.
+  //
+  // Note: the historical scan collected the same cells in a
+  // std::set<unsigned int>, i.e. iterated them by ascending med cell number;
+  // the h-ascending order used since can only pick a different cell in the
+  // degenerate case where several cells admit an inversion root (root exactly
+  // on a shared edge), where both orders give an equivalent h.
+  void EOS_Ipp::get_cells_containing_p(double p, std::vector<unsigned int> &cells) const
+  {
+    locator_.cells_in_column((long)virtual_p_index(p), cells);
+  }
+
+  // get_cells_containing_p, reusing the previous answer when p has not left the
+  // virtual column it was built for (cf. column_cache).
+  const std::vector<unsigned int> &EOS_Ipp::cells_containing_p_cached(double p) const
+  {
+    EOS_Ipp_ColumnCache &cc = column_cache();
+    const unsigned int ip = virtual_p_index(p);
+    if (cc.owner == this && cc.ip == ip)
+      return cc.cells;
+
+    cc.owner = this;
+    cc.ip = ip;
+    get_cells_containing_p(p, cc.cells);
+    return cc.cells;
   }
 
   /*
    * EOS_Ipp::get_segmidx :
-   *      return indice of first node of segment (indice in nodes_sat/lim)
+   *      return index of first node of segment (index in nodes_sat/lim)
    *            (note = nodes in nodes_sat/lim are stored in ascending order)
    *
    * double& p  : intput p value
    * int     sat_lim  : sat or lim curve
    *
-   * return : int (indice)
+   * return : int (index), or -1 when p falls on no segment of the curve
    */
   int EOS_Ipp::get_segmidx(double &p, int sat_lim) const
   {
-    unsigned int ip;
-    if (sat_lim == 0)
-    {
-    ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
+    // Signed, and range-checked, for the same reason as get_cellidx:
+    // check_p_bounds_satlim admits a p a hair below pmin_ipp, whose quotient
+    // is negative and wrapped to ~4e9 once converted to unsigned.
+    long ip = (long)((p - pmin_ipp) / delta_p_f);
     // if p respectively equal to pmax_ipp
-    if (ip == nb_p_virtual)
+    if (ip == (long)nb_p_virtual)
       ip--;
-    return fnodes2pnodes[ip];
-    }
-    else
-    {
-      ip = (unsigned int)((p - pmin_ipp) / delta_p_f);
-    // if p respectively equal to pmax_ipp
-    if (ip == nb_p_virtual)
-      ip--;
-    return fnodes2pnodes_lim[ip];
-    }
+    if (ip < 0 || ip >= (long)nb_p_virtual)
+      return -1;
+
+    const ArrOfInt &table = (sat_lim == 0) ? fnodes2pnodes : fnodes2pnodes_lim;
+    if (ip >= (long)table.size())
+      return -1;
+    return table[(int)ip];
   }
 
 
-  // recupere les valeurs p, h et "property" pour les 4 points (=coin) de la maille réelle
-  //  idx = indice dans le maillage med = fnodes2phnodes[indice_h + Nb_pts_h * indice_p]
-  EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const
+  // Resolves, once per load, everything the interpolation of each property
+  // needs -- which fields exist and where their storage actually is -- so that
+  // compute_prop_ph stops re-deriving it for every point of every batch.
+  // Called at the end of a load, after f_mesh2r_mesh() has built corners.
+  void EOS_Ipp::build_prop_plans()
   {
+    prop_plan_.assign((std::size_t)NEPTUNE::lastLimProperty + 1, EOS_Ipp_PropPlan());
 
+    node_p_  = (nodes_ph.size() > 0 && nodes_ph[0].size() > 0) ? &nodes_ph[0][0] : nullptr;
+    node_h_  = (nodes_ph.size() > 1 && nodes_ph[1].size() > 0) ? &nodes_ph[1][0] : nullptr;
+    corners_ = (corners.size() > 0) ? &corners[0] : nullptr;
+
+    const int nb_err = (int)err_cell_ph.size();
+    const int nb_val = val_prop_properties.size();
+
+    // A property counts as loaded only when both its values and its per-cell
+    // error field are there. A selective load makes "error field but no
+    // values" ordinary, and reading the values then meant subscripting an
+    // unset EOS_Field -- get_cell_values_bicubic already guarded against it,
+    // get_cell_values did not.
+    for (int prop = 0; prop <= NEPTUNE::lastLimProperty; prop++)
+    {
+      EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+      if (prop >= nb_err || err_cell_ph[(std::size_t)prop] == nullptr)
+        continue;
+      if (prop >= nb_val || val_prop_properties[prop].size() == 0)
+        continue;
+      pl.has_value = true;
+      pl.val = &val_prop_properties[prop][0];
+      pl.err = err_cell_ph[(std::size_t)prop];
+    }
+
+    for (int prop = 0; prop <= NEPTUNE::lastLimProperty; prop++)
+    {
+      EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+      if (!pl.has_value)
+        continue;
+
+      EOS_Property dp_prop, dh_prop;
+      if (bicubic_derivative_properties((EOS_Property)prop, dp_prop, dh_prop)
+          && dp_prop >= 0 && dp_prop <= NEPTUNE::lastLimProperty
+          && dh_prop >= 0 && dh_prop <= NEPTUNE::lastLimProperty
+          && prop_plan_[(std::size_t)dp_prop].has_value
+          && prop_plan_[(std::size_t)dh_prop].has_value)
+      {
+        pl.has_first_derivatives = true;
+        pl.d_dp   = prop_plan_[(std::size_t)dp_prop].val;
+        pl.d_dh   = prop_plan_[(std::size_t)dh_prop].val;
+        pl.err_dp = prop_plan_[(std::size_t)dp_prop].err;
+        pl.err_dh = prop_plan_[(std::size_t)dh_prop].err;
+
+        EOS_Property d2_prop;
+        if (bicubic_cross_derivative_property((EOS_Property)prop, d2_prop)
+            && d2_prop >= 0 && d2_prop <= NEPTUNE::lastLimProperty
+            && prop_plan_[(std::size_t)d2_prop].has_value)
+        {
+          pl.has_cross_derivative = true;
+          pl.d2     = prop_plan_[(std::size_t)d2_prop].val;
+          pl.err_d2 = prop_plan_[(std::size_t)d2_prop].err;
+        }
+      }
+    }
+
+    retrace_hanging_nodes();
+  }
+
+  // What a hanging node must carry is the trace, along the edge it splits, of
+  // the patch the coarse cell on the other side builds. That trace depends on
+  // the interpolation method, and the database can only store one value per
+  // node: EOS_IGen writes the half-sum of the two ends, which is exactly the
+  // trace of a bilinear patch. On a Hermite patch the trace is the cubic set by
+  // the values *and* the tangential derivatives at both ends, so the stored
+  // value is short by L*(f'(A)-f'(B))/8 and the node's tangential derivative is
+  // whatever the model returned rather than the cubic's slope.
+  //
+  // Measured, that difference is not a detail: forcing the half-sum moved the
+  // largest step across a junction on T from 4.5e-5 to 1.6e-2, the same size as
+  // the jump an unforced bilinear surface has (cf. main_ipp_continuity.cxx).
+  //
+  // So the correction is applied here, once, to the loaded arrays, and only
+  // when this instance interpolates bicubically. Nothing on the hot path
+  // changes: get_cell_values keeps reading 4 corners and knows nothing of this.
+  void EOS_Ipp::retrace_hanging_nodes()
+  {
+    if (interp_method != BICUBIC)
+      return;
+    const int nb_node = (int)cnt_type_.size();
+    if (nb_node == 0 || (int)cnt_sup0_.size() != nb_node || (int)cnt_sup1_.size() != nb_node)
+      return;
+    if (node_p_ == nullptr || node_h_ == nullptr)
+      return;
+
+    int nb_done = 0;
+    for (int prop = 0; prop <= NEPTUNE::lastLimProperty; prop++)
+    {
+      EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+      if (!pl.has_value || !pl.has_first_derivatives)
+        continue;
+
+      double *f  = const_cast<double *>(pl.val);
+      double *dp = const_cast<double *>(pl.d_dp);
+      double *dh = const_cast<double *>(pl.d_dh);
+      if (f == nullptr || dp == nullptr || dh == nullptr)
+        continue;
+
+      // read the supports before writing, so a node leaning on another
+      // hanging node still sees what the database stored
+      std::vector<double> f0(f, f + nb_node);
+      std::vector<double> p0(dp, dp + nb_node);
+      std::vector<double> h0(dh, dh + nb_node);
+
+      for (int i = 0; i < nb_node; i++)
+      {
+        const int t = cnt_type_[i];
+        if (t != 1 && t != 2)
+          continue;
+        const int B = cnt_sup0_[i], A = cnt_sup1_[i];
+        if (A < 0 || B < 0 || A >= nb_node || B >= nb_node)
+          continue;
+
+        // type 1 splits a vertical edge, so the tangential coordinate is p
+        const double tA = (t == 1) ? node_p_[A] : node_h_[A];
+        const double tB = (t == 1) ? node_p_[B] : node_h_[B];
+        const double tM = (t == 1) ? node_p_[i] : node_h_[i];
+        const double L  = tB - tA;
+        if (!(L > 0.))
+          continue;
+
+        const std::vector<double> &dt0 = (t == 1) ? p0 : h0;
+        const double s = (tM - tA) / L;      // general s: dyadic refinement
+        const double s2 = s * s, s3 = s2 * s;   // also splits edges at quarters
+
+        const double H00 =  2.*s3 - 3.*s2 + 1., H10 =    s3 - 2.*s2 + s;
+        const double H01 = -2.*s3 + 3.*s2,      H11 =    s3 -    s2;
+        const double G00 =  6.*s2 - 6.*s,       G10 = 3.*s2 - 4.*s + 1.;
+        const double G01 = -6.*s2 + 6.*s,       G11 = 3.*s2 - 2.*s;
+
+        f[i] = H00*f0[A] + H10*L*dt0[A] + H01*f0[B] + H11*L*dt0[B];
+
+        const double slope = (G00*f0[A] + G10*L*dt0[A]
+                            + G01*f0[B] + G11*L*dt0[B]) / L;
+        if (t == 1) dp[i] = slope; else dh[i] = slope;
+        nb_done++;
+      }
+    }
+
+    if (getenv("EOS_IPP_RETRACE_STATS"))
+      cerr << "RETRACE " << med_file.aschar() << " : " << nb_done
+           << " hanging-node value(s) put back on the cubic trace" << endl;
+  }
+
+  // Per-cell enclosure of the interpolated T, used by the h(p,T) inversions to
+  // rule a cell out without reading it (cf. the declaration for why one bound
+  // serves both interpolation methods).
+  void EOS_Ipp::build_cell_T_ranges()
+  {
+    cell_T_lo_.clear();
+    cell_T_hi_.clear();
+    cell_T_lo_ptr_ = cell_T_hi_ptr_ = nullptr;
+
+    const int nb_cell = index_conn_ph.size() - 1;
+    if (nb_cell <= 0 || corners_ == nullptr)
+      return;
+    if ((std::size_t)NEPTUNE::T >= prop_plan_.size())
+      return;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)NEPTUNE::T];
+    if (!pl.has_value)
+      return;
+
+    cell_T_lo_.resize((std::size_t)nb_cell);
+    cell_T_hi_.resize((std::size_t)nb_cell);
+
+    EOS_Ipp_CellData cv;
+    double f[4], ft[4], fu[4], ftu[4];
+
+    for (int c = 0; c < nb_cell; c++)
+    {
+      const int *cor = corners_ + 4 * c;
+
+      double lo = pl.val[cor[0]], hi = lo;
+      for (int k = 1; k < 4; k++)
+      {
+        const double v = pl.val[cor[k]];
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+
+      if (pl.has_first_derivatives)
+      {
+        for (int k = 0; k < 4; k++)
+        {
+          const int id = cor[k];
+          cv[0][k] = node_p_[id];
+          cv[1][k] = node_h_[id];
+          cv[2][k] = pl.val[id];
+          cv[3][k] = pl.d_dp[id];
+          cv[4][k] = pl.d_dh[id];
+          if (pl.has_cross_derivative)
+            cv[5][k] = pl.d2[id];
+        }
+        bicubic_patch_data(cv, pl.has_cross_derivative, f, ft, fu, ftu);
+
+        // Bezier control net of the tensor-product cubic Hermite patch. Corner
+        // order here is 0=(t=0,u=0), 1=(0,1), 2=(1,1), 3=(1,0), and the 1D rule
+        // is b0 = f0, b1 = f0 + d0/3, b2 = f1 - d1/3, b3 = f1, applied in t then
+        // in u. The patch lies inside the hull of these 16 values.
+        const double f00 = f[0], f01 = f[1], f11 = f[2], f10 = f[3];
+        const double t00 = ft[0], t01 = ft[1], t11 = ft[2], t10 = ft[3];
+        const double u00 = fu[0], u01 = fu[1], u11 = fu[2], u10 = fu[3];
+        const double m00 = ftu[0], m01 = ftu[1], m11 = ftu[2], m10 = ftu[3];
+        const double T3 = 1. / 3., N9 = 1. / 9.;
+
+        const double b[16] = {
+          f00,                                   f00 + u00 * T3,
+          f01 - u01 * T3,                        f01,
+          f00 + t00 * T3,                        f00 + t00 * T3 + u00 * T3 + m00 * N9,
+          f01 + t01 * T3 - u01 * T3 - m01 * N9,  f01 + t01 * T3,
+          f10 - t10 * T3,                        f10 - t10 * T3 + u10 * T3 - m10 * N9,
+          f11 - t11 * T3 - u11 * T3 + m11 * N9,  f11 - t11 * T3,
+          f10,                                   f10 + u10 * T3,
+          f11 - u11 * T3,                        f11
+        };
+        for (int k = 0; k < 16; k++)
+        {
+          if (b[k] < lo) lo = b[k];
+          if (b[k] > hi) hi = b[k];
+        }
+      }
+
+      // The root test accepts a normalized coordinate slightly outside [0,1]
+      // (IPP_BOUND_TOL, 1e-9), so the surface the
+      // inversion really searches reaches marginally past the cell. The margin
+      // is orders of magnitude above that slack, and still tight enough to
+      // reject the cells this exists to reject.
+      const double span = hi - lo;
+      const double margin = 1.e-6 * span + 1.e-9 * (fabs(lo) + fabs(hi));
+      cell_T_lo_[(std::size_t)c] = lo - margin;
+      cell_T_hi_[(std::size_t)c] = hi + margin;
+    }
+
+    cell_T_lo_ptr_ = &cell_T_lo_[0];
+    cell_T_hi_ptr_ = &cell_T_hi_[0];
+  }
+
+  // fetches the p, h and "property" values for the 4 points (=corners) of the actual cell
+  //  idx = index in the med mesh = fnodes2phnodes[index_h + Nb_pts_h * index_p]
+  // True if the 2D field of i_prop was loaded from the database. Asking for a
+  // property a database does not carry -- or, now that a tiled database can be
+  // opened for a subset of them, one that was not selected -- used to walk
+  // straight into a null err_cell_ph entry and segfault.
+  bool EOS_Ipp::has_ph_property(EOS_Property i_prop) const
+  {
+    return i_prop >= 0 && (std::size_t)i_prop < prop_plan_.size()
+           && prop_plan_[(std::size_t)i_prop].has_value;
+  }
+
+  EOS_Internal_Error EOS_Ipp::get_cell_values(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val) const
+  {
+    if (!has_ph_property(i_prop))
+      return EOS_Ipp::PROP_NOT_IN_DB;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)i_prop];
+
+    // Raw pointers hoisted out of the loop. Written through nodes_ph[0][...] /
+    // val_prop_properties[i_prop][...] this was twelve out-of-line
+    // EOS_Fields::operator[] calls, and the property array could not be
+    // resolved once because the compiler had to assume the call might change
+    // it between corners.
+    const int *cor = corners_ + 4 * idx;
     for (unsigned short i_node = 0; i_node < 4; i_node++)
     {
-      int id_corn = corners[i_node + 4 * idx];
-      cell_val[0][i_node] = nodes_ph[0][id_corn];
-      cell_val[1][i_node] = nodes_ph[1][id_corn];
-      cell_val[2][i_node] = val_prop_properties[i_prop][id_corn];
+      const int id_corn = cor[i_node];
+      cell_val[0][i_node] = node_p_[id_corn];
+      cell_val[1][i_node] = node_h_[id_corn];
+      cell_val[2][i_node] = pl.val[id_corn];
     }
 
-    return (*err_cell_ph[i_prop])[idx].get_code();
+    return (*pl.err)[idx].get_code();
   }
 
-  EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, EOS_Property i_prop, int sat_lim, EOS_Fields &segm_val) const
+  bool EOS_Ipp::has_bicubic_first_derivative_data(EOS_Property prop) const
   {
+    return prop >= 0 && (std::size_t)prop < prop_plan_.size()
+           && prop_plan_[(std::size_t)prop].has_first_derivatives;
+  }
+
+  bool EOS_Ipp::has_bicubic_cross_derivative_data(EOS_Property prop) const
+  {
+    return prop >= 0 && (std::size_t)prop < prop_plan_.size()
+           && prop_plan_[(std::size_t)prop].has_cross_derivative;
+  }
+
+  // Fetches p, h, f and its two first derivatives (plus the stored cross
+  // derivative if fetch_cross_derivative) for the 4 corners of the actual cell
+  EOS_Internal_Error EOS_Ipp::get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val,
+                                                       bool fetch_cross_derivative) const
+  {
+    // Which fields exist and where they live was resolved once at load time
+    // (cf. build_prop_plans). This used to redo two switches over the base
+    // properties and four range-checked lookups in a ~120-entry pointer
+    // vector, per point, and then read the values through twenty-four
+    // out-of-line EOS_Fields subscripts.
+    if (i_prop < 0 || (std::size_t)i_prop >= prop_plan_.size())
+      return EOS_Ipp::PROP_NOT_IN_DB;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)i_prop];
+    if (!pl.has_first_derivatives || (fetch_cross_derivative && !pl.has_cross_derivative))
+      return EOS_Ipp::PROP_NOT_IN_DB;
+
+    const int *cor = corners_ + 4 * idx;
+    for (unsigned short i_node = 0; i_node < 4; i_node++)
+    {
+      const int id_corn = cor[i_node];
+      cell_val[0][i_node] = node_p_[id_corn];
+      cell_val[1][i_node] = node_h_[id_corn];
+      cell_val[2][i_node] = pl.val[id_corn];
+      cell_val[3][i_node] = pl.d_dp[id_corn];
+      cell_val[4][i_node] = pl.d_dh[id_corn];
+      if (fetch_cross_derivative)
+        cell_val[5][i_node] = pl.d2[id_corn];
+    }
+
+    EOS_Internal_Error ierr = (*pl.err)[idx].get_code();
+    ierr = worst_internal_error(ierr, (*pl.err_dp)[idx].get_code());
+    ierr = worst_internal_error(ierr, (*pl.err_dh)[idx].get_code());
+    if (fetch_cross_derivative)
+      ierr = worst_internal_error(ierr, (*pl.err_d2)[idx].get_code());
+    return ierr;
+  }
+
+  EOS_Internal_Error EOS_Ipp::get_segm_values(int idx, EOS_Property i_prop, int sat_lim, EOS_Ipp_CellData &segm_val) const
+  {
+    // Same guard as get_cell_values: a saturation/limit property the database
+    // does not carry must be reported, not dereferenced.
+    const std::vector<EOS_Error_Field *> &errs = (sat_lim == 0) ? err_segm_sat : err_segm_lim;
+    if (i_prop < 0 || i_prop >= (int)errs.size() || errs[i_prop] == nullptr)
+      return EOS_Ipp::PROP_NOT_IN_DB;
+
     if (sat_lim == 0)
     {
 
@@ -1304,73 +2683,65 @@ namespace NEPTUNE_EOS
     }
     unsigned int nb_cell = index_conn_ph.size() - 1;
     error_cells = new double[nb_cell];
-    EOS_Fields values(3);
+    EOS_Ipp_CellData values;
     std::vector<int> error_eos(1, 0);
     NEPTUNE::EOS_Error_Field eos_error_field(1, &error_eos[0]);
     erreurtot = 0;
     double erreur_loc;
     //double vol_loc;
     long unsigned int nb_cell_pb = 0;
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
     ArrOfDouble ap_bary(1);
     ArrOfDouble ah_bary(1);
     EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
     EOS_Field h_bary("h", "h",NEPTUNE::h, ah_bary);
-    AString prop_string = get_property_name(prop); 
+    AString prop_string = get_property_name(prop);
     EOS_Field rf_fluid_bary(prop_string.aschar(), prop_string.aschar(),prop, ar_fluid_bary);
-
-    EOS_Field rf(prop_string.aschar(), prop_string.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
-    // Récupération des valeurs des cellules
+    // Retrieving the cell values
 
     for (unsigned int i_cell = 0; i_cell < nb_cell; i_cell++)
     {
       error_cells[i_cell] = 0;
       get_cell_values(i_cell, prop, values);
-      // Calcule des barycentres et des volumes
+      const double *ap = values[0];
+      const double *ah = values[1];
+      // Compute barycenters and volumes
       ar_Ipp_bary[0] = 0; //
       ar_fluid_bary[0] = 0;
       //vol_loc = abs((ap[0] - ap[2]) * (ah[0] - ah[2]));
       ap_bary = (ap[0] + ap[1] + ap[2] + ap[3]) / 4;
       ah_bary = (ah[0] + ah[1] + ah[2] + ah[3]) / 4;
-      // Calcule avec le fluide
+      // Compute with the fluid
       NEPTUNE::EOS_Error worst_liq = obj_fluid->compute(p_bary, h_bary, rf_fluid_bary, eos_error_field);
       NEPTUNE::EOS_Internal_Error worst_ipp = compute_prop_ph(prop, ap_bary[0], ah_bary[0], ar_Ipp_bary[0]);
       if ((worst_liq == 0) && (worst_ipp.get_code() == 0))
       {
-        // Calcule des erreurs avec les valeurs des barycentres
+        // Compute errors using the barycenter values
         /*if (abs(ar_Ipp_bary[0]-ar_fluid_bary[0])>10)
         {
-          std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
-          std::cout<<"La diff est " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
-          std::cout << "Les erreurs sont : Ipp : " << worst_ipp.get_partial_code() << ", fluide : " << worst_liq<<endl;
+          std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
+          std::cout<<"The diff is " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
+          std::cout << "The errors are: Ipp: " << worst_ipp.get_partial_code() << ", fluid: " << worst_liq<<endl;
           nb_cell_pb++;
         }
         else
         {*/
-        // erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])) * vol_loc; // Erreur en norme L^1
-        erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])); // Erreur local sans prendre en compte l'aire de la cellule
+        // erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])) * vol_loc; // Error in L^1 norm
+        erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])); // Local error, not accounting for cell area
         error_cells[i_cell] = erreur_loc;
         erreurtot += erreur_loc;
         //}
       }
       else
       {
-        // std::cout<< "erreur ipp" << worst_ipp.get_code() << " et " << "erreur liquide : " << worst_liq << endl ;
-        /*std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
+        // std::cout<< "ipp error" << worst_ipp.get_code() << " and " << "fluid error: " << worst_liq << endl ;
+        /*std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
         nb_cell_pb++;
       }
     }
-    // erreurtot = erreurtot / ((hmax_ipp - hmin_ipp) * (pmax_ipp - pmin_ipp)); // normalisation de l'erreur
-    erreurtot = erreurtot / (nb_cell - nb_cell_pb); // moyenne de l'erreur
+    // erreurtot = erreurtot / ((hmax_ipp - hmin_ipp) * (pmax_ipp - pmin_ipp)); // error normalization
+    erreurtot = erreurtot / (nb_cell - nb_cell_pb); // error average
     error_tot = erreurtot;
     std::cout << "There were " << nb_cell_pb << " problematic cells out of " << nb_cell << ".";
     return EOS_Internal_Error::OK;
@@ -1391,7 +2762,7 @@ namespace NEPTUNE_EOS
 
     error_cells = new double[nb_seg];
 
-    EOS_Fields values(2);
+    EOS_Ipp_CellData values;
 
     std::vector<int> error_eos(1, 0);
     NEPTUNE::EOS_Error_Field eos_error_field(1, &error_eos[0]);
@@ -1399,50 +2770,44 @@ namespace NEPTUNE_EOS
     double erreur_loc;
     double vol_loc;
     long unsigned int nb_seg_pb = 0;
-    ArrOfDouble ap(2);
-    ArrOfDouble ah(2);
-    ArrOfDouble ar(2);
     ArrOfDouble ar_Ipp_bary(1);
     ArrOfDouble ar_fluid_bary(1);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
     ArrOfDouble ap_bary(1);
     EOS_Field p_bary("P", "p",NEPTUNE::p, ap_bary);
     EOS_Field rf_fluid_bary(propname.aschar(), propname.aschar(),prop, ar_fluid_bary);
-    EOS_Field rf(propname.aschar(), propname.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = rf;
-    std::cout << "Le nombre de noeuds est " << nodes_sat[0].size() << endl;
-    std::cout << "Le nombre de segm est " << nb_seg << endl;
+    std::cout << "The number of nodes is " << nodes_sat[0].size() << endl;
+    std::cout << "The number of segm is " << nb_seg << endl;
     std::cout << "Pmin= " << pmin_ipp << endl;
     std::cout << "Pmax= " << pmax_ipp << endl;
-    // Récupération des valeurs des cellules
+    // Retrieving the cell values
     for (int i_seg = 0; i_seg < nb_seg - 1; i_seg++)
     {
       error_cells[i_seg] = 0;
       get_segm_values(i_seg, prop, 0, values);
-      // Calcule des barycentres et des volumes
+      const double *ap = values[0];
+      // Compute barycenters and volumes
       ar_Ipp_bary[0] = 0; //
       ar_fluid_bary[0] = 0;
       vol_loc = abs((ap[1] - ap[0]));
       ap_bary = (ap[0] + ap[1]) / 2;
-      // Calcule avec le fluide
-      std::cout << "calcul pour (p,h):" << ap_bary[0] << "," << endl;
+      // Compute with the fluid
+      std::cout << "computing for (p,h):" << ap_bary[0] << "," << endl;
       NEPTUNE::EOS_Error worst_liq = obj_fluid->compute(p_bary, rf_fluid_bary, eos_error_field);
       NEPTUNE::EOS_Internal_Error worst_ipp = compute_prop_p(prop, ap_bary[0], 0, ar_Ipp_bary[0]);
       if ((worst_liq == 0) && (worst_ipp.get_code() == 0))
       {
-        // Calcule des erreurs avec les valeurs des barycentres
+        // Compute errors using the barycenter values
         /*if (abs(ar_Ipp_bary[0]-ar_fluid_bary[0])>10)
         {
-          std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
-          std::cout<<"La diff est " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
-          std::cout << "Les erreurs sont : Ipp : " << worst_ipp.get_partial_code() << ", fluide : " << worst_liq<<endl;
+          std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ;
+          std::cout<<"The diff is " << abs(ar_Ipp_bary[0]-ar_fluid_bary[0])<<endl;
+          std::cout << "The errors are: Ipp: " << worst_ipp.get_partial_code() << ", fluid: " << worst_liq<<endl;
           nb_cell_pb++;
         }
         else
         {*/
 
-        std::cout << "La diff est " << abs(ar_Ipp_bary[0] - ar_fluid_bary[0]) << endl;
+        std::cout << "The diff is " << abs(ar_Ipp_bary[0] - ar_fluid_bary[0]) << endl;
         erreur_loc = (abs(ar_Ipp_bary[0] - ar_fluid_bary[0])) * vol_loc;
         error_cells[i_seg] = erreur_loc;
         erreurtot += erreur_loc;
@@ -1450,21 +2815,75 @@ namespace NEPTUNE_EOS
       }
       else
       {
-        std::cout << "erreur ipp" << worst_ipp.get_code() << " et " << "erreur liquide : " << worst_liq << endl;
-        /*std::cout<<"probleme de calcul pour (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
+        std::cout << "ipp error" << worst_ipp.get_code() << " and " << "fluid error: " << worst_liq << endl;
+        /*std::cout<<"computation problem for (p,h):" << ap_bary[0] <<","<<ah_bary[0] <<endl ; */
         nb_seg_pb++;
       }
     }
-    erreurtot = erreurtot / ((pmax_ipp - pmin_ipp)); // normalisation de l'erreur
+    erreurtot = erreurtot / ((pmax_ipp - pmin_ipp)); // error normalization
     error_tot = erreurtot;
     std::cout << "There were " << nb_seg_pb << " problematic cells out of " << nb_seg << ".";
     return EOS_Internal_Error::OK;
   }
 
+  // Saturation enthalpy on the requested side, used by compute_h_pT to check
+  // that the root it just inverted really lies in the expected phase.
+  //
+  // The historical route -- re-inverting T(p,h) = T_sat on the 2D mesh -- is
+  // kept as the primary one, so that on a single-file database this returns
+  // bit for bit what compute_h_pT used to compare against. It is however
+  // structurally unable to answer on a tiled database: inside a tile the
+  // inversion only ever sees that tile's h-slice, and the saturation enthalpy
+  // generally lives in a *different* tile of the column. So when it fails,
+  // the stored 1D saturation curve -- which every tile of a column carries a
+  // copy of -- is read instead, rather than leaving the caller to compare
+  // against a value that was never written.
+  EOS_Internal_Error EOS_Ipp::compute_h_sat_for_phase(double p, double T_sat, bool liquid,
+                                                       double &res) const
+  {
+    // Read the stored 1D saturation curve first: one segment lookup, and it
+    // tells us where the answer lies before we consider scanning for it.
+    const EOS_Property prop = liquid ? NEPTUNE::h_l_sat : NEPTUNE::h_v_sat;
+    const int sz = (int)err_segm_sat.size();
+    double from_curve = NAN;
+    bool has_curve = false;
+    if (prop >= 0 && prop < sz && err_segm_sat[prop] != nullptr)
+      has_curve = (compute_prop_p(prop, p, 0, from_curve) == EOS_Internal_Error::OK)
+                  && !std::isnan(from_curve);
+
+    // The 2D inversion at T_sat stays authoritative -- it is what a
+    // single-file database has always compared against -- but it is only
+    // worth attempting when the curve says the answer can fall inside this
+    // mesh's own h-range. On a tile it usually cannot, the saturation
+    // enthalpy of the column living in a different tile, and the attempt
+    // would be a guaranteed miss paid for by a scan of every cell of the
+    // column.
+    EOS_Internal_Error ierr = EOS_Ipp::INVERT_h_pT;
+    if (!has_curve || (from_curve >= hmin_ipp && from_curve <= hmax_ipp))
+    {
+      res = NAN;
+      ierr = liquid ? compute_h_l_pT(p, T_sat, res) : compute_h_v_pT(p, T_sat, res);
+      if (ierr == EOS_Internal_Error::OK && !std::isnan(res))
+        return ierr;
+    }
+
+    if (has_curve)
+    {
+      res = from_curve;
+      return EOS_Internal_Error::OK;
+    }
+
+    res = NAN;
+    return ierr;
+  }
+
   EOS_Internal_Error EOS_Ipp::compute_h_pT(double p, double T, double &h) const
   {
+    if (tile_cache_ != nullptr)
+      return tile_cache_->compute_h_pT(p, T, h);
+
     h = NAN;
-    double h_l_sat, h_v_sat, T_sat;
+    double h_sat = NAN, T_sat;
     EOS_Internal_Error ierr;
     EOS_Internal_Error ierrT, ierr1, ierr2, ierr3;
 
@@ -1476,69 +2895,157 @@ namespace NEPTUNE_EOS
     if (ierrT != EOS_Internal_Error::OK)
       return ierrT;
 
-    if (T <= T_sat)
-    {
-      ierr1 = compute_h_l_pT(p, T, h);
-      ierr2 = compute_h_l_pT(p, T_sat, h_l_sat);
-      ierr3 = worst_internal_error(ierr1, ierr2);
-      if (std::isnan(h))
-        return EOS_Internal_Error::EOS_BAD_COMPUTE; // If the computation of h failed
-      if (h <= h_l_sat)
-        return ierr3;
-    }
-    else
-    {
-      ierr1 = compute_h_v_pT(p, T, h);
-      ierr2 = compute_h_v_pT(p, T_sat, h_v_sat);
-      ierr3 = worst_internal_error(ierr1, ierr2);
-      if (std::isnan(h))
-        return ierr3; // If the computation of h failed
-      if (h >= h_v_sat)
-        return ierr3;
-    }
+    const bool liquid = (T <= T_sat);
+
+    ierr1 = liquid ? compute_h_l_pT(p, T, h) : compute_h_v_pT(p, T, h);
+    if (std::isnan(h))
+      return liquid ? EOS_Internal_Error::EOS_BAD_COMPUTE : ierr1; // the inversion itself failed
+
+    ierr2 = compute_h_sat_for_phase(p, T_sat, liquid, h_sat);
+    // Without a usable saturation enthalpy the phase check cannot be made.
+    // It used to be attempted anyway, against an uninitialized double, which
+    // accepted or rejected a perfectly good root essentially at random.
+    if (ierr2 != EOS_Internal_Error::OK || std::isnan(h_sat))
+      return ierr2;
+
+    ierr3 = worst_internal_error(ierr1, ierr2);
+    if (liquid ? (h <= h_sat) : (h >= h_sat))
+      return ierr3;
+
     return INVERT_h_pT;
+  }
+
+  // Bicubic counterpart of the bilinear h(p,T) inversion of compute_h_l_pT /
+  // compute_h_v_pT (cf. report Doc/Interpolator for the bilinear methodology,
+  // reused here): all real cells whose p-range contains p are scanned, and in
+  // each of them the equation T(p,h) = T is solved on the very same Hermite
+  // patch as bicubic_interpolator, so that a subsequent direct evaluation
+  // T(p, h(p,T)) in BICUBIC mode gives back the input T.
+  //
+  // How the bicubic coefficients are used: at fixed p (fixed t = pcal), the
+  // tensor-product patch collapses to a 1D cubic Hermite polynomial in
+  // u = hcal on [0,1],
+  //     T(u) = A0*Hu0(u) + A1*Hu1(u) + D0*Ku0(u) + D1*Ku1(u)
+  // where A0/A1 (edge values) and D0/D1 (edge u-derivatives) are obtained by a
+  // 1D Hermite evaluation in t along the two edges u=0 and u=1. Written in
+  // monomial form this is a cubic equation in u, solved in closed form
+  // (cf. cubic_real_roots); a root is accepted when it lies in [0,1] with the
+  // same boundary tolerance (IPP_BOUND_TOL) as the bilinear inversion, and the
+  // first (smallest) valid root of the first matching cell is returned, as in
+  // the bilinear version. Degenerate cells in u (saturation plateau: T almost
+  // independent of h) yield no isolated root and are skipped -- the bilinear
+  // inversion skips them too (0/0 division -> NaN -> rejected by the [0,1]
+  // test).
+  //
+  // Assumptions at the domain borders: no extrapolation is attempted; if no
+  // scanned cell yields a root in [0,1], INVERT_h_pT is returned, exactly like
+  // the bilinear inversion.
+  EOS_Internal_Error EOS_Ipp::compute_h_pT_bicubic(double p, double T, double &res) const
+  {
+    EOS_Internal_Error ierr;
+    bool has_cross_derivative = has_bicubic_cross_derivative_data(NEPTUNE::T);
+
+    EOS_Ipp_CellData values;
+
+    // Get all real cells containing p (same cell list as the bilinear inversion)
+    const std::vector<unsigned int> &cells_containing_p = cells_containing_p_cached(p);
+
+    // Cells whose interpolated T provably never reaches the target cannot
+    // hold the root, and saying so costs two contiguous doubles instead of
+    // gathering four corners across the node and property arrays
+    // (cf. build_cell_T_ranges).
+    const double *T_lo = cell_T_lo_ptr_, *T_hi = cell_T_hi_ptr_;
+
+    for (auto med_cell : cells_containing_p)
+    {
+      if (T_lo != nullptr && (T < T_lo[med_cell] || T > T_hi[med_cell]))
+        continue;
+      ierr = get_cell_values_bicubic(med_cell, NEPTUNE::T, values, has_cross_derivative);
+
+      double pcal = (p - values[0][0]) / (values[0][3] - values[0][0]);
+
+      // Patch data in unit-square coordinates: corners 0=(0,0), 1=(0,1), 2=(1,1), 3=(1,0)
+      double f[4], ft[4], fu[4], ftu[4];
+      bicubic_patch_data(values, has_cross_derivative, f, ft, fu, ftu);
+
+      // 1D Hermite evaluation in t along the edges u=0 (corners 0,3) and u=1
+      // (corners 1,2): values A0/A1 and u-derivatives D0/D1 of T at (t,u=0/1)
+      double t = pcal, t2 = t * t, t3 = t2 * t;
+      double Ht0 = 2. * t3 - 3. * t2 + 1.;
+      double Ht1 = -2. * t3 + 3. * t2;
+      double Kt0 = t3 - 2. * t2 + t;
+      double Kt1 = t3 - t2;
+
+      double A0 = Ht0 * f[0] + Ht1 * f[3] + Kt0 * ft[0] + Kt1 * ft[3];
+      double A1 = Ht0 * f[1] + Ht1 * f[2] + Kt0 * ft[1] + Kt1 * ft[2];
+      double D0 = Ht0 * fu[0] + Ht1 * fu[3] + Kt0 * ftu[0] + Kt1 * ftu[3];
+      double D1 = Ht0 * fu[1] + Ht1 * fu[2] + Kt0 * ftu[1] + Kt1 * ftu[2];
+
+      // Monomial coefficients of T(u) - T = 0, from
+      // T(u) = A0*(2u^3-3u^2+1) + A1*(-2u^3+3u^2) + D0*(u^3-2u^2+u) + D1*(u^3-u^2)
+      double c3 = 2. * (A0 - A1) + D0 + D1;
+      double c2 = -3. * (A0 - A1) - 2. * D0 - D1;
+      double c1 = D0;
+      double c0 = A0 - T;
+
+      double uroots[3];
+      int nb_roots = cubic_real_roots(c3, c2, c1, c0, uroots);
+
+      for (int k = 0; k < nb_roots; k++)
+      {
+        double hcal = uroots[k];
+        if (((hcal > 0.0) || (fabs(hcal) < IPP_BOUND_TOL)) && ((hcal < 1.0) || (fabs(hcal - 1.) < IPP_BOUND_TOL)))
+        {
+          // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
+          res = hcal * (values[1][1] - values[1][0]) + values[1][0];
+          return EOS_Internal_Error::OK;
+        }
+      }
+    }
+
+    return EOS_Ipp::INVERT_h_pT;
   }
 
   EOS_Internal_Error EOS_Ipp::compute_h_l_pT(double p, double T, double &res) const
   {
     //    cout << "--- compute_h_l_pT p="<<p<<" T="<<T<<endl;
+
+    // Bicubic inversion of h(p,T): only when the BICUBIC method is selected and
+    // the T first-derivative fields are available in the loaded database;
+    // otherwise the historical bilinear inversion below is used (same fallback
+    // policy as compute_prop_ph).
+    if (interp_method == BICUBIC && has_bicubic_first_derivative_data(NEPTUNE::T))
+      return compute_h_pT_bicubic(p, T, res);
+
     EOS_Internal_Error ierr;
     double pcal, hcal, h;
     double a, b, c, d;
 
     pcal = hcal = h = 0.e0;
 
-    EOS_Fields values(3);
-    AString propname = "T";
+    EOS_Ipp_CellData values;
     EOS_Property prop = NEPTUNE::T;
 
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(propname.aschar(), propname.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
-
-    // Get all real cells containing p   : TODO: Optimize these lines
-    std::set<unsigned int> cells_containing_p;
-    for (double h = hmin_ipp + delta_h_f / 2; h < hmax_ipp; h += delta_h_f)
-    {
-      unsigned int med_id_cell = get_cellidx(p, h);
-      cells_containing_p.insert(med_id_cell);
-    }
+    // Get all real cells containing p (ascending h order)
+    const std::vector<unsigned int> &cells_containing_p = cells_containing_p_cached(p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
     // return first h computed
+    // Cells whose interpolated T provably never reaches the target cannot
+    // hold the root, and saying so costs two contiguous doubles instead of
+    // gathering four corners across the node and property arrays
+    // (cf. build_cell_T_ranges).
+    const double *T_lo = cell_T_lo_ptr_, *T_hi = cell_T_hi_ptr_;
+
     for (auto med_cell : cells_containing_p)
     {
+      if (T_lo != nullptr && (T < T_lo[med_cell] || T > T_hi[med_cell]))
+        continue;
       ierr = get_cell_values(med_cell, prop, values);
       pcal = (p - values[0][0]) / (values[0][2] - values[0][0]);
 
-      /* a = values[2][1] - values[2][0];   // This calcul doesn't correspond to the one on the report
+      /* a = values[2][1] - values[2][0];   // This computation doesn't correspond to the one on the report
       b = values[2][2] - values[2][0];
       c = values[2][3] - values[2][2] - a;
       d = values[2][0]; */ 
@@ -1552,7 +3059,7 @@ namespace NEPTUNE_EOS
 
       hcal = (T - (b * pcal + d)) / (a + c * pcal);
 
-      if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
+      if (((hcal > 0.0) || (fabs(hcal) < IPP_BOUND_TOL)) && ((hcal < 1.0) || (fabs(hcal - 1.) < IPP_BOUND_TOL)))
       {
         // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
         res = hcal * (values[1][1] - values[1][0]) + values[1][0];
@@ -1565,39 +3072,38 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::compute_h_v_pT(double p, double T, double &res) const
   {
+    // Bicubic inversion of h(p,T): same policy as compute_h_l_pT above. The
+    // liquid/vapor distinction is not made here (as in the bilinear inversion,
+    // both scans cover the whole (p,h) mesh); it is handled by the caller
+    // (compute_h_pT) through the comparison with the saturation enthalpies.
+    if (interp_method == BICUBIC && has_bicubic_first_derivative_data(NEPTUNE::T))
+      return compute_h_pT_bicubic(p, T, res);
+
     EOS_Internal_Error ierr;
     double pcal, hcal, h;
     double a, b, c, d;
 
     pcal = hcal = h = 0.0;
 
-    EOS_Fields values(3);
-    AString prop_string = "T";
+    EOS_Ipp_CellData values;
     EOS_Property prop = NEPTUNE::T;
 
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(prop_string.aschar(), prop_string.aschar(),prop, ar);
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
-
-    // Get all real cells containing p
-    std::set<unsigned int> cells_containing_p;
-    for (double h = hmin_ipp + delta_h_f / 2; h < hmax_ipp; h += delta_h_f)
-    {
-      unsigned int med_id_cell = get_cellidx(p, h);
-      cells_containing_p.insert(med_id_cell);
-    }
+    // Get all real cells containing p (ascending h order)
+    const std::vector<unsigned int> &cells_containing_p = cells_containing_p_cached(p);
 
     // read all cells containing p
     // for each cell compute h if 0<=h*<=1
     // return first h computed
+    // Cells whose interpolated T provably never reaches the target cannot
+    // hold the root, and saying so costs two contiguous doubles instead of
+    // gathering four corners across the node and property arrays
+    // (cf. build_cell_T_ranges).
+    const double *T_lo = cell_T_lo_ptr_, *T_hi = cell_T_hi_ptr_;
+
     for (auto med_cell : cells_containing_p)
     {
+      if (T_lo != nullptr && (T < T_lo[med_cell] || T > T_hi[med_cell]))
+        continue;
       ierr = get_cell_values(med_cell,prop, values);
       pcal = (p - values[0][0]) / (values[0][2] - values[0][0]);
       /* a = values[2][1] - values[2][0];
@@ -1611,7 +3117,7 @@ namespace NEPTUNE_EOS
 
 
       hcal = (T - (b * pcal + d)) / (a + c * pcal);
-      if (((hcal > 0.0) || (fabs(hcal) < DBL_EPSILON)) && ((hcal < 1.0) || (fabs(hcal - 1.) < DBL_EPSILON)))
+      if (((hcal > 0.0) || (fabs(hcal) < IPP_BOUND_TOL)) && ((hcal < 1.0) || (fabs(hcal - 1.) < IPP_BOUND_TOL)))
       {
         // hcal = (h-h1)/(h2-h1)   =>   h = hcal*(h2-h1)+h1;
         res = hcal * (values[1][1] - values[1][0]) + values[1][0];
@@ -1625,59 +3131,119 @@ namespace NEPTUNE_EOS
   EOS_Internal_Error EOS_Ipp::compute_prop_ph(EOS_Property prop,
                                               double p, double h, double &res) const
   {
+    if (tile_cache_ != nullptr)
+      return tile_cache_->compute_prop_ph(prop, p, h, res);
+
     // changer l'acces au prop
     EOS_Internal_Error ierr;
-    EOS_Fields values(3);
-
-    AString name_prop_string=  get_property_name(prop);
-     
-    ArrOfDouble ap(4);
-    ArrOfDouble ah(4);
-    ArrOfDouble ar(4);
-    EOS_Field pf("P", "p",NEPTUNE::p, ap);
-    EOS_Field hf("h", "h",NEPTUNE::h, ah);
-    EOS_Field rf(name_prop_string.aschar(), name_prop_string.aschar(),prop, ar); // transformer prop.
-    // EOS_Field rf(prop,prop,ar)
-    values[0] = pf;
-    values[1] = hf;
-    values[2] = rf;
 
     ierr = check_ph_bounds(p, h);
     if (ierr == OUT_OF_BOUNDS)
       return ierr;
 
     int index = get_cellidx(p, h);
-    ierr = get_cell_values(index, prop, values);
+    // Inside the declared (p,h) box but on no real cell: a mesh that does not
+    // tile its own bounding box has holes, and answering from cell 0 -- which
+    // is what reading the zero-filled lookup table amounted to -- is worse
+    // than admitting the point cannot be interpolated.
+    if (index < 0)
+      return OUT_OF_BOUNDS;
+
+    // Bicubic Hermite patch, only if explicitly selected and the property has its
+    // two first-derivative fields available in the loaded database; otherwise
+    // (and for any property outside the 2D base-property set) fall back to the
+    // historical bilinear path below. When the true stored cross derivative is
+    // also available, it is used in place of the local finite-difference twist
+    // estimate (cf. bicubic_interpolator) -- its absence alone never causes a
+    // fallback to bilinear as long as the first derivatives are present.
+
+    // One lookup for the three questions this used to answer with two switch
+    // statements and up to four range-checked pointer-vector reads, per point.
+    if (prop < 0 || (std::size_t)prop >= prop_plan_.size())
+      return EOS_Ipp::PROP_NOT_IN_DB;
+    const EOS_Ipp_PropPlan &pl = prop_plan_[(std::size_t)prop];
+
+    const bool bicubic = (interp_method == BICUBIC && pl.has_first_derivatives);
+
+    // Consecutive points of a host code's batch walk its own mesh, so they
+    // land in the same interpolation cell over and over. Remembering the last
+    // one skips the gather -- four corner indices scattered across two node
+    // arrays and up to four property arrays, which is where a query spends
+    // most of its memory traffic -- and, in bicubic, the Hermite patch built
+    // from it, neither of which depends on (p,h) within the cell.
+    //
+    // thread_local, and keyed on the instance, for the same reason as
+    // column_scratch(): a loaded tile's EOS_Ipp is shared between the caches
+    // of different threads, so the cache cannot live in the object.
+    EOS_Ipp_CellCache &cache = cell_cache();
+    if (cache.owner == this && cache.cell == index && cache.prop == (int)prop
+        && cache.bicubic == bicubic)
+    {
+      if (cache.ierr != EOS_Internal_Error::OK)
+        return cache.ierr;
+      res = bicubic ? bicubic_evaluate(p, h, cache.values, cache.f, cache.ft, cache.fu, cache.ftu)
+                    : bilinear_interpolator(p, h, cache.values);
+      return EOS_Internal_Error::OK;
+    }
+
+    // Miss: fill the cache in place, so this costs no copy over what the
+    // non-caching version wrote into its own local anyway.
+    cache.owner   = this;
+    cache.cell    = index;
+    cache.prop    = (int)prop;
+    cache.bicubic = bicubic;
+
+    if (bicubic)
+    {
+      const bool has_cross_derivative = pl.has_cross_derivative;
+
+      cache.ierr = ierr = get_cell_values_bicubic(index, prop, cache.values, has_cross_derivative);
+      if (ierr != EOS_Internal_Error::OK)
+        return ierr;
+
+      bicubic_patch_data(cache.values, has_cross_derivative,
+                         cache.f, cache.ft, cache.fu, cache.ftu);
+      res = bicubic_evaluate(p, h, cache.values, cache.f, cache.ft, cache.fu, cache.ftu);
+      return EOS_Internal_Error::OK;
+    }
+
+    cache.ierr = ierr = get_cell_values(index, prop, cache.values);
     if (ierr != EOS_Internal_Error::OK)
       return ierr;
 
-    res = bilinear_interpolator(p, h, values);
+    res = bilinear_interpolator(p, h, cache.values);
 
     return EOS_Internal_Error::OK;
   }
 
-  // tag = 0 pour sat et tag = 1 pour lim
+  // tag = 0 for sat and tag = 1 for lim
   EOS_Internal_Error EOS_Ipp::compute_prop_p(EOS_Property prop,
                                              double p, int sat_lim, double &res) const
   {
+    if (tile_cache_ != nullptr)
+      return tile_cache_->compute_prop_p(prop, p, sat_lim, res);
+
     EOS_Internal_Error ierr;
-    EOS_Fields values(2);
-
-    ArrOfDouble ap(2);
-    ArrOfDouble ar(2);
-    EOS_Field pf("P", "p", NEPTUNE::p, ap);
-    AString name_prop= get_property_name(prop);
-    EOS_Field rf(name_prop.aschar(), name_prop.aschar(),prop, ar); // transformer prop.
-
-    values[0] = pf;
-    values[1] = rf;
+    EOS_Ipp_CellData values;
 
     ierr = check_p_bounds_satlim(p);
     if (ierr == OUT_OF_BOUNDS)
       return ierr;
 
     int index = get_segmidx(p, sat_lim);
+    if (index < 0)
+      return OUT_OF_BOUNDS; // cf. get_cellidx: no segment here, so no answer
+
     ierr = get_segm_values(index, prop, sat_lim, values);
+    // The result of this was computed and then dropped, with an unconditional
+    // OK returned in its place. When get_segm_values reports PROP_NOT_IN_DB it
+    // has written nothing into values, so linear_interpolator went on to read
+    // uninitialized stack and the caller was told the answer was good. This is
+    // the 1D counterpart of the guard compute_prop_ph already applies to
+    // get_cell_values, and it matters more, because compute_T_sat_p goes
+    // through here and the whole (p,T) chain goes through compute_T_sat_p.
+    if (ierr != EOS_Internal_Error::OK)
+      return ierr;
 
     res = linear_interpolator(p, values);
 
@@ -1690,16 +3256,16 @@ namespace NEPTUNE_EOS
     if (std::isnan(h))
       return OUT_OF_BOUNDS;
 
-    if ((fabs(h - hmin_ipp)) > DBL_EPSILON)
-    //if ((fabs(h - hmin)) > DBL_EPSILON)
+    if ((fabs(h - hmin_ipp)) > IPP_BOUND_TOL)
+    //if ((fabs(h - hmin)) > IPP_BOUND_TOL)
     {
       if (h < hmin_ipp)
       //if (h < hmin)
         return OUT_OF_BOUNDS;
     }
 
-    if ((fabs(h - hmax_ipp) > DBL_EPSILON))
-    //if ((fabs(h - hmax) > DBL_EPSILON))
+    if ((fabs(h - hmax_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(h - hmax) > IPP_BOUND_TOL))
     {
       // if ((h > hmax_ipp))
       if ((h > hmax_ipp))
@@ -1712,16 +3278,16 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Ipp::check_p_bounds_ph(double p) const
   {
-    if ((fabs(p - pmin_ipp) > DBL_EPSILON))
-    //if ((fabs(p - pmin) > DBL_EPSILON))
+    if ((fabs(p - pmin_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(p - pmin) > IPP_BOUND_TOL))
     {
       if ((p < pmin_ipp))
       //if ((p < pmin))
         return OUT_OF_BOUNDS;
     }
 
-    if ((fabs(p - pmax_ipp) > DBL_EPSILON))
-    //if ((fabs(p - pmax) > DBL_EPSILON))
+    if ((fabs(p - pmax_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(p - pmax) > IPP_BOUND_TOL))
     {
       if ((p > pmax_ipp))
       //if ((p > pmax))
@@ -1735,8 +3301,8 @@ namespace NEPTUNE_EOS
   {
     double max;
 
-    if ((fabs(p - pmin_ipp) > DBL_EPSILON))
-    //if ((fabs(p - pmin) > DBL_EPSILON))
+    if ((fabs(p - pmin_ipp) > IPP_BOUND_TOL))
+    //if ((fabs(p - pmin) > IPP_BOUND_TOL))
     {
       if ((p < pmin_ipp))
       //if ((p < pmin))
@@ -1749,7 +3315,7 @@ namespace NEPTUNE_EOS
     else
       max = pmax_ipp;
       //max = pmax;
-    if ((fabs(p - max) > DBL_EPSILON))
+    if ((fabs(p - max) > IPP_BOUND_TOL))
     {
       if ((p > max))
         return OUT_OF_BOUNDS;

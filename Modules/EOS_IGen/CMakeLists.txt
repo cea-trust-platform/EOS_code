@@ -9,4 +9,5 @@ endif (WITH_DOC_DOXYGEN)
 
 add_subdirectory(Src)
 add_subdirectory(API)
+add_subdirectory(Tools)
 add_subdirectory(Tests)

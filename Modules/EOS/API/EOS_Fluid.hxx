@@ -259,6 +259,25 @@ namespace NEPTUNE
     virtual EOS_Internal_Error compute_d_gamma_d_p_h_ph(double p, double h, double& r) const;
     virtual EOS_Internal_Error compute_d_gamma_d_h_p_ph(double p, double h, double& r) const;
 
+    // Cross derivatives d2(X)/dp.dh : default implementation is a direct 4-point
+    // central difference of the base property (cf. EOS_Fluid.cxx). A fluid
+    // model may override with an analytical formula if available.
+    virtual EOS_Internal_Error compute_d2_T_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_rho_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_u_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_s_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_mu_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_lambda_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_cp_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_cv_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_sigma_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_w_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_g_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_f_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_pr_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_beta_d_p_d_h_ph(double p, double h, double& r) const;
+    virtual EOS_Internal_Error compute_d2_gamma_d_p_d_h_ph(double p, double h, double& r) const;
+
     virtual EOS_Internal_Error compute_d_h_d_p_T_pT(double p, double T, double& r) const;
     virtual EOS_Internal_Error compute_d_h_d_T_p_pT(double p, double T, double& r) const;
     virtual EOS_Internal_Error compute_d_rho_d_p_T_pT(double p, double T, double& r) const;

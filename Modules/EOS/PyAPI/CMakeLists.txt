@@ -14,6 +14,7 @@ include_directories(
   ${CMAKE_BINARY_DIR}/Modules/
   ${CMAKE_BINARY_DIR}/Modules/EOS/API  # pour les headers générés
   ${Python3_INCLUDE_DIRS}
+  ${GLOBALEXT_INC}  # MED/HDF5/... requis par EOS_Ipp.hxx (interpolateur)
 )
 
 # --- Configuration SWIG ---

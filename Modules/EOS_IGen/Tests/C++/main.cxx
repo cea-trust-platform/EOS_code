@@ -20,9 +20,44 @@
 #include "EOS/API/EOS_Config.hxx"
 #include "EOS_IGen/API/EOS_IGen.hxx"
 #include <vector>
+#include <cstring>
 
 using namespace NEPTUNE;
 using namespace NEPTUNE_EOS_IGEN;
+
+// Quality limit of the two "raffinement local" fixtures.
+//
+// 1e-7, where this asked for 1.2e-4 at first and 2e-6 after that. The
+// unrefined 4x4 mesh is already accurate to 5.9e-6 on T with Cathare2 and
+// 2.7e-6 with either Refprop, so the original limit was satisfied at every
+// cell centre and nothing was ever subdivided: the fixture named
+// "raffinement local" came out byte-identical to the unrefined one. 2e-6
+// bought one round of subdivision, which is still not what this fixture is
+// for -- one round only ever refines cells that are already at the finest
+// step, and every defect local refinement has had lived in refining a cell
+// coarser than that.
+//
+// 1e-7 is the loosest limit that drives the mesh to three rounds. Measured
+// against the code as it stood before EOS_Mesh was fixed: at 3e-7 it builds
+// the mesh without complaint, and at 1e-7 it stops with "a continuity node
+// at row 2 column 17 lies on no cell edge". So this is the point at which
+// the fixture starts holding the ground that was just fixed.
+//
+// What is being held is EOS_Mesh, which does not care which model filled the
+// nodes, and the models do not cost the same: three rounds take 1.4 s with
+// Cathare2 and over a minute with each Refprop (about 50 ms a node, every
+// property, recomputed over the whole mesh at every round). So when Cathare2
+// is there to go deep, the Refprop fixtures stay at the one round of 2e-6 --
+// still refined, which is what EOSTestIpp reads them for.
+static double local_refine_limit(const AString& methode)
+{
+#ifdef WITH_PLUGIN_CATHARE2
+  if (strncmp(methode.aschar(), "EOS_Refprop", 11) == 0)
+    return 2.e-6;
+#endif
+  (void)methode;
+  return 1.e-7;
+}
 
 int main()
 {
@@ -188,7 +223,7 @@ int main()
 	      exit(Err);
 	    }
 	    
-	    obj_igen.set_quality("T","centre",0, 0.00012);
+	    obj_igen.set_quality("T","centre",0, local_refine_limit(methodes[i]));
 
 	    Err = obj_igen.make_local_refine();
 	    if (Err!=good)
@@ -234,7 +269,7 @@ int main()
 	      exit(Err);
 	    }
 	    
-	    obj_igen.set_quality("T","centre",0, 0.00012);
+	    obj_igen.set_quality("T","centre",0, local_refine_limit(methodes[i]));
 
 	    Err = obj_igen.make_local_refine(false);
 	    if (Err!=good)

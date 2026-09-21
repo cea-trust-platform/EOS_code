@@ -13,74 +13,17 @@
 *
 *****************************************************************************/
 
+#ifndef EOS_TESTS_TEST_UTILS_HXX_
+#define EOS_TESTS_TEST_UTILS_HXX_
 
+#include <cmath>
 
-/*
- * EOS_IGen_QI_i.hxx
- *
- *  Created on: 12 mai 2010
- */
-
-#ifndef EOS_IGEN_QI_I_HXX_
-#define EOS_IGEN_QI_I_HXX_
-
-
-namespace NEPTUNE_EOS_IGEN
+// vérifie si val est dans [ (1-tol)*ref ; (1+tol)*ref ]
+inline bool in_relative_range(double val, double ref, double tol)
 {
-  
-  inline void EOS_IGen_QI::set_quality_mesh(const EOS_Mesh* mesh, EOS_Fields& nodes)
-  { if      (type == "centre")
-       make_centre_nodes(mesh,nodes) ;
-    else if (type == "node")
-       make_nodes(mesh->get_domain(), nodes) ;
-    else 
-       cerr << "EOS_IGen_QI::set_quality_mesh :  type " << type 
-            << " is not implemented" << endl ;
-  }
-  
-  inline const AString& EOS_IGen_QI::get_type() const
-  { return type ;
-  }
-  
-  inline int EOS_IGen_QI::get_is_abs() const
-  { return is_abs ;
-  }
-  
-  inline int EOS_IGen_QI::get_nb_sub() const
-  { return nb_sub ;
-  }
-  
-  inline int EOS_IGen_QI::samples_per_cell() const
-  { return (type == "centre") ? nb_sub*nb_sub : 1 ;
-  }
-  
-  inline bool EOS_IGen_QI::get_test_quality() const
-  { return test_quality ;
-  }
-  
-  inline double EOS_IGen_QI::get_limit_qi() const
-  { return limit_qi ;
-  }
-   
-  inline const ArrOfDouble& EOS_IGen_QI::get_quality_nodes() const
-  { return quality_nodes ; 
-  }
-  
-  inline const AString& EOS_IGen_QI::get_property() const
-  { return property ;
-  }
-  
-  inline EOS_Property EOS_IGen_QI::get_property_number() const
-  { return property_number ;
-  }
-
-  inline AString EOS_IGen_QI::get_propint() const
-  { char propconv[PROPNAME_MSIZE] ;
-    eostp_strcov(property.aschar(), propconv) ;
-    return propconv ;
-  }
-
-
-
+    if (ref == 0.0) return (val == 0.0);  // cas particulier
+    double diff = std::fabs(val - ref);
+    return diff <= tol * std::fabs(ref);
 }
-#endif /* EOS_IGEN_QI_I_HXX_ */
+
+#endif /* EOS_TESTS_TEST_UTILS_HXX_ */

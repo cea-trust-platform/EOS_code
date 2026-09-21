@@ -96,10 +96,26 @@ namespace NEPTUNE
       { "[dPrdT]P"      ,      "[dPrdT]P"                               }, 
       { "[dbeta/dT]P"   ,      "[dbeta/dT]P"                            },
       { "[dgamma/dT]P"  ,      "[dgamma/dT]P"                           },
-      { "[dh/dT]P"      ,      "[dh/dT]P"                               }, 
-      { "[dh/dP]T"      ,      "[dh/dP]T"                               }, 
-      { "[dh/ds]P"      ,      "[dh/ds]P"                               }, 
-      { "[dh/dP]s"      ,      "[dh/dP]s"                               }  
+      { "[dh/dT]P"      ,      "[dh/dT]P"                               },
+      { "[dh/dP]T"      ,      "[dh/dP]T"                               },
+      { "[dh/ds]P"      ,      "[dh/ds]P"                               },
+      { "[dh/dP]s"      ,      "[dh/dP]s"                               },
+
+      { "[d2T/dPdh]"     ,     "[d2T/dPdh]"                             },
+      { "[d2rho/dPdh]"   ,     "[d2rho/dPdh]"                           },
+      { "[d2u/dPdh]"     ,     "[d2u/dPdh]"                             },
+      { "[d2s/dPdh]"     ,     "[d2s/dPdh]"                             },
+      { "[d2mu/dPdh]"    ,     "[d2mu/dPdh]"                            },
+      { "[d2lambda/dPdh]",     "[d2lambda/dPdh]"                        },
+      { "[d2cp/dPdh]"    ,     "[d2cp/dPdh]"                            },
+      { "[d2cv/dPdh]"    ,     "[d2cv/dPdh]"                            },
+      { "[d2sigma/dPdh]" ,     "[d2sigma/dPdh]"                         },
+      { "[d2w/dPdh]"     ,     "[d2w/dPdh]"                             },
+      { "[d2g/dPdh]"     ,     "[d2g/dPdh]"                             },
+      { "[d2f/dPdh]"     ,     "[d2f/dPdh]"                             },
+      { "[d2pr/dPdh]"    ,     "[d2pr/dPdh]"                            },
+      { "[d2beta/dPdh]"  ,     "[d2beta/dPdh]"                          },
+      { "[d2gamma/dPdh]" ,     "[d2gamma/dPdh]"                         }
     };
 #if  __cplusplus <  201103L
  static std::vector<typrop> thermprop(t_thermprop, 
@@ -184,7 +200,25 @@ namespace NEPTUNE
       d_h_d_p_T      ,
       d_h_d_p_s      ,
       d_h_d_s_p      ,
-      lastTProperty = d_h_d_s_p
+
+      // Cross derivatives d2(X)/dp.dh, used by the bicubic Hermite patch (EOS_Ipp).
+      // Default implementation: central difference of d_X_d_p_h w.r.t. h (cf. EOS_Fluid).
+      d2_T_d_p_d_h     ,
+      d2_rho_d_p_d_h   ,
+      d2_u_d_p_d_h     ,
+      d2_s_d_p_d_h     ,
+      d2_mu_d_p_d_h    ,
+      d2_lambda_d_p_d_h,
+      d2_cp_d_p_d_h    ,
+      d2_cv_d_p_d_h    ,
+      d2_sigma_d_p_d_h ,
+      d2_w_d_p_d_h     ,
+      d2_g_d_p_d_h     ,
+      d2_f_d_p_d_h     ,
+      d2_pr_d_p_d_h    ,
+      d2_beta_d_p_d_h  ,
+      d2_gamma_d_p_d_h ,
+      lastTProperty = d2_gamma_d_p_d_h
     };
   enum EOS_limthermprop
     { EOS_TPROP    =    p ,

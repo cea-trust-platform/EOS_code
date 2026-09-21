@@ -25,6 +25,11 @@
 static NEPTUNE::AString UNKNOWN("Unknown") ;
 // for numerical derivation
 static double epsilon = 1.e-6 ;
+// for numerical second/cross derivatives (a 4-point mixed difference divides
+// by epsilon^2 : reusing the first-derivative epsilon amplifies round-off
+// noise, so a coarser step -- balancing truncation vs round-off error for a
+// second-order difference -- is used instead)
+static double epsilon2 = 1.e-4 ;
 // for Newton
 static  int nb_iter_max = 50 ;
 static  int iter_Newton;
@@ -410,18 +415,24 @@ namespace NEPTUNE
     assert(errfield.size() == sz) ;
 
     errfield = EOS_Internal_Error::OK ;
-    ArrOfDouble pp_data(sz) ;
-    ArrOfDouble hh_data(sz) ;
-    ArrOfDouble tt_data(sz) ;
-    ArrOfDouble ss_data(sz) ;
-    EOS_Field pp("pp","p",NEPTUNE::p,pp_data) ;
-    EOS_Field hh("hh","h",NEPTUNE::h,hh_data) ;
-    EOS_Field tt("tt","T",NEPTUNE::T,tt_data) ;
-    EOS_Field ss("ss","s",NEPTUNE::s,ss_data) ;
+
+    // Four sz-long arrays used to be allocated up front, each zero-filled by
+    // ArrOfDouble's constructor, per output field and per batch: eight UObject
+    // constructions and as many destructions on top, every one of them taking
+    // the process-wide registry mutex. A twenty-field batch of 100000 points
+    // allocated and zeroed 6.4 MB, most of it never read.
+    //
+    // Only one of them is ever storage. pp and ss are always aliases of the
+    // inputs -- nothing writes through them. Of hh and tt, exactly one is an
+    // input and the other is scratch: (p,h) inverts T into tt for the
+    // d_X_d_T_p / d_X_d_p_T families, (p,T) inverts h into hh for everything
+    // else. So one array is allocated instead of four, whichever way round the
+    // pair came.
     int lp = 0 ;
     int lh = 0 ;
     int lt = 0 ;
     int ls = 0 ;
+    EOS_Field pp, hh, tt, ss ;
 
     switch(p.get_property_number())
        { case NEPTUNE::p:
@@ -462,6 +473,13 @@ namespace NEPTUNE
             break  ;
          default: break;
        }
+
+    // Whichever of h and T was not given is the one that needs storage.
+    ArrOfDouble scratch_data(sz) ;
+    if (lh == 0)
+       hh = EOS_Field("hh","h",NEPTUNE::h,scratch_data) ;
+    else if (lt == 0)
+       tt = EOS_Field("tt","T",NEPTUNE::T,scratch_data) ;
 
     if ( (lp == 1) && (lt == 1) )
        { for (int i=0; i<sz; i++)
@@ -835,6 +853,114 @@ namespace NEPTUNE
                       errfield.set(i, err);
                     }
                  return errfield.find_worst_error().generic_error();
+
+              // Cross derivatives d2(X)/dp.dh
+              case NEPTUNE::d2_T_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_T_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_rho_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_rho_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_u_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_u_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_s_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_s_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_mu_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_mu_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_lambda_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_lambda_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_cp_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_cp_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_cv_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_cv_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_sigma_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_sigma_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_w_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_w_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_g_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_g_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_f_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_f_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_pr_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_pr_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_beta_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_beta_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+              case NEPTUNE::d2_gamma_d_p_d_h :
+                 for (int i=0; i<sz; i++)
+                    { EOS_Internal_Error err = compute_d2_gamma_d_p_d_h_ph(pp[i],hh[i],r[i]);
+                      err = worst_internal_error(errfield[i], err);
+                      errfield.set(i, err);
+                    }
+                 return errfield.find_worst_error().generic_error();
+
               case NEPTUNE::d_rho_d_T_p :
                  if (lt == 0)
                     for (int i=0; i<sz; i++)
@@ -1209,6 +1335,22 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
          case NEPTUNE::d_beta_d_h_p   :  return compute_d_beta_d_h_p_ph(p,h,x)   ;
          case NEPTUNE::d_gamma_d_p_h  :  return compute_d_gamma_d_p_h_ph(p,h,x)  ;
          case NEPTUNE::d_gamma_d_h_p  :  return compute_d_gamma_d_h_p_ph(p,h,x)  ;
+         // Cross derivatives d2(X)/dp.dh
+         case NEPTUNE::d2_T_d_p_d_h      :  return compute_d2_T_d_p_d_h_ph(p,h,x)      ;
+         case NEPTUNE::d2_rho_d_p_d_h    :  return compute_d2_rho_d_p_d_h_ph(p,h,x)    ;
+         case NEPTUNE::d2_u_d_p_d_h      :  return compute_d2_u_d_p_d_h_ph(p,h,x)      ;
+         case NEPTUNE::d2_s_d_p_d_h      :  return compute_d2_s_d_p_d_h_ph(p,h,x)      ;
+         case NEPTUNE::d2_mu_d_p_d_h     :  return compute_d2_mu_d_p_d_h_ph(p,h,x)     ;
+         case NEPTUNE::d2_lambda_d_p_d_h :  return compute_d2_lambda_d_p_d_h_ph(p,h,x) ;
+         case NEPTUNE::d2_cp_d_p_d_h     :  return compute_d2_cp_d_p_d_h_ph(p,h,x)     ;
+         case NEPTUNE::d2_cv_d_p_d_h     :  return compute_d2_cv_d_p_d_h_ph(p,h,x)     ;
+         case NEPTUNE::d2_sigma_d_p_d_h  :  return compute_d2_sigma_d_p_d_h_ph(p,h,x)  ;
+         case NEPTUNE::d2_w_d_p_d_h      :  return compute_d2_w_d_p_d_h_ph(p,h,x)      ;
+         case NEPTUNE::d2_g_d_p_d_h      :  return compute_d2_g_d_p_d_h_ph(p,h,x)      ;
+         case NEPTUNE::d2_f_d_p_d_h      :  return compute_d2_f_d_p_d_h_ph(p,h,x)      ;
+         case NEPTUNE::d2_pr_d_p_d_h     :  return compute_d2_pr_d_p_d_h_ph(p,h,x)     ;
+         case NEPTUNE::d2_beta_d_p_d_h   :  return compute_d2_beta_d_p_d_h_ph(p,h,x)   ;
+         case NEPTUNE::d2_gamma_d_p_d_h  :  return compute_d2_gamma_d_p_d_h_ph(p,h,x)  ;
          case NEPTUNE::d_rho_d_T_p    :  return compute_d_rho_d_T_p_pT(p,h,x)    ;
          case NEPTUNE::d_rho_d_p_T    :  return compute_d_rho_d_p_T_pT(p,h,x)    ;
          case NEPTUNE::d_u_d_T_p      :  return compute_d_u_d_T_p_pT(p,h,x)      ;
@@ -1557,6 +1699,15 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
     return EOS_Internal_Error::NOT_IMPLEMENTED ;
   }
 
+//  Specific internal energy, u = h - p/rho. Asked of the model first, exactly
+//  as before, so a model that has its own u keeps answering with it and no
+//  value already in a database moves. Only when the model has none is the
+//  definition used -- which needs rho and nothing else, so it costs one extra
+//  property lookup and works for every model that has a density.
+//
+//  This default did nothing but ask the model and report NOT_IMPLEMENTED when
+//  it would not answer, which for EOS_Cathare2 meant u, its two derivatives
+//  and its cross derivative were absent from every database built from it.
   EOS_Internal_Error EOS_Fluid::compute_u_ph(double p, double h, double& r) const
   { static int loop = 0 ;
   #ifdef _OPENMP
@@ -1571,15 +1722,25 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
          EOS_Error_Field ferr(tmp) ;
          compute(fin1, fin2, fout, ferr) ;
          loop = 0 ;
-         return ferr[0] ;
+         if (ferr[0].generic_error() < EOS_Error::bad)  return ferr[0] ;
        }
-    else
-       return EOS_Internal_Error::NOT_IMPLEMENTED ;
-    loop = 0 ;
+
+    double rho ;
+    EOS_Internal_Error ierr = compute_rho_ph(p, h, rho) ;
+    if (ierr.generic_error() >= EOS_Error::bad)  return ierr ;
+    if (rho == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    r = h - p/rho ;
+    return ierr ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_s_ph(double p, double h, double& r) const
   { static int loop = 0 ;
+  //  The guard has to be per thread, as it is in the other twenty-eight of
+  //  these: it is set around a call back into the model, and one thread
+  //  clearing it while another is inside would let that other one recurse.
+  #ifdef _OPENMP
+  #pragma omp threadprivate(loop)
+  #endif
     if (!loop)
        { loop = 1 ;
          const EOS_Field fin1("p", "p",NEPTUNE::p, 1, &p) ;
@@ -2226,10 +2387,26 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
     return ierrm ;
   }
 
+//  From u = h - p/rho, at constant h:  du/dp = -1/rho + (p/rho^2) drho/dp .
+//  Exact wherever the model has rho and its derivative, which is cheaper and
+//  closer than differencing u, and these values go straight into a bicubic
+//  patch. Falls back to the difference when the derivative of rho is missing.
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_p_h_ph(double p, double h, double& r) const
   { EOS_Internal_Error ierrm, ierrp ;
     r = 0.e0 ;
     if (p == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+
+    { double rho, drho ;
+      EOS_Internal_Error e1 = compute_rho_ph(p, h, rho) ;
+      if (e1.generic_error() < EOS_Error::bad && rho != 0.e0)
+         { EOS_Internal_Error e2 = compute_d_rho_d_p_h_ph(p, h, drho) ;
+           if (e2.generic_error() < EOS_Error::bad)
+              { r = -1.e0/rho + (p/(rho*rho)) * drho ;
+                return e2 ;
+              }
+         }
+    }
+
     double vm = p*(1.e0-epsilon) ;
     double vp = p*(1.e0+epsilon) ;
     double rm, rp ;
@@ -2242,10 +2419,23 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
     return ierrm ;
   }
 
+//  And at constant p:  du/dh = 1 + (p/rho^2) drho/dh .
   EOS_Internal_Error EOS_Fluid::compute_d_u_d_h_p_ph(double p, double h, double& r) const
   { EOS_Internal_Error ierrm, ierrp ;
     r = 0.e0 ;
     if (p == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+
+    { double rho, drho ;
+      EOS_Internal_Error e1 = compute_rho_ph(p, h, rho) ;
+      if (e1.generic_error() < EOS_Error::bad && rho != 0.e0)
+         { EOS_Internal_Error e2 = compute_d_rho_d_h_p_ph(p, h, drho) ;
+           if (e2.generic_error() < EOS_Error::bad)
+              { r = 1.e0 + (p/(rho*rho)) * drho ;
+                return e2 ;
+              }
+         }
+    }
+
     double vm = h*(1.e0-epsilon) ;
     double vp = h*(1.e0+epsilon) ;
     double rm, rp ;
@@ -2640,6 +2830,237 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
          return ierrp ;
        }
     return ierrm ;
+  }
+
+  // Cross derivatives d2(X)/dp.dh : default implementation, direct 4-point
+  // central difference of the base property X itself (not of an already
+  // finite-differenced first derivative -- this avoids compounding two levels
+  // of perturbation, which was observed to occasionally step outside a fluid
+  // model's valid domain right at a mesh corner). A fluid model may override
+  // any of these with an analytical formula.
+  EOS_Internal_Error EOS_Fluid::compute_d2_T_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_T_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_T_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_T_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_T_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_rho_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_rho_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_rho_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_rho_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_rho_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_u_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_u_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_u_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_u_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_u_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_s_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_s_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_s_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_s_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_s_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_mu_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_mu_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_mu_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_mu_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_mu_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_lambda_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_lambda_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_lambda_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_lambda_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_lambda_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_cp_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_cp_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_cp_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_cp_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_cp_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_cv_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_cv_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_cv_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_cv_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_cv_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_sigma_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_sigma_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_sigma_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_sigma_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_sigma_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_w_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_w_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_w_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_w_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_w_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_g_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_g_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_g_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_g_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_g_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_f_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_f_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_f_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_f_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_f_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_pr_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_pr_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_pr_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_pr_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_pr_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_beta_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_beta_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_beta_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_beta_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_beta_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
+  }
+
+  EOS_Internal_Error EOS_Fluid::compute_d2_gamma_d_p_d_h_ph(double p, double h, double& r) const
+  { EOS_Internal_Error ierr ;
+    r = 0.e0 ;
+    if (p == 0.e0 || h == 0.e0)  return EOS_Internal_Error::EOS_BAD_COMPUTE ;
+    double pm = p*(1.e0-epsilon2), pp = p*(1.e0+epsilon2) ;
+    double hm = h*(1.e0-epsilon2), hp = h*(1.e0+epsilon2) ;
+    double rmm, rmp, rpm, rpp ;
+    ierr = compute_gamma_ph(pm, hm, rmm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_gamma_ph(pm, hp, rmp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_gamma_ph(pp, hm, rpm) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    ierr = compute_gamma_ph(pp, hp, rpp) ; if (ierr != EOS_Internal_Error::OK)  return ierr ;
+    r = (rpp - rpm - rmp + rmm) / (4.e0*epsilon2*p*epsilon2*h) ;
+    return ierr ;
   }
 
   EOS_Internal_Error EOS_Fluid::compute_d_h_d_p_T_pT(double p, double T, double& r) const

@@ -23,6 +23,7 @@
  */
 #include "EOS_IGen.hxx"
 #include "EOS/API/EOS_Config.hxx"
+#include "EOS/Src/EOS_Ipp/EOS_Ipp_BicubicProps.hxx"
 
 #include <fstream>
 #include <string>
@@ -34,9 +35,11 @@ namespace NEPTUNE_EOS_IGEN
   method("unknown"),
   reference("unknown"),
   memory_max(-1),
+  obj_Ipp(nullptr),
   IGen_handler(),
   test_qualities(false),
-  refine(false)
+  refine(false),
+  tempory_med_stale(false)
   { mesh_ph = new EOS_Mesh() ;
     mesh_p  = new EOS_Mesh() ;
   }
@@ -55,10 +58,12 @@ namespace NEPTUNE_EOS_IGEN
   mesh_p(right.mesh_p),
   mesh_ph(right.mesh_ph),
   fluid(right.fluid),
-  IGen_handler(right.IGen_handler),
+  obj_Ipp(nullptr),     // not shared: refresh_tempory_med deletes it, so
+  IGen_handler(right.IGen_handler),   // each copy builds its own when it needs one
   qualities(right.qualities),
   test_qualities(right.test_qualities),
-  refine(right.refine)
+  refine(right.refine),
+  tempory_med_stale(true)
   {
   }
         
@@ -66,9 +71,11 @@ namespace NEPTUNE_EOS_IGEN
   method(meth),
   reference(ref),
   memory_max(-1),
+  obj_Ipp(nullptr),
   IGen_handler(),
   test_qualities(false),
-  refine(false)
+  refine(false),
+  tempory_med_stale(false)
   { mesh_ph = new EOS_Mesh() ;
     mesh_p  = new EOS_Mesh() ;
   }
@@ -148,18 +155,17 @@ namespace NEPTUNE_EOS_IGEN
 
     set_mesh_ph(nb_node_p, nb_node_h, level_max) ;
     set_mesh_p(nb_node_p, level_max) ;
-    err = write_tempory_med() ;
-    if (err != EOS_Error::good)
-       { cerr<< "Error EOS_IGen::make_mesh : no temporary MED file writed" <<endl ;
-         return err ;
-       }
+    //  The temporary MED is not written here any more: what it has to carry
+    //  depends on the quality criteria, which are set after the mesh is made
+    //  (cf. refresh_tempory_med). The index only needs its name and the data path.
+    set_tempory_med_name() ;
+    if (strlen(path_environement.aschar()) == 0)  set_path_environement() ;
+    tempory_med_stale = true ;
     err = write_index(true) ;
     if (err != EOS_Error::good)
        { cerr<< "Error EOS_IGen::make_mesh : no index.eos file writed" <<endl ;
          return err ;
        }
-       
-    set_obj_Ipp() ;
     
     return good ;
   }
@@ -212,18 +218,17 @@ namespace NEPTUNE_EOS_IGEN
        }
 
     set_mesh_ph(nb_node_p, nb_node_h, level_max) ;
-    err = write_tempory_med() ;
-    if (err != EOS_Error::good)
-       { cerr<< "Error EOS_IGen::make_mesh_ph : no temporary MED file writed" <<endl ;
-         return err ;
-       }
+    //  The temporary MED is not written here any more: what it has to carry
+    //  depends on the quality criteria, which are set after the mesh is made
+    //  (cf. refresh_tempory_med). The index only needs its name and the data path.
+    set_tempory_med_name() ;
+    if (strlen(path_environement.aschar()) == 0)  set_path_environement() ;
+    tempory_med_stale = true ;
     err = write_index(true) ;
     if (err != EOS_Error::good)
        { cerr<< "Error EOS_IGen::make_mesh_ph : no index.eos file writed" <<endl ;
          return err ;
        }
-       
-    set_obj_Ipp() ;
        
     return EOS_Error::good ;
   }
@@ -240,18 +245,17 @@ namespace NEPTUNE_EOS_IGEN
     set_fluid() ;
         
     set_mesh_p(nb_node_p, level_max) ;
-    err = write_tempory_med() ;
-    if (err != EOS_Error::good)
-       { cerr<< "Error EOS_IGen::make_mesh_p : no temporary MED file writed" <<endl ;
-         return err ;
-       }
+    //  The temporary MED is not written here any more: what it has to carry
+    //  depends on the quality criteria, which are set after the mesh is made
+    //  (cf. refresh_tempory_med). The index only needs its name and the data path.
+    set_tempory_med_name() ;
+    if (strlen(path_environement.aschar()) == 0)  set_path_environement() ;
+    tempory_med_stale = true ;
     err = write_index(true) ;
     if (err != EOS_Error::good)
        { cerr<< "Error EOS_IGen::make_mesh_p : no index.eos file writed" <<endl ;
          return err ;
        }
-
-    set_obj_Ipp() ;
     
     return EOS_Error::good ;
   }
@@ -338,7 +342,7 @@ namespace NEPTUNE_EOS_IGEN
          return err ;
        }
 
-    err = make_properties(med) ;
+    err = make_properties(med, true) ;
     if (err != EOS_Error::good)
        { cerr<< " Error EOS_IGen::write_tempory_med : impossible to write properties in temporary MED file" <<endl ;
          return err ;
@@ -354,6 +358,23 @@ namespace NEPTUNE_EOS_IGEN
   }
 
   
+//  The temporary MED is what compute_qualities interpolates in, to compare
+//  with the model. It used to be rewritten, in full, as soon as the mesh
+//  changed: by make_mesh, before any criterion was known, and after every
+//  refinement round. It is now only marked stale there and written here, on
+//  the way into compute_qualities -- so a mesh that is never qualified never
+//  pays for one, and by then the criteria say what it has to carry.
+  EOS_Error EOS_IGen::refresh_tempory_med()
+  { EOS_Error err = write_tempory_med() ;
+    if (err != EOS_Error::good)  return err ;
+
+    delete obj_Ipp ;
+    set_obj_Ipp() ;
+    tempory_med_stale = false ;
+    return EOS_Error::good ;
+  }
+
+
 /* make_header en prevision de se servir du header 
  * pour recreer la bdd.
  * pour l'instant header limite a 200c dc erreur
@@ -413,7 +434,51 @@ namespace NEPTUNE_EOS_IGEN
   }
   
 
-  EOS_Error EOS_IGen::make_properties(EOS_Med& med)
+//  What the quality criteria read out of a database, among `props`: each
+//  criterion's property and, because EOS_Ipp interpolates bicubically whenever
+//  it finds them, that property's two first derivatives and its cross
+//  derivative (the same rule EOS_Ipp applies on load, cf.
+//  EOS_Ipp_BicubicProps.hxx). Leaving the derivatives out would not fail: the
+//  interpolator would quietly fall back to bilinear, the error measured on the
+//  temporary MED would no longer be the error of the finished database, and
+//  the mesh would be refined to a different depth.
+//
+//  The order of `props` is kept, and nothing is returned that was not in it.
+  vector<string> EOS_IGen::quality_fields(const vector<string>& props) const
+  { vector<int> wanted ;
+    const int nb_q = qualities.size() ;
+    for (int i=0; i<nb_q; i++)
+       { const EOS_Property x = gen_property_number(qualities[i].get_property().aschar()) ;
+         wanted.push_back(x) ;
+         EOS_Property dp, dh, d2 ;
+         if (NEPTUNE_EOS::bicubic_derivative_properties(x, dp, dh))
+            { wanted.push_back(dp) ;
+              wanted.push_back(dh) ;
+            }
+         if (NEPTUNE_EOS::bicubic_cross_derivative_property(x, d2))
+            wanted.push_back(d2) ;
+       }
+
+    vector<string> kept ;
+    const int nb_p = props.size() ;
+    for (int i=0; i<nb_p; i++)
+       { const int n = gen_property_number(props[i].c_str()) ;
+         for (size_t j=0; j<wanted.size(); j++)
+            if (wanted[j] == n)  { kept.push_back(props[i]) ; break ; }
+       }
+    return kept ;
+  }
+
+
+//  quality_only is for the temporary MED, which exists to be read by
+//  compute_qualities and by nothing else. Filling a node costs one model call
+//  per property -- about a hundred of them, 50 ms a node with Refprop -- and a
+//  refinement writes that file once per round over the whole mesh, to read
+//  back four fields of it.
+//
+//  Only the 2D fields are cut down. The 1D curves have a handful of nodes and
+//  cost nothing next to the (p,h) mesh.
+  EOS_Error EOS_IGen::make_properties(EOS_Med& med, bool quality_only)
   { EOS_Error err ;
 
     // 2D diagram P-h
@@ -438,6 +503,14 @@ namespace NEPTUNE_EOS_IGEN
               str_properties = fluid->is_implemented("P", "h", list_propi, tp1, tp2) ;
             }
 
+         if (quality_only)
+            { //  No 2D criterion at all (they bear on the curves): nothing to
+              //  go by, keep the full list rather than write a mesh with no
+              //  field on it.
+              const vector<string> kept = quality_fields(str_properties) ;
+              if (!kept.empty())  str_properties = kept ;
+            }
+
 //       ArrOfInt nerr(mesh_ph->get_nb_node());
 //       ArrOfInt fnodes(mesh_ph->get_nb_node());
 //       AString f_name("real nodes");
@@ -457,38 +530,51 @@ namespace NEPTUNE_EOS_IGEN
          ArrOfInt nerr(nb_nc) ;
          EOS_Error_Field err_field(nerr) ;
 
-         int nb_sp = str_properties.size() ;
          if (!refine)
             { err = med.add_Connectivity_NoRef_2D(mesh_name, mesh_ph->get_nb_mesh(), 
                                                   mesh_ph->get_nb_h()-1) ;
               if (err != EOS_Error::good)   return err ;
-              for (int i=0; i<nb_sp; i++)
-                 { const char *pprop = str_properties[i].c_str() ;
-                   EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
-
-                   fluid->compute(mesh_ph->get_domain_continuity()[1], 
-                                  mesh_ph->get_domain_continuity()[0], field, err_field) ;
-                   err = med.add_Champ_Noeud(mesh_name,field) ;
-
-                   AString err_name = pprop ;
-                   err = med.add_ErrChamp_Noeud(mesh_name, err_name, err_field) ;
-                   if (err != EOS_Error::good)  return err ;
-                 }
+              //  compute_properties is fluid->compute plus the continuity
+              //  forcing, and an unrefined mesh has no continuity node for the
+              //  forcing to touch, so the two branches can share one writer.
+              err = write_properties(med, mesh_name, str_properties, nb_nc) ;
+              if (err != EOS_Error::good)  return err ;
             }
          else
             { err = med.add_Connectivity_Refine_2D(mesh_name ,mesh_ph->get_med_to_node()) ;
               if (err != EOS_Error::good)   return err ;
-              for (int i=0; i<nb_sp; i++)
-                 { const char *pprop = str_properties[i].c_str() ;
-                   EOS_Field field(pprop, pprop,gen_property_number(pprop), x) ;
 
-                   err = compute_properties(field, err_field) ;
-                   err = med.add_Champ_Noeud(mesh_name,field) ;
+              //  Which nodes are hanging nodes, and which two nodes each one
+              //  hangs between. The interpolator needs this and cannot get it
+              //  from the mesh it reads: continuity splits the coarse cell at
+              //  the node, so the result is an ordinary conforming mesh and
+              //  nothing in the geometry still says which corner was a
+              //  junction. Written per node, -1 where there is none.
+              { const ArrOfInt& ton = mesh_ph->get_type_of_node() ;
+                const vector<ArrOfInt>& c2n = mesh_ph->get_continuity_to_node() ;
+                ArrOfInt cnt_type(nb_nc) ;  cnt_type =  0 ;
+                ArrOfInt cnt_sup0(nb_nc) ;  cnt_sup0 = -1 ;
+                ArrOfInt cnt_sup1(nb_nc) ;  cnt_sup1 = -1 ;
+                int kc = 0 ;
+                for (int i=0; i<nb_nc; i++)
+                   { cnt_type[i] = ton[i] ;
+                     if (ton[i] == 1 || ton[i] == 2)
+                        { if (kc < (int)c2n.size())
+                             { cnt_sup0[i] = c2n[kc][0] ;
+                               cnt_sup1[i] = c2n[kc][1] ;
+                             }
+                          kc++ ;
+                        }
+                   }
+                AString n_type("CNT_TYPE") , n_s0("CNT_SUP0") , n_s1("CNT_SUP1") ;
+                err = med.add_IntChamp_Noeud(mesh_name, n_type, cnt_type) ;
+                if (err == EOS_Error::good)  err = med.add_IntChamp_Noeud(mesh_name, n_s0, cnt_sup0) ;
+                if (err == EOS_Error::good)  err = med.add_IntChamp_Noeud(mesh_name, n_s1, cnt_sup1) ;
+                if (err != EOS_Error::good)  return err ;
+              }
 
-                   AString err_name = pprop ;
-                   err = med.add_ErrChamp_Noeud(mesh_name, err_name, err_field) ;
-                   if (err != EOS_Error::good)  return err ;
-                 }
+              err = write_properties(med, mesh_name, str_properties, nb_nc) ;
+              if (err != EOS_Error::good)  return err ;
             }
        }
     
@@ -649,6 +735,176 @@ namespace NEPTUNE_EOS_IGEN
     return EOS_Error::good ;
   }
   
+  //  The bicubic Hermite patch wants d2X/dp.dh at each corner. Without it
+  //  EOS_Ipp estimates the twist from one-sided differences of the four
+  //  corners of a single cell -- an O(h) approximation inside an O(h^4)
+  //  scheme, so it can dominate the error the scheme was chosen for.
+  //
+  //  The models will not supply it. All fifteen cross derivatives exist in
+  //  thermprop and EOS_Fluid implements every one of them generically, but
+  //  EOS_Cathare2::compute routes every (p,h) request to Cathare's own
+  //  dispatcher and only falls back to EOS_Fluid when the *input pair* is not
+  //  one it handles. A property Cathare does not know therefore answers
+  //  NOT_IMPLEMENTED instead of reaching the generic version, is_implemented
+  //  drops it, and no cross derivative was ever written.
+  //
+  //  So it is built here instead, by differencing the [dX/dP]h field along h.
+  //  Nodes are numbered over the occupied grid slots in row-major order, so a
+  //  row is a contiguous run of indices at one pressure, ordered by increasing
+  //  h: the neighbours are simply the surrounding indices with the same p.
+  //  Differencing over the mesh's own nodes rather than at some relative
+  //  epsilon keeps the stencil where the data is, and follows local refinement
+  //  for free.
+  //
+  //  Two things the stencil has to avoid. Continuity nodes are skipped: their
+  //  value is forced to the trace of the neighbouring cell, not taken from the
+  //  model, and differencing through one would spread that forcing into a
+  //  quantity meant to approximate the model. And a neighbour the model could
+  //  not compute ends the search on that side rather than being stepped over,
+  //  which is what keeps the validity boundary from leaking inwards: the node
+  //  falls back to a one-sided difference, and to an error only if neither
+  //  side is usable.
+  void EOS_IGen::compute_cross_derivative(const EOS_Field& d_dp, const EOS_Error_Field& e_dp,
+                                          EOS_Field& d2, EOS_Error_Field& e_d2) const
+  {
+    const int sz = d_dp.size() ;
+    const EOS_Field& node_p = mesh_ph->get_domain_continuity()[1] ;
+    const EOS_Field& node_h = mesh_ph->get_domain_continuity()[0] ;
+    const ArrOfInt& ton = mesh_ph->get_type_of_node() ;
+    const bool has_types = ((int)ton.size() == sz) ;
+
+    for (int i=0; i<sz; i++)
+       { int L = -1, L2 = -1, R = -1, R2 = -1 ;
+
+         if (e_dp[i].get_code() == EOS_Internal_Error::OK)
+            { for (int j=i-1; j>=0 && node_p[j] == node_p[i]; j--)
+                 { if (has_types && ton[j] != 0)  continue ;
+                   if (e_dp[j].get_code() != EOS_Internal_Error::OK)  break ;
+                   if (L < 0)  L = j ; else { L2 = j ; break ; }
+                 }
+              for (int j=i+1; j<sz && node_p[j] == node_p[i]; j++)
+                 { if (has_types && ton[j] != 0)  continue ;
+                   if (e_dp[j].get_code() != EOS_Internal_Error::OK)  break ;
+                   if (R < 0)  R = j ; else { R2 = j ; break ; }
+                 }
+            }
+
+         double r = 0.e0 ;
+         EOS_Internal_Error ierr = EOS_Internal_Error::OK ;
+
+         if (L >= 0 && R >= 0)
+            { //  three points, unequally spaced wherever refinement changes step
+              const double a = node_h[i] - node_h[L] ;
+              const double b = node_h[R] - node_h[i] ;
+              if (a > 0.e0 && b > 0.e0)
+                 r = -b/(a*(a+b)) * d_dp[L]
+                   + (b-a)/(a*b)  * d_dp[i]
+                   +  a/(b*(a+b)) * d_dp[R] ;
+              else
+                 ierr = EOS_Internal_Error::EOS_BAD_COMPUTE ;
+            }
+         else if (R >= 0)
+            { //  edge of the domain, or of the valid region: lean on two points
+              //  from the one side there is. The two-point difference that
+              //  stood here is first order, and it showed -- the worst error
+              //  over the whole domain sat in the last row of cells in h,
+              //  where this branch is the one that runs.
+              const double b = node_h[R] - node_h[i] ;
+              if (b <= 0.e0)
+                 ierr = EOS_Internal_Error::EOS_BAD_COMPUTE ;
+              else if (R2 >= 0 && node_h[R2] > node_h[R])
+                 { const double c = node_h[R2] - node_h[R] ;
+                   r = -(2.e0*b+c)/(b*(b+c)) * d_dp[i]
+                     +      (b+c)/(b*c)      * d_dp[R]
+                     -        b/(c*(b+c))    * d_dp[R2] ;
+                 }
+              else
+                 r = (d_dp[R] - d_dp[i]) / b ;
+            }
+         else if (L >= 0)
+            { const double a = node_h[i] - node_h[L] ;
+              if (a <= 0.e0)
+                 ierr = EOS_Internal_Error::EOS_BAD_COMPUTE ;
+              else if (L2 >= 0 && node_h[L2] < node_h[L])
+                 { const double c = node_h[L] - node_h[L2] ;
+                   r =  (2.e0*a+c)/(a*(a+c)) * d_dp[i]
+                     -      (a+c)/(a*c)      * d_dp[L]
+                     +        a/(c*(a+c))    * d_dp[L2] ;
+                 }
+              else
+                 r = (d_dp[i] - d_dp[L]) / a ;
+            }
+         else
+            //  nothing usable in this row: keep whatever went wrong upstream
+            ierr = (e_dp[i].get_code() != EOS_Internal_Error::OK)
+                     ? e_dp[i] : EOS_Internal_Error::EOS_BAD_COMPUTE ;
+
+         d2[i] = r ;
+         e_d2.set(i, ierr) ;
+       }
+  }
+
+  EOS_Error EOS_IGen::write_properties(EOS_Med& med, AString& mesh_name,
+                                       const vector<string>& props, int nb_nc)
+  {
+    EOS_Error err = EOS_Error::good ;
+    const int nb_sp = props.size() ;
+
+    for (int i=0; i<nb_sp; i++)
+       { const char *pprop = props[i].c_str() ;
+
+         ArrOfDouble xv(nb_nc) ;
+         ArrOfInt    nv(nb_nc) ;
+         EOS_Error_Field ev(nv) ;
+         EOS_Field field(pprop, pprop, gen_property_number(pprop), xv) ;
+
+         compute_properties(field, ev) ;
+         err = med.add_Champ_Noeud(mesh_name, field) ;
+         if (err != EOS_Error::good)  return err ;
+         AString err_name = pprop ;
+         err = med.add_ErrChamp_Noeud(mesh_name, err_name, ev) ;
+         if (err != EOS_Error::good)  return err ;
+
+         //  [dX/dP]h is the one field the cross derivative can be built from;
+         //  when this property is it, and the model does not supply d2X/dPdh
+         //  itself, derive it here and write that too.
+         //
+         //  The model supplying it is new. EOS_Cathare2 used to route every
+         //  (p,h) request to Cathare's own dispatcher and reach EOS_Fluid only
+         //  when the *input pair* was one Cathare did not handle, so a cross
+         //  derivative answered NOT_IMPLEMENTED, is_implemented dropped it, and
+         //  this was the only way any got written. Now that it chains per
+         //  property, the cross derivatives are in props -- and for a while
+         //  both paths wrote them, under the same name, four times per field
+         //  per database, with whichever landed last silently winning.
+         const string &nm = props[i] ;
+         if (nm.size() > 7 && nm.compare(0, 2, "[d") == 0
+             && nm.compare(nm.size()-5, 5, "/dP]h") == 0)
+            { const string base = nm.substr(2, nm.size()-7) ;
+              const string nm_d2 = "[d2" + base + "/dPdh]" ;
+              const EOS_Property p_d2 = gen_property_number(nm_d2.c_str()) ;
+              bool model_has_it = false ;
+              for (int j=0; j<nb_sp; j++)
+                 if (props[j] == nm_d2)  { model_has_it = true ; break ; }
+              if (p_d2 >= 0 && !model_has_it)
+                 { ArrOfDouble x2(nb_nc) ;
+                   ArrOfInt    n2(nb_nc) ;
+                   EOS_Error_Field e2(n2) ;
+                   EOS_Field f2(nm_d2.c_str(), nm_d2.c_str(), p_d2, x2) ;
+
+                   compute_cross_derivative(field, ev, f2, e2) ;
+
+                   err = med.add_Champ_Noeud(mesh_name, f2) ;
+                   if (err != EOS_Error::good)  return err ;
+                   AString err_name2 = nm_d2.c_str() ;
+                   err = med.add_ErrChamp_Noeud(mesh_name, err_name2, e2) ;
+                   if (err != EOS_Error::good)  return err ;
+                 }
+            }
+       }
+    return EOS_Error::good ;
+  }
+
   EOS_Error EOS_IGen::compute_properties(EOS_Field& field, EOS_Error_Field& err_field)
   { int sz = mesh_ph->get_nb_node() + mesh_ph->get_nb_continuity() ;
     
@@ -656,14 +912,44 @@ namespace NEPTUNE_EOS_IGEN
     fluid->compute(mesh_ph->get_domain_continuity()[1], 
                    mesh_ph->get_domain_continuity()[0], field, err_field) ;
     
-    int k = 0 ;
-    for (int i=0; i<sz; i++)
-       { if (mesh_ph->get_type_of_node()[i] == 1 || mesh_ph->get_type_of_node()[i] == 2)
-         { field[i] = 0.5e0 * ( field[mesh_ph->get_continuity_to_node()[k][0]] 
-                              + field[mesh_ph->get_continuity_to_node()[k][1]] ) ;
+//     What a hanging node has to carry is the value the coarse cell on the
+//     other side of the junction reads at that point. Read bilinearly, that
+//     cell is linear along the edge between its two ends, so the node takes
+//     that line at the position it actually sits at.
+//
+//     This was the half-sum of the two ends, which is that line at the middle
+//     of the edge. A hanging node splits its edge in half only while the two
+//     cells meeting there differ by one refinement level; from the third level
+//     on, dyadic refinement also leaves nodes at the quarter points, and the
+//     half-sum then names a point the node is not at. Measured on the 17x17
+//     WaterLiquid fixture refined to level 4, that put the largest step in T
+//     across a junction at 3623 times the median step, against 7.1 with the
+//     continuity nodes left out altogether -- the forcing was making the
+//     bilinear surface far rougher than no forcing at all. The bicubic reading
+//     was already unaffected: EOS_Ipp::retrace_hanging_nodes recomputes these
+//     values at load time and has always used the node's real position.
+//
+//     Supports are read from a snapshot, so a hanging node leaning on another
+//     one still sees the value the model returned, as retrace_hanging_nodes
+//     does with the same case.
+    { const EOS_Fields& dom = mesh_ph->get_domain_continuity() ;
+      ArrOfDouble f0(sz) ;
+      for (int i=0; i<sz; i++)  f0[i] = field[i] ;
+
+      int k = 0 ;
+      for (int i=0; i<sz; i++)
+         { const int t = mesh_ph->get_type_of_node()[i] ;
+           if (t != 1 && t != 2)  continue ;
+           const int B = mesh_ph->get_continuity_to_node()[k][0] ;
+           const int A = mesh_ph->get_continuity_to_node()[k][1] ;
            k++ ;
+//         type 1 splits a vertical edge, so the coordinate along it is p
+           const EOS_Field& x = (t == 1) ? dom[1] : dom[0] ;
+           const double L = x[B] - x[A] ;
+           const double s = (L != 0.e0) ? (x[i] - x[A]) / L : 0.5e0 ;
+           field[i] = (1.e0-s)*f0[A] + s*f0[B] ;
          }
-       }
+    }
 //     Dans le cas des noeuds de continuite au centre, la valeur de la methode choisi (ex : Refprop) est preferee
 //     ci-dessous l'interpolation pour ces noeuds est faite a p cst 
 //     une etude, pourait etre faite, permettant de valider la meilleur methode à utiliser, pour les noeuds de continuité au centre des mailles,
@@ -770,9 +1056,10 @@ namespace NEPTUNE_EOS_IGEN
  * int is_abs              : flag for relatif or absolute quality
  */
   void EOS_IGen::set_quality(const char* const property, const char* const type,
-                             int const is_abs, double const limit_qi)
-  { EOS_IGen_QI qi(property, type, limit_qi, is_abs) ;
+                             int const is_abs, double const limit_qi, int const nb_sub)
+  { EOS_IGen_QI qi(property, type, limit_qi, is_abs, nb_sub) ;
     qualities.push_back(qi) ;
+    tempory_med_stale = true ;
   }
   
   
@@ -865,6 +1152,14 @@ namespace NEPTUNE_EOS_IGEN
   EOS_Error EOS_IGen::compute_qualities()
   { test_qualities = true ;
 
+    if (tempory_med_stale)
+       { EOS_Error err = refresh_tempory_med() ;
+         if (err != EOS_Error::good)
+            { cerr << "Error EOS_IGen::compute_qualities : no temporary MED file writed" <<endl ;
+              return err ;
+            }
+       }
+
     int nb_q = qualities.size() ;
     for (int i=0; i<nb_q; i++)
        { int prop = check_properties(qualities[i].get_property()) ;
@@ -883,7 +1178,7 @@ namespace NEPTUNE_EOS_IGEN
             { EOS_Fields nodes(2) ;
               int sz ;
               if      (qualities[i].get_type() == "centre")
-                 sz = mesh_ph->get_nb_mesh() ;
+                 sz = mesh_ph->get_nb_mesh() * qualities[i].samples_per_cell() ;
               else if (qualities[i].get_type() == "node")
                  sz = mesh_ph->get_nb_node() ;
               else
@@ -908,9 +1203,11 @@ namespace NEPTUNE_EOS_IGEN
                                 qualities[i].get_property().aschar(),
                                 x_eos);
               
-              ArrOfInt ierr(sz) ;
-              EOS_Error_Field err_ipp(ierr) ;
-              EOS_Error_Field err_eos(ierr) ;
+              //  One array each: an EOS_Error_Field is a view, so sharing one
+              //  meant the second compute overwrote the first's errors.
+              ArrOfInt ierr_ipp(sz), ierr_eos(sz) ;
+              EOS_Error_Field err_ipp(ierr_ipp) ;
+              EOS_Error_Field err_eos(ierr_eos) ;
 
               obj_Ipp->compute(nodes[1], nodes[0], res_ipp, err_ipp) ;
               fluid->compute(nodes[1], nodes[0], res_eos, err_eos) ;
@@ -927,7 +1224,7 @@ namespace NEPTUNE_EOS_IGEN
             { EOS_Fields nodes(1) ;
               int sz;
               if      (qualities[i].get_type() == "centre")
-                 sz = mesh_p->get_nb_mesh() ;
+                 sz = mesh_p->get_nb_mesh() * qualities[i].samples_per_cell() ;
               else if (qualities[i].get_type() == "node")
                  sz = mesh_p->get_nb_node() ;
               else
@@ -949,9 +1246,11 @@ namespace NEPTUNE_EOS_IGEN
                                 qualities[i].get_property().aschar(),
                                 x_eos) ; 
               
-              ArrOfInt ierr(sz) ;
-              EOS_Error_Field err_ipp(ierr) ;
-              EOS_Error_Field err_eos(ierr) ;
+              //  One array each: an EOS_Error_Field is a view, so sharing one
+              //  meant the second compute overwrote the first's errors.
+              ArrOfInt ierr_ipp(sz), ierr_eos(sz) ;
+              EOS_Error_Field err_ipp(ierr_ipp) ;
+              EOS_Error_Field err_eos(ierr_eos) ;
               
               obj_Ipp->compute(nodes[0], res_ipp, err_ipp) ;
               fluid->compute(nodes[0], res_eos, err_eos)   ;
@@ -999,14 +1298,7 @@ namespace NEPTUNE_EOS_IGEN
          
          if (test_level_p && test_level_ph)  break ;
          
-         err = write_tempory_med() ;
-         if (err != EOS_Error::good)
-            { cerr << "Error EOS_IGen::make_global_refine : no temporary MED file writed" <<endl ;
-              return err ;
-            }
-         
-         delete obj_Ipp ;
-         set_obj_Ipp() ;
+         tempory_med_stale = true ;
 
          err = compute_qualities() ;
          if (err != good)
@@ -1042,21 +1334,26 @@ namespace NEPTUNE_EOS_IGEN
             test_level_p = true ;
          if ( (mesh_ph->get_exist()) && (mesh_ph->get_level_max() != level) )
             { mesh_ph->add_local_nodes(level, cont) ;
-              if (cont)  mesh_ph->add_continuity_nodes(level) ;
+//            Only on a mesh the step could actually build: the continuity
+//            nodes are derived from the cell lists add_local_nodes fills, and
+//            running this over a half-built one segfaults.
+              if (cont && mesh_ph->refine_ok())  mesh_ph->add_continuity_nodes(level) ;
             }
          else
             test_level_ph = true ;
+
+//       A refinement step that could not make sense of the mesh leaves it half
+//       built, so it must not be carried on with or written out. This used to
+//       run off the end of an array instead (cf. EOS_Mesh::add_local_nodes).
+         if ( !mesh_p->refine_ok() || !mesh_ph->refine_ok() )
+            { cerr << "Error EOS_IGen::make_local_refine : the mesh could not be refined "
+                   << "past level " << level << " ; refinement stopped" << endl ;
+              return EOS_Error::error ;
+            }
          
          if (test_level_p && test_level_ph)  break ;
          refine = true ;
-         err = write_tempory_med() ;
-         if (err != EOS_Error::good)
-            { cerr << "Error EOS_IGen::make_local_refine : no temporary MED file writed" <<endl ;
-              return err ;
-            }
-         
-         delete obj_Ipp ;
-         set_obj_Ipp() ;
+         tempory_med_stale = true ;
 
          err = compute_qualities() ;
          if (err != EOS_Error::good)
@@ -1090,6 +1387,11 @@ namespace NEPTUNE_EOS_IGEN
     
     fluid     = right.fluid     ;
     qualities = right.qualities ;
+
+    //  Not shared, cf. the copy constructor.
+    delete obj_Ipp ;
+    obj_Ipp = nullptr ;
+    tempory_med_stale = true ;
     
     return *this ;
   }

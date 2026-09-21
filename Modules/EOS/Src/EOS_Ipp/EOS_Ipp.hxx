@@ -22,6 +22,7 @@
 #include "EOS/API/EOS_Std_Error_Handler.hxx" // ajout M.F.
 #include "Language/API/Language.hxx"
 #include "EOS_IGen/Src/EOS_Med.hxx"
+#include "EOS_Ipp_CellLocator.hxx"
 #include <vector>
 #include <string>
 using std::vector;
@@ -30,17 +31,129 @@ using namespace NEPTUNE;
 
 namespace NEPTUNE_EOS
 {
+       class EOS_Ipp_TileCache; // Src/EOS_Ipp_TileCache.hxx: lazy-loaded (p,h) tile cache backing the
+                                 // "tiled database" (streaming) mode of this class, cf. init()/tile_cache_.
+
+       //! Interpolation data of one mesh cell (4 corners) or one saturation /
+       //! limit segment (2 endpoints), as a plain block of doubles.
+       //!
+       //! Rows, for a 2D (p,h) cell:
+       //!   [0] = p           [1] = h
+       //!   [2] = f  (the interpolated property)
+       //!   [3] = d f/dp |h   [4] = d f/dh |p     (bicubic only)
+       //!   [5] = d2 f/dp.dh  (bicubic only, when the database stores it)
+       //! For a 1D saturation/limit segment only [0] = p and [1] = f are used,
+       //! with 2 valid entries instead of 4.
+       //!
+       //! This used to be an EOS_Fields of ArrOfDouble, rebuilt on every single
+       //! compute_* call. Those are Language NumberedObjects: each construction
+       //! and destruction allocates, and registers/unregisters itself in the
+       //! global OBJECTSHANDLING::Objects registry behind a process-wide mutex.
+       //! Profiling the scalar hot path put ~33% of its time in malloc/free and
+       //! ~24% in that registry, against ~4% in the interpolation itself -- and
+       //! the registry's own reallocation races made the whole path unusable
+       //! from several threads at once. None of the interpolators ever needed
+       //! more than indexed doubles, so they now take this instead.
+       struct EOS_Ipp_CellData
+       {
+              enum { NB_ROWS = 6, NB_POINTS = 4 };
+              double v[NB_ROWS][NB_POINTS];
+
+              double *operator[](int row) { return v[row]; }
+              const double *operator[](int row) const { return v[row]; }
+       };
+
+       //! Everything the interpolation of one property needs, resolved once when
+       //! the database is loaded rather than on every query.
+       //!
+       //! compute_prop_ph used to re-derive all of this per point *and* per
+       //! property: a switch over the ~15 base properties to name the two
+       //! derivative fields, up to four range-checked lookups in a ~120-entry
+       //! vector of EOS_Error_Field pointers, a second switch for the cross
+       //! derivative -- and then both switches again inside
+       //! get_cell_values_bicubic. None of it depends on (p,h).
+       //!
+       //! The pointers are into the arrays the load filled and stay valid for as
+       //! long as the EOS_Field objects beside them do: an EOS_Field shares its
+       //! storage rather than owning it (cf. EOS_Field::operator=), so this adds
+       //! no lifetime requirement the class did not already have. They are
+       //! rebuilt by build_prop_plans() at the end of every load.
+       struct EOS_Ipp_PropPlan
+       {
+              bool has_value = false;             //!< the 2D field of the property itself is loaded
+              bool has_first_derivatives = false; //!< ... and both d/dp|h and d/dh|p, so BICUBIC is possible
+              bool has_cross_derivative = false;  //!< ... and the stored d2/dp.dh
+
+              //! Per-node property values. Raw, because an EOS_Fields subscript is
+              //! an out-of-line call the compiler cannot hoist out of the
+              //! four-corner loop -- which is how a bilinear query came to make
+              //! twelve of them, and a bicubic one twenty-four.
+              const double *val = nullptr, *d_dp = nullptr, *d_dh = nullptr, *d2 = nullptr;
+              //! Per-cell error codes, one field per property involved.
+              const EOS_Error_Field *err = nullptr, *err_dp = nullptr,
+                                    *err_dh = nullptr, *err_d2 = nullptr;
+       };
+
+       //! The last interpolation cell a thread touched, with the patch built
+       //! from it. Consecutive points of a host code's batch walk its own mesh
+       //! and land in the same cell over and over, so the gather -- four corner
+       //! indices scattered across two node arrays and up to four property
+       //! arrays -- and the Hermite patch derived from it are worth keeping
+       //! between calls. Neither depends on (p,h) inside the cell.
+       //!
+       //! Keyed on the instance as well as the cell, and held thread_local
+       //! rather than in EOS_Ipp: a loaded tile's EOS_Ipp is shared by the
+       //! caches of several threads (cf. EOS_Ipp_TileStore), and the whole
+       //! reason that sharing is safe is that the object stays immutable under
+       //! concurrent compute_* calls.
+       struct EOS_Ipp_CellCache
+       {
+              const void *owner = nullptr;
+              int  cell = -1;
+              int  prop = -1;
+              bool bicubic = false;
+              NEPTUNE::EOS_Internal_Error ierr;
+              EOS_Ipp_CellData values;
+              double f[4], ft[4], fu[4], ftu[4];
+       };
+
+       //! The cell list of the last p-column an h(p,T) inversion scanned, on one
+       //! thread. Held and keyed like EOS_Ipp_CellCache, and for the same
+       //! reasons.
+       struct EOS_Ipp_ColumnCache
+       {
+              const void *owner = nullptr;
+              unsigned int ip = 0xFFFFFFFFu;
+              std::vector<unsigned int> cells;
+       };
+
        class EOS_Ipp : public EOS_Fluid
        {
               static const AString tablename;
+              friend class EOS_Ipp_TileCache; // needs compute_prop_ph/compute_prop_p on each tile's EOS_Ipp
 
        public:
+              //! Interpolation method used on the 2D (p,h) mesh for physical properties.
+              //! BILINEAR is the historical/default behaviour, preserved for compatibility.
+              enum Interpolation_Method
+              {
+                     BILINEAR = 0,
+                     BICUBIC = 1
+              };
+
               virtual const AString &table_name() const;
-              mutable bool switch_model;         // If true : on surcharge les fcts compute si calcul pas ok
-              mutable bool switch_comp_sat_;     // If true : on surcharge les fcts compute si calcul pas ok
-              mutable bool swch_calc_deriv_fld_; // If true: calcule d_lambda_d_h_p avec la methode du fluide
+              mutable bool switch_model;         // If true: override the compute functions when the calculation is not ok
+              mutable bool switch_comp_sat_;     // If true: override the compute functions when the calculation is not ok
+              mutable bool swch_calc_deriv_fld_; // If true: compute d_lambda_d_h_p using the fluid's own method
+              //! Per-point interpolated (r1_val) and reference-model (r2_val)
+              //! values, filled by compute_() so it can report the gap between
+              //! them. Empty until compute_() is called and sized by it to the
+              //! batch it received: they used to be born 20x30 and indexed
+              //! [property][point] unchecked, which any batch of more than 30
+              //! points overran.
               mutable std::vector<std::vector<double>> r1_val;
               mutable std::vector<std::vector<double>> r2_val;
+              void resize_debug_grids(int nb_prop, int nb_pts) const;
               EOS *obj_fluid = nullptr;
               EOS_Ipp();
               virtual ~EOS_Ipp();
@@ -49,6 +162,56 @@ namespace NEPTUNE_EOS
               virtual int init(const Strings &);
               //! to initialize an implementation of EOS_Ipp with supplementary parameters
               virtual int init(const Strings &, const Strings &);
+
+              //! Loads a single, standalone .med file at an exact path, bypassing the
+              //! {DATA}/EOS_Ipp/ directory convention used by init(const Strings&).
+              //! This factors out the historical, eager, whole-database loading body of
+              //! init(const Strings&) so it can also be used by EOS_Ipp_TileCache to load
+              //! one tile of a tiled database (cf. init()'s ".eosmm" manifest detection).
+              //! Public because EOS_Ipp_TileCache constructs plain EOS_Ipp instances (one
+              //! per tile) rather than being a subclass.
+              //! properties, when non-empty, restricts the loading to those fields
+              //! (same selection as init(const Strings&, const Strings&)). Reading a
+              //! .med field is what dominates a tile load, so a tiled database opened
+              //! for a handful of properties both loads and occupies proportionally
+              //! less.
+              EOS_Error load_from_med_path(const AString &full_med_path,
+                                           const Strings &properties = Strings());
+
+              //! Select the interpolation method to use on the 2D (p,h) mesh.
+              //! Has no effect on the 1D saturation/limit curves (always linear).
+              void set_interpolation_method(Interpolation_Method method);
+              Interpolation_Method get_interpolation_method() const;
+
+              //! Approximate resident size of this instance's loaded database, in
+              //! bytes: the mesh nodes, the property values, the connectivity and
+              //! the per-cell error fields. Used to give the tile cache a budget in
+              //! bytes rather than in tiles -- a tile count says nothing about how
+              //! much memory a database will occupy, since that depends entirely on
+              //! how finely each tile was meshed.
+              std::size_t approximate_footprint_bytes() const;
+
+              //! Tiled mode only (null tile_cache_ otherwise): how many tiles are
+              //! currently resident, how many were loaded from disk since init, how
+              //! many were evicted, and the resident bytes. Returns false when this
+              //! instance is not a tiled database. Loads far above the number of
+              //! distinct tiles a run touches means the cache is thrashing and the
+              //! budget is too small.
+              bool get_tile_cache_stats(std::size_t &nb_resident, std::size_t &nb_loads,
+                                        std::size_t &nb_evictions, std::size_t &resident_bytes) const;
+
+              //! True if the 2D (p,h) field of prop was loaded from the database.
+              //! False both for a property the database does not carry and for one
+              //! left out when the database was opened for a subset of properties.
+              bool has_ph_property(EOS_Property prop) const;
+
+              //! True if prop is a base 2D property with both first-derivative fields
+              //! (d_prop_d_p_h, d_prop_d_h_p) loaded from the current database -- the
+              //! minimum required for BICUBIC; otherwise BICUBIC falls back to bilinear.
+              bool has_bicubic_first_derivative_data(EOS_Property prop) const;
+              //! True if, in addition, the stored cross derivative (d2_prop_d_p_d_h) is
+              //! loaded -- used in place of the local twist approximation when available.
+              bool has_bicubic_cross_derivative_data(EOS_Property prop) const;
 
               //! Error handling methods
               void describe_error(const EOS_Internal_Error error, AString &description) const;
@@ -268,7 +431,8 @@ namespace NEPTUNE_EOS
               mutable double tmin_cpt;
               mutable double tmax_cpt;
               mutable int save_bound;
-              double erreurtot; // erreur de l'interpolation sur le maillage
+              Interpolation_Method interp_method; // BILINEAR by default (compatibility)
+              double erreurtot; // interpolation error over the mesh
               double tcrit;
               double pcrit;
               double hcrit;
@@ -311,12 +475,26 @@ namespace NEPTUNE_EOS
                                                 double p, int tag, double &res) const;
 
               // Retrieve the values of a cell for a given field as well as the associated ph values at the vertices.
-              EOS_Internal_Error get_cell_values(int idx, EOS_Property i_prop, EOS_Fields &cell_val) const;
+              EOS_Internal_Error get_cell_values(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val) const;
 
-              EOS_Internal_Error get_segm_values(int idx, EOS_Property i_prop, int tag, EOS_Fields &segm_val) const;
+              EOS_Internal_Error get_segm_values(int idx, EOS_Property i_prop, int tag, EOS_Ipp_CellData &segm_val) const;
 
               EOS_Internal_Error compute_h_l_pT(double p, double T, double &res) const;
               EOS_Internal_Error compute_h_v_pT(double p, double T, double &res) const;
+              //! Saturation enthalpy on the liquid ('liquid' true) or vapor side,
+              //! as used by compute_h_pT to check the phase of the root it inverted.
+              //! Prefers the stored 1D saturation curve over re-inverting T(p,h) at
+              //! T_sat on the 2D mesh -- cheaper, and the only route that works on a
+              //! tiled database (cf. EOS_Ipp.cxx).
+              EOS_Internal_Error compute_h_sat_for_phase(double p, double T_sat, bool liquid,
+                                                         double &res) const;
+              // Inversion h(p,T) on the bicubic (Hermite patch) representation of
+              // T(p,h): used by compute_h_l_pT / compute_h_v_pT when the BICUBIC
+              // method is selected and the T derivative fields are available.
+              // Same cell-scanning strategy as the bilinear inversion (cf. report
+              // Doc/Interpolator), but the per-cell equation T(p,h) = T is cubic in
+              // h at fixed p and is solved in closed form (cf. EOS_Ipp.cxx).
+              EOS_Internal_Error compute_h_pT_bicubic(double p, double T, double &res) const;
               EOS_Internal_Error check_p_bounds_ph(double p) const;
 
               virtual EOS_Error init_model(const std::string &model_name, const std::string &fluid_name, bool switch_comp_sat, bool swch_calc_deriv_fld); // for the interpolator
@@ -324,24 +502,133 @@ namespace NEPTUNE_EOS
                                         EOS_Error_Field &errfield) const;
               EOS_Error compute(const EOS_Field &p, EOS_Fields &r, EOS_Error_Field &errfield) const;
 
-              /* Fonction qui servent a recuperer les bornes d'un jdd (lance les calculs avec le fluid declarer par init model)*/
+              /* Function used to retrieve the bounds of a dataset (runs the calculations with the fluid declared via init_model) */
               virtual EOS_Error compute_(const EOS_Field &p, const EOS_Field &h, EOS_Fields &r,
                                          EOS_Error_Field &errfield) const;
-              /* Fonction qui servent a recuperer les bornes d'un jdd (lance les calculs avec le fluid declarer par init model)*/
+              /* Function used to retrieve the bounds of a dataset (runs the calculations with the fluid declared via init_model) */
               EOS_Error compute_(const EOS_Field &p, EOS_Fields &r, EOS_Error_Field &errfield) const;
 
        private:
               static int type_Id;
               AString FluidStr;
 
-              ArrOfInt corners;        // liste des 4 noeuds formant les angles de chaque mailles du
-                                       // maillage non conforme. Taille : 4 * nb_cells_med_mesh
-                                       // sommet i de la maille j -> corners[i + 4*j]
-              ArrOfInt fnodes2phnodes; // correspondance entre chaque maille du maillage ph et la maille
-                                       // du maillage non conforme (med) dans laquelle elle est
-              ArrOfInt fnodes2pnodes; // correspondance entre chaque maille du maillage p et la maille dans regime saturation
-              ArrOfInt fnodes2pnodes_lim; // correspondance entre chaque maille du maillage p et la maille dans regime limite
-                                       // 
+              // Non-null only in "tiled database" (streaming) mode: init() detected a
+              // ".eosmm" manifest instead of a plain .med file. When set, compute_prop_ph,
+              // compute_prop_p and compute_h_pT delegate to it instead of running their
+              // usual body against this instance's own (in that mode, unused) nodes_ph /
+              // connect_ph / ... members. NULL in the historical, whole-database mode, so
+              // every existing caller keeps the exact previous behaviour.
+              //! Puts every hanging node back on the cubic trace of the
+              //! coarse cell beside it. No-op unless this instance
+              //! interpolates bicubically; called at the end of
+              //! build_prop_plans, so the hot path never sees it.
+              void retrace_hanging_nodes();
+
+              //! Hanging-node tables, one entry per node, as written by
+              //! EOS_IGen (CNT_TYPE / CNT_SUP0 / CNT_SUP1). cnt_type_ is 1 for
+              //! a node splitting a vertical edge, 2 for a horizontal one, 0
+              //! otherwise; the two supports are the ends of that edge, -1
+              //! where there is none. Empty when the database predates them or
+              //! was built without continuity.
+              NEPTUNE::ArrOfInt cnt_type_;
+              NEPTUNE::ArrOfInt cnt_sup0_;
+              NEPTUNE::ArrOfInt cnt_sup1_;
+
+              EOS_Ipp_TileCache *tile_cache_ = nullptr;
+              //! properties, when non-empty, restricts every tile load to those fields.
+              int init_tiled(AString file_name, const Strings &properties);
+
+              // Recomputes with the reference model only the points the
+              // interpolator could not answer, rather than the whole batch. hh is
+              // null for the 1D (p) overload. Returns the worst generic error left
+              // in errfield afterwards. Requires obj_fluid non-null.
+              EOS_Error fallback_failed_points(const EOS_Field &pp, const EOS_Field *hh,
+                                               EOS_Fields &r, EOS_Error_Field &errfield) const;
+              //! How many points this instance handed to the reference model.
+              //! Reported at destruction under EOS_IPP_FALLBACK_STATS: a database
+              //! quietly falling back on a large share of its points is one whose
+              //! domain does not match what the host code asks of it.
+              mutable std::size_t nb_fallback_points_ = 0;
+
+              // True when this batch is a (p,T) request whose h(p,T) inversion is
+              // worth doing once per point rather than once per point and per
+              // output field, and sets p_field/T_field to the two inputs in a
+              // known order. EOS_Fluid::compute loops fields on the outside and
+              // re-derives h for each of them, which on this class means
+              // re-scanning a whole p-column per field. Declines for fewer than
+              // two outputs (nothing to share) and when h is itself an output
+              // (cf. EOS_Ipp.cxx).
+              bool hoistable_h_pT(const EOS_Field &pp, const EOS_Field &hh,
+                                  const EOS_Fields &r,
+                                  const EOS_Field *&p_field, const EOS_Field *&T_field) const;
+
+              // Tiled mode: runs a (p,h) batch with its points regrouped by tile,
+              // so a batch spanning more tiles than the cache can hold does not
+              // reload them all the way through. Only the order changes -- the
+              // permuted fields go through the same EOS_Fluid::compute dispatch and
+              // the results are scattered back. Returns false (having done nothing)
+              // when regrouping would not pay for itself.
+              bool compute_tiled_regrouped(const EOS_Field &pp, const EOS_Field &hh,
+                                           EOS_Fields &r, EOS_Error_Field &errfield,
+                                           EOS_Error &result) const;
+
+              ArrOfInt corners;        // list of the 4 nodes forming the corners of each cell of the
+                                       // non-conforming mesh. Size: 4 * nb_cells_med_mesh
+                                       // vertex i of cell j -> corners[i + 4*j]
+              ArrOfInt fnodes2phnodes; // correspondence between each cell of the ph mesh and the cell
+                                       // of the non-conforming (med) mesh it is in
+              ArrOfInt fnodes2pnodes; // correspondence between each cell of the p mesh and the cell in the saturation regime
+              ArrOfInt fnodes2pnodes_lim; // correspondence between each cell of the p mesh and the cell in the limit regime
+                                       //
+              // Strips the ":"-separated options a reference name may carry after the
+              // file name and applies them, leaving file_name holding the bare name.
+              // Recognized:
+              //   bicubic | bilinear     interpolation method on the 2D (p,h) mesh
+              //   cache=<n>[MB|GB]       tiled databases: resident tile budget, in bytes
+              //   tiles=<n>              tiled databases: resident tile budget, in tiles
+              // e.g. "water.eosmm:bicubic:cache=512MB". Historical names carrying just
+              // ":bicubic"/":bilinear" keep working unchanged.
+              void extract_init_options(AString &file_name);
+
+              // Resident tile budget for tiled mode, as set by extract_init_options or
+              // by the EOS_IPP_TILE_CACHE env variable. Zero means "unset": the
+              // EOS_Ipp_TileCache default applies.
+              std::size_t tile_cache_bytes_ = 0;
+              std::size_t tile_cache_tiles_ = 0;
+
+              //! Resolves, once per load, what every property needs for its
+              //! interpolation (cf. EOS_Ipp_PropPlan). Must run after
+              //! f_mesh2r_mesh(), whose corners array it points into, and after
+              //! the last thing that may reallocate a property array.
+              void build_prop_plans();
+
+              //! Per-cell enclosure of the interpolated T over the whole cell, so
+              //! the h(p,T) inversions can rule a cell out without reading it.
+              //!
+              //! They scan every real cell of a p-column looking for one whose
+              //! surface crosses the target T, and each candidate costs a gather of
+              //! four corners across the node and property arrays -- about a dozen
+              //! scattered loads -- to then be rejected by arithmetic. Two
+              //! contiguous doubles answer the same question for the ones that
+              //! cannot possibly hold the root.
+              //!
+              //! The bound must enclose the surface the inversion actually solves
+              //! on. For bilinear that is the corner range, which a bilinear patch
+              //! attains exactly. For bicubic the Hermite patch overshoots its
+              //! corners, so the bound is the min/max of its 16 Bezier control
+              //! points, which contains the patch by the convex hull property --
+              //! and contains the corner range too, since the corners are among the
+              //! control points. So one bound serves both methods, which matters
+              //! because set_interpolation_method can switch after the load.
+              void build_cell_T_ranges();
+              std::vector<double> cell_T_lo_, cell_T_hi_; //!< per cell, empty when unavailable
+              const double *cell_T_lo_ptr_ = nullptr;     //!< null disables the filter
+              const double *cell_T_hi_ptr_ = nullptr;
+              std::vector<EOS_Ipp_PropPlan> prop_plan_; //!< indexed by EOS_Property
+              const double *node_p_ = nullptr;          //!< nodes_ph[0], per node
+              const double *node_h_ = nullptr;          //!< nodes_ph[1], per node
+              const int *corners_ = nullptr;            //!< corners, 4 per cell
+
               void load_domain_values(EOS_Med &med);
               EOS_Error load_med_nodes(EOS_Med &med);
               EOS_Error load_med_champ(EOS_Med &med);
@@ -349,11 +636,62 @@ namespace NEPTUNE_EOS
               EOS_Error load_med_scalar(EOS_Med &med);
 
               int get_cellidx(double &p, double &h) const;
+              // Real (med) cells whose p-range contains p, in ascending h order:
+              // the cell list scanned by the h(p,T) inversions. Each identified
+              // cell is used to jump directly over its own h-extent, so the cost
+              // is O(number of real cells in the p-column), not O(nb_h_virtual).
+              // The cell list is appended to 'cells' (cleared first) rather than
+              // returned by value: the h(p,T) inversions call this per point, and
+              // a fresh vector per point is an allocation the caller can hoist.
+              void get_cells_containing_p(double p, std::vector<unsigned int> &cells) const;
+              //! Which cell contains a point, and which cells a p-column holds.
+              //! Replaces fnodes2phnodes, whose size was 4^level_max per base cell
+              //! however few cells the mesh had (cf. EOS_Ipp_CellLocator).
+              EOS_Ipp_CellLocator locator_;
+              //! Compares the locator against the flat table over every virtual
+              //! cell. Run only under EOS_IPP_VERIFY_LOCATOR, since it needs that
+              //! table built alongside.
+              void verify_locator(unsigned int nb_p_nodes, unsigned int nb_h_nodes) const;
+              //! Virtual-grid column index of p, shared by get_cellidx,
+              //! get_cells_containing_p and the column cache so they cannot drift.
+              unsigned int virtual_p_index(double p) const;
+              //! Same list as get_cells_containing_p, reusing the last one when p
+              //! falls in the same virtual column (cf. column_cache in EOS_Ipp.cxx).
+              //! The reference is valid until the next call on this thread.
+              const std::vector<unsigned int> &cells_containing_p_cached(double p) const;
               int get_segmidx(double &p, int sat_lim) const;
-              void linear_interpolator(double p, double &res) const;
-              double linear_interpolator(double p, EOS_Fields &segmval) const;
+              double linear_interpolator(double p, const EOS_Ipp_CellData &segmval) const;
               //void bilinear_interpolator(double p, double h, double &res) const;
-              double bilinear_interpolator(double p, double h, EOS_Fields &cellval) const;
+              double bilinear_interpolator(double p, double h, const EOS_Ipp_CellData &cellval) const;
+
+              // Bicubic (Hermite patch) interpolation on the 2D (p,h) mesh.
+              // cellval rows: [0]=p, [1]=h, [2]=f, [3]=d f/dp |h, [4]=d f/dh |p,
+              // [5]=d2 f/dp.dh (4 corners each). Row [5] is only read when
+              // has_cross_derivative is true; otherwise the cross derivative is
+              // approximated locally from rows [3]/[4] (cf. EOS_Ipp.cxx).
+              double bicubic_interpolator(double p, double h, const EOS_Ipp_CellData &cellval,
+                                           bool has_cross_derivative) const;
+              // The evaluation half of bicubic_interpolator, taking a patch that was
+              // already extracted. Split out so compute_prop_ph can keep the patch of
+              // the cell it last touched instead of rebuilding it per point: the patch
+              // depends on the cell and the property, not on where in it (p,h) falls.
+              double bicubic_evaluate(double p, double h, const EOS_Ipp_CellData &cellval,
+                                       const double f[4], const double ft[4],
+                                       const double fu[4], const double ftu[4]) const;
+              // Extracts the Hermite patch data of a cell in unit-square coordinates
+              // (t along p, u along h): corner values f and derivatives ft = df/dt,
+              // fu = df/du, ftu = d2f/dt.du, scaled from the physical derivatives of
+              // cellval. Corner order: 0=(t=0,u=0), 1=(0,1), 2=(1,1), 3=(1,0). When
+              // has_cross_derivative is false, ftu is the local twist approximation
+              // (cf. EOS_Ipp.cxx). Shared by bicubic_interpolator (direct evaluation)
+              // and compute_h_pT_bicubic (inversion), so both use the same patch.
+              void bicubic_patch_data(const EOS_Ipp_CellData &cellval, bool has_cross_derivative,
+                                       double f[4], double ft[4], double fu[4], double ftu[4]) const;
+              // Fetches f and its two first partial derivatives at the 4 corners of the
+              // cell (rows 0-4), plus the stored cross derivative (row 5) if
+              // fetch_cross_derivative is true.
+              EOS_Internal_Error get_cell_values_bicubic(int idx, EOS_Property i_prop, EOS_Ipp_CellData &cell_val,
+                                                          bool fetch_cross_derivative) const;
 
               EOS_Internal_Error check_ph_bounds(double p, double h) const;
               EOS_Internal_Error check_p_bounds_satlim(double p) const;

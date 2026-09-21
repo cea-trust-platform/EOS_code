@@ -68,8 +68,11 @@ namespace NEPTUNE_EOS_IGEN
         void set_file_med_name() ;
         void make_header(AString& header) ; 
         
+        //! nb_sub probes each cell at nb_sub x nb_sub points instead of at its
+        //! centre alone. 1 is the historical single-point criterion.
         void set_quality(const char* const property, const char* const type, 
-                         int const is_abs, double const limit_qi=-9999.9) ;
+                         int const is_abs, double const limit_qi=-9999.9,
+                         int const nb_sub=1) ;
         
         EOS_Error make_mesh(int nb_mesh_p, int nb_mesh_h, int level_max=-1)    ;
         EOS_Error make_mesh_ph(int nb_mesh_p, int nb_mesh_h, int level_max=-1) ;
@@ -82,11 +85,28 @@ namespace NEPTUNE_EOS_IGEN
         
         int check_properties(const AString& property) const ;
         
-        EOS_Error make_properties(EOS_Med& med) ;
+        //! quality_only: write, on the (p,h) mesh, only what the quality
+        //! criteria read (cf. quality_fields). For the temporary MED.
+        EOS_Error make_properties(EOS_Med& med, bool quality_only=false) ;
+        //! The fields of `props` the quality criteria read: their properties
+        //! and the derivatives their bicubic interpolation uses.
+        vector<string> quality_fields(const vector<string>& props) const ;
         EOS_Error compute_properties(EOS_Field& field, EOS_Error_Field& error) ;
+
+        //! Cross derivative d2X/dp.dh at every node, obtained by differencing
+        //! the [dX/dP]h field along h over the mesh's own nodes.
+        void compute_cross_derivative(const EOS_Field& d_dp, const EOS_Error_Field& e_dp,
+                                      EOS_Field& d2, EOS_Error_Field& e_d2) const ;
+
+        //! Writes every property of `props`, plus for each one whose [dX/dP]h
+        //! is there the cross derivative derived from it.
+        EOS_Error write_properties(EOS_Med& med, AString& mesh_name,
+                                   const vector<string>& props, int nb_nc) ;
         
         EOS_Error write_med()               ;
         EOS_Error write_tempory_med()       ;
+        //! Writes the temporary MED and reloads the interpolator built on it.
+        EOS_Error refresh_tempory_med()     ;
         EOS_Error write_index(bool tempory) ;
         
         const AString& get_method() const    ;
@@ -136,6 +156,8 @@ namespace NEPTUNE_EOS_IGEN
         vector<EOS_IGen_QI> qualities ;
         bool test_qualities ;
         bool refine ;
+        //! The mesh or the criteria changed since the temporary MED was written.
+        bool tempory_med_stale ;
 
         vector<string> list_propi     ;
         vector<string> list_propi_sat ;

@@ -24,6 +24,9 @@
 #ifndef EOS_IGEN_I_HXX_
 #define EOS_IGEN_I_HXX_
 
+#include <unistd.h>
+#include <cstdio>
+
 namespace NEPTUNE_EOS_IGEN
 {
   inline void EOS_IGen::set_method(const char* const str)
@@ -67,12 +70,25 @@ namespace NEPTUNE_EOS_IGEN
   
   
   inline void EOS_IGen::set_tempory_med_name()
-  { if (mesh_ph->get_exist())
+  { // The scratch MED file the mesh generation goes through used to be named
+    // "mesh_ph"/"mesh_p" flat, i.e. the same file for every EOS_IGen writing
+    // into a given data directory. Two generations running at once therefore
+    // fought over it -- which is what made generating a tiled database in
+    // parallel fail (cf. EOS_Ipp_Tiler's --jobs). The process id makes it
+    // per-process; it stays stable within a process, which is all the
+    // write/read-back cycle needs, and nothing else refers to the name.
+    char suffix[32] ;
+    snprintf(suffix, sizeof suffix, "_%d", (int)getpid()) ;
+
+    if (mesh_ph->get_exist())
        { tempory_med_name="mesh_ph" ;
          if (mesh_p->get_exist())  tempory_med_name += "_p" ;
+         tempory_med_name += suffix ;
        }
     else if (mesh_p->get_exist())
-       tempory_med_name = "mesh_p" ;
+       { tempory_med_name = "mesh_p" ;
+         tempory_med_name += suffix ;
+       }
     else
        tempory_med_name = "" ;
   }

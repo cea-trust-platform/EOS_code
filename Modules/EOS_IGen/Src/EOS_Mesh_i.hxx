@@ -49,7 +49,7 @@ namespace NEPTUNE_EOS_IGEN
   inline void EOS_Mesh::set_nodes(double pmin, double hmin)
   { double tmp_p = pmin ;
     double tmp_h = hmin ;
-    
+
     int k = 0 ;
     for (int i=0; i< nb_p; i++)
        { node_p[k] = tmp_p ;
@@ -66,6 +66,15 @@ namespace NEPTUNE_EOS_IGEN
             }
          tmp_p = tmp_p + delta_p ;
        }
+
+    // The grid lines of the unrefined mesh, accumulated exactly as the node
+    // coordinates above are, so that the two agree bit for bit.
+    grid_h.resize(nb_h) ;
+    grid_p.resize(nb_p) ;
+    grid_h[0] = hmin ;
+    for (int j=1; j<nb_h; j++)  grid_h[j] = grid_h[j-1] + delta_h ;
+    grid_p[0] = pmin ;
+    for (int i=1; i<nb_p; i++)  grid_p[i] = grid_p[i-1] + delta_p ;
   }
   
   inline void EOS_Mesh::set_error(ArrOfInt& ierr)

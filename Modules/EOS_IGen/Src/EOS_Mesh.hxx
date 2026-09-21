@@ -30,8 +30,6 @@
 #include <vector>
 using std::vector;
 
-#define DBL_EPSILON 1e-9
-
 using namespace NEPTUNE;
 
 namespace NEPTUNE_EOS_IGEN
@@ -63,6 +61,11 @@ namespace NEPTUNE_EOS_IGEN
         void set_error(ArrOfInt& ierr);
         
         bool get_exist() const ;
+        //! False when the last add_local_nodes() could not make sense of the
+        //! mesh it was refining and stopped early (cf. EOS_Mesh.cxx). The
+        //! object is then left half-refined and must not be used; the caller
+        //! is expected to turn this into an error rather than write it out.
+        bool refine_ok() const { return refine_ok_ ; }
         int get_level_max() const;
         const EOS_Fields& get_domain() const;
         const EOS_Fields& get_domain_continuity() const;
@@ -89,6 +92,7 @@ namespace NEPTUNE_EOS_IGEN
            
    private:
       bool exist;
+      bool refine_ok_ = true;
       int nb_p;
       int nb_h;
       int level_max;     // max level of refinement applied (no refinement : 
@@ -104,6 +108,15 @@ namespace NEPTUNE_EOS_IGEN
       ArrOfDouble node_h;
       ArrOfDouble node_p_continuity;
       ArrOfDouble node_h_continuity;
+
+      //! Coordinates of the grid lines of the current global (virtual) grid:
+      //! grid_h one entry per column, grid_p one entry per row. The mesh is a
+      //! tensor product, so a node's coordinates are fixed by the grid slot it
+      //! occupies and by nothing else -- in particular they do not depend on
+      //! which neighbouring slots happen to be occupied. Refining bisects these
+      //! two arrays, which is where every node coordinate comes from.
+      ArrOfDouble grid_h;
+      ArrOfDouble grid_p;
       
       EOS_Field p;
       EOS_Field h;
@@ -123,9 +136,6 @@ namespace NEPTUNE_EOS_IGEN
       vector<ArrOfInt> mesh_to_node;
       vector<ArrOfInt> med_to_node;
       vector<ArrOfInt> continuity_to_node;
-      
-      vector<ArrOfInt> med_correction;
-      vector<ArrOfInt> new_correction;
    };
 }
 

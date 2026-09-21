@@ -67,6 +67,7 @@ class EOS_Med
      EOS_Error add_Famille(AString& m_name, AString& fam_name, int fam_num);
      EOS_Error add_Champ_Noeud(AString& m_name, EOS_Field& champ);
      EOS_Error add_ErrChamp_Noeud(AString& m_name, AString& e_name, EOS_Error_Field& err);
+     EOS_Error add_IntChamp_Noeud(AString& m_name, AString& c_name, const ArrOfInt& v);
      EOS_Error add_Scalar_Float(AString& sf_name, double& value);
 
 
@@ -89,6 +90,7 @@ class EOS_Med
      EOS_Error get_Champ_Noeud_Infos(int index, AString& c_name, int& type, int& nb_val, AString& m_ass);
      EOS_Error get_Champ_Noeud(AString& c_name, EOS_Field& res) ;
      EOS_Error get_ErrChamp_Noeud(AString& c_name, EOS_Error_Field& res) ;
+     EOS_Error get_IntChamp_Noeud(AString& c_name, ArrOfInt& res) ;
      EOS_Error get_Scalar_Float(AString& sf_name, double& res);
 
 

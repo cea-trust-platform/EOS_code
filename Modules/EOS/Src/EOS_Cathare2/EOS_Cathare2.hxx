@@ -222,6 +222,12 @@ namespace NEPTUNE_EOS
     AString equationname;           //!< fluid name (with phase)
 
   private:
+    //! Computes `out` through EOS_Fluid's own per-property dispatch, for the
+    //! case where the pilot refused the whole batch because one of the
+    //! properties in it is not one it knows. See EOS_Cathare2.cxx.
+    EOS_Error compute_through_base(const EOS_Field& in1, const EOS_Field& in2,
+                                   EOS_Fields& out, EOS_Error_Field& err) const;
+
     //! Type identifier: see language documentation
     static int type_Id;
   };
