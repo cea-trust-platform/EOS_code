@@ -1,3 +1,5 @@
+.. _eos-igen:
+
 Module EOS_IGen (générateur d'interpolateur)
 ============================================
 

@@ -1,3 +1,5 @@
+.. _eos-ihm:
+
 Module EOS_IHM (interface graphique)
 ====================================
 
