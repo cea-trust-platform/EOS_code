@@ -80,7 +80,7 @@ Répertoire                Contenu
 ``bin/``                  Exécutables et utilitaires
 ``lib/``                  Bibliothèques (``libeos``, etc.)
 ``include/``              En-têtes publics (``EOS/API``, ``Language/API``, …)
-``data/``                 Données des méthodes (fichiers ``.ipp``, tables…)
+``data/``                 Données des méthodes (tables d'interpolation ``.med``, index…)
 ``doc/``                  Documentation installée
 ``share/``                Fichiers annexes
 ========================  =====================================================

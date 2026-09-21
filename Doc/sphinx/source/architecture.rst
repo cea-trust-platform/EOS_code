@@ -22,7 +22,7 @@ SWIG) et ``Data/`` (données) :
        ├── Common/             # utilitaires partagés (fxdr, func…)
        ├── Functions/          # évaluateur de fonctions analytiques
        ├── EOS/                # cœur : API EOS + méthodes thermodynamiques
-       ├── EOS_IGen/           # générateur de tables d'interpolation (.ipp)
+       ├── EOS_IGen/           # générateur de tables d'interpolation (.med)
        ├── EOS_IHM/            # IHM graphique Qt/Python + wrapper SWIG
        └── system/             # intégration système
 
