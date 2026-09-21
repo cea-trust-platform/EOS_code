@@ -23,6 +23,7 @@
  */
 #include "EOS_IGen.hxx"
 #include "EOS/API/EOS_Config.hxx"
+#include "EOS/Src/EOS_Ipp/EOS_Ipp_BicubicProps.hxx"
 
 #include <fstream>
 #include <string>
@@ -341,7 +342,7 @@ namespace NEPTUNE_EOS_IGEN
          return err ;
        }
 
-    err = make_properties(med) ;
+    err = make_properties(med, true) ;
     if (err != EOS_Error::good)
        { cerr<< " Error EOS_IGen::write_tempory_med : impossible to write properties in temporary MED file" <<endl ;
          return err ;
@@ -433,7 +434,51 @@ namespace NEPTUNE_EOS_IGEN
   }
   
 
-  EOS_Error EOS_IGen::make_properties(EOS_Med& med)
+//  What the quality criteria read out of a database, among `props`: each
+//  criterion's property and, because EOS_Ipp interpolates bicubically whenever
+//  it finds them, that property's two first derivatives and its cross
+//  derivative (the same rule EOS_Ipp applies on load, cf.
+//  EOS_Ipp_BicubicProps.hxx). Leaving the derivatives out would not fail: the
+//  interpolator would quietly fall back to bilinear, the error measured on the
+//  temporary MED would no longer be the error of the finished database, and
+//  the mesh would be refined to a different depth.
+//
+//  The order of `props` is kept, and nothing is returned that was not in it.
+  vector<string> EOS_IGen::quality_fields(const vector<string>& props) const
+  { vector<int> wanted ;
+    const int nb_q = qualities.size() ;
+    for (int i=0; i<nb_q; i++)
+       { const EOS_Property x = gen_property_number(qualities[i].get_property().aschar()) ;
+         wanted.push_back(x) ;
+         EOS_Property dp, dh, d2 ;
+         if (NEPTUNE_EOS::bicubic_derivative_properties(x, dp, dh))
+            { wanted.push_back(dp) ;
+              wanted.push_back(dh) ;
+            }
+         if (NEPTUNE_EOS::bicubic_cross_derivative_property(x, d2))
+            wanted.push_back(d2) ;
+       }
+
+    vector<string> kept ;
+    const int nb_p = props.size() ;
+    for (int i=0; i<nb_p; i++)
+       { const int n = gen_property_number(props[i].c_str()) ;
+         for (size_t j=0; j<wanted.size(); j++)
+            if (wanted[j] == n)  { kept.push_back(props[i]) ; break ; }
+       }
+    return kept ;
+  }
+
+
+//  quality_only is for the temporary MED, which exists to be read by
+//  compute_qualities and by nothing else. Filling a node costs one model call
+//  per property -- about a hundred of them, 50 ms a node with Refprop -- and a
+//  refinement writes that file once per round over the whole mesh, to read
+//  back four fields of it.
+//
+//  Only the 2D fields are cut down. The 1D curves have a handful of nodes and
+//  cost nothing next to the (p,h) mesh.
+  EOS_Error EOS_IGen::make_properties(EOS_Med& med, bool quality_only)
   { EOS_Error err ;
 
     // 2D diagram P-h
@@ -456,6 +501,14 @@ namespace NEPTUNE_EOS_IGEN
          else
             { // use list_propi
               str_properties = fluid->is_implemented("P", "h", list_propi, tp1, tp2) ;
+            }
+
+         if (quality_only)
+            { //  No 2D criterion at all (they bear on the curves): nothing to
+              //  go by, keep the full list rather than write a mesh with no
+              //  field on it.
+              const vector<string> kept = quality_fields(str_properties) ;
+              if (!kept.empty())  str_properties = kept ;
             }
 
 //       ArrOfInt nerr(mesh_ph->get_nb_node());

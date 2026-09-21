@@ -85,7 +85,12 @@ namespace NEPTUNE_EOS_IGEN
         
         int check_properties(const AString& property) const ;
         
-        EOS_Error make_properties(EOS_Med& med) ;
+        //! quality_only: write, on the (p,h) mesh, only what the quality
+        //! criteria read (cf. quality_fields). For the temporary MED.
+        EOS_Error make_properties(EOS_Med& med, bool quality_only=false) ;
+        //! The fields of `props` the quality criteria read: their properties
+        //! and the derivatives their bicubic interpolation uses.
+        vector<string> quality_fields(const vector<string>& props) const ;
         EOS_Error compute_properties(EOS_Field& field, EOS_Error_Field& error) ;
 
         //! Cross derivative d2X/dp.dh at every node, obtained by differencing
