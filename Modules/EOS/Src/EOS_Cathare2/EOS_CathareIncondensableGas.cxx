@@ -17,6 +17,7 @@
 
 #include <sstream>
 #include "EOS_CathareIncondensableGas.hxx"
+#include "tracy/Tracy.hpp"
 
 using namespace NEPTUNE;
 
@@ -47,7 +48,8 @@ namespace NEPTUNE_EOS
   }
 
   static RegisteredClass& CathareIncondensableGas_create()
-  { return *(new EOS_CathareIncondensableGas()) ;
+  { ZoneScopedN("CathareIncondensableGas_create");
+    return *(new EOS_CathareIncondensableGas()) ;
   }
 
   EOS_CathareIncondensableGas::EOS_CathareIncondensableGas() :
@@ -70,11 +72,14 @@ namespace NEPTUNE_EOS
                                                             CathareIncondensableGas_create)) ;
 
   const Type_Info& EOS_CathareIncondensableGas::get_Type_Info () const
-  { return (Types_Info::instance())[type_Id] ;
+  { ZoneScopedN("EOS_CathareIncondensableGas::get_Type_Info");
+    return (Types_Info::instance())[type_Id] ;
   }
 
   int EOS_CathareIncondensableGas::init(const Strings& args) 
-  { int i = 0 ;
+  { ZoneScopedN("EOS_CathareIncondensableGas::init");
+    ZoneText("init with one args", sizeof("init with one args"));
+    int i = 0 ;
     if (cathare_name == AString("        ")) 
        { if (args.size() < 1) return EOS_Error::error ;
          if      ( args[i] == AString("Nitrogen") ) cathare_name = "NITROGEN";
@@ -128,7 +133,9 @@ namespace NEPTUNE_EOS
   }
 
   int EOS_CathareIncondensableGas::init(const Strings& args, const Strings& other_args) 
-  { int iret ;
+  { ZoneScopedN("EOS_CathareIncondensableGas::init");
+    ZoneText("init with two args", sizeof("init with two args"));
+    int iret ;
     iret = init(args) ;
     if (iret == (int)EOS_Error::good)  iret = init(other_args) ;
     return iret ;

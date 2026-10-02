@@ -47,7 +47,8 @@ namespace NEPTUNE_EOS
   const AString EOS_Mixing::tablename("EOS_Mixing") ;
 
   static RegisteredClass& EOS_Mixing_create()
-  { return *(new EOS_Mixing()) ;
+  { ZoneScopedN("EOS_Mixing_create");
+    return *(new EOS_Mixing()) ;
   }
 
   const AString& EOS_Mixing::table_name() const
@@ -84,7 +85,8 @@ namespace NEPTUNE_EOS
   }
 
   int EOS_Mixing::set_components(EOS **components, int nb)
-  { nb_fluids = nb ;
+  { ZoneScopedN("EOS_Mixing::set_components");
+    nb_fluids = nb ;
     if (the_fluids)  delete[] the_fluids ;
     the_fluids = new EOS*[nb];
     for(int i=0; i<nb; i++) {
@@ -96,6 +98,7 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Mixing::set_compute_mode() {
+    ZoneScopedN("EOS_Mixing::set_compute_mode");
     if (    ((*the_fluids[0]).table_name()    == AString("Cathare"))
          && ((*the_fluids[0]).equation_name() == AString("WaterVapor")) ) {
         compute_mode = MixingType::Cathare;
@@ -119,7 +122,8 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Mixing::set_mixing_reference_state()
-  { if ((compute_mode == MixingType::WithPerfectGas) && ((*the_fluids[0]).table_name() == AString("Cathare2")))
+  { ZoneScopedN("EOS_Mixing::set_mixing_reference_state");
+    if ((compute_mode == MixingType::WithPerfectGas) && ((*the_fluids[0]).table_name() == AString("Cathare2")))
     {
         EOS_Internal_Error err;
         double href, Tref, pref;
@@ -135,7 +139,8 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Mixing::~EOS_Mixing()
-  { if (the_fluids)  delete[] the_fluids ;
+  { ZoneScopedN("EOS_Mixing::~EOS_Mixing");
+    if (the_fluids)  delete[] the_fluids ;
   }
 
   EOS& EOS_Mixing::operator[](int i)
@@ -147,7 +152,8 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Mixing::set_component(int i, const EOS& fluid)
-  { the_fluids[i]=&((EOS&)(fluid));
+  { ZoneScopedN("EOS_Mixing::set_component");
+    the_fluids[i]=&((EOS&)(fluid));
     if (compute_mode == MixingType::Unsupported) {
         set_compute_mode();
     } else if (i > 0 && compute_mode == MixingType::WithPerfectGas) {
@@ -179,7 +185,8 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Mixing::compute(const EOS_Fields& input,
                                 EOS_Field& r,
                                 EOS_Error_Field& errfield) const
-  { // warning : must be changed to avoid copy
+  { ZoneScopedN("EOS_Mixing::compute");
+    // warning : must be changed to avoid copy
     EOS_Fields output(1) ;
     output[0] = r ;
     return compute(input, output, errfield) ;
@@ -188,7 +195,7 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Mixing::compute(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
-  {
+  { ZoneScopedN("EOS_Mixing::compute");
     switch(compute_mode) {
         case MixingType::Cathare:
             return compute_cathare_mix(input, r, errfield);
@@ -206,7 +213,8 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Mixing::compute_cathare2_mix(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
-  { //EOS_Error cr ;
+  { ZoneScopedN("EOS_Mixing::compute_cathare2_mix");
+    //EOS_Error cr ;
     //int nb_infields = input.size() ;
     // provisional for EOS_Mixing
 #ifdef WITH_PLUGIN_CATHARE2
@@ -268,7 +276,7 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Mixing::compute_cathare_mix(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
-  {
+  { ZoneScopedN("EOS_Mixing::compute_cathare_mix");
     // provisional for EOS_Mixing
 #ifdef WITH_PLUGIN_CATHARE
         EOS_Error cr ;
@@ -313,7 +321,8 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Mixing::compute_perfect_gas(const EOS_Fields& input,
                                 EOS_Fields& r,
                                 EOS_Error_Field& errfield) const
-  { //EOS_Error cr ;
+  { ZoneScopedN("EOS_Mixing::compute_perfect_gas");
+    //EOS_Error cr ;
     int nb_infields  = input.size()  ;         // number of input  fields
     int nb_outfields = r.size() ;         // number of output fields
     int nsca  = errfield.size() ;                 // number of points
@@ -1444,7 +1453,8 @@ std::fill(std::begin(ic), std::end(ic), -1);
                , double C_4
                , double C_5
                ) const
-  { T = 0.e0 ;
+  { ZoneScopedN("EOS_Mixing::calcamix_T_ph");
+    T = 0.e0 ;
     double Ti = 0.e0 ;
     EOS_Internal_Error err = EOS_Internal_Error::OK ;
     ArrOfDouble C(nb_fluids) ;
@@ -1505,7 +1515,7 @@ std::fill(std::begin(ic), std::end(ic), -1);
   // TODO faire proprement les erreurs (EOS_Internal_Error)
   int EOS_Mixing::compute_pv_hv_ph(double P, double h, double &Pv, double &hv,
                  double c_0, double c_1, double c_2, double c_3, double c_4, double c_5) const
-  {
+  { ZoneScopedN("EOS_Mixing::compute_pv_hv_ph");
     ArrOfDouble c(nb_fluids) ;
     totab(c, c_0 ,c_1, c_2, c_3, c_4, c_5) ;
     EOS_Internal_Error err;

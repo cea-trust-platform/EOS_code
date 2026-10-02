@@ -173,6 +173,9 @@ add_opt   "--with-sanitizer"               "ENABLE_SANITIZER=ON"
 add_opt   "--without-sanitizer"            "ENABLE_SANITIZER=OFF"
 add_opt   "--with-doc-sphinx"              "WITH_DOC_SPHINX=ON"
 add_opt   "--without-doc-sphinx"           "WITH_DOC_SPHINX=OFF"
+add_opt   "--with-tracy"                   "USE_TRACY=ON"
+add_opt   "--without-tracy"                "USE_TRACY=OFF"
+
 # option like --prefix=/home/myrep --> -DCMAKE_INSTALL_PREFIX=/home/myrep
 # ex : add_opteq "--prefix" "CMAKE_INSTALL_PREFIX"
 # ------------------------------------------

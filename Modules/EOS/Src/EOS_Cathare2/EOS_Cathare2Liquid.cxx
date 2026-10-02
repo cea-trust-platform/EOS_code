@@ -16,6 +16,7 @@
 
 
 #include "EOS_Cathare2Liquid.hxx"
+#include "tracy/Tracy.hpp"
 
 using namespace NEPTUNE;
 
@@ -24,7 +25,7 @@ namespace NEPTUNE_EOS
   const AString EOS_Cathare2Liquid::phasename("Liquid");
 
   static RegisteredClass& Cathare2Liquid_create()
-  {
+  { ZoneScopedN("Cathare2Liquid_create");
     return *(new EOS_Cathare2Liquid());
   }
 
@@ -49,7 +50,7 @@ namespace NEPTUNE_EOS
 
   const Type_Info& EOS_Cathare2Liquid::
   get_Type_Info () const
-  {
+  { ZoneScopedN("EOS_Cathare2Liquid::get_Type_Info");
     return (Types_Info::instance())[type_Id];
   }
 

@@ -66,6 +66,7 @@ function(felemlib)
 
    # objects library
    add_library(${TGT_OBJ} OBJECT ${SRCS} ${LIST_SO})
+     target_link_libraries(${TGT_OBJ} PUBLIC tracy)
    target_include_directories(${TGT_OBJ} PRIVATE ${CMAKE_BINARY_DIR}/Modules/EOS/API ${CMAKE_BINARY_DIR}/Modules)
 
    # static library  TGT_LIBS
@@ -73,6 +74,7 @@ function(felemlib)
      set(TGT_LIBS "${TGT_OBJ}_stat")
      add_library(${TGT_LIBS} STATIC $<TARGET_OBJECTS:${TGT_OBJ}>)
      target_include_directories(${TGT_LIBS} PRIVATE ${CMAKE_BINARY_DIR}/Modules/EOS/API ${CMAKE_BINARY_DIR}/Modules)
+     target_link_libraries(${TGT_LIBS} PUBLIC tracy)
    endif(BUILD_STATIC_LIB)
 
    # shared library  TGT_LIBD
@@ -80,6 +82,7 @@ function(felemlib)
      set(TGT_LIBD "${TGT_OBJ}_shar")
      add_library(${TGT_LIBD} SHARED $<TARGET_OBJECTS:${TGT_OBJ}>)
      target_include_directories(${TGT_LIBD} PRIVATE ${CMAKE_BINARY_DIR}/Modules/EOS/API ${CMAKE_BINARY_DIR}/Modules)
+     target_link_libraries(${TGT_LIBD} PUBLIC tracy)
    endif(BUILD_SHARED_LIB)
 
   

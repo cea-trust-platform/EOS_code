@@ -29,6 +29,8 @@
 #include "Language/API/Objects.hxx"
 // Boolean
 #include "Language/API/Boolean.hxx"
+// Tracy for monitoring perfs
+#include "tracy/Tracy.hpp"
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -47,7 +49,8 @@ namespace OBJECTSHANDLING
       step(1024)       ,
       next(0)          ,
       free(0)
-  {
+  { ZoneScopedN("Objects::Objects");
+    ZoneText("with no args", sizeof("with no args"));
     //std::cerr << endl;
     //std::cerr << endl;
     //std::cerr << endl;
@@ -71,7 +74,9 @@ namespace OBJECTSHANDLING
       step(1024)       ,
       next(0)          ,
       free(0)
-  { (void)right ;
+  { ZoneScopedN("Objects::Objects");
+    ZoneText("by copy", sizeof("by copy"));
+    (void)right ;
     std::cerr << "This should not append!!" << endl ;
     assert(0) ;
     exit(-1) ;
@@ -79,7 +84,8 @@ namespace OBJECTSHANDLING
 
 
   Objects::~Objects()
-  { std::cerr << "End of the simulation : " << std::endl
+  { ZoneScopedN("Objects::~Objects");
+    std::cerr << "End of the simulation : " << std::endl
               << "Cleaning up memory ... "  << std::flush ;
     for(int i=0; i<nb_obj_max; i++)
        if (the_objects[i] != 0)  delete the_objects[i] ;
@@ -99,7 +105,8 @@ namespace OBJECTSHANDLING
 
 
   NEPTUNE::Boolean Objects::is_object(const NEPTUNE::Object_ID& key)
-  { if ((key<0) || (key>=nb_obj_max))  std::cerr << key << "Not allowed" << endl ;
+  { ZoneScopedN("Objects::is_object");
+    if ((key<0) || (key>=nb_obj_max))  std::cerr << key << "Not allowed" << endl ;
     if (the_objects[key]) return 1 ;
     else return 0 ;
   }
@@ -139,7 +146,7 @@ namespace OBJECTSHANDLING
   }
 
   int  Objects::add_object (NumberedObject *obj)
-  {
+  { //ZoneScopedN("Objects::add_object");
 #ifdef _OPENMP
 //  if (omp_in_parallel()) {
     mutex_objects.lock();
@@ -176,7 +183,7 @@ namespace OBJECTSHANDLING
   }
 
   NEPTUNE::Boolean Objects::delete_object (const NEPTUNE::Object_ID& obj)
-  { 
+  { //ZoneScopedN("Objects::delete_object");
 #ifdef _OPENMP
 //  if (omp_in_parallel()) {
     mutex_objects.lock();
@@ -218,6 +225,7 @@ namespace OBJECTSHANDLING
     //       if(obj)
     //  delete_object(*(obj));
     //     }
+    ZoneScopedN("Objects::destroy_all");
     delete[] the_objects ;
     the_objects = 0    ;
     nb_obj_max  = 1024 ;

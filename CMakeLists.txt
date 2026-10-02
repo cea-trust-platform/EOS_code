@@ -365,6 +365,8 @@ endif (WITH_IPP)
 set(EOS_LIB_NAME "eos")
 option(BUILD_STATIC_LIB "Option to build static EOS library libeos.a" ON)
 option(BUILD_SHARED_LIB "Option to build dynamic EOS library libeos.so" ON)
+option(USE_TRACY "Compile Tracy profiler and merge it directly into libeos.a" OFF)
+message(STATUS "Option USE_TRACY       : ${USE_TRACY}")
 
 if(NOT BUILD_SHARED_LIB AND NOT BUILD_STATIC_LIB)
   message(FATAL_ERROR "Error, you can't de-activate the build of both shared and static libraries")
@@ -406,11 +408,14 @@ if (APPLE)
   set(CMAKE_Fortran_FLAGS "-Wall -ffixed-line-length-none -Wno-unused-label")
 endif()
 
-SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -fPIC ")
+# -DNDEBUG belongs in the release flags : without it every assert() stays
+# live in the shipped library, and ArrOf<T>::operator[] alone runs three of
+# them on each element access.
+SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fPIC ")
 SET(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fPIC ")
-SET(CMAKE_C_FLAGS_RELEASE "-O2 -fPIC ")
+SET(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG -fPIC ")
 SET(CMAKE_C_FLAGS_DEBUG "-g -O0 -fPIC ")
-SET(CMAKE_Fortran_FLAGS_RELEASE "-O2 -fPIC ")
+SET(CMAKE_Fortran_FLAGS_RELEASE "-O2 -DNDEBUG -fPIC ")
 SET(CMAKE_Fortran_FLAGS_DEBUG "-g -O0 -fPIC ")
 
 if (USE_OPENMP)
@@ -559,6 +564,11 @@ set(HEADERS_TO_INSTALL ${CMAKE_SOURCE_DIR}/Modules/Common
 if (WITH_IPP)
    list(APPEND HEADERS_TO_INSTALL ${CMAKE_SOURCE_DIR}/Modules/EOS_IGen ${CMAKE_BINARY_DIR}/Modules/EOS_IGen)
 endif (WITH_IPP)
+if(USE_TRACY)
+  install(DIRECTORY ${CMAKE_SOURCE_DIR}/Modules/Tracy/public/
+          DESTINATION ${EOS_INCLUDE_DIR}
+          FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp" PATTERN "*.hmm")
+endif(USE_TRACY)
 if(WITH_PLUGIN_FLICA4)
   foreach(dir ${HEADERS_TO_INSTALL})
     install(DIRECTORY ${dir}

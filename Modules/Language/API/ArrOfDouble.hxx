@@ -21,6 +21,7 @@
 // UObject
 #include "Language/API/UObject.hxx"
 #include "Language/API/ArrOfT.hxx"
+#include <vector>
 
 using LANGUAGE_KERNEL::UObject;
 
@@ -34,6 +35,9 @@ namespace NEPTUNE
     ArrOfDouble (const ArrOfDouble &right) ;
     ArrOfDouble (int nsz=0, const double& x=0) ;
     ArrOfDouble (int nsz, const double* ptr) ;
+
+    static void resize_all(std::vector<ArrOfDouble*> &vec, int n);
+    static void set_ptr_all(std::vector<ArrOfDouble*> &vecArr, std::vector<const double*> &vecPtr, std::vector<int> &vecSize);
 
     virtual ~ArrOfDouble();
 

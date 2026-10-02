@@ -100,7 +100,8 @@ namespace NEPTUNE
                                                       const double arg1,
                                                       const double arg2,
                                                       const double /*result*/)
-  { const EOS_Error err = err_code.generic_error() ;
+  { ZoneScopedN("EOS_Std_Error_Handler::handle_error_point");
+    const EOS_Error err = err_code.generic_error() ;
     if (err > no_dump_on_) 
        { std::ostream & os = *dump_stream_ ;
 
@@ -135,7 +136,8 @@ namespace NEPTUNE
 
   // Tool function used to dump informations on fields
   static void print_field_names(const LANGUAGE_KERNEL::UObject * const arg, std::ostream & os)
-  { char s[100] ;
+  { ZoneScopedN("print_field_names");
+    char s[100] ;
     const EOS_Field  * field  = dynamic_cast<const EOS_Field *>(arg)  ;
     const EOS_Fields * fields = dynamic_cast<const EOS_Fields *>(arg); 
     if (field) 
@@ -158,7 +160,8 @@ namespace NEPTUNE
 
 
   static void print_field_values(const UObject * const arg, int j, ostream & os)
-  { char s[100] ;
+  { ZoneScopedN("print_field_values");
+    char s[100] ;
     const EOS_Field  * field  = dynamic_cast<const EOS_Field *>(arg)  ;
     const EOS_Fields * fields = dynamic_cast<const EOS_Fields *>(arg) ;
     if (field) 
@@ -186,7 +189,8 @@ namespace NEPTUNE
                                                       const UObject *arg1,
                                                       const UObject *arg2,
                                                       const UObject *result)
-  { const int max_lines_to_dump = 400000;
+  { ZoneScopedN("EOS_Std_Error_Handler::handle_error_field");
+    const int max_lines_to_dump = 400000;
     const EOS_Internal_Error ierr = err_field.find_worst_error() ;
     const EOS_Error          err  = ierr.generic_error() ;
   
@@ -254,7 +258,8 @@ namespace NEPTUNE
   // Duplicates *this and returns a reference to the new instance
   // See also EOS_Error_Handler::duplicate()
   EOS_Error_Handler & EOS_Std_Error_Handler::duplicate() const
-  { // Call to copy constructor.
+  { ZoneScopedN("EOS_Std_Error_Handler::duplicate");
+    // Call to copy constructor.
     EOS_Std_Error_Handler *ptr = new EOS_Std_Error_Handler ;
     *ptr = *this ;
     // cerr << "Duplicate : " << no_exit_on_ << " " << ptr->no_exit_on_ << endl;

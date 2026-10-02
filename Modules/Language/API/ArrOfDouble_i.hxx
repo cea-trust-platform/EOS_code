@@ -25,6 +25,28 @@ namespace NEPTUNE
   {
   }
 
+  //! Resize every array of the vector to n. Kept as one call so the whole
+  //! batch shows up as a single zone when profiling; the resizing itself is
+  //! ArrOf<T>::resize, never a copy of it.
+  inline void ArrOfDouble::resize_all(std::vector<ArrOfDouble*> &vec, int n)
+  { ZoneScopedN("ArrOfDouble::resize_all");
+    for (ArrOfDouble* elt : vec)
+      { assert(elt);
+        elt->resize(n);
+      }
+  }
+
+  //! Point every array of vecArr to its vecPtr buffer of vecSize elements.
+  //! Kept as one call for the same reason as resize_all; the aliasing itself
+  //! is ArrOf<T>::set_ptr, which reuses the Vdata when nothing else shares it.
+  inline void ArrOfDouble::set_ptr_all(std::vector<ArrOfDouble*> &vecArr, std::vector<const double*> &vecPtr, std::vector<int> &vecSize)
+  { ZoneScopedN("ArrOfDouble::set_ptr_all");
+    for(unsigned int i=0; i<vecArr.size(); i++)
+      { assert(vecArr.at(i));
+        vecArr.at(i)->set_ptr(vecSize.at(i), vecPtr.at(i));
+      }
+  }
+
   inline ArrOfDouble::ArrOfDouble (int nsz, const double *ptr)
     : LANGUAGE_KERNEL::ArrOf<double>(nsz, ptr)
   {

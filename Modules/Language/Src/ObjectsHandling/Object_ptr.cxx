@@ -20,6 +20,7 @@
 #include "Language/API/NumberedObject.hxx"
 #include "Language/API/Boolean.hxx"
 #include "Language/API/UObject.hxx"
+#include "tracy/Tracy.hpp"
 
 // Class Object_ptr 
 namespace OBJECTSHANDLING
@@ -64,7 +65,8 @@ namespace OBJECTSHANDLING
 
 
   const NumberedObject& Object_ptr::get_object ()
-  { return Objects::instance().get_object(key) ;
+  { ZoneScopedN("Object_ptr::get_object");
+    return Objects::instance().get_object(key) ;
   }
 
   NEPTUNE::Boolean Object_ptr::set_object (const NumberedObject& obj)

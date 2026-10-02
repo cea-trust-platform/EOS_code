@@ -18,11 +18,12 @@
 
 #include "Language/API/Types_Info.hxx"
 #include "EOS/API/EOS_Field.hxx"
-
+#include "tracy/Tracy.hpp"
 namespace NEPTUNE
 {
   static RegisteredClass& EOS_Field_create()
-  { return *(new EOS_Field()) ;
+  { ZoneScopedN("EOS_Field_create");
+    return *(new EOS_Field()) ;
   }
 
   int EOS_Field::type_Id = (RegisterType("EOS_Field", 
@@ -85,9 +86,12 @@ namespace NEPTUNE
   int EOS_Field::init(const char* const namet, 
                       const char* const namep,
                       ArrOfDouble &x) 
-  { property_title  = namet ;
+  { ZoneScopedN("EOS_Field::init");
+    property_title  = namet ;
     property_name   = namep ;
+    {ZoneScopedN("gen_property_number inside init");
     property_number = gen_property_number(namep)   ;
+    }
     data            = ArrOfDouble(x.size(), &x[0]) ;
     return good ;
   }
@@ -95,7 +99,9 @@ namespace NEPTUNE
                       const char* const namep,
                       int prop_numb,
                       ArrOfDouble &x) 
-  { property_title  = namet ;
+  { ZoneScopedN("EOS_Field::init");
+    ZoneText("with property number", sizeof("with property number"));
+    property_title  = namet ;
     property_name   = namep ;
     property_number = prop_numb  ;
     data            = ArrOfDouble(x.size(), &x[0]) ;
@@ -106,7 +112,9 @@ namespace NEPTUNE
                       const char* const namep,
                       int prop_numb,
 					  int nsz, double* ptr)
-  { property_title  = namet ;
+  { ZoneScopedN("EOS_Field::init");
+    ZoneText("with property number and pointer to array", sizeof("with property number and pointer to array"));
+    property_title  = namet ;
     property_name   = namep ;
     property_number = prop_numb  ;
     data            = ArrOfDouble(nsz, ptr) ;
@@ -139,7 +147,8 @@ namespace NEPTUNE
   int EOS_Field::init(const char* const namet,
                       const char* const namep,
 					  int nsz, double* ptr)
-  { property_title  = namet ;
+  { ZoneScopedN("EOS_Field::init");
+    property_title  = namet ;
     property_name   = namep ;
     property_number = gen_property_number(namep)   ;
     data            = ArrOfDouble(nsz, ptr) ;

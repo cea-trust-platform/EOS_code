@@ -46,6 +46,8 @@ Options: [defaults in brackets after descriptions]
   --add_comp_flags=<opt1>,<opt2>,...    add flags for compilation
   --with-openmp                         compile with support of OpenMP
   --without-openmp                      compile without support of OpenMP
+  --with-tracy                          compile Tracy profiler and merge it into libeos.a
+  --without-tracy                       do not include Tracy profiler (default)
   --static-only                         do not build shared library
   --shared-only                         do not build static library
   --with-cmake-exec=<bin_cmake>         cmake executable

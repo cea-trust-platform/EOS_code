@@ -39,13 +39,13 @@ namespace NEPTUNE_EOS
   EOS_Refprop10::EOS_Refprop10() : nbcomp(1), xphase(1),
                                    hrf("DEF"), setmod(0), setref(0), fluid(1),
                                    iline(0), errcode(100), wmm(0), arr_hname(1), arr_hn80(1), arr_hcas(1)
-  {
+  { ZoneScopedN("EOS_Refprop10::EOS_Refprop10");
     varr_molfrac.assign(nc_max_10, 0.e0);
     arr_molfrac = &varr_molfrac[0];
   }
 
   static RegisteredClass &EOS_Refprop10_create()
-  {
+  { ZoneScopedN("EOS_Refprop10_create");
     return *(new EOS_Refprop10());
   }
 
@@ -90,7 +90,7 @@ namespace NEPTUNE_EOS
   }
 
   const Type_Info &EOS_Refprop10::get_Type_Info() const
-  {
+  { ZoneScopedN("EOS_Refprop10::get_Type_Info");
     return (Types_Info::instance())[type_Id];
   }
 
@@ -100,7 +100,8 @@ namespace NEPTUNE_EOS
   }
 
   int EOS_Refprop10::init(const Strings &strings)
-  {
+  { ZoneScopedN("EOS_Refprop10::init");
+    ZoneText("with one arg strings", sizeof("with one arg strings"));
     EOS_Internal_Error err;
     AString desc_err;
     /*
@@ -175,7 +176,8 @@ namespace NEPTUNE_EOS
   }
 
   int EOS_Refprop10::init(const Strings &strings, const Strings &values)
-  {
+  { ZoneScopedN("EOS_Refprop10::init");
+    ZoneText("with two arg strings and values", sizeof("with two arg strings and values"));
     EOS_Internal_Error err;
     AString desc_err;
     /*
@@ -298,7 +300,8 @@ namespace NEPTUNE_EOS
 
   int EOS_Refprop10::init(const Strings &strings, const Strings &values,
                           const double href0, const double sref0, const double tref0, const double pref0)
-  {
+  { ZoneScopedN("EOS_Refprop10::init");
+    ZoneText("with args strings, values and ref values", sizeof("with args strings, values and ref values"));
     EOS_Internal_Error err;
     AString desc_err;
     /*
@@ -438,7 +441,8 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Refprop10::set_allpath(const Strings &strings)
-  { // Verify $NEPTUNE_EOS_REFPROP system variable.
+  { ZoneScopedN("EOS_Refprop10::set_allpath");
+    // Verify $NEPTUNE_EOS_REFPROP system variable.
     // And get all paths
 
     AString ref_path;
@@ -472,7 +476,7 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Internal_Error EOS_Refprop10::callSetup() const
-  {
+  { ZoneScopedN("EOS_Refprop10::callSetup");
     int ierr;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
@@ -591,7 +595,7 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Refprop10::callSetupInitial() const
   {
-
+    ZoneScopedN("EOS_Refprop10::callSetupInitial");
     EOS_Internal_Error err;
     err = callSetup();
 
@@ -628,7 +632,7 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Internal_Error EOS_Refprop10::init_allparams()
-  {
+  { ZoneScopedN("EOS_Refprop10::init_allparams");
     EOS_Internal_Error err;
 
     // arr_hname, arr_hn80, arr_hcas
@@ -665,7 +669,7 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Refprop10::init_limits()
-  {
+  { ZoneScopedN("EOS_Refprop10::init_limits");
     double dmax, p_tmp, h_tmp;
     char htyp[] = "EOS";
     F77NAME(limits_rp10)
@@ -682,7 +686,7 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Refprop10::call_tpflsh(EOS_thermprop prop,
                                                 double p, double T, double &value) const
-  {
+  { ZoneScopedN("EOS_Refprop10::call_tpflsh");
     int ierr;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
@@ -741,7 +745,7 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Refprop10::call_psflsh(EOS_thermprop prop,
                                                 double p, double s, double &value) const
-  {
+  { ZoneScopedN("EOS_Refprop10::call_psflsh");
     EOS_Internal_Error err;
     double rho, rhol, rhov, q, e, h, T, cv, cp, w;
     double *x = new double[nbcomp];
@@ -785,7 +789,7 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Refprop10::call_phflsh(EOS_thermprop prop,
                                                 double p, double h, double &value) const
-  {
+  { ZoneScopedN("EOS_Refprop10::call_phflsh");
     EOS_Internal_Error err;
     double t, rho, rhol, rhov, q, e, s, cv, cp, w;
     double *xl = new double[nbcomp];
@@ -847,7 +851,7 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Refprop10::call_dhd1(EOS_Property prop,
                                               double p, double h, double &value) const
-  {
+  { ZoneScopedN("EOS_Refprop10::call_dhd1");
     EOS_Internal_Error err;
     double t, rho, dhdt_d, dhdt_p, dhdd_t, dhdd_p, dhdp_t, dhdp_d;
 
@@ -888,7 +892,7 @@ namespace NEPTUNE_EOS
 
   EOS_Internal_Error EOS_Refprop10::call_ag(EOS_thermprop prop,
                                             double t, double rho, double &value) const
-  {
+  { ZoneScopedN("EOS_Refprop10::call_ag");
     EOS_Internal_Error err;
     double f, g;
     rho = eos_rho_2_refprop(rho);
@@ -921,7 +925,7 @@ namespace NEPTUNE_EOS
                                                    double &hcrit, double &scrit, double &ucrit,
                                                    double &pcrit_r, double &rhocrit_r, double &hcrit_r,
                                                    double &scrit_r, double &ucrit_r) const
-  {
+  { ZoneScopedN("EOS_Refprop10::critical_point");
     int ierr;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
@@ -949,7 +953,7 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Internal_Error EOS_Refprop10::generate_error(int ierr, const char *err) const
-  {
+  { ZoneScopedN("EOS_Refprop10::generate_error");
     int EOS_REFPROP_CODE = 0;
 
 #ifdef _OPENMP
@@ -1057,7 +1061,7 @@ namespace NEPTUNE_EOS
   }
 
   void EOS_Refprop10::describe_error(const EOS_Internal_Error error, AString &description) const
-  {
+  { ZoneScopedN("EOS_Refprop10::describe_error");
     //
     // Search error message implemented in errorMsgs
     int EOS_REFPROP_CODE = 0;
@@ -1088,7 +1092,7 @@ namespace NEPTUNE_EOS
   }
 
   EOS_Internal_Error EOS_Refprop10::newton_hlim(EOS_splimprop prop, double p, double &h_lim) const
-  {
+  { ZoneScopedN("EOS_Refprop10::newton_hlim");
     double p_ref, tsat_ref;
     double rholsat_ref, rhovsat_ref;
     double rho_sat;
@@ -1344,7 +1348,7 @@ namespace NEPTUNE_EOS
   // indic[7]   trnprp en differences finies
   // indic[8]   stn en differences finies
   // indic[9]   ag en differences finies
-  {
+  { ZoneScopedN("EOS_Refprop10::calrp_indic_ph");
     for (int i = 0; i <= 9; i++)
       indic[i] = 0;
     const int nb_fields = r.size();
@@ -1447,7 +1451,7 @@ namespace NEPTUNE_EOS
                                                           double *tab_prop,
                                                           double *tab_propder,
                                                           int *indic) const
-  {
+  { ZoneScopedN("EOS_Refprop10::calrp_optim_ph");
     int kph, ierr;
     char herr[HC255];
     memset(herr, '\0', sizeof(herr));
@@ -1746,7 +1750,7 @@ namespace NEPTUNE_EOS
                                    const EOS_Field &hh,
                                    EOS_Fields &r,
                                    EOS_Error_Field &errfield) const
-  {
+  { ZoneScopedN("EOS_Refprop10::compute");
     const int nb_fields = r.size();
     const int sz = pp.size();
     assert(hh.size() == sz);
@@ -1873,7 +1877,7 @@ namespace NEPTUNE_EOS
   // indic[8]   cvcp liquide
   // indic[9]   cvcp vapeur
   // indic[10]  satp en differences finies pour derivee seconde
-  {
+  { ZoneScopedN("EOS_Refprop10::calrp_indic_sat_p");
     for (int i = 0; i <= 10; i++)
       indic[i] = 0;
     const int nb_fields = r.size();
@@ -1935,7 +1939,7 @@ namespace NEPTUNE_EOS
                                                              double *tab_propder,
                                                              double *tab_propder2,
                                                              int *indic) const
-  {
+  { ZoneScopedN("EOS_Refprop10::calrp_optim_sat_p");
     double t = 0.0,
            rhol = 0.0, rhov = 0.0,
            xliq = 0.0, xvapint = 0.0,
@@ -2046,7 +2050,7 @@ namespace NEPTUNE_EOS
   EOS_Error EOS_Refprop10::compute(const EOS_Field &p,
                                    EOS_Fields &r,
                                    EOS_Error_Field &errfield) const
-  {
+  { ZoneScopedN("EOS_Refprop10::compute");
     if (p.get_property_number() != NEPTUNE::p)
     { // Calcul non optimise
       return EOS_Fluid::compute(p, r, errfield);
@@ -2140,7 +2144,7 @@ namespace NEPTUNE_EOS
   // indic[5]   trnprp
   // indic[6]   stn
   // indic[7]   trnprp en differences finies
-  {
+  { ZoneScopedN("EOS_Refprop10::calrp_indic_pt");
     for (int i = 0; i <= 9; i++)
       indic[i] = 0;
     const int nb_fields = r.size();
@@ -2203,7 +2207,7 @@ namespace NEPTUNE_EOS
                                                           double *tab_prop,
                                                           double *tab_propder,
                                                           int *indic) const
-  {
+  { ZoneScopedN("EOS_Refprop10::calrp_optim_pt");
     int kph;
     double s, cp, cv, w, mu, lambda, beta, sigma;
     double e, rhol, rhov, hjt, pi, Z, h0;

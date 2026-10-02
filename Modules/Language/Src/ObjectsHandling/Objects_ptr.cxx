@@ -20,6 +20,7 @@
 #include <iostream>
 #include "Language/API/Objects_ptr.hxx"
 #include "Language/API/NumberedObject.hxx"
+#include "tracy/Tracy.hpp"
 // Class Objects_ptr 
 
 
@@ -74,30 +75,34 @@ namespace OBJECTSHANDLING
 
 
   const NumberedObject& Objects_ptr::get_object (int key) const
-  {
+  { ZoneScopedN("Objects_ptr::get_object");
     int id=the_keys[key];
     return Objects::instance().get_object(id);
   }
 
   NumberedObject& Objects_ptr::set_object (int key) const
   {
+    ZoneScopedN("Objects_ptr::set_object");
     int id=the_keys[key];
     return Objects::instance().set_object(id);
   }
 
   void Objects_ptr::destroy_all ()
   {
+    ZoneScopedN("Objects_ptr::destroy_all");
     for(int i=0; i<size();i++)
       delete &(set_object(the_keys[i]));
   }
 
   int Objects_ptr::add_object (NumberedObject& obj)
   {
+    ZoneScopedN("Objects_ptr::add_object");
     return the_keys.add_value(obj.get_key());
   }
 
   NEPTUNE::Boolean Objects_ptr::delete_object (int key)
   {
+    ZoneScopedN("Objects_ptr::delete_object");
     return the_keys.delete_value(key);
   }
 }
