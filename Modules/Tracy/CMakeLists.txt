@@ -14,6 +14,8 @@ if(USE_TRACY)
     add_library(TracyObjects OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/public/TracyClient.cpp)
     target_include_directories(TracyObjects PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/public)
     target_compile_definitions(TracyObjects PUBLIC TRACY_ENABLE)
+    # No warnings for the Tracy sources.
+    target_compile_options(TracyObjects PRIVATE -w)
 
     if(BUILD_SHARED_LIB)
         add_library(tracy SHARED $<TARGET_OBJECTS:TracyObjects>)
@@ -21,7 +23,8 @@ if(USE_TRACY)
         add_library(tracy STATIC $<TARGET_OBJECTS:TracyObjects>)
     endif()
     set_target_properties(tracy PROPERTIES OUTPUT_NAME TracyClient)
-    target_include_directories(tracy PUBLIC
+    # SYSTEM: no warnings from the Tracy headers in the code including them.
+    target_include_directories(tracy SYSTEM PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>
         $<INSTALL_INTERFACE:include>)
     target_compile_definitions(tracy PUBLIC TRACY_ENABLE)
