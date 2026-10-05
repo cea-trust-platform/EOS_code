@@ -80,7 +80,8 @@ if (WITH_IPP)
   # Continuity across hanging nodes: the property the local-refinement
   # algorithm exists to guarantee (cf. Doc/Interpolator, §Continuité and the
   # "Test de continuité" appendix, which demonstrated it on a plot and left it
-  # unchecked). Self-contained: generates its own refined fixtures.
+  # unchecked). Self-contained: generates its own refined fixtures, from
+  # EOS_Cathare2, so it is skipped when that plugin is not built.
   message(STATUS "Add test EOSTestIppContinuity")
   add_executable (EOSTestIppContinuity "${CMAKE_CURRENT_SOURCE_DIR}/main_ipp_continuity.cxx")
   target_include_directories(EOSTestIppContinuity PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
@@ -88,6 +89,10 @@ if (WITH_IPP)
   add_test(EOSTestIppContinuity bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppContinuity 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_continuity")
   set_tests_properties(EOSTestIppContinuity PROPERTIES COST        20.
                                                        ENVIRONMENT ${RUN_ENV})
+  if (NOT WITH_PLUGIN_CATHARE2)
+    message(STATUS "EOSTestIppContinuity disabled: needs the Cathare2 plugin")
+    set_tests_properties(EOSTestIppContinuity PROPERTIES DISABLED TRUE)
+  endif (NOT WITH_PLUGIN_CATHARE2)
 
   # Performance bench and value-regression harness. Not registered as a ctest
   # test: it is a measuring instrument, run by hand around a change

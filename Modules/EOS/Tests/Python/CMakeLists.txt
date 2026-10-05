@@ -21,6 +21,12 @@ if(EXISTS ${PY_TEST_SCRIPT})
       "PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib"
     COST 2.
   )
+
+  # The script only uses Cathare2: skipped without that plugin
+  if(NOT WITH_PLUGIN_CATHARE2)
+    message(STATUS "EOSTest_PyAPI disabled: needs the Cathare2 plugin")
+    set_tests_properties(EOSTest_PyAPI PROPERTIES DISABLED TRUE)
+  endif()
 else()
   message(WARNING "EOSTest_PyAPI not added: test file not found at ${PY_TEST_SCRIPT}")
 endif()
@@ -70,6 +76,12 @@ if(EXISTS ${PY_TEST_SCRIPT_MIXING})
       "PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib"
     COST 2.
   )
+
+  # The tested mixture is built on EOS_Cathare2: skipped without that plugin
+  if(NOT WITH_PLUGIN_CATHARE2)
+    message(STATUS "EOSTest_PyAPI_Mixing disabled: needs the Cathare2 plugin")
+    set_tests_properties(EOSTest_PyAPI_Mixing PROPERTIES DISABLED TRUE)
+  endif()
 else()
   message(WARNING "EOSTest_PyAPI_Mixing not added: test file not found at ${PY_TEST_SCRIPT_MIXING}")
 endif()
