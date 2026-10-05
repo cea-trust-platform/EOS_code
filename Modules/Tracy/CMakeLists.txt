@@ -1,21 +1,38 @@
 if(USE_TRACY)
+    # Tracy keeps process-wide state (event queues, profiler thread, static
+    # destructors run at exit), so exactly one copy of the client must exist in
+    # a process. EOS builds several shared libraries that are loaded together
+    # (e.g. _eos_py.so loads libCCEOSAPI.so and libLanguage_src_shar.so), so
+    # they all link libTracyClient instead of embedding the client.
+    #
+    # libeos.a is the exception: the root CMakeLists.txt merges TracyObjects into
+    # it, so that software linking libeos.a gets the client with no extra library.
+
+    find_package(Threads REQUIRED)
+
     # Compile TracyClient.cpp once as OBJECT library.
     add_library(TracyObjects OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/public/TracyClient.cpp)
     target_include_directories(TracyObjects PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/public)
     target_compile_definitions(TracyObjects PUBLIC TRACY_ENABLE)
 
-    # Add Tracy objects to LCOMM_TGT_OBJ → they get merged into libeos.a/libeos.so
-    # by the root CMakeLists.txt (same mechanism as all other modules).
-    set(LCOMM_TGT_OBJ ${LCOMM_TGT_OBJ} TracyObjects CACHE STRING LCOMM_TGT_OBJ FORCE)
-
-    # Static library built from the same objects (no recompilation).
-    # Needed so that test executables and intermediate shared libs can link against
-    # it and export Tracy symbols to resolve the .so's undefined references at runtime.
-    add_library(tracy STATIC $<TARGET_OBJECTS:TracyObjects>)
-    target_include_directories(tracy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/public)
+    if(BUILD_SHARED_LIB)
+        add_library(tracy SHARED $<TARGET_OBJECTS:TracyObjects>)
+    else()
+        add_library(tracy STATIC $<TARGET_OBJECTS:TracyObjects>)
+    endif()
+    set_target_properties(tracy PROPERTIES OUTPUT_NAME TracyClient)
+    target_include_directories(tracy PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/public>
+        $<INSTALL_INTERFACE:include>)
     target_compile_definitions(tracy PUBLIC TRACY_ENABLE)
+    target_link_libraries(tracy PRIVATE ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
-    message(STATUS "Tracy profiling : ON (merged into libeos.a)")
+    install(TARGETS tracy
+            EXPORT EOSTargets
+            LIBRARY DESTINATION ${EOS_LIB_DIR}
+            ARCHIVE DESTINATION ${EOS_LIB_DIR})
+
+    message(STATUS "Tracy profiling : ON (merged into libeos.a, libTracyClient for shared libraries)")
 else()
     # INTERFACE-only stub: headers available, TRACY_ENABLE not set →
     # all Tracy macros expand to nothing, zero overhead.

@@ -26,3 +26,4 @@ else()
   target_link_libraries(${NLIB_FUNC} PRIVATE ${NLIB_LANG})
 endif()
 
+target_link_libraries(${NLIB_FUNC} PUBLIC tracy)

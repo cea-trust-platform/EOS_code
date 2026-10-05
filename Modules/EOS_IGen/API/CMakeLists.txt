@@ -28,4 +28,4 @@ else()
   add_library(${NLIB_IPP}  STATIC  ${LSO})
 endif()
 
-target_link_libraries(${NLIB_IPP} ${GLOBALEXT_LIB})
+target_link_libraries(${NLIB_IPP} ${GLOBALEXT_LIB} tracy)

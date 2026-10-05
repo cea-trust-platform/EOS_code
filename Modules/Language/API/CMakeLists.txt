@@ -23,3 +23,4 @@ else()
   add_library(${NLIB_LANG}  STATIC  ${LSO})
 endif()
 
+target_link_libraries(${NLIB_LANG} PUBLIC tracy)
