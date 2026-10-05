@@ -501,6 +501,9 @@ namespace NEPTUNE_EOS
               virtual EOS_Error compute(const EOS_Field &p, const EOS_Field &h, EOS_Fields &r,
                                         EOS_Error_Field &errfield) const;
               EOS_Error compute(const EOS_Field &p, EOS_Fields &r, EOS_Error_Field &errfield) const;
+              EOS_Error compute(const EOS_Field &p, const EOS_Field &h, EOS_Field &r,
+                                EOS_Error_Field &errfield) const;
+              EOS_Error compute(const EOS_Field &p, EOS_Field &r, EOS_Error_Field &errfield) const;
 
               /* Function used to retrieve the bounds of a dataset (runs the calculations with the fluid declared via init_model) */
               virtual EOS_Error compute_(const EOS_Field &p, const EOS_Field &h, EOS_Fields &r,
@@ -544,6 +547,8 @@ namespace NEPTUNE_EOS
               // in errfield afterwards. Requires obj_fluid non-null.
               EOS_Error fallback_failed_points(const EOS_Field &pp, const EOS_Field *hh,
                                                EOS_Fields &r, EOS_Error_Field &errfield) const;
+              EOS_Error interpolate(const EOS_Field &pp, const EOS_Field *hh,
+                                    EOS_Fields &r, EOS_Error_Field &errfield) const;
               //! How many points this instance handed to the reference model.
               //! Reported at destruction under EOS_IPP_FALLBACK_STATS: a database
               //! quietly falling back on a large share of its points is one whose
