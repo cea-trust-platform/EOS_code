@@ -94,6 +94,14 @@ res=`ls $PLUGINEXT_DAT/mixtures/*.MIX | wc -l`
 if [ $res = 0 ] ; then
     error 53 "no DATA/mixtures files in $PLUGINEXT_DAT"
 fi
+# python interpreter : python if available, python3 otherwise
+if command -v python > /dev/null 2>&1 ; then
+    PYTHON=python
+elif command -v python3 > /dev/null 2>&1 ; then
+    PYTHON=python3
+else
+    error 54 "neither python nor python3 found in PATH"
+fi
 
 # ----------------------------------------
 # Source files
@@ -102,7 +110,7 @@ mkdir -p $BINARY_DIR/Refprop10
 
 
 # Patches
-(cd $BINARY_DIR/Refprop10 ; python ./Refprop10_patch.py \
+(cd $BINARY_DIR/Refprop10 ; $PYTHON ./Refprop10_patch.py \
      $PLUGINEXT_SRC \
      $BINARY_DIR/../tmp_Refprop10_patch \
      $BINARY_DIR/Refprop10 \
