@@ -788,7 +788,7 @@ namespace NEPTUNE_EOS
       for (int prop = 0; prop < r.size(); prop++)
         r1_val[prop][pts] = r[prop].get_data()[pts]; // debug: does the computation still run?
     // EOS_Error err2 = obj_fluid->compute(pp, hh, r, errfield);
-    EOS_Error err = EOS_Fluid::compute(pp, hh, r, errfield);
+    EOS_Error err = interpolate(pp, &hh, r, errfield);
     for (int pts = 0; pts < pp.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
         r2_val[prop][pts] = r[prop].get_data()[pts];
@@ -849,7 +849,7 @@ namespace NEPTUNE_EOS
     }
     resize_debug_grids(r.size(), p.size()); // cf. the (p,h) overload above
 
-    EOS_Error err = EOS_Fluid::compute(p, r, errfield);
+    EOS_Error err = interpolate(p, nullptr, r, errfield);
     // Filling r1_val and r2_val
     for (int pts = 0; pts < p.size(); pts++)
       for (int prop = 0; prop < r.size(); prop++)
@@ -957,7 +957,7 @@ namespace NEPTUNE_EOS
     ArrOfInt err_data(sz);
     EOS_Error_Field err_sorted(err_data);
 
-    result = EOS_Fluid::compute(p_field, h_field, out, err_sorted);
+    result = interpolate(p_field, &h_field, out, err_sorted);
 
     for (int k = 0; k < sz; k++)
     {
@@ -1104,6 +1104,24 @@ namespace NEPTUNE_EOS
     return errfield.find_worst_error().generic_error();
   }
 
+  EOS_Error EOS_Ipp::interpolate(const EOS_Field &pp, const EOS_Field *hh,
+                                 EOS_Fields &r, EOS_Error_Field &errfield) const
+  {
+    const int sz = errfield.size();
+    errfield = EOS_Internal_Error::OK;
+    EOS_Error err = EOS_Error::good;
+    ArrOfInt err_data(sz);
+    EOS_Error_Field err_field(err_data);
+    for (int i = 0; i < r.size(); i++)
+    {
+      EOS_Error err_i = (hh != nullptr) ? EOS_Fluid::compute(pp, *hh, r[i], err_field)
+                                        : EOS_Fluid::compute(pp, r[i], err_field);
+      err = worst_generic_error(err, err_i);
+      errfield.set_worst_error(err_field);
+    }
+    return err;
+  }
+
   EOS_Error EOS_Ipp::compute(const EOS_Field &pp,
                              const EOS_Field &hh,
                              EOS_Fields &r,
@@ -1136,7 +1154,7 @@ namespace NEPTUNE_EOS
       if (tile_cache_ != nullptr && compute_tiled_regrouped(*p_field, h_field, r, errfield, err))
         ; // errfield already set by the regrouped run
       else
-        err = EOS_Fluid::compute(*p_field, h_field, r, errfield);
+        err = interpolate(*p_field, &h_field, r, errfield);
 
       errfield.set_worst_error(invert_err);
       err = worst_generic_error(err, invert_err.find_worst_error().generic_error());
@@ -1147,7 +1165,7 @@ namespace NEPTUNE_EOS
         return err;
     }
     else
-      err = EOS_Fluid::compute(pp, hh, r, errfield);
+      err = interpolate(pp, &hh, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
       if (obj_fluid == nullptr)
@@ -1166,7 +1184,7 @@ namespace NEPTUNE_EOS
                              EOS_Fields &r,
                              EOS_Error_Field &errfield) const
   {
-    EOS_Error err = EOS_Fluid::compute(p, r, errfield);
+    EOS_Error err = interpolate(p, nullptr, r, errfield);
     if ((err != EOS_Error::good)) // if the calculation by ipp did not pass
     {
       if (obj_fluid == nullptr)
@@ -1178,6 +1196,25 @@ namespace NEPTUNE_EOS
                                    : fallback_failed_points(p, nullptr, r, errfield);
     }
     return err;
+  }
+
+  EOS_Error EOS_Ipp::compute(const EOS_Field &p,
+                             const EOS_Field &h,
+                             EOS_Field &r,
+                             EOS_Error_Field &errfield) const
+  {
+    EOS_Fields r_fields(1);
+    r_fields[0] = r;
+    return compute(p, h, r_fields, errfield);
+  }
+
+  EOS_Error EOS_Ipp::compute(const EOS_Field &p,
+                             EOS_Field &r,
+                             EOS_Error_Field &errfield) const
+  {
+    EOS_Fields r_fields(1);
+    r_fields[0] = r;
+    return compute(p, r_fields, errfield);
   }
 
   // load all fields

@@ -441,6 +441,70 @@ int main()
     
   }
 
+  // Sortie unique hors de la base (p < 1e7 Pa) : repli sur le modèle de référence
+  Strings modeles_ref(0);
+#ifdef WITH_PLUGIN_REFPROP_9
+  modeles_ref.resize(modeles_ref.size()+1);
+  modeles_ref[modeles_ref.size()-1]="EOS_Refprop9";
+#endif
+#ifdef WITH_PLUGIN_REFPROP_10
+  modeles_ref.resize(modeles_ref.size()+1);
+  modeles_ref[modeles_ref.size()-1]="EOS_Refprop10";
+#endif
+
+  for (int m=0; m<modeles_ref.size() ; m++)
+  {
+    cout<<endl<<"Test repli sur le modèle de référence (sortie unique) : "<<modeles_ref[m]<<endl<<endl;
+
+    AString med_file = "sans_raffinement_";
+    med_file+=modeles_ref[m];
+
+    EOS obj_ipp("EOS_Ipp",med_file.aschar());
+    obj_ipp.init_model(modeles_ref[m].aschar(), "WaterLiquid");
+    EOS obj_eos(modeles_ref[m].aschar(),"WaterLiquid");
+
+    EOS_Std_Error_Handler handler;
+    handler.set_exit_on_error(EOS_Std_Error_Handler::disable_feature);
+    handler.set_throw_on_error(EOS_Std_Error_Handler::disable_feature);
+    handler.set_dump_on_error(EOS_Std_Error_Handler::disable_feature);
+    obj_ipp.set_error_handler(handler);
+
+    double p = 1.0e6;
+    double T = 393.15;
+    double h = 0.0, h_ref = 0.0;
+    double Tsat = 0.0, Tsat_ref = 0.0;
+    obj_eos.compute_h_pT(p, T, h_ref);
+    obj_eos.compute_T_sat_p(p, Tsat_ref);
+
+    EOS_Field p_f("p","p",NEPTUNE::p,1,&p);
+    EOS_Field T_f("T","T",NEPTUNE::T,1,&T);
+    EOS_Field h_f("h","h",NEPTUNE::h,1,&h);
+    EOS_Field Tsat_f("T_sat","T_sat",NEPTUNE::T_sat,1,&Tsat);
+    ArrOfInt ierr(1);
+    EOS_Error_Field err(ierr);
+
+    EOS_Error cr_h    = obj_ipp.compute(p_f, T_f, h_f, err);
+    EOS_Error cr_Tsat = obj_ipp.compute(p_f, Tsat_f, err);
+
+    cout<<"p "<<p<<" ; T "<<T<<" ; h ipp "<<h<<" ; h "<<modeles_ref[m]<<" "<<h_ref
+        <<" ; cr = "<<cr_h<<endl;
+    cout<<"p "<<p<<" ; tsat ipp "<<Tsat<<" ; tsat "<<modeles_ref[m]<<" "<<Tsat_ref
+        <<" ; cr = "<<cr_Tsat<<endl;
+
+    if (cr_h != good || !in_relative_range(h, h_ref, 1.e-10))
+    {
+        std::cerr << "ECHEC repli h(p,T) sortie unique : cr = " << cr_h
+                  << ", h = " << h << ", ref = " << h_ref << "\n";
+        return EXIT_FAILURE;
+    }
+    if (cr_Tsat != good || !in_relative_range(Tsat, Tsat_ref, 1.e-10))
+    {
+        std::cerr << "ECHEC repli T_sat(p) sortie unique : cr = " << cr_Tsat
+                  << ", tsat = " << Tsat << ", ref = " << Tsat_ref << "\n";
+        return EXIT_FAILURE;
+    }
+  }
+
   cout<<endl<<endl ;
   cout<< "--------------------------------------- " <<endl ;
   cout<< "---------------- End ------------------ " <<endl ;
