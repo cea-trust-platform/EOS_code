@@ -50,7 +50,7 @@ if(WITH_IPP)
     # cf. Modules/EOS/Tests/C++/CMakeLists.txt).
     set_tests_properties(EOSTest_PyAPI_IppBicubic PROPERTIES
       ENVIRONMENT
-        "PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib;USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/"
+        "PYTHONPATH=${CMAKE_INSTALL_PREFIX}/lib;NEPTUNE_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/;USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/"
       DEPENDS EOSIGenTest
       COST 5.
     )

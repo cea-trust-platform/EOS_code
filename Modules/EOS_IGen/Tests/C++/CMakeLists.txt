@@ -3,7 +3,7 @@ add_executable (EOSIGenTest ${CMAKE_CURRENT_SOURCE_DIR}/main.cxx)
 target_include_directories(EOSIGenTest PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
 target_link_libraries(EOSIGenTest PRIVATE ${NLIB_IPP} ${NLIB_LANG}  ${NLIB_TM})
 add_test(EOSIGenTest bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSIGenTest 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_igen")
-set_tests_properties(EOSIGenTest PROPERTIES ENVIRONMENT "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/")
+set_tests_properties(EOSIGenTest PROPERTIES ENVIRONMENT "NEPTUNE_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/;USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/")
 
 message(STATUS "Add test EOSIGenQILimitTest")
 add_executable (EOSIGenQILimitTest ${CMAKE_CURRENT_SOURCE_DIR}/main_qi_limit.cxx)

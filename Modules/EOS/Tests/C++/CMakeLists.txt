@@ -1,4 +1,4 @@
-set(RUN_ENV "USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/")
+set(RUN_ENV "NEPTUNE_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/;USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data/")
 
 if (USE_OPENMP)
   set(RUN_ENV "${RUN_ENV};OMP_NUM_THREADS=3;OMP_STACKSIZE=16M")
@@ -12,7 +12,7 @@ add_executable (EOSTest "${CMAKE_CURRENT_SOURCE_DIR}/main.cxx")
 target_include_directories(EOSTest PRIVATE ${EOS_BINARY_DIR}/Modules)
 target_link_libraries(EOSTest PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
 add_test(EOSTest bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTest 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output")
-set_tests_properties(EOSTest PROPERTIES ENVIRONMENT ${RUN_ENV}
+set_tests_properties(EOSTest PROPERTIES ENVIRONMENT "${RUN_ENV}"
                                         COST        5.)
                                         
                                         
@@ -55,7 +55,7 @@ if (WITH_IPP)
   add_test(EOSTestIpp bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIpp 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp")
   set_tests_properties(EOSTestIpp PROPERTIES DEPENDS      EOSIGenTest
                                              COST         10.
-                                             ENVIRONMENT ${RUN_ENV})
+                                             ENVIRONMENT "${RUN_ENV}")
 
   message(STATUS "Add test EOSTestIppBicubic")
   add_executable (EOSTestIppBicubic  "${CMAKE_CURRENT_SOURCE_DIR}/main_ipp_bicubic.cxx")
@@ -64,7 +64,7 @@ if (WITH_IPP)
   add_test(EOSTestIppBicubic bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppBicubic 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_bicubic")
   set_tests_properties(EOSTestIppBicubic PROPERTIES DEPENDS      EOSIGenTest
                                                     COST         10.
-                                                    ENVIRONMENT ${RUN_ENV})
+                                                    ENVIRONMENT "${RUN_ENV}")
 
   # EOS_Ipp tiled ("streaming") mode: self-contained (generates its own
   # fixtures at run time via EOS_Ipp_Tiler, cf. Modules/EOS_IGen/Src), so
@@ -75,7 +75,7 @@ if (WITH_IPP)
   target_link_libraries(EOSTestIppTiled PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
   add_test(EOSTestIppTiled bash -c "set -o pipefail ; OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppTiled 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_tiled")
   set_tests_properties(EOSTestIppTiled PROPERTIES COST        5.
-                                                   ENVIRONMENT ${RUN_ENV})
+                                                   ENVIRONMENT "${RUN_ENV}")
 
   # Continuity across hanging nodes: the property the local-refinement
   # algorithm exists to guarantee (cf. Doc/Interpolator, §Continuité and the
@@ -88,7 +88,7 @@ if (WITH_IPP)
   target_link_libraries(EOSTestIppContinuity PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
   add_test(EOSTestIppContinuity bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppContinuity 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_continuity")
   set_tests_properties(EOSTestIppContinuity PROPERTIES COST        20.
-                                                       ENVIRONMENT ${RUN_ENV})
+                                                       ENVIRONMENT "${RUN_ENV}")
   if (NOT WITH_PLUGIN_CATHARE2)
     message(STATUS "EOSTestIppContinuity disabled: needs the Cathare2 plugin")
     set_tests_properties(EOSTestIppContinuity PROPERTIES DISABLED TRUE)
@@ -113,7 +113,7 @@ if (WITH_IPP)
     target_link_libraries(EOSTestIppOpenMP PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
     add_test(EOSTestIppOpenMP bash -c "set -o pipefail ; OMP_NUM_THREADS=8 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTestIppOpenMP 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_ipp_openmp")
     set_tests_properties(EOSTestIppOpenMP PROPERTIES COST        5.
-                                                     ENVIRONMENT ${RUN_ENV})
+                                                     ENVIRONMENT "${RUN_ENV}")
   endif (USE_OPENMP)
 endif (WITH_IPP)
 
@@ -131,7 +131,7 @@ if (USE_OPENMP)
   add_test(EOSTest_OpenMP bash -c "set -o pipefail ; \
   USER_EOS_DATA=${CMAKE_BINARY_DIR}/Modules/EOS/Data OMP_NUM_THREADS=3 OMP_STACKSIZE=16M ${CMAKE_CURRENT_BINARY_DIR}/EOSTest_OpenMP 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_openmp")
 
-  set_tests_properties(EOSTest_OpenMP PROPERTIES ENVIRONMENT ${RUN_ENV}
+  set_tests_properties(EOSTest_OpenMP PROPERTIES ENVIRONMENT "${RUN_ENV}"
                                                  COST        5.)
 endif()
 
