@@ -127,6 +127,30 @@ int main()
   EOS tiled("EOS_Ipp", tiled_args);
   relax(tiled);
 
+  // ---- 2b. the same database opened by its index.eos name.
+  EOS tiled_by_name("EOS_Ipp", "eos_ipp_tiled_test");
+  relax(tiled_by_name);
+  {
+    double rho_name = 0., rho_args = 0.;
+    const EOS_Error en = tiled_by_name.compute_rho_ph(2.0e6, 4.0e5, rho_name);
+    const EOS_Error ea = tiled.compute_rho_ph(2.0e6, 4.0e5, rho_args);
+    check_same_error("rho_ph error code, opened by name", en, ea);
+    if (rho_name != rho_args)
+    {
+      std::cerr << "FAILED rho_ph opened by name=" << rho_name << " by manifest=" << rho_args << std::endl;
+      ++g_failures;
+    }
+    double h_name = 0., h_args = 0.;
+    const EOS_Error hn = tiled_by_name.compute_h_pT(2.0e6, 350., h_name);
+    const EOS_Error ha = tiled.compute_h_pT(2.0e6, 350., h_args);
+    check_same_error("h_pT error code, opened by name", hn, ha);
+    if (h_name != h_args)
+    {
+      std::cerr << "FAILED h_pT opened by name=" << h_name << " by manifest=" << h_args << std::endl;
+      ++g_failures;
+    }
+  }
+
   // ---- 3. domain bounds: the tiled instance must report the GLOBAL domain,
   //         not whichever tile happened to load first.
   double pmin_t, pmax_t, hmin_t, hmax_t;

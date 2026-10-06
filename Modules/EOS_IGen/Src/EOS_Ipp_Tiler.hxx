@@ -122,6 +122,8 @@ namespace NEPTUNE_EOS_IGEN
   //! manifest_file_name is written under the same {eos_data_dir}/EOS_Ipp/
   //! directory as the tiles, so a plain, un-prefixed name (e.g.
   //! "mydb.eosmm") is what EOS_Ipp::init() should later be given.
+  //! The database is also registered in index.eos as "mydb", so
+  //! EOS("EOS_Ipp", "mydb") opens it.
   //! Returns EOS_Error::good on success.
   NEPTUNE::EOS_Error generate_tiled_database(const EOS_Ipp_Tiler_Params &params,
                                               const std::string &manifest_file_name);
