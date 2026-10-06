@@ -24,3 +24,7 @@ else()
 endif()
 
 target_link_libraries(${NLIB_LANG} PUBLIC tracy)
+
+install(TARGETS ${NLIB_LANG}
+        LIBRARY DESTINATION ${EOS_LIB_DIR}
+        ARCHIVE DESTINATION ${EOS_LIB_DIR})
