@@ -29,3 +29,7 @@ else()
 endif()
 
 target_link_libraries(${NLIB_IPP} ${GLOBALEXT_LIB} tracy)
+
+install(TARGETS ${NLIB_IPP}
+        LIBRARY DESTINATION ${EOS_LIB_DIR}
+        ARCHIVE DESTINATION ${EOS_LIB_DIR})

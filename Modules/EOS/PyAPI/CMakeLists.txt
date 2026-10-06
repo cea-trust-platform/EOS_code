@@ -99,12 +99,6 @@ else()
     message(STATUS "Propriété ajoutée pour (attendu) : ${EXPECTED_WRAP}")
 endif()
 
-# --- Installation des bibliothèques ---
-install(FILES
-  ${CMAKE_BINARY_DIR}/Modules/EOS/API/libCCEOSAPI.so
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-)
-
 # --- Installation du wrapper Python ---
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/eos_py.py
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
@@ -113,17 +107,8 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/eos_py.py
 # --- Installation des libs Language nécessaires ---
 install(FILES
   ${CMAKE_BINARY_DIR}/Modules/Language/Src/libLanguage_src_shar.so
-  ${CMAKE_BINARY_DIR}/Modules/Language/API/libCCLanguageAPI.so
   DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 )
-
-# --- Installation des libs Language nécessaires pour IPP---
-if (WITH_IPP)
-  install(FILES
-    ${CMAKE_BINARY_DIR}/Modules/EOS_IGen/API/libCCEOSIGenAPI.so
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
-  )
-endif()
 
 # --- Installation du module SWIG ---
 install(TARGETS ${SWIG_MODULE_EOS_py_REAL_NAME}

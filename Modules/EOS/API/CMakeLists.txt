@@ -31,3 +31,7 @@ if(INSTALL_TIRPC)
 endif()
 
 target_link_libraries(${NLIB_TM} PUBLIC ${LIBCOOLPROP_SHAREDLIB} ${RPC_LIB} tracy)
+
+install(TARGETS ${NLIB_TM}
+        LIBRARY DESTINATION ${EOS_LIB_DIR}
+        ARCHIVE DESTINATION ${EOS_LIB_DIR})
