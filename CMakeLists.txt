@@ -275,6 +275,10 @@ set(GLOBALEXT_INC
     ${LIBCOOLPROP_INC}
     ${RPC_INC}
 )
+# SYSTEM: no warnings from the MED headers.
+if(MED_INC)
+  include_directories(SYSTEM ${MED_INC})
+endif(MED_INC)
 
 # Shared libraries
 set(GLOBALEXT_LIB
