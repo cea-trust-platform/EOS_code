@@ -668,7 +668,14 @@ calculer ; ``--info=<manifeste>`` décrit une base existante ; ``--help`` donne
 la liste complète. Sans ``--quality_limit`` ni seuil dans
 ``--quality_property``, aucun raffinement n'a lieu.
 
-À la lecture, il suffit de désigner le manifeste :
+À la lecture, il suffit de désigner le manifeste. L'outil l'inscrit dans
+``index.eos`` sous son nom sans l'extension, comme une table ``.med`` :
+
+.. code-block:: c++
+
+   EOS eau("EOS_Ipp", "eau_liquide");
+
+Les options de chargement passent par le nom de fichier complet :
 
 .. code-block:: c++
 

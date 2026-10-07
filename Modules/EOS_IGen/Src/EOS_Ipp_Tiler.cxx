@@ -203,6 +203,22 @@ namespace NEPTUNE_EOS_IGEN
       return stat(path.c_str(), &st) == 0;
     }
 
+    //! Appends line to the index.eos file at path, unless it is already there.
+    bool add_index_line(const std::string &path, const std::string &line)
+    {
+      std::ifstream in(path.c_str());
+      if (!in)
+        return false;
+      std::string existing;
+      while (std::getline(in, existing))
+        if (existing == line)
+          return true;
+      in.close();
+      std::ofstream out(path.c_str(), std::ios::app);
+      out << line << "\n";
+      return out.good();
+    }
+
     struct WrittenTile
     {
       int ip, ih;
@@ -611,6 +627,23 @@ namespace NEPTUNE_EOS_IGEN
     {
       cerr << "EOS_Ipp_Tiler: error writing manifest file " << manifest_path << endl;
       return EOS_Error::error;
+    }
+    out.close();
+
+    // Index entry: EOS("EOS_Ipp", <manifest name without .eosmm>) opens the database.
+    const std::string ext = ".eosmm";
+    if (manifest_file_name.size() > ext.size() &&
+        manifest_file_name.compare(manifest_file_name.size() - ext.size(), ext.size(), ext) == 0)
+    {
+      const std::string name = manifest_file_name.substr(0, manifest_file_name.size() - ext.size());
+      const std::string line = "Ipp " + name + " EOS_Ipp " + prm.reference + " Unknown 1 " + manifest_file_name;
+      Index_lock lock(true);
+      if (!add_index_line(eos_data_dir + "/EOS_Ipp/index.eos", line) ||
+          !add_index_line(eos_data_dir + "/index.eos", line))
+      {
+        cerr << "EOS_Ipp_Tiler: cannot register " << name << " in index.eos" << endl;
+        return EOS_Error::error;
+      }
     }
     return EOS_Error::good;
   }
