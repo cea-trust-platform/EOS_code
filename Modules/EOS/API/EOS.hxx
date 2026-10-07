@@ -55,6 +55,9 @@ namespace NEPTUNE
     //! EOS water("Cathare_Water");
     EOS(const char *const str) ;
     //! EOS eos("method_name", "ref_name");
+    //! With "EOS_Ipp" ("EOS_Ipp_liquid", "EOS_Ipp_vapor"), ref_name may also be the
+    //! path of a .med table or .eosmm manifest, absolute or starting with "./" or
+    //! "../" : the file is then opened as is, without looking it up in index.eos.
     EOS(const char *const method_str, const char *const ref_str) ;
     //! EOS eos("method_name", "ref_name", [values]);
     EOS(const char *const method_str, const char *const ref_str, const Strings &init_args) ;

@@ -401,7 +401,7 @@ Ouverture
 
 La façade cherche dans ``index.eos`` la ligne ``Ipp eau_liquide_refprop10``,
 instancie la classe indiquée et lui passe le nom du fichier. Le répertoire de
-données doit donc être le même qu'à la génération. Deux variantes existent.
+données doit donc être le même qu'à la génération. Trois variantes existent.
 On peut ne charger que certaines propriétés, ce qui réduit l'empreinte
 mémoire :
 
@@ -411,8 +411,8 @@ mémoire :
    liste[0] = "T";  liste[1] = "d_T_d_p_h";  liste[2] = "d_T_d_h_p";
    EOS eau("EOS_Ipp", "eau_liquide_refprop10", liste);
 
-Et l'on peut désigner directement un fichier, sans passer par l'index, avec
-des options séparées par ``:`` :
+On peut désigner un fichier du répertoire de données sans passer par l'index,
+avec des options séparées par ``:`` :
 
 .. code-block:: c++
 
@@ -422,6 +422,22 @@ des options séparées par ``:`` :
 
 Les options reconnues sont ``bicubic``, ``bilinear``, et pour les bases
 tuilées ``cache=<taille>`` et ``tiles=<nombre>``.
+
+Enfin, la référence peut être le chemin du fichier lui-même, table ``.med``
+ou manifeste ``.eosmm``, absolu ou relatif au répertoire courant s'il commence
+par ``./`` ou ``../`` :
+
+.. code-block:: c++
+
+   EOS eau("EOS_Ipp", "/home/moi/tables/eau_liquide_refprop10.med");
+
+Le fichier est alors ouvert tel quel, sans consulter ``index.eos`` ni le
+répertoire de données. La méthode choisit la classe : ``EOS_Ipp``, comme la
+forme précédente, ou ``EOS_Ipp_liquid`` et ``EOS_Ipp_vapor`` si on les nomme,
+pour retrouver la classe que l'index associe à une table ``.med``. La liste de
+propriétés, les options en ``:`` et la forme précédente acceptent aussi un
+chemin. Un nom qui ne commence ni par ``/``, ni par ``./``, ni par ``../``
+reste cherché dans l'index ou le répertoire de données, comme avant.
 
 Au chargement, ``EOS_Ipp`` lit les nœuds, les champs et les scalaires,
 convertit les codes d'erreur par nœud en codes par maille (une maille hérite
@@ -682,6 +698,13 @@ Les options de chargement passent par le nom de fichier complet :
    Strings args(1);
    args[0] = "eau_liquide.eosmm:cache=256M";
    EOS eau("EOS_Ipp", args);
+
+Une base copiée ailleurs, manifeste et tuiles dans le même répertoire, s'ouvre
+par le chemin de son manifeste ; les tuiles sont cherchées à côté de lui :
+
+.. code-block:: c++
+
+   EOS eau("EOS_Ipp", "/home/moi/bases/eau_liquide.eosmm");
 
 Les tuiles sont chargées à la demande. Un ``EOS_Ipp_TileCache`` par objet garde résidentes les dernières tuiles utilisées, dans la limite d'un
 budget (512 Mo par défaut, réglable par ``cache=``, ``tiles=`` ou la variable

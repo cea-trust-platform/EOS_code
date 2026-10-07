@@ -163,6 +163,13 @@ namespace NEPTUNE_EOS
               //! to initialize an implementation of EOS_Ipp with supplementary parameters
               virtual int init(const Strings &, const Strings &);
 
+              //! True when the file name given to init() is a path to the file itself,
+              //! absolute or relative to the current directory with a leading "./" or
+              //! "../", rather than a name under the {DATA}/EOS_Ipp/ directory.
+              //! EOS::EOS(method, reference) relies on it to open such a file without
+              //! looking the reference up in index.eos.
+              static bool is_file_path(const std::string &file_name);
+
               //! Loads a single, standalone .med file at an exact path, bypassing the
               //! {DATA}/EOS_Ipp/ directory convention used by init(const Strings&).
               //! This factors out the historical, eager, whole-database loading body of
@@ -540,6 +547,8 @@ namespace NEPTUNE_EOS
               EOS_Ipp_TileCache *tile_cache_ = nullptr;
               //! properties, when non-empty, restricts every tile load to those fields.
               int init_tiled(AString file_name, const Strings &properties);
+              //! file_name itself when is_file_path(), {DATA}/EOS_Ipp/file_name otherwise.
+              static AString full_path(const AString &file_name);
 
               // Recomputes with the reference model only the points the
               // interpolator could not answer, rather than the whole batch. hh is

@@ -432,6 +432,24 @@ namespace NEPTUNE_EOS
     return true;
   }
 
+  bool EOS_Ipp::is_file_path(const std::string &file_name)
+  {
+    return file_name.compare(0, 1, "/") == 0
+        || file_name.compare(0, 2, "./") == 0
+        || file_name.compare(0, 3, "../") == 0;
+  }
+
+  AString EOS_Ipp::full_path(const AString &file_name)
+  {
+    if (is_file_path(std::string(file_name.aschar())))
+      return file_name;
+
+    AString path = eos_data_dir.c_str();
+    path += "/EOS_Ipp/";
+    path += file_name;
+    return path;
+  }
+
   int EOS_Ipp::init(const Strings &strings)
   {
     AString desc_err;
@@ -446,19 +464,17 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
     }
 
-    // directory {DATA}/EOS_Ipp : med_file (or tiled-database manifest)
+    // med_file (or tiled-database manifest): {DATA}/EOS_Ipp/<file_name>, or
+    // file_name itself when it is a path, which needs no data directory.
     AString &file_name = strings[0];
     extract_init_options(file_name);
-    if (iret_eos_data_dir)
+    if (iret_eos_data_dir && !is_file_path(std::string(file_name.aschar())))
       return EOS_Error::error;
 
     if (EOS_Ipp_TileIndex::is_manifest(std::string(file_name.aschar())))
       return init_tiled(file_name, Strings());
 
-    AString path = eos_data_dir.c_str();
-    path += "/EOS_Ipp/";
-    path += file_name;
-    return load_from_med_path(path);
+    return load_from_med_path(full_path(file_name));
   }
 
   // Historical, eager, whole-database loading body of init(const Strings&),
@@ -562,9 +578,7 @@ namespace NEPTUNE_EOS
   // whichever tile happened to be loaded last.
   int EOS_Ipp::init_tiled(AString file_name, const Strings &properties)
   {
-    AString path = eos_data_dir.c_str();
-    path += "/EOS_Ipp/";
-    path += file_name;
+    AString path = full_path(file_name);
 
     med_file = path; // so error messages and the cache report name the database
 
@@ -619,23 +633,6 @@ namespace NEPTUNE_EOS
       return EOS_Error::error;
     }
 
-    char *pshell;
-    if ((pshell = getenv("NEPTUNE_EOS_DATA")))
-      med_file = pshell;
-    else if ((pshell = getenv("USER_EOS_DATA")))
-      med_file = pshell;
-    else
-#ifdef EOS_DATA_DIR
-      med_file = EOS_DATA_DIR;
-#else
-    {
-      cerr << "Directory DATA is not set " << endl;
-      exit(-1);
-    }
-#endif
-    // directory {DATA}/EOS_Ipp : med_file
-    med_file += "/EOS_Ipp/";
-    // file : med_file
     AString &file_name = strings[0];
     extract_init_options(file_name);
 
@@ -646,10 +643,14 @@ namespace NEPTUNE_EOS
     if (EOS_Ipp_TileIndex::is_manifest(std::string(file_name.aschar())))
       return init_tiled(file_name, values);
 
-    med_file += file_name;
+    // med_file: {DATA}/EOS_Ipp/<file_name>, or file_name itself when it is a path
+    med_file = full_path(file_name);
 
     // get method and reference used to generate med file: file name == "EOS_Method"."Liquid".med
-    method = strtok(file_name.aschar(), ".");
+    AString base_name = file_name;
+    char *raw = base_name.aschar();
+    char *slash = strrchr(raw, '/');
+    method = strtok(slash ? slash + 1 : raw, ".");
     reference = strtok(NULL, ".");
 
     // load med file

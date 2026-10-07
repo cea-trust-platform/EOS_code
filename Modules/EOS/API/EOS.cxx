@@ -132,10 +132,40 @@ namespace NEPTUNE
    //   return dynamic_cast<EOS_Fluid&>(set_Objects().set_object(Id));
    // }
 
+#ifdef WITH_IPP
+// EOS("EOS_Ipp", "/path/to/table.med") : a reference that is a path to an
+// interpolator file (a .med table or a .eosmm manifest, cf.
+// EOS_Ipp::is_file_path) is opened as is, without being looked up in
+// index.eos. The method chooses the class : EOS_Ipp, as the Strings form,
+// or EOS_Ipp_liquid / EOS_Ipp_vapor when asked for.
+// Returns the class name, or NULL when (method_str, ref_str) is not such a
+// pair and must be looked up in index.eos.
+static const char* ipp_class_for_path(const char* const method_str, const char* const ref_str)
+{
+  if (!::NEPTUNE_EOS::EOS_Ipp::is_file_path(ref_str))  return NULL ;
+
+  string method(method_str) ;
+  for (char &c : method)  c = (char)toupper((unsigned char)c) ;
+  if (method.compare(0, 4, "EOS_") == 0)  method.erase(0, 4) ;
+
+  if (method == "IPP")         return "EOS_Ipp" ;
+  if (method == "IPP_LIQUID")  return "EOS_Ipp_liquid" ;
+  if (method == "IPP_VAPOR")   return "EOS_Ipp_vapor" ;
+  return NULL ;
+}
+#endif
+
 // Determine   in return, the class associated with(method_str, ref_str) from index.eos  :  fluid_model_class
 const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
 {
   ZoneScopedN("EOS::INDEX");
+#ifdef WITH_IPP
+  if (const char *ipp_class = ipp_class_for_path(method_str, ref_str))
+     { strcpy(fluid_model_class, ipp_class) ;
+       return fluid_model_class ;
+     }
+#endif
+
   char method_str_maj[50], ref_str_maj[50] ;
   char method_str_iem[50], ref_str_iem[50] ;
   char *cpt_method, *cpt_ref ;
@@ -239,6 +269,26 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
    int EOS::index_data(const char *const tmname_in, const char *const fename_in)
    {
      ZoneScopedN("EOS::index_data");
+#ifdef WITH_IPP
+     // Path to an interpolator file : the file itself is the only argument,
+     // as an index.eos line would give it, and its directory is the data one.
+     if (const char *ipp_class = ipp_class_for_path(tmname_in, fename_in))
+        { strcpy(fluid_model_class, ipp_class) ;
+          fluid_model_args.resize(1) ;
+          fluid_model_args[0] = AString(fename_in) ;
+          therm_model     = "Ipp" ;
+          fluid_equa      = fename_in ;
+          eos_therm_model = "EOS_Ipp" ;
+          const string path(fename_in) ;
+          const size_t slash = path.find_last_of('/') ;
+          tm_data_dir = (slash == 0) ? string("/") : path.substr(0, slash) ;
+          tm_version  = "scripi-shell amodifier sauf Refprop" ;
+          m_fluid     = "afaire" ;
+          m_phase     = "afaire" ;
+          return 0 ;
+        }
+#endif
+
      char tmname_in_maj[50], fename_in_maj[50] ;
      char tmname_read[50], fename_read[50] ;
      char *cpt_tmname_in, *cpt_fename_in ;

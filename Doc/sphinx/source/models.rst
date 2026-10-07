@@ -119,6 +119,11 @@ précision contrôlée, en interpolation bilinéaire ou bicubique.
    EOS eau("EOS_Ipp", "<nom de la table>");
    eau.init_model("EOS_Refprop10", "WaterLiquid");  // secours hors table, facultatif
 
+Une table rangée ailleurs s'ouvre par son chemin (absolu, ou commençant par
+``./`` ou ``../``), sans passer par le répertoire de données :
+``EOS eau("EOS_Ipp", "/chemin/vers/table.med")``, ou ``.eosmm`` pour une base
+tuilée.
+
 Génération, méthodes d'interpolation, réglages et exemple complet :
 :doc:`modules/eos_igen`.
 

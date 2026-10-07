@@ -35,9 +35,16 @@
 #include "EOS/API/EOS_Std_Error_Handler.hxx"
 #include "EOS/API/EOS_Config.hxx"
 #include "EOS_IGen/Src/EOS_Ipp_Tiler.hxx"
+#include "EOS/Src/EOS_Ipp/EOS_Ipp_liquid.hxx"
 #include <iostream>
+#include <fstream>
+#include <string>
 #include <cmath>
 #include <cstdlib>
+#include <cstdio>
+#include <unistd.h>
+using std::string;
+#include "EOS/API/EOS_eosdatadir.hxx"
 
 using namespace NEPTUNE;
 using namespace NEPTUNE_EOS_IGEN;
@@ -72,6 +79,40 @@ namespace
       std::cerr << "FAILED " << label << ": error mismatch tiled=" << a << " monolithic=" << b << std::endl;
       ++g_failures;
     }
+  }
+
+  // rho(p,h) and h(p,T) of a database opened some other way must be, bit for
+  // bit, those of the same database opened through its Strings form.
+  void check_same_database(const std::string &how, EOS &opened, EOS &ref)
+  {
+    double rho_o = 0., rho_r = 0.;
+    const EOS_Error ro = opened.compute_rho_ph(2.0e6, 4.0e5, rho_o);
+    const EOS_Error rr = ref.compute_rho_ph(2.0e6, 4.0e5, rho_r);
+    check_same_error(("rho_ph error code, opened by " + how).c_str(), ro, rr);
+    if (rho_o != rho_r)
+    {
+      std::cerr << "FAILED rho_ph opened by " << how << "=" << rho_o << " ref=" << rho_r << std::endl;
+      ++g_failures;
+    }
+    double h_o = 0., h_r = 0.;
+    const EOS_Error ho = opened.compute_h_pT(2.0e6, 350., h_o);
+    const EOS_Error hr = ref.compute_h_pT(2.0e6, 350., h_r);
+    check_same_error(("h_pT error code, opened by " + how).c_str(), ho, hr);
+    if (h_o != h_r)
+    {
+      std::cerr << "FAILED h_pT opened by " << how << "=" << h_o << " ref=" << h_r << std::endl;
+      ++g_failures;
+    }
+  }
+
+  bool copy_file(const std::string &from, const std::string &to)
+  {
+    std::ifstream in(from.c_str(), std::ios::binary);
+    std::ofstream out(to.c_str(), std::ios::binary);
+    if (!in || !out)
+      return false;
+    out << in.rdbuf();
+    return out.good();
   }
 }
 
@@ -150,6 +191,60 @@ int main()
       ++g_failures;
     }
   }
+
+  // ---- 2c. the same databases opened by the path of their file: the
+  //          manifest by its absolute path, and the monolithic table copied
+  //          out of the data directory, by an absolute and by a "./" path.
+  const std::string ipp_dir = eos_data_dir + "/EOS_Ipp/";
+  EOS tiled_by_path("EOS_Ipp", (ipp_dir + "eos_ipp_tiled_test.eosmm").c_str());
+  relax(tiled_by_path);
+  check_same_database("absolute manifest path", tiled_by_path, tiled);
+
+  const std::string mono_copy = "eos_ipp_tiled_test_mono_copy.med";
+  char cwd[4096];
+  if (getcwd(cwd, sizeof(cwd)) == NULL ||
+      !copy_file(ipp_dir + "eos_ipp_tiled_test_mono_0_0.med", mono_copy))
+  {
+    std::cerr << "FAILED: could not copy the monolithic table out of the data directory" << std::endl;
+    return 1;
+  }
+  {
+    EOS mono_by_abs_path("EOS_Ipp", (std::string(cwd) + "/" + mono_copy).c_str());
+    relax(mono_by_abs_path);
+    check_same_database("absolute .med path", mono_by_abs_path, monolithic);
+
+    EOS mono_by_rel_path("EOS_Ipp", ("./" + mono_copy).c_str());
+    relax(mono_by_rel_path);
+    check_same_database("relative .med path", mono_by_rel_path, monolithic);
+
+    // The method still chooses the class, here the one index.eos gives the table.
+    EOS mono_liquid_by_path("EOS_Ipp_liquid", ("./" + mono_copy).c_str());
+    if (dynamic_cast<NEPTUNE_EOS::EOS_Ipp_liquid *>(&mono_liquid_by_path.fluid()) == NULL)
+    {
+      std::cerr << "FAILED EOS(\"EOS_Ipp_liquid\", path) is not an EOS_Ipp_liquid" << std::endl;
+      ++g_failures;
+    }
+
+    // A property list goes through init(Strings, Strings): same table, same
+    // list, by path and by name.
+    Strings props(1);
+    props[0] = "rho";
+    EOS rho_by_path("EOS_Ipp", ("./" + mono_copy).c_str(), props);
+    EOS rho_by_name("EOS_Ipp", "eos_ipp_tiled_test_mono_0_0", props);
+    relax(rho_by_path);
+    relax(rho_by_name);
+    double rho_p = 0., rho_n = 0.;
+    const EOS_Error ep = rho_by_path.compute_rho_ph(2.0e6, 4.0e5, rho_p);
+    const EOS_Error en = rho_by_name.compute_rho_ph(2.0e6, 4.0e5, rho_n);
+    check_same_error("rho_ph error code, property list opened by path", ep, en);
+    if (ep != EOS_Error::good || rho_p != rho_n)
+    {
+      std::cerr << "FAILED rho_ph property list opened by path=" << rho_p << " by name=" << rho_n
+                << " (error " << ep << ")" << std::endl;
+      ++g_failures;
+    }
+  }
+  std::remove(mono_copy.c_str());
 
   // ---- 3. domain bounds: the tiled instance must report the GLOBAL domain,
   //         not whichever tile happened to load first.
