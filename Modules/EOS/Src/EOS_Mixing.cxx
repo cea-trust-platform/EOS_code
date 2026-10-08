@@ -849,7 +849,7 @@ std::fill(std::begin(ic), std::end(ic), -1);
           //
           dlambdadx[j-1][i] = ((dlambdavpv[i]*dpvdx[j-1][i] + dlambdavhv[i]*dhvdx[j-1][i])*c[0]*fldr + dlambdagtg*dtgdx[j-1][i] + lambdaj*(*this)[j].fluid().get_prxr() - lambdav[i]*fldr + (fldr - (*this)[j].fluid().get_prxr())*lambdag[i])/prgr[i];
           //
-          dmudx[j-1][i] = ((dmuvpv[i]*dpvdx[j-1][i] + dmuvpv[i]*dpvdx[j-1][i])*c[0]*fldr + dmugtg*dtgdx[j-1][i] + muj*(*this)[j].fluid().get_prxr() - muv[i]*fldr + (fldr - (*this)[j].fluid().get_prxr())*mug[i])/prgr[i];
+          dmudx[j-1][i] = ((dmuvpv[i]*dpvdx[j-1][i] + dmuvhv[i]*dhvdx[j-1][i])*c[0]*fldr + dmugtg*dtgdx[j-1][i] + muj*(*this)[j].fluid().get_prxr() - muv[i]*fldr + (fldr - (*this)[j].fluid().get_prxr())*mug[i])/prgr[i];
           //
           dsigmadx[j-1][i] = dsigmapv[i]*dpvdx[j-1][i];
           //
