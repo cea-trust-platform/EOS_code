@@ -1,7 +1,9 @@
 #include "EOS_py.hxx"
 #include "Language/API/UObject.hxx"
+#ifdef WITH_IPP   // MED/HDF5 dependent headers, cf. EOS_py.hxx
 #include "EOS/Src/EOS_Ipp/EOS_Ipp.hxx"
 #include "EOS_IGen/API/EOS_IGen.hxx"
+#endif
 
 #include <stdexcept>
 #include <string>
@@ -212,6 +214,7 @@ double EOS_py::get_p() const {
     return call_getter(&NEPTUNE::EOS::get_p, "get_p");
 }
 
+#ifdef WITH_IPP
 void EOS_py::set_interpolation_method(const std::string& mode) {
     if (!eos_) {
         throw std::runtime_error("EOS_py::eos_ not initialized");
@@ -415,6 +418,7 @@ double EOS_IGen_py::get_p_min() const { return p_min_; }
 double EOS_IGen_py::get_p_max() const { return p_max_; }
 double EOS_IGen_py::get_T_min() const { return T_min_; }
 double EOS_IGen_py::get_T_max() const { return T_max_; }
+#endif // WITH_IPP
 
 
 EOS_Mixing_py::EOS_Mixing_py(

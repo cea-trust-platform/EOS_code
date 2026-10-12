@@ -3,12 +3,22 @@
 
 #include <vector>
 #include <string>
-#include "EOS/API/EOS.hxx"
+#include "EOS/API/EOS.hxx"   // also brings EOS_Config.hxx, hence WITH_IPP
 #include <sstream>
 
+// The interpolator (EOS_Ipp) and the mesh generator (EOS_IGen) need MED and
+// HDF5 and are only built when EOS is configured with the interpolator
+// (WITH_IPP, cf. EOS_Config.hxx). Everything below that depends on them is
+// compiled out otherwise, so the Python API builds without those libraries:
+// the EOS_Ipp methods of EOS_py, the EOS_IGen_py class, and (in EOS_py.i)
+// the generate_mesh_igen / IGenMesh Python layer. SWIG does not read
+// EOS_Config.hxx: the CMakeLists passes it -DWITH_IPP so it sees the same
+// blocks as the compiler.
+#ifdef WITH_IPP
 // Forward declaration only: keeps the (heavier) EOS_IGen headers out of this
 // file, included only in EOS_py.cxx -- same pattern as EOS_Ipp below.
 namespace NEPTUNE_EOS_IGEN { class EOS_IGen; }
+#endif
 
 class EOS_py {
 public:
@@ -52,6 +62,7 @@ public:
     double get_p() const;
     double get_mm() const;
 
+#ifdef WITH_IPP
     // Selects the interpolation method used on the 2D (p,h) mesh, when this
     // EOS_py object wraps an EOS_Ipp interpolator (method == "EOS_Ipp").
     // mode must be "bilinear" or "bicubic". Throws if this object does not
@@ -69,6 +80,7 @@ public:
     // is loaded -- used by the Hermite patch instead of the local twist
     // approximation when available (cf. EOS_Ipp::bicubic_interpolator).
     bool has_bicubic_cross_derivative_data(const std::string& prop_name) const;
+#endif // WITH_IPP
 
 private:
     NEPTUNE::EOS* eos_;
@@ -81,6 +93,7 @@ private:
 };
 
 
+#ifdef WITH_IPP
 // Thin wrapper around NEPTUNE_EOS_IGEN::EOS_IGen : builds a regular (p,h)
 // interpolation mesh over a rectangular (p,T) domain and writes it to a
 // .med base readable by EOS_py("EOS_Ipp", file_name) (cf. EOS_py above).
@@ -192,6 +205,7 @@ private:
     bool extremum_set_;
     bool mesh_built_;
 };
+#endif // WITH_IPP
 
 
 class EOS_Mixing_py {

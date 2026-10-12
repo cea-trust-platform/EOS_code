@@ -14,12 +14,22 @@ include_directories(
   ${CMAKE_BINARY_DIR}/Modules/
   ${CMAKE_BINARY_DIR}/Modules/EOS/API  # pour les headers générés
   ${Python3_INCLUDE_DIRS}
-  ${GLOBALEXT_INC}  # MED/HDF5/... requis par EOS_Ipp.hxx (interpolateur)
 )
+# MED/HDF5 headers: only the interpolator part of the wrapper (EOS_Ipp.hxx,
+# EOS_IGen.hxx) needs them, and it is only compiled with the interpolator.
+if (WITH_IPP)
+  include_directories(${GLOBALEXT_INC})
+endif()
 
 # --- Configuration SWIG ---
 set(CMAKE_SWIG_OUTDIR ${CMAKE_CURRENT_BINARY_DIR})
+# SWIG does not read EOS_Config.hxx: tell it whether the interpolator is built
+# so it skips the same "#ifdef WITH_IPP" blocks of EOS_py.hxx and EOS_py.i as
+# the compiler (EOS_Ipp methods of EOS_py, EOS_IGen_py, generate_mesh_igen).
 set(CMAKE_SWIG_FLAGS "")
+if (WITH_IPP)
+  set(CMAKE_SWIG_FLAGS "-DWITH_IPP")
+endif()
 set_source_files_properties(EOS_py.i PROPERTIES CPLUSPLUS ON)
 
 # --- Module SWIG ---

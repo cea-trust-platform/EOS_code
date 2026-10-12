@@ -41,6 +41,15 @@ manipulent que des chaînes de caractères et des listes de flottants.
      - Raccourci en Python pur pour générer une table en un appel, et la
        fiche descriptive qu'il renvoie.
 
+.. note::
+
+   ``EOS_IGen_py``, ``generate_mesh_igen``, ``IGenMesh`` and the interpolation
+   methods of ``EOS_py`` (``set_interpolation_method``,
+   ``get_interpolation_method``, ``has_bicubic_*_derivative_data``) exist only
+   when EOS is built with the interpolator (``WITH_IPP``, which needs MED and
+   HDF5). Without it the ``eos_py`` module builds without those libraries and
+   holds ``EOS_py`` and ``EOS_Mixing_py`` only.
+
 Deux conséquences pratiques découlent de ce choix. Les classes C++ de l'API
 (``EOS``, ``EOS_Field``, ``EOS_Error``…) ne sont **pas** visibles depuis
 Python ; et il n'y a jamais de code de retour à tester : une méthode renvoie

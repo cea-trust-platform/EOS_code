@@ -35,13 +35,17 @@ namespace std {
 // ----------------------------------------------------------------------------
 // Pure-Python convenience layer, appended verbatim to the generated eos_py.py
 // so it is available directly via "import eos_py" (no separate module/path
-// needed). Built on top of EOS_IGen_py above: generate_mesh_igen() chains
+// needed). Only when EOS is built with the interpolator (WITH_IPP, passed to
+// SWIG by the CMakeLists): it needs EOS_IGen_py and EOS_py("EOS_Ipp", ...),
+// which EOS_py.hxx compiles out otherwise.
+// Built on top of EOS_IGen_py above: generate_mesh_igen() chains
 // set_extremum -> make_mesh -> [set_list_properties] -> write_med with a
 // signature closer to a generic mesh-generation tool, and documents where
 // the real EOS_IGen API is more restrictive than that signature suggests
 // (cf. its docstring). See EOS/api_python_interpolateur/
 // documentation_api_python_interpolateur.ipynb for a full worked example.
 // ----------------------------------------------------------------------------
+#ifdef WITH_IPP
 %pythoncode %{
 from dataclasses import dataclass, field
 from typing import List, Optional, Sequence
@@ -292,3 +296,4 @@ def generate_mesh_igen(
         properties=prop_list,
     )
 %}
+#endif // WITH_IPP
