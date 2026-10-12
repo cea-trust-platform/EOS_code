@@ -73,6 +73,15 @@ namespace NEPTUNE
     int init(const Strings &init_args) ;
     int init(const Strings &init_args,
              const double h0, const double s0, const double t0, const double p0) ;
+    //! EOS_Error code of the last initialisation of the fluid model, i.e. the
+    //! code returned by EOS_Fluid::init from the constructor or from init().
+    //! EOS_Error::good or EOS_Error::ok  : the object is usable.
+    //! EOS_Error::bad  or EOS_Error::error : the initialisation failed (table
+    //! or manifest not found, unreadable file, ...), the object must not be used.
+    //! EOS(const char*) alone attempts no initialisation and reports good.
+    EOS_Error init_status() const ;
+    //! true when init_status() is EOS_Error::good or EOS_Error::ok
+    bool is_initialized() const ;
     //! For mixing only
     int set_components(EOS **components, int nb) ;
     //! For perfectgas
@@ -1253,6 +1262,10 @@ namespace NEPTUNE
     EOS_Error_Handler *err_handler ;
     //! Stack of saved error_handlers
     EOS_Error_Handler_Stack err_handler_stack_;
+    //! Code returned by the last EOS_Fluid::init call, see init_status()
+    EOS_Error init_status_ = EOS_Error::good ;
+    //! Store the code returned by EOS_Fluid::init as init_status_, return it unchanged
+    int set_init_status(int iret) ;
 
     
   //friends

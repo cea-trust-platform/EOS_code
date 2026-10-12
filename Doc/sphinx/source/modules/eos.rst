@@ -30,6 +30,7 @@ Classes principales
       ``compute(EOS_Fields...)`` ;
     * le support des mélanges (``set_components``, surcharges avec
       ``c_0 … c_4``, accesseurs ``get_prx*``) ;
+    * the initialisation status (``init_status``, ``is_initialized``) ;
     * la gestion d'erreurs (``set_error_handler``, ``save_error_handler``,
       ``restore_error_handler``) ;
     * l'interpolateur (``init_model``, ``compute_Ipp_error``,

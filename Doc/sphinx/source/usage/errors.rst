@@ -109,3 +109,39 @@ L'exception levée est de type ``EOS_Std_Exception`` et transporte le
    Par défaut (sans configuration explicite), les calculs ne s'interrompent
    pas : il appartient au code appelant de tester les codes de retour et le
    champ d'erreurs.
+
+Initialisation status of an EOS object
+--------------------------------------
+
+The constructors of :cpp:class:`NEPTUNE::EOS` never fail: when the
+thermodynamic method cannot be initialised (``.eosmm`` manifest or ``.med``
+table not found, unreadable file...), the object is built all the same and
+only a message is written on ``cerr``. The ``EOS_Error`` code returned by the
+initialisation is kept in the object and reported by two accessors:
+
+* ``init_status()`` — the ``EOS_Error`` code of the last initialisation
+  (constructor or ``init()``): ``good`` or ``ok`` when the model is usable,
+  ``bad`` or ``error`` when the initialisation failed;
+* ``is_initialized()`` — ``true`` when ``init_status()`` is ``good`` or
+  ``ok``.
+
+.. code-block:: c++
+
+   EOS *liquid = new EOS("EOS_Ipp", "./EOS_Refprop10_WaterLiquid.eosmm");
+   if (!liquid->is_initialized())
+     { cerr << "cannot load the table (EOS_Error " << liquid->init_status()
+            << ")" << endl;
+       delete liquid;
+       return EOS_Error::error;
+     }
+
+An object built from the class name alone (``EOS("EOS_Ipp")``) attempts no
+initialisation and reports ``good``; a later call to ``init(args)`` replaces
+the status with its own result.
+
+.. note::
+
+   Two cases still escape this mechanism and stop the program with
+   ``exit(-1)``: a method/equation pair missing from ``index.eos``, and a
+   missing data file in the methods that check it themselves (perfect gas,
+   stiffened gas, REFPROP, THETIS, CoolProp).

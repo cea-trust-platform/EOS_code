@@ -77,6 +77,17 @@ if (WITH_IPP)
   set_tests_properties(EOSTestIppTiled PROPERTIES COST        5.
                                                    ENVIRONMENT "${RUN_ENV}")
 
+  # EOS::init_status() / EOS::is_initialized(): a missing .eosmm or .med must
+  # be reported to the caller, a valid database (generated at run time, as
+  # above) must not. Self-contained for the same reason as EOSTestIppTiled.
+  message(STATUS "Add test EOSTestInitStatus")
+  add_executable (EOSTestInitStatus  "${CMAKE_CURRENT_SOURCE_DIR}/main_init_status.cxx")
+  target_include_directories(EOSTestInitStatus PRIVATE ${EOS_BINARY_DIR}/Modules ${GLOBALEXT_INC})
+  target_link_libraries(EOSTestInitStatus PRIVATE ${NLIB_LANG} ${NLIB_TM} ${NLIB_IPP})
+  add_test(EOSTestInitStatus bash -c "set -o pipefail ; ${CMAKE_CURRENT_BINARY_DIR}/EOSTestInitStatus 2>&1 | tee ${CMAKE_CURRENT_BINARY_DIR}/output_init_status")
+  set_tests_properties(EOSTestInitStatus PROPERTIES COST        2.
+                                                     ENVIRONMENT "${RUN_ENV}")
+
   # Continuity across hanging nodes: the property the local-refinement
   # algorithm exists to guarantee (cf. Doc/Interpolator, §Continuité and the
   # "Test de continuité" appendix, which demonstrated it on a plot and left it

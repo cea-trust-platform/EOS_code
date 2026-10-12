@@ -23,6 +23,14 @@ EOS_py::~EOS_py() {
     delete eos_;
 }
 
+bool EOS_py::is_initialized() const {
+    return eos_->is_initialized();
+}
+
+int EOS_py::init_status() const {
+    return static_cast<int>(eos_->init_status());
+}
+
 std::vector<std::vector<double>> EOS_py::compute(
     std::string str_P,
     std::string str_H,

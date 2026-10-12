@@ -39,18 +39,18 @@ int EOS_Ipp_vapor::type_Id=(RegisterType("EOS_Ipp_vapor", "EOS_Fluid",
                             sizeof(EOS_Ipp_vapor),
                             EOS_Ipp_vapor_create));
 
+// The code EOS_Ipp::init returns is the one EOS::init_status() reports : it
+// must be passed on, not replaced by a constant.
 int EOS_Ipp_vapor::
 init(const Strings& strings)
 {
-  EOS_Ipp::init(strings);
-  return 1;
+  return EOS_Ipp::init(strings);
 }
 
 int EOS_Ipp_vapor::
 init(const Strings& strings, const Strings& values)
 {
-  EOS_Ipp::init(strings,values);
-  return 1;
+  return EOS_Ipp::init(strings,values);
 }
 
 }

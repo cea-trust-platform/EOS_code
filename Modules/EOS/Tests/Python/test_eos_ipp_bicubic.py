@@ -63,6 +63,14 @@ def check(condition, message):
 def main():
     # --- Fluide reel, verite terrain pour les comparaisons ci-dessous ---
     fluide = eos_py.EOS_py(METHOD, REFERENCE)
+    check(fluide.is_initialized() and fluide.init_status() in (0, 1),
+          "EOS_py(%s, %s) is initialised" % (METHOD, REFERENCE))
+
+    # A missing file does not raise at construction: only the initialisation
+    # status tells (cf. NEPTUNE::EOS::is_initialized).
+    absent = eos_py.EOS_py("EOS_Ipp", "./test_eos_ipp_bicubic_py_missing.eosmm")
+    check(not absent.is_initialized() and absent.init_status() == 3,
+          "EOS_py(EOS_Ipp, missing manifest) is not initialised")
 
     # --- 1. Generation d'un maillage (p,h) avec EOS_IGen_py -----------------
     # set_extremum -> make_mesh -> set_list_properties -> write_med, cf.

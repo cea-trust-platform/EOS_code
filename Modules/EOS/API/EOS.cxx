@@ -453,7 +453,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
        index_data(tmname_in, fename_in) ;
        Object obj(fluid_model_class) ;
        fluid_model_obj = dynamic_cast<EOS_Fluid&> (set_object(obj.id())) ;
-       fluid_model_obj.init(fluid_model_args) ;
+       set_init_status(fluid_model_obj.init(fluid_model_args)) ;
        err_handler = new EOS_Std_Error_Handler;
      }
 
@@ -464,7 +464,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
        index_data(tmname_in, fename_in) ;
        Object obj(fluid_model_class) ;
        fluid_model_obj = dynamic_cast<EOS_Fluid&> (set_object(obj.id())) ;
-       fluid_model_obj.init(fluid_model_args,init_args) ;
+       set_init_status(fluid_model_obj.init(fluid_model_args,init_args)) ;
        err_handler = new EOS_Std_Error_Handler ;
      }
 
@@ -476,14 +476,14 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
        index_data(tmname_in, fename_in) ;
        Object obj(fluid_model_class) ;
        fluid_model_obj = dynamic_cast<EOS_Fluid&> (set_object(obj.id())) ;
-       fluid_model_obj.init(fluid_model_args,init_args, h0, s0, t0, p0) ;
+       set_init_status(fluid_model_obj.init(fluid_model_args,init_args, h0, s0, t0, p0)) ;
        err_handler = new EOS_Std_Error_Handler ;
      }
   EOS::EOS(const char *const str, const Strings &args)
      : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
      { ZoneScopedN("EOS::EOS");
        ZoneText("with str and args args", sizeof("with str and args args"));
-       fluid_model_obj.init(args);
+       set_init_status(fluid_model_obj.init(args)) ;
        err_handler = new EOS_Std_Error_Handler ;
      }
 
@@ -491,7 +491,7 @@ const char* EOS::INDEX(const char* const method_str, const char* const ref_str)
     : Object(str), fluid_model_obj(dynamic_cast<EOS_Fluid&> (set_object(id())))
      { ZoneScopedN("EOS::EOS");
        ZoneText("with str and obj args", sizeof("with str and obj args"));
-       fluid_model_obj.init(dynamic_cast<const Strings&> (get_object(obj.id())));
+       set_init_status(fluid_model_obj.init(dynamic_cast<const Strings&> (get_object(obj.id())))) ;
        err_handler = new EOS_Std_Error_Handler ;
      }
 

@@ -42,6 +42,15 @@ public:
     std::string describe() const;
     static void fluids_available(); 
 
+    // Initialisation status of the wrapped NEPTUNE::EOS object (cf.
+    // EOS::is_initialized / EOS::init_status): the constructor does not throw
+    // when the fluid model cannot be loaded (manifest or table not found,
+    // unreadable file, ...), this is how a script finds out. init_status() is
+    // the EOS_Error code as an integer (0 good, 1 ok, 2 bad, 3 error);
+    // is_initialized() is true for good and ok.
+    bool is_initialized() const;
+    int init_status() const;
+
     double get_p_crit() const;
     double get_h_crit() const;
     double get_T_crit() const;

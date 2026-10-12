@@ -158,7 +158,7 @@ Python et le calcul thermodynamique. La figure
            Gen  [fillcolor="#e8f5e2", label="{generate_mesh_igen(...)|fonction Python pure\l}"];
        }
        subgraph cluster_wrap { label="Classes enveloppes (EOS_py.hxx)"; color="#bbbbbb";
-           Epy [label="{EOS_py|- eos_ : NEPTUNE::EOS*\l|+ compute(n1, n2, v1, v2, sorties)\l+ compute_sat(n, v, sorties)\l+ describe()\l+ get_p_crit() ... get_T_max()\l+ set_interpolation_method(mode)\l+ get_interpolation_method()\l+ has_bicubic_first_derivative_data(prop)\l+ has_bicubic_cross_derivative_data(prop)\l+ fluids_available() (static)\l}"];
+           Epy [label="{EOS_py|- eos_ : NEPTUNE::EOS*\l|+ compute(n1, n2, v1, v2, sorties)\l+ compute_sat(n, v, sorties)\l+ describe()\l+ is_initialized()\l+ init_status()\l+ get_p_crit() ... get_T_max()\l+ set_interpolation_method(mode)\l+ get_interpolation_method()\l+ has_bicubic_first_derivative_data(prop)\l+ has_bicubic_cross_derivative_data(prop)\l+ fluids_available() (static)\l}"];
            Ipy [label="{EOS_IGen_py|+ set_extremum(pmin, pmax, Tmin, Tmax)\l+ set_list_properties(props)\l+ make_mesh(np, nh, level_max=-1)\l+ set_quality(prop, type, is_abs, limite)\l+ make_global_refine()\l+ make_local_refine(cont=true)\l+ write_med(nom)\l+ describe()\l}"];
            Mpy [label="{EOS_Mixing_py|- mixing_ : NEPTUNE::EOS*\l- components_ : vector\<EOS*\>\l|+ compute(noms_entree, valeurs, noms_sortie)\l+ describe()\l}"];
        }
@@ -248,6 +248,17 @@ Le préfixe ``EOS_`` est facultatif : ``eos_py.EOS_py("Cathare2",
 Pour connaître les méthodes compilées dans la bibliothèque,
 ``eos_py.EOS_py.fluids_available()`` imprime la table des classes
 enregistrées.
+
+The constructor does not raise when the method cannot be initialised (table
+or manifest not found, unreadable file...): ``is_initialized()`` tells, and
+``init_status()`` gives the ``EOS_Error`` code as an integer (0 ``good``,
+1 ``ok``, 2 ``bad``, 3 ``error``).
+
+.. code-block:: python
+
+   water = eos_py.EOS_py("EOS_Ipp", "./EOS_Refprop10_WaterLiquid.eosmm")
+   if not water.is_initialized():
+       raise RuntimeError("cannot load the table, EOS_Error %d" % water.init_status())
 
 Les bornes du domaine et le point critique sont accessibles par des
 accesseurs qui renvoient un flottant :

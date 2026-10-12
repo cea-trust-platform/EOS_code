@@ -47,7 +47,27 @@
 namespace NEPTUNE
 {
   inline int EOS::init(const Strings& args)
-  { return fluid_model_obj.init(args) ;
+  { return set_init_status(fluid_model_obj.init(args)) ;
+  }
+
+  // Every EOS_Fluid::init returns an EOS_Error value as an int (good or ok on
+  // success, bad or error on failure) ; a value outside the enumeration is a failure.
+  inline int EOS::set_init_status(int iret)
+  { switch (iret)
+       { case EOS_Error::good : init_status_ = EOS_Error::good  ; break ;
+         case EOS_Error::ok   : init_status_ = EOS_Error::ok    ; break ;
+         case EOS_Error::bad  : init_status_ = EOS_Error::bad   ; break ;
+         default              : init_status_ = EOS_Error::error ; break ;
+       }
+    return iret ;
+  }
+
+  inline EOS_Error EOS::init_status() const
+  { return init_status_ ;
+  }
+
+  inline bool EOS::is_initialized() const
+  { return (init_status_ == EOS_Error::good) || (init_status_ == EOS_Error::ok) ;
   }
 
   inline int EOS::set_components(EOS** components, int nb)

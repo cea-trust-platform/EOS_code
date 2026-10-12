@@ -34,6 +34,16 @@ Les noms de méthode et d'équation effectivement disponibles dépendent des
 bibliothèques activées à la compilation ; voir :doc:`../models` pour la liste
 complète.
 
+A constructor does not report by itself that the initialisation failed
+(table not found, unreadable file...): the object must be asked before it is
+used, see :doc:`errors`:
+
+.. code-block:: c++
+
+   EOS water("EOS_Ipp", "./EOS_Refprop10_WaterLiquid.eosmm");
+   if (!water.is_initialized())
+     { /* file not found or unreadable: water.init_status() gives the code */ }
+
 Calcul au point
 ---------------
 
