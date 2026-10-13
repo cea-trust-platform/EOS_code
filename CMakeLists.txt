@@ -518,7 +518,26 @@ if(BUILD_STATIC_LIB)
   set_target_properties(${EOS_LIB_STAT} PROPERTIES OUTPUT_NAME ${EOS_LIB_NAME}
                                                    IMPORTED_LOCATION_RELEASE ${EOS_LIB_DIR})
 endif(BUILD_STATIC_LIB)
-
+# Fusion de libCoolProp.a dans libeos.a
+if(BUILD_STATIC_LIB AND WITH_PLUGIN_COOLPROP
+   AND LIBCOOLPROP_STATICLIB AND NOT LIBCOOLPROP_STATICLIB MATCHES "NOTFOUND")
+  set(_merge_mri ${CMAKE_BINARY_DIR}/merge_eos_coolprop.mri)
+  file(GENERATE OUTPUT ${_merge_mri} CONTENT
+"create $<TARGET_FILE:${EOS_LIB_STAT}>.merged
+addlib $<TARGET_FILE:${EOS_LIB_STAT}>
+addlib ${LIBCOOLPROP_STATICLIB}
+save
+end
+")
+  add_custom_command(TARGET ${EOS_LIB_STAT} POST_BUILD
+    COMMAND sh -c "\"${CMAKE_AR}\" -M < \"${_merge_mri}\""
+    COMMAND ${CMAKE_COMMAND} -E rename
+            $<TARGET_FILE:${EOS_LIB_STAT}>.merged
+            $<TARGET_FILE:${EOS_LIB_STAT}>
+    COMMENT "Merging CoolProp static library into libeos.a"
+    VERBATIM)
+  message(STATUS "libeos.a will embed ${LIBCOOLPROP_STATICLIB}")
+endif()
 #
 # EOS shared library definition
 if(BUILD_SHARED_LIB)
