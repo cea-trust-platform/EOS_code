@@ -21,7 +21,6 @@ C ****************************************************************************/
 *
       implicit none
       include 'med.hf'
-      parameter(med_equivalence=0, med_group=0, med_joint=0) ! correction
 
 *--arguments
       integer       nindx,nindy                          ! axes sizes
