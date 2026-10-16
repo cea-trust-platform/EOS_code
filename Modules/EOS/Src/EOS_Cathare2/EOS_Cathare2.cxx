@@ -74,7 +74,14 @@ namespace NEPTUNE_EOS
 
   EOS_Cathare2::~EOS_Cathare2()
   { ZoneScopedN("EOS_Cathare2::~EOS_Cathare2");
+    #ifdef _OPENMP
+    if (pilot)
+       { for (int i = 0; i < nb_pilots; i++)  delete pilot[i] ;
+         delete[] pilot ;
+       }
+    #else
     if (pilot) delete pilot;
+    #endif
     pilot = NULL;
   }
 
@@ -100,16 +107,25 @@ namespace NEPTUNE_EOS
       bool err = false;
 
     #ifdef _OPENMP
-      pilot = new CATHARE2::CATHARE2*[omp_get_max_threads()];
+      nb_pilots = omp_get_max_threads();
+      pilot = new CATHARE2::CATHARE2*[nb_pilots];
+      for (int i = 0; i < nb_pilots; i++)  pilot[i] = nullptr ;
     #pragma omp parallel reduction(|| : err)
       {
     #endif
         CATHARE2::CATHARE2 *local_pilot = nullptr;
         err = false;
 
-      #include "EOS_Cathare2.cxx.fld"
+        // One pilot per thread, built one thread at a time : the CATHARE2
+        // constructor runs the Fortran initialisation of the fluid tables.
+    #ifdef _OPENMP
+    #pragma omp critical(EOS_Cathare2_init)
+    #endif
         {
-          err = true;
+      #include "EOS_Cathare2.cxx.fld"
+          {
+            err = true;
+          }
         }
     #ifdef _OPENMP
         pilot[omp_get_thread_num()] = local_pilot;
