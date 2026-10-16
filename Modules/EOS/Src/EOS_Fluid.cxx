@@ -32,7 +32,6 @@ static double epsilon = 1.e-6 ;
 static double epsilon2 = 1.e-4 ;
 // for Newton
 static  int nb_iter_max = 50 ;
-static  int iter_Newton;
 static  double epsn = 1.e-8 ;
 
 namespace NEPTUNE
@@ -1667,6 +1666,7 @@ EOS_Internal_Error EOS_Fluid::compute([[maybe_unused]] const char* const propert
     double Ti, dTi, deltap ;
     double func = 1.e0 ;
     double pi   = 1.e5 ; // Starting from 1 bar.
+    int iter_Newton ;
     for (iter_Newton = 0 ;
         (iter_Newton < nb_iter_max) && (fabs(func) > epsn);
         iter_Newton++ )
