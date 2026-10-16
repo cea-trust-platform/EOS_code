@@ -26,6 +26,7 @@
 #include "EOS/API/EOS_Field.hxx"
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Config.hxx"
+#include <atomic>
 #include <cmath>
 #include <fstream>
 #include <iostream> // for std::cerr
@@ -1014,10 +1015,9 @@ namespace NEPTUNE_EOS
   // of them.
   static void warn_no_reference_model()
   {
-    static bool said = false;
-    if (said)
+    static std::atomic<bool> said(false);
+    if (said.exchange(true))
       return;
-    said = true;
     cerr << "EOS_Ipp: some points could not be interpolated and no reference model is "
          << "attached to fall back on; call init_model() if you want them computed."
          << endl;
