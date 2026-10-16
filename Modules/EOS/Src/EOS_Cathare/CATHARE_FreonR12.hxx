@@ -232,81 +232,43 @@ namespace CATHARE_FREONR12
   inline EOS_Error CATHARE_FreonR12::calca_all_saturation (const NEPTUNE::EOS_Field& P, EOS_Fields& r, EOS_Error_Field& err) const
   {
     // -- init
-    static int szmax = 1 ;
+    int sz = P.size() ;
 
     // -- local ArrOfDouble ...
     // -- -- fpsatr12
-    static ArrOfDouble locp(szmax)    ;
-    static ArrOfDouble loctsp(szmax)  ;
-    static ArrOfDouble loctsp1(szmax) ;
+    ArrOfDouble locp(sz)    ;
+    ArrOfDouble loctsp(sz)  ;
+    ArrOfDouble loctsp1(sz) ;
     // -- -- frovlr12
-    static ArrOfDouble locrvsp(szmax) ;
-    static ArrOfDouble locrlsp(szmax) ;
-    static ArrOfDouble locrlsp1(szmax);
-    static ArrOfDouble locrvsp1(szmax);
+    ArrOfDouble locrvsp(sz) ;
+    ArrOfDouble locrlsp(sz) ;
+    ArrOfDouble locrlsp1(sz);
+    ArrOfDouble locrvsp1(sz);
     // -- -- fhsatr12
-    static ArrOfDouble lochvsp(szmax) ;
-    static ArrOfDouble lochlsp(szmax) ;
-    static ArrOfDouble lochvsp1(szmax);
-    static ArrOfDouble lochlsp1(szmax); 
+    ArrOfDouble lochvsp(sz) ;
+    ArrOfDouble lochlsp(sz) ;
+    ArrOfDouble lochvsp1(sz);
+    ArrOfDouble lochlsp1(sz); 
  
     // -- ArrOfDouble for compute ...
     // -- -- fpsatr12
-    static ArrOfDouble tp; //(szmax);
-    static ArrOfDouble ttsp; //(szmax);
-    static ArrOfDouble ttsp1; //(szmax);
+    ArrOfDouble tp;
+    ArrOfDouble ttsp;
+    ArrOfDouble ttsp1;
     // -- -- frovlr12
-    static ArrOfDouble trvsp; //(szmax);
-    static ArrOfDouble trlsp; //(szmax);
-    static ArrOfDouble trlsp1; //(szmax);
-    static ArrOfDouble trvsp1; //(szmax);
+    ArrOfDouble trvsp;
+    ArrOfDouble trlsp;
+    ArrOfDouble trlsp1;
+    ArrOfDouble trvsp1;
     // -- -- fhsatr12
-    static ArrOfDouble thvsp; //(szmax);
-    static ArrOfDouble thlsp; //(szmax);
-    static ArrOfDouble thvsp1; //(szmax);
-    static ArrOfDouble thlsp1; //(szmax); 
+    ArrOfDouble thvsp;
+    ArrOfDouble thlsp;
+    ArrOfDouble thvsp1;
+    ArrOfDouble thlsp1;
 
     // -- ArrOfInt for error
-    static ArrOfInt    terrc(szmax);
-    static ArrOfInt    internal_err_tmp(szmax);
-
-    // -- -- resize if needed
-    int sz = P.size() ;
-    if (sz > szmax)
-       { szmax = sz ;
-
-         // -- local ArrOfDouble ...
-         // -- -- fpsatr12
-         locp.resize(sz)    ;
-         loctsp.resize(sz)  ;
-         loctsp1.resize(sz) ;
-         // -- -- frovlr12
-         locrvsp.resize(sz)  ;
-         locrlsp.resize(sz)  ;
-         locrlsp1.resize(sz) ;
-         locrvsp1.resize(sz) ;
-         // -- -- fhsatr12
-         lochvsp.resize(sz)  ;
-         lochlsp.resize(sz)  ;
-         lochvsp1.resize(sz) ;
-         lochlsp1.resize(sz) ; 
-
-//       // -- ArrOfDouble for compute ...
-//       // -- -- fpsatr12
-//       tp.resize(sz);
-//       ttsp.resize(sz);
-//       ttsp1.resize(sz);
-//       // -- -- frovlr12
-//       trvsp.resize(sz);
-//       trlsp.resize(sz);
-//       trlsp1.resize(sz);
-//       trvsp1.resize(sz);
-//       // -- -- fhsatr12
-//       thvsp.resize(sz);
-//       thlsp.resize(sz);
-//       thvsp1.resize(sz);
-//       thlsp1.resize(sz); 
-       }
+    ArrOfInt    terrc(sz);
+    ArrOfInt    internal_err_tmp(sz);
 
     // -- -- resize (needed)
     // -- ArrOfInt for error
@@ -476,170 +438,88 @@ namespace CATHARE_FREONR12
   inline EOS_Error CATHARE_FreonR12::calca_all_liquid (const EOS_Fields& input, EOS_Fields& r, EOS_Error_Field& err) const
   {
     // -- init
-    static int szmax = 1 ;
+    int sz = input[0].size() ;
 
     // -- local ArrOfDouble ...
     // -- -- fpsatr12
-    static ArrOfDouble locp(szmax)    ;
-    static ArrOfDouble loctsp(szmax)  ;
-    static ArrOfDouble loctsp1(szmax) ;
+    ArrOfDouble locp(sz)    ;
+    ArrOfDouble loctsp(sz)  ;
+    ArrOfDouble loctsp1(sz) ;
     // -- -- frovlr12
-    static ArrOfDouble locrvsp(szmax)  ;
-    static ArrOfDouble locrlsp(szmax)  ;
-    static ArrOfDouble locrlsp1(szmax) ;
-    static ArrOfDouble locrvsp1(szmax) ;
+    ArrOfDouble locrvsp(sz)  ;
+    ArrOfDouble locrlsp(sz)  ;
+    ArrOfDouble locrlsp1(sz) ;
+    ArrOfDouble locrvsp1(sz) ;
     // -- -- fhsatr12
-    static ArrOfDouble lochvsp(szmax)  ;
-    static ArrOfDouble lochlsp(szmax)  ;
-    static ArrOfDouble lochvsp1(szmax) ;
-    static ArrOfDouble lochlsp1(szmax) ; 
+    ArrOfDouble lochvsp(sz)  ;
+    ArrOfDouble lochlsp(sz)  ;
+    ArrOfDouble lochvsp1(sz) ;
+    ArrOfDouble lochlsp1(sz) ; 
     // -- -- fpthlr12
-    static ArrOfDouble lochl(szmax) ;
-    static ArrOfDouble loctl(szmax) ;
-    static ArrOfDouble locrl(szmax) ;
+    ArrOfDouble lochl(sz) ;
+    ArrOfDouble loctl(sz) ;
+    ArrOfDouble locrl(sz) ;
     // -- -- fcplr12
-    static ArrOfDouble loccpl(szmax)  ;
-    static ArrOfDouble loctl1(szmax)  ;
-    static ArrOfDouble loctl2(szmax)  ;
-    static ArrOfDouble locrl1(szmax)  ;
-    static ArrOfDouble locrl2(szmax)  ;
-    static ArrOfDouble loccpl1(szmax) ;
-    static ArrOfDouble loccpl2(szmax) ;
+    ArrOfDouble loccpl(sz)  ;
+    ArrOfDouble loctl1(sz)  ;
+    ArrOfDouble loctl2(sz)  ;
+    ArrOfDouble locrl1(sz)  ;
+    ArrOfDouble locrl2(sz)  ;
+    ArrOfDouble loccpl1(sz) ;
+    ArrOfDouble loccpl2(sz) ;
     // -- -- fmulr12
-    static ArrOfDouble loctmul(szmax)  ;
-    static ArrOfDouble loctmul1(szmax) ;
-    static ArrOfDouble loctmul2(szmax) ;
+    ArrOfDouble loctmul(sz)  ;
+    ArrOfDouble loctmul1(sz) ;
+    ArrOfDouble loctmul2(sz) ;
     // -- -- fconlr12
-    static ArrOfDouble loctlal(szmax)  ;
-    static ArrOfDouble loctlal1(szmax) ;
-    static ArrOfDouble loctlal2(szmax) ;
+    ArrOfDouble loctlal(sz)  ;
+    ArrOfDouble loctlal1(sz) ;
+    ArrOfDouble loctlal2(sz) ;
     // -- -- others
-    static ArrOfDouble locc(szmax);
+    ArrOfDouble locc(sz);
 
     // -- ArrOfDouble for compute ...
     // -- -- fpsatr12
-    static ArrOfDouble tp     ; //(szmax);
-    static ArrOfDouble ttsp   ; //(szmax);
-    static ArrOfDouble ttsp1  ; //(szmax);
+    ArrOfDouble tp     ;
+    ArrOfDouble ttsp   ;
+    ArrOfDouble ttsp1  ;
     // -- -- frovlr12
-    static ArrOfDouble trvsp  ; //(szmax);
-    static ArrOfDouble trlsp  ; //(szmax);
-    static ArrOfDouble trlsp1 ; //(szmax);
-    static ArrOfDouble trvsp1 ; //(szmax);
+    ArrOfDouble trvsp  ;
+    ArrOfDouble trlsp  ;
+    ArrOfDouble trlsp1 ;
+    ArrOfDouble trvsp1 ;
     // -- -- fhsatr12
-    static ArrOfDouble thvsp  ; //(szmax);
-    static ArrOfDouble thlsp  ; //(szmax);
-    static ArrOfDouble thvsp1 ; //(szmax);
-    static ArrOfDouble thlsp1 ; //(szmax); 
+    ArrOfDouble thvsp  ;
+    ArrOfDouble thlsp  ;
+    ArrOfDouble thvsp1 ;
+    ArrOfDouble thlsp1 ;
     // -- -- fpthlr12
-    static ArrOfDouble thl    ; //(szmax);
-    static ArrOfDouble ttl    ; //(szmax);
-    static ArrOfDouble trl    ; //(szmax);
+    ArrOfDouble thl    ;
+    ArrOfDouble ttl    ;
+    ArrOfDouble trl    ;
     // -- -- fcplr12
-    static ArrOfDouble tcpl   ; //(szmax);
-    static ArrOfDouble ttl1   ; //(szmax);
-    static ArrOfDouble ttl2   ; //(szmax);
-    static ArrOfDouble trl1   ; //(szmax);
-    static ArrOfDouble trl2   ; //(szmax);
-    static ArrOfDouble tcpl1  ; //(szmax);
-    static ArrOfDouble tcpl2  ; //(szmax);
+    ArrOfDouble tcpl   ;
+    ArrOfDouble ttl1   ;
+    ArrOfDouble ttl2   ;
+    ArrOfDouble trl1   ;
+    ArrOfDouble trl2   ;
+    ArrOfDouble tcpl1  ;
+    ArrOfDouble tcpl2  ;
     // -- -- fmulr12
-    static ArrOfDouble ttmul  ; //(szmax);
-    static ArrOfDouble ttmul1 ; //(szmax);
-    static ArrOfDouble ttmul2 ; //(szmax);
+    ArrOfDouble ttmul  ;
+    ArrOfDouble ttmul1 ;
+    ArrOfDouble ttmul2 ;
     // -- -- fconlr12
-    static ArrOfDouble ttlal  ; //(szmax);
-    static ArrOfDouble ttlal1 ; //(szmax);
-    static ArrOfDouble ttlal2 ; //(szmax);
+    ArrOfDouble ttlal  ;
+    ArrOfDouble ttlal1 ;
+    ArrOfDouble ttlal2 ;
     // -- -- others
-    static ArrOfDouble tc ; //(szmax);
+    ArrOfDouble tc ;
 
     // -- ArrOfInt for error
-    static ArrOfInt terrc(szmax) ;
-    static ArrOfInt internal_err_tmp(szmax) ;
+    ArrOfInt terrc(sz) ;
+    ArrOfInt internal_err_tmp(sz) ;
 
-
-    // -- -- resize if needed
-    int sz = input[0].size() ;
-    if (sz > szmax)
-       { szmax = sz ;
-
-         // -- local ArrOfDouble ...
-         // -- -- fpsatr12
-         locp.resize(sz)    ;
-         loctsp.resize(sz)  ;
-         loctsp1.resize(sz) ;
-         // -- -- frovlr12
-         locrvsp.resize(sz)  ;
-         locrlsp.resize(sz)  ;
-         locrlsp1.resize(sz) ;
-         locrvsp1.resize(sz) ;
-         // -- -- fhsatr12
-         lochvsp.resize(sz)  ;
-         lochlsp.resize(sz)  ;
-         lochvsp1.resize(sz) ;
-         lochlsp1.resize(sz) ; 
-         // -- -- fpthlr12
-         lochl.resize(sz) ;
-         loctl.resize(sz) ;
-         locrl.resize(sz) ;
-         // -- -- fcplr12
-         loccpl.resize(sz)  ;
-         loctl1.resize(sz)  ;
-         loctl2.resize(sz)  ;
-         locrl1.resize(sz)  ;
-         locrl2.resize(sz)  ;
-         loccpl1.resize(sz) ;
-         loccpl2.resize(sz) ;
-         // -- -- fmulr12
-         loctmul.resize(sz)  ;
-         loctmul1.resize(sz) ;
-         loctmul2.resize(sz) ;
-         // -- -- fconlr12
-         loctlal.resize(sz)  ;
-         loctlal1.resize(sz) ;
-         loctlal2.resize(sz) ;
-         // -- -- others
-         locc.resize(sz) ;
-
-//       // -- ArrOfDouble for compute ...
-//       // -- -- fpsatr12
-//       tp.resize(sz);
-//       ttsp.resize(sz);
-//       ttsp1.resize(sz);
-//       // -- -- frovlr12
-//       trvsp.resize(sz);
-//       trlsp.resize(sz);
-//       trlsp1.resize(sz);
-//       trvsp1.resize(sz);
-//       // -- -- fhsatr12
-//       thvsp.resize(sz);
-//       thlsp.resize(sz);
-//       thvsp1.resize(sz);
-//       thlsp1.resize(sz); 
-//       // -- -- fpthlr12
-//       thl.resize(sz);
-//       ttl.resize(sz);
-//       trl.resize(sz);
-//       // -- -- fcplr12
-//       tcpl.resize(sz);
-//       ttl1.resize(sz);
-//       ttl2.resize(sz);
-//       trl1.resize(sz);
-//       trl2.resize(sz);
-//       tcpl1.resize(sz);
-//       tcpl2.resize(sz);
-//       // -- -- fmulr12
-//       ttmul.resize(sz);
-//       ttmul1.resize(sz);
-//       ttmul2.resize(sz);
-//       // -- -- fconlr12
-//       ttlal.resize(sz);
-//       ttlal1.resize(sz);
-//       ttlal2.resize(sz);
-//       // -- -- others
-//       tc.resize(sz);
-       }
 
     // -- -- resize (needed)
     // -- ArrOfInt for error
@@ -991,186 +871,96 @@ namespace CATHARE_FREONR12
   inline EOS_Error CATHARE_FreonR12::calca_all_vapor (const EOS_Fields& input, EOS_Fields& r, EOS_Error_Field& err) const
   {
     // -- init
-    static int szmax=1;
+    int sz = input[0].size() ;
 
     // -- local ArrOfDouble ...
     // -- -- fpsatr12
-    static ArrOfDouble locp(szmax);
-    static ArrOfDouble loctsp(szmax);
-    static ArrOfDouble loctsp1(szmax);
+    ArrOfDouble locp(sz);
+    ArrOfDouble loctsp(sz);
+    ArrOfDouble loctsp1(sz);
     // -- -- frovlr12
-    static ArrOfDouble locrvsp(szmax);
-    static ArrOfDouble locrlsp(szmax);
-    static ArrOfDouble locrlsp1(szmax);
-    static ArrOfDouble locrvsp1(szmax);
+    ArrOfDouble locrvsp(sz);
+    ArrOfDouble locrlsp(sz);
+    ArrOfDouble locrlsp1(sz);
+    ArrOfDouble locrvsp1(sz);
     // -- -- fhsatr12
-    static ArrOfDouble lochvsp(szmax);
-    static ArrOfDouble lochlsp(szmax);
-    static ArrOfDouble lochvsp1(szmax);
-    static ArrOfDouble lochlsp1(szmax); 
+    ArrOfDouble lochvsp(sz);
+    ArrOfDouble lochlsp(sz);
+    ArrOfDouble lochvsp1(sz);
+    ArrOfDouble lochlsp1(sz); 
     // -- -- fpthgr12
-    static ArrOfDouble lochg(szmax);
-    static ArrOfDouble loctg(szmax);
+    ArrOfDouble lochg(sz);
+    ArrOfDouble loctg(sz);
     // -- -- ftgr12
-    static ArrOfDouble loctgpv(szmax);
-    static ArrOfDouble loctghv(szmax);
-    static ArrOfDouble locrv(szmax);
-    static ArrOfDouble locrvpv(szmax);
-    static ArrOfDouble locrvhv(szmax);
+    ArrOfDouble loctgpv(sz);
+    ArrOfDouble loctghv(sz);
+    ArrOfDouble locrv(sz);
+    ArrOfDouble locrvpv(sz);
+    ArrOfDouble locrvhv(sz);
     // -- -- fcpvr12
-    static ArrOfDouble loccpv(szmax);
-    static ArrOfDouble loccpvpv(szmax);
-    static ArrOfDouble loccpvhv(szmax);
+    ArrOfDouble loccpv(sz);
+    ArrOfDouble loccpvpv(sz);
+    ArrOfDouble loccpvhv(sz);
     // -- -- fmuvr12
-    static ArrOfDouble loctmuv(szmax);
-    static ArrOfDouble locmuvpv(szmax);
-    static ArrOfDouble locmuvhv(szmax);
+    ArrOfDouble loctmuv(sz);
+    ArrOfDouble locmuvpv(sz);
+    ArrOfDouble locmuvhv(sz);
     // -- -- fconvr12
-    static ArrOfDouble loctlav(szmax);
-    static ArrOfDouble loclavpv(szmax);
-    static ArrOfDouble loclavhv(szmax);
+    ArrOfDouble loctlav(sz);
+    ArrOfDouble loclavpv(sz);
+    ArrOfDouble loclavhv(sz);
     // -- -- fsigmar12
-    static ArrOfDouble locsi(szmax);
-    static ArrOfDouble locsipv(szmax);
+    ArrOfDouble locsi(sz);
+    ArrOfDouble locsipv(sz);
     // -- -- others
-    static ArrOfDouble locc(szmax);
+    ArrOfDouble locc(sz);
 
     // -- ArrOfDouble for compute ...
     // -- -- fpsatr12
-    static ArrOfDouble tp; //(szmax);
-    static ArrOfDouble ttsp; //(szmax);
-    static ArrOfDouble ttsp1; //(szmax);
+    ArrOfDouble tp;
+    ArrOfDouble ttsp;
+    ArrOfDouble ttsp1;
     // -- -- frovlr12
-    static ArrOfDouble trvsp; //(szmax);
-    static ArrOfDouble trlsp; //(szmax);
-    static ArrOfDouble trlsp1; //(szmax);
-    static ArrOfDouble trvsp1; //(szmax);
+    ArrOfDouble trvsp;
+    ArrOfDouble trlsp;
+    ArrOfDouble trlsp1;
+    ArrOfDouble trvsp1;
     // -- -- fhsatr12
-    static ArrOfDouble thvsp; //(szmax);
-    static ArrOfDouble thlsp; //(szmax);
-    static ArrOfDouble thvsp1; //(szmax);
-    static ArrOfDouble thlsp1; //(szmax); 
+    ArrOfDouble thvsp;
+    ArrOfDouble thlsp;
+    ArrOfDouble thvsp1;
+    ArrOfDouble thlsp1;
     // -- -- fpthgr12
-    static ArrOfDouble ttg; //(szmax);
-    static ArrOfDouble thg; //(szmax);
+    ArrOfDouble ttg;
+    ArrOfDouble thg;
     // -- -- ftgr12
-    static ArrOfDouble ttgpv; //(szmax);
-    static ArrOfDouble ttghv; //(szmax);
-    static ArrOfDouble trv; //(szmax);
-    static ArrOfDouble trvpv; //(szmax);
-    static ArrOfDouble trvhv; //(szmax);
+    ArrOfDouble ttgpv;
+    ArrOfDouble ttghv;
+    ArrOfDouble trv;
+    ArrOfDouble trvpv;
+    ArrOfDouble trvhv;
     // -- -- fcpvr12
-    static ArrOfDouble tcpv; //(szmax);
-    static ArrOfDouble tcpvpv; //(szmax);
-    static ArrOfDouble tcpvhv; //(szmax);
+    ArrOfDouble tcpv;
+    ArrOfDouble tcpvpv;
+    ArrOfDouble tcpvhv;
     // -- -- fmuvr12
-    static ArrOfDouble ttmuv; //(szmax);
-    static ArrOfDouble tmuvpv; //(szmax);
-    static ArrOfDouble tmuvhv; //(szmax);
+    ArrOfDouble ttmuv;
+    ArrOfDouble tmuvpv;
+    ArrOfDouble tmuvhv;
     // -- -- fconvr12
-    static ArrOfDouble ttlav; //(szmax);
-    static ArrOfDouble tlavpv; //(szmax);
-    static ArrOfDouble tlavhv; //(szmax);
+    ArrOfDouble ttlav;
+    ArrOfDouble tlavpv;
+    ArrOfDouble tlavhv;
     // -- -- fsigmar12
-    static ArrOfDouble tsi; //(szmax);
-    static ArrOfDouble tsipv; //(szmax);
+    ArrOfDouble tsi;
+    ArrOfDouble tsipv;
     // -- -- others
-    static ArrOfDouble tc; //(szmax);
+    ArrOfDouble tc;
 
     // -- ArrOfInt for error
-    static ArrOfInt    terrc(szmax);
-    static ArrOfInt    internal_err_tmp(szmax);
+    ArrOfInt    terrc(sz);
+    ArrOfInt    internal_err_tmp(sz);
 
-    // -- -- resize if needed
-    int sz = input[0].size() ;
-    if (sz > szmax)
-       { szmax = sz ;
-
-         // -- local ArrOfDouble ...
-         // -- -- fpsatr12
-         locp.resize(sz);
-         loctsp.resize(sz);
-         loctsp1.resize(sz);
-         // -- -- frovlr12
-         locrvsp.resize(sz);
-         locrlsp.resize(sz);
-         locrlsp1.resize(sz);
-         locrvsp1.resize(sz);
-         // -- -- fhsatr12
-         lochvsp.resize(sz);
-         lochlsp.resize(sz);
-         lochvsp1.resize(sz);
-         lochlsp1.resize(sz); 
-         // -- -- fpthgr12
-         lochg.resize(sz);
-         loctg.resize(sz);
-         // -- -- ftgr12
-         loctgpv.resize(sz);
-         loctghv.resize(sz);
-         locrv.resize(sz);
-         locrvpv.resize(sz);
-         locrvhv.resize(sz);
-         // -- -- fcpvr12
-         loccpv.resize(sz);
-         loccpvpv.resize(sz);
-         loccpvhv.resize(sz);
-         // -- -- fmuvr12
-         loctmuv.resize(sz);
-         locmuvpv.resize(sz);
-         locmuvhv.resize(sz);
-         // -- -- fconvr12
-         loctlav.resize(sz);
-         loclavpv.resize(sz);
-         loclavhv.resize(sz);
-         // -- -- fsigmar12
-         locsi.resize(sz);
-         locsipv.resize(sz);
-         // -- -- others
-         locc.resize(sz);
-
-//       // -- ArrOfDouble for compute ...
-//       // -- -- fpsatr12
-//       tp.resize(sz);
-//       ttsp.resize(sz);
-//       ttsp1.resize(sz);
-//       // -- -- frovlr12
-//       trvsp.resize(sz);
-//       trlsp.resize(sz);
-//       trlsp1.resize(sz);
-//       trvsp1.resize(sz);
-//       // -- -- fhsatr12
-//       thvsp.resize(sz);
-//       thlsp.resize(sz);
-//       thvsp1.resize(sz);
-//       thlsp1.resize(sz); 
-//       // -- -- fpthgr12
-//       thg.resize(sz);
-//       ttg.resize(sz);
-//       // -- -- ftgr12
-//       ttgpv.resize(sz);
-//       ttghv.resize(sz);
-//       trv.resize(sz);
-//       trvpv.resize(sz);
-//       trvhv.resize(sz);
-//       // -- -- fcpvr12
-//       tcpv.resize(sz);
-//       tcpvpv.resize(sz);
-//       tcpvhv.resize(sz);
-//       // -- -- fmuvr12
-//       ttmuv.resize(sz);
-//       tmuvpv.resize(sz);
-//       tmuvhv.resize(sz);
-//       // -- -- fconvr12
-//       ttlav.resize(sz);
-//       tlavpv.resize(sz);
-//       tlavhv.resize(sz);
-//       // -- -- fsigmar12
-//       tsi.resize(sz);
-//       tsipv.resize(sz);
-//       // -- -- others
-//       tc.resize(sz);
-       }
- 
     // -- -- resize (needed)
     // -- ArrOfInt for error 
     terrc.resize(sz);

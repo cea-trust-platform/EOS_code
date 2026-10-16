@@ -214,6 +214,7 @@ namespace NEPTUNE_EOS
   protected:
 #ifdef _OPENMP
     CATHARE2::CATHARE2 **pilot;   //!< pointer to vector of pilot class (thread local)
+    int nb_pilots ;               //!< size of that vector : the number of threads at init
 #else
     CATHARE2::CATHARE2 *pilot;   //!< pointer to the pilot class
 #endif

@@ -20,6 +20,9 @@
 
 #include "Language/API/RegisterType.hxx"
 #include <AbstractState.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 #include <algorithm>
 #include <cassert>
@@ -138,6 +141,26 @@ namespace NEPTUNE_EOS
     //! Vapour quality of the saturated state on the branch of the imposed phase
     double saturation_quality(bool liquid)
     { return liquid ? 0.0 : 1.0 ;
+    }
+
+    //! Index of the calling thread in the per-thread pools
+    int thread_index()
+    {
+#ifdef _OPENMP
+      return omp_get_thread_num() ;
+#else
+      return 0 ;
+#endif
+    }
+
+    //! Number of threads the per-thread pools are sized for
+    int thread_count()
+    {
+#ifdef _OPENMP
+      return omp_get_max_threads() ;
+#else
+      return 1 ;
+#endif
     }
 
     //! Set the state to (value1, value2) in the imposed phase
@@ -453,30 +476,36 @@ namespace NEPTUNE_EOS
          return EOS_Error::error ;
        }
 
+    // One state per thread ; the first one is created now, the others by
+    // the threads themselves on their first call
+    states_.clear() ;
+    states_.resize(thread_count()) ;
+    messages_.assign(thread_count(), std::string()) ;
     try
-       { state_.reset(CoolProp::AbstractState::factory("HEOS", fluid_name_.aschar())) ;
-         p_min_  = state_->p_triple() ;
-         p_max_  = state_->pmax() ;
-         T_min_  = state_->Tmin() ;
-         T_max_  = state_->Tmax() ;
-         p_crit_ = state_->p_critical() ;
-         T_crit_ = state_->T_critical() ;
-         mm_     = state_->molar_mass() ;
+       { states_[0].reset(CoolProp::AbstractState::factory("HEOS", fluid_name_.aschar())) ;
        }
     catch (const std::exception& e)
        { cerr << " EOS_CoolProp::init(strings) : " << e.what() << endl ;
-         state_.reset() ;
+         states_.clear() ;
          return EOS_Error::error ;
        }
+    CoolProp::AbstractState& state = *states_[0] ;
+    p_min_  = state.p_triple() ;
+    p_max_  = state.pmax() ;
+    T_min_  = state.Tmin() ;
+    T_max_  = state.Tmax() ;
+    p_crit_ = state.p_critical() ;
+    T_crit_ = state.T_critical() ;
+    mm_     = state.molar_mass() ;
 
     // Enthalpy bounds. The flashes at (p_max, T_max) and at the critical point
     // only converge with the phase left free. The one at (p_min, T_min) lies on
     // the saturation curve and only converges with the phase imposed, which
     // also selects the bound relevant to the phase of this object.
-    h_max_  = enthalpy_or(*state_, p_max_, T_max_, 1.0e20) ;
-    h_crit_ = enthalpy_or(*state_, p_crit_, T_crit_, std::numeric_limits<double>::quiet_NaN()) ;
-    state_->specify_phase(imposed_phase(liquid_)) ;
-    h_min_  = enthalpy_or(*state_, p_min_, T_min_, 1.0) ;
+    h_max_  = enthalpy_or(state, p_max_, T_max_, 1.0e20) ;
+    h_crit_ = enthalpy_or(state, p_crit_, T_crit_, std::numeric_limits<double>::quiet_NaN()) ;
+    state.specify_phase(imposed_phase(liquid_)) ;
+    h_min_  = enthalpy_or(state, p_min_, T_min_, 1.0) ;
 
     return EOS_Error::good ;
   }
@@ -530,7 +559,14 @@ namespace NEPTUNE_EOS
 
   void EOS_CoolProp::describe_error(const EOS_Internal_Error error, AString& description) const
   { if (error == COMPUTE_ERROR_)
-       description = AString(last_message_.empty() ? "CoolProp : computation failed" : last_message_.c_str()) ;
+       { const int t = thread_index() ;
+         if (t >= static_cast<int>(states_.size()))
+            description = AString("EOS_CoolProp : more OpenMP threads than when the object was initialised") ;
+         else if (messages_[t].empty())
+            description = AString("CoolProp : computation failed") ;
+         else
+            description = AString(messages_[t].c_str()) ;
+       }
     else if (error == WRONG_INPUT_TYPE_)
        description = AString("EOS_CoolProp : unsupported input properties") ;
     else
@@ -596,9 +632,24 @@ namespace NEPTUNE_EOS
   // Error reporting
   // ---------------------------------------------------------------------------
 
+  CoolProp::AbstractState* EOS_CoolProp::thread_state() const
+  { const int t = thread_index() ;
+    if (t >= static_cast<int>(states_.size()))  return nullptr ;
+    if (!states_[t])
+       { try
+            { states_[t].reset(CoolProp::AbstractState::factory("HEOS", fluid_name_.aschar())) ;
+            }
+         catch (const std::exception& e)
+            { messages_[t] = std::string("CoolProp : ") + e.what() ;
+              return nullptr ;
+            }
+       }
+    return states_[t].get() ;
+  }
+
   void EOS_CoolProp::record_failure(EOS_Error_Field& err, int idata, const std::exception& e) const
   { err.set(idata, COMPUTE_ERROR_) ;
-    last_message_ = std::string("CoolProp : ") + e.what() ;
+    messages_[thread_index()] = std::string("CoolProp : ") + e.what() ;
   }
 
   // ---------------------------------------------------------------------------
@@ -611,8 +662,13 @@ namespace NEPTUNE_EOS
     err = EOS_Internal_Error::OK ;
 
     const CoolProp::parameters input_key = coolprop_key(input.get_property_number()) ;
-    if ( !state_ || ((input_key != CoolProp::iP) && (input_key != CoolProp::iT)) )
+    if ( (input_key != CoolProp::iP) && (input_key != CoolProp::iT) )
        { err = WRONG_INPUT_TYPE_ ;
+         return err.find_worst_error().generic_error() ;
+       }
+    CoolProp::AbstractState* const state = thread_state() ;
+    if (!state)
+       { err = COMPUTE_ERROR_ ;
          return err.find_worst_error().generic_error() ;
        }
     // Argument order CoolProp expects for (input, vapour quality)
@@ -646,19 +702,19 @@ namespace NEPTUNE_EOS
             { for (int branch = 0; branch < 2; branch++)
                  { if (!needed[branch])  continue ;
                    const double values[2] = { x, double(branch) } ;
-                   update_saturation_state(*state_, pair, values[first], values[second]) ;
+                   update_saturation_state(*state, pair, values[first], values[second]) ;
                    for (const SaturationOutput& out : plan)
                       { if (out.branch != branch)  continue ;
                         double& result = outputs[out.index][idata] ;
                         switch (out.kind)
                            { case SaturationOutput::value :
-                                result = evaluate(*state_, out.quantity) ;
+                                result = evaluate(*state, out.quantity) ;
                                 break ;
                              case SaturationOutput::analytic :
-                                result = state_->first_saturation_deriv(coolprop_key(out.quantity), CoolProp::iP) ;
+                                result = state->first_saturation_deriv(coolprop_key(out.quantity), CoolProp::iP) ;
                                 break ;
                              case SaturationOutput::second :
-                                result = state_->second_saturation_deriv(coolprop_key(out.quantity), CoolProp::iP, CoolProp::iP) ;
+                                result = state->second_saturation_deriv(coolprop_key(out.quantity), CoolProp::iP, CoolProp::iP) ;
                                 break ;
                              default :
                                 break ;
@@ -666,17 +722,17 @@ namespace NEPTUNE_EOS
                       }
                    if (!difference[branch])  continue ;
                    // Centred difference along the saturation curve : two more flashes
-                   const double p   = state_->p() ;
+                   const double p   = state->p() ;
                    const double eps = difference_step(p) ;
-                   update_saturation_state(*state_, CoolProp::PQ_INPUTS, p + eps, double(branch)) ;
+                   update_saturation_state(*state, CoolProp::PQ_INPUTS, p + eps, double(branch)) ;
                    for (const SaturationOutput& out : plan)
                       { if ( (out.branch == branch) && (out.kind == SaturationOutput::difference) )
-                           outputs[out.index][idata] = evaluate(*state_, out.quantity) ;
+                           outputs[out.index][idata] = evaluate(*state, out.quantity) ;
                       }
-                   update_saturation_state(*state_, CoolProp::PQ_INPUTS, p - eps, double(branch)) ;
+                   update_saturation_state(*state, CoolProp::PQ_INPUTS, p - eps, double(branch)) ;
                    for (const SaturationOutput& out : plan)
                       { if ( (out.branch == branch) && (out.kind == SaturationOutput::difference) )
-                           outputs[out.index][idata] = (outputs[out.index][idata] - evaluate(*state_, out.quantity)) / (2.0 * eps) ;
+                           outputs[out.index][idata] = (outputs[out.index][idata] - evaluate(*state, out.quantity)) / (2.0 * eps) ;
                       }
                  }
             }
@@ -716,8 +772,13 @@ namespace NEPTUNE_EOS
     const CoolProp::input_pairs pair = CoolProp::generate_update_pair(coolprop_key(input_property[0]), 0,
                                                                       coolprop_key(input_property[1]), 1,
                                                                       first, second) ;
-    if ( !state_ || (pair == CoolProp::INPUT_PAIR_INVALID) )
+    if (pair == CoolProp::INPUT_PAIR_INVALID)
        { err = WRONG_INPUT_TYPE_ ;
+         return err.find_worst_error().generic_error() ;
+       }
+    CoolProp::AbstractState* const state = thread_state() ;
+    if (!state)
+       { err = COMPUTE_ERROR_ ;
          return err.find_worst_error().generic_error() ;
        }
     int p_input = -1 ;
@@ -751,18 +812,18 @@ namespace NEPTUNE_EOS
     for (int idata = 0; idata < size; idata++)
        { const double values[2] = { input1[idata], input2[idata] } ;
          try
-            { update_state(*state_, liquid_, pair, values[first], values[second]) ;
+            { update_state(*state, liquid_, pair, values[first], values[second]) ;
               for (const Output& out : plan)
                  { double& result = outputs[out.index][idata] ;
                    switch (out.kind)
                       { case Output::value :
-                           result = evaluate(*state_, out.quantity) ;
+                           result = evaluate(*state, out.quantity) ;
                            break ;
                         case Output::analytic :
-                           result = state_->first_partial_deriv(coolprop_key(out.quantity), out.wrt, out.constant) ;
+                           result = state->first_partial_deriv(coolprop_key(out.quantity), out.wrt, out.constant) ;
                            break ;
                         case Output::cross :
-                           result = state_->second_partial_deriv(coolprop_key(out.quantity),
+                           result = state->second_partial_deriv(coolprop_key(out.quantity),
                                                                  CoolProp::iP, CoolProp::iHmass,
                                                                  CoolProp::iHmass, CoolProp::iP) ;
                            break ;
@@ -781,16 +842,16 @@ namespace NEPTUNE_EOS
                    const double eps = difference_step(values[k]) ;
                    double shifted[2] = { values[0], values[1] } ;
                    shifted[k] = values[k] + eps ;
-                   update_state(*state_, liquid_, pair, shifted[first], shifted[second]) ;
+                   update_state(*state, liquid_, pair, shifted[first], shifted[second]) ;
                    for (const Output& out : plan)
                       { if ( (out.kind == Output::difference) && (out.perturbed == k) )
-                           outputs[out.index][idata] = evaluate(*state_, out.quantity) ;
+                           outputs[out.index][idata] = evaluate(*state, out.quantity) ;
                       }
                    shifted[k] = values[k] - eps ;
-                   update_state(*state_, liquid_, pair, shifted[first], shifted[second]) ;
+                   update_state(*state, liquid_, pair, shifted[first], shifted[second]) ;
                    for (const Output& out : plan)
                       { if ( (out.kind == Output::difference) && (out.perturbed == k) )
-                           outputs[out.index][idata] = (outputs[out.index][idata] - evaluate(*state_, out.quantity)) / (2.0 * eps) ;
+                           outputs[out.index][idata] = (outputs[out.index][idata] - evaluate(*state, out.quantity)) / (2.0 * eps) ;
                       }
                  }
 
@@ -798,15 +859,15 @@ namespace NEPTUNE_EOS
               if (saturation)
                  { const double p = values[p_input] ;
                    const double quality = saturation_quality(liquid_) ;
-                   update_saturation_state(*state_, CoolProp::PQ_INPUTS, p, quality) ;
-                   const double sigma = state_->surface_tension() ;
+                   update_saturation_state(*state, CoolProp::PQ_INPUTS, p, quality) ;
+                   const double sigma = state->surface_tension() ;
                    double d_sigma_d_p = 0.0 ;
                    if (saturation_difference)
                       { const double eps = difference_step(p) ;
-                        update_saturation_state(*state_, CoolProp::PQ_INPUTS, p + eps, quality) ;
-                        d_sigma_d_p = state_->surface_tension() ;
-                        update_saturation_state(*state_, CoolProp::PQ_INPUTS, p - eps, quality) ;
-                        d_sigma_d_p = (d_sigma_d_p - state_->surface_tension()) / (2.0 * eps) ;
+                        update_saturation_state(*state, CoolProp::PQ_INPUTS, p + eps, quality) ;
+                        d_sigma_d_p = state->surface_tension() ;
+                        update_saturation_state(*state, CoolProp::PQ_INPUTS, p - eps, quality) ;
+                        d_sigma_d_p = (d_sigma_d_p - state->surface_tension()) / (2.0 * eps) ;
                       }
                    for (const Output& out : plan)
                       { if      (out.kind == Output::saturation)             outputs[out.index][idata] = sigma ;

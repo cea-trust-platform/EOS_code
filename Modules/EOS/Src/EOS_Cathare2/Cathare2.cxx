@@ -32,12 +32,11 @@ extern "C"
 
 namespace CATHARE2
 {
-  bool CATHARE2::in_erpile = false          ;
-  const double CATHARE2::tabsk = 273.15e0   ;
-  TH_space CATHARE2::typ_ths = TH_space::no ;
+  thread_local bool CATHARE2::in_erpile = false ;
+  const double CATHARE2::tabsk = 273.15e0       ;
 
   CATHARE2::CATHARE2(NEPTUNE::EOS_Fluid* fld, domain ph, int c2ref) :
-      nincon(0), un(1.e0), zero(0.e0), epspp(1.e3),
+      nincon(0), typ_ths(TH_space::no), un(1.e0), zero(0.e0), epspp(1.e3),
       fluid(fld), phase(ph), 
       fldm(-1.e0),
       tc(-1.e0), hc(-1.e0), 

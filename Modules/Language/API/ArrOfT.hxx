@@ -18,6 +18,8 @@
 #ifndef ArrOfT_h
 #define ArrOfT_h 1
 
+#include <atomic>
+
 namespace LANGUAGE_KERNEL
 {
   template <class T> 
@@ -34,7 +36,9 @@ namespace LANGUAGE_KERNEL
     int   sz;
     int capacity;
     T* data;
-    int   ref_count;
+    //! Number of ArrOf objects sharing this block. Atomic, so that arrays
+    //! attached to the same data by several threads stay consistent.
+    std::atomic<int> ref_count;
     int owner;
   };
 

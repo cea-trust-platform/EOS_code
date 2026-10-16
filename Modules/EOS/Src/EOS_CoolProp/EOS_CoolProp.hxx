@@ -22,6 +22,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "EOS/API/EOS_Fluid.hxx"
 #include "EOS/API/EOS_Field.hxx"
@@ -42,13 +43,14 @@ namespace NEPTUNE_EOS
 {
   //! Equation of state provided by the CoolProp library (HEOS backend)
   /*!
-   * One CoolProp::AbstractState is held per object and kept in the phase
-   * given at initialisation (phase_liquid or phase_gas). The field methods
-   * update that state once per point and read every requested output from
-   * it, so a call costs one flash per point whatever the number of outputs.
-   * Derivatives are taken analytically whenever CoolProp provides them, by
-   * centred differences otherwise. Outputs CoolProp cannot evaluate are
-   * delegated to the generic EOS_Fluid implementation.
+   * One CoolProp::AbstractState is held per OpenMP thread and kept in the
+   * phase given at initialisation (phase_liquid or phase_gas). The field
+   * methods update the state of the calling thread once per point and read
+   * every requested output from it, so a call costs one flash per point
+   * whatever the number of outputs. Derivatives are taken analytically
+   * whenever CoolProp provides them, by centred differences otherwise.
+   * Outputs CoolProp cannot evaluate are delegated to the generic EOS_Fluid
+   * implementation.
    */
   class EOS_CoolProp : public EOS_Fluid
   {
@@ -141,14 +143,25 @@ namespace NEPTUNE_EOS
     void describe_error(const EOS_Internal_Error error, AString & description) const;
 
   private:
+    //! State of the calling thread, created on its first use
+    /*!
+     * \return the state, or a null pointer when the thread is not one of the
+     *         threads counted at initialisation or when CoolProp failed to
+     *         create the state (describe_error() then gives the reason)
+     */
+    CoolProp::AbstractState* thread_state() const;
+
     //! Record a CoolProp failure for point idata and keep its message for describe_error()
     void record_failure(EOS_Error_Field& err, int idata, const std::exception& e) const;
 
-    std::unique_ptr<CoolProp::AbstractState> state_ ;
+    //! One CoolProp state per OpenMP thread. The pool is sized at init, when
+    //! the number of threads is known, and each slot is only ever touched by
+    //! its own thread.
+    mutable std::vector<std::unique_ptr<CoolProp::AbstractState> > states_ ;
+    mutable std::vector<std::string> messages_ ;  //!< Message of the last CoolProp exception, per thread
     bool                liquid_ ;         //!< Phase imposed to the single-phase flashes : liquid or gas
     AString             fluid_name_ ;     //!< CoolProp fluid name
     AString             phase_name_ ;     //!< "phase_liquid" or "phase_gas"
-    mutable std::string last_message_ ;   //!< Message of the last CoolProp exception
 
     double p_min_  ;
     double p_max_  ;

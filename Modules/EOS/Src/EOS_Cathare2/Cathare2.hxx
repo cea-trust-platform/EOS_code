@@ -151,14 +151,17 @@ namespace CATHARE2
      * ~CATHARE2() is pure virtual to force CATHARE2 to be abstract
      */
     virtual ~CATHARE2() = 0 ;
-    static bool in_erpile ;     //!< erpile error flag
+    //! erpile error flag, raised by the Fortran error routine c2_erpile on
+    //! the calling thread : each thread works with its own pilot, so the
+    //! flag is thread-local
+    static thread_local bool in_erpile ;
 
   protected:
     int nincon ;                //!< Number of noncondensible gas
     int nsca   ;                //!< Number of scalars
 
     static const double tabsk ; //!< Thermodynamic temperature of water triple point
-    static TH_space typ_ths   ;
+    TH_space typ_ths ;          //!< Thermodynamic space of the computation in progress
     double un, zero, epspp    ;
 
     EOS_Fluid* fluid ;      //!< Pointer to the EOS_Cathare2 adapter
