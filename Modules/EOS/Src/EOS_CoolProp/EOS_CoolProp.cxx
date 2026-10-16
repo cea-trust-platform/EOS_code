@@ -724,12 +724,12 @@ namespace NEPTUNE_EOS
                    // Centred difference along the saturation curve : two more flashes
                    const double p   = state->p() ;
                    const double eps = difference_step(p) ;
-                   update_saturation_state(*state, CoolProp::PQ_INPUTS, p + eps, double(branch)) ;
+                   update_saturation_state(*state, CoolProp::PQ_INPUTS, std::min(std::max(p + eps, p_min_), p_crit_), double(branch)) ;
                    for (const SaturationOutput& out : plan)
                       { if ( (out.branch == branch) && (out.kind == SaturationOutput::difference) )
                            outputs[out.index][idata] = evaluate(*state, out.quantity) ;
                       }
-                   update_saturation_state(*state, CoolProp::PQ_INPUTS, p - eps, double(branch)) ;
+                   update_saturation_state(*state, CoolProp::PQ_INPUTS, std::min(std::max(p - eps, p_min_), p_crit_), double(branch)) ;
                    for (const SaturationOutput& out : plan)
                       { if ( (out.branch == branch) && (out.kind == SaturationOutput::difference) )
                            outputs[out.index][idata] = (outputs[out.index][idata] - evaluate(*state, out.quantity)) / (2.0 * eps) ;
