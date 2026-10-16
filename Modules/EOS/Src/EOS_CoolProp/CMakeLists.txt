@@ -24,8 +24,8 @@ STRING(REGEX REPLACE "(^.*/)(.*$)" "\\2" TGT_OBJ "${CMAKE_CURRENT_SOURCE_DIR}")
 felemlib(${TGT_OBJ} LTM_TGT_OBJ GLOB_RECURSE)
 
 # -------------------------------------------------------------------
-# CoolProp requiert C++17 (std::string_view dans DataStructures.h)
-# La compilation réelle se fait sur la cible OBJECT  c'est elle qu'on cible
+# The plugin is compiled in C++17 on the OBJECT target, which is the one
+# actually compiled.
 # -------------------------------------------------------------------
 set_target_properties(${TGT_OBJ}
   PROPERTIES
@@ -33,10 +33,9 @@ set_target_properties(${TGT_OBJ}
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
-target_compile_definitions(${TGT_OBJ} PRIVATE COOLPROP_LIB_STATIC)
 
-# Spécification des répertoires d'inclusion directement sur la cible d'objets
-target_include_directories(${TGT_OBJ} PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${GLOBALEXT_INC}
-)
+# Include directories of the object target. The external headers are SYSTEM
+# so that -Wextra does not report the warnings of CoolProp's AbstractState.h,
+# as the top-level CMakeLists.txt does for the MED headers.
+target_include_directories(${TGT_OBJ} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${TGT_OBJ} SYSTEM PRIVATE ${GLOBALEXT_INC})

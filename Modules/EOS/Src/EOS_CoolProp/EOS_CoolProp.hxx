@@ -15,263 +15,118 @@
 
 
 
+
 #ifndef __EOS_CoolProp_HH__
 #define __EOS_CoolProp_HH__
 
-#include <fstream>
-#include <algorithm>
-#include <cmath>
-#include <sstream>
-using std::istringstream ;
-using std::ostringstream ;
-#include "DataStructures.h"
-#include "EOS/API/EOS.hxx"
+#include <exception>
+#include <memory>
+#include <string>
+
 #include "EOS/API/EOS_Fluid.hxx"
 #include "EOS/API/EOS_Field.hxx"
 #include "EOS/API/EOS_Fields.hxx"
 #include "EOS/API/EOS_Error.hxx"
 #include "EOS/API/EOS_Error_Field.hxx"
-#include "EOS/API/EOS_Config.hxx"
-#include "EOS/API/EOS_eosdatadir.hxx"
-#include "Language/API/RegisterType.hxx"
 #include "Language/API/Types_Info.hxx"
-#include "system/arch.h"
-#include <limits>
+
 using namespace NEPTUNE ;
+
+// The CoolProp headers are only needed by the implementation
+namespace CoolProp
+{
+  class AbstractState ;
+}
 
 namespace NEPTUNE_EOS
 {
-
-  //! EOS_CoolProp class
+  //! Equation of state provided by the CoolProp library (HEOS backend)
+  /*!
+   * One CoolProp::AbstractState is held per object and kept in the phase
+   * given at initialisation (phase_liquid or phase_gas). The field methods
+   * update that state once per point and read every requested output from
+   * it, so a call costs one flash per point whatever the number of outputs.
+   * Derivatives are taken analytically whenever CoolProp provides them, by
+   * centred differences otherwise. Outputs CoolProp cannot evaluate are
+   * delegated to the generic EOS_Fluid implementation.
+   */
   class EOS_CoolProp : public EOS_Fluid
   {
-    static const AString TMStr    ;
-    static const AString MVStr    ;
-
   public:
     //! Constructor method
     EOS_CoolProp();
-
-//    //! Copy constructor, which should not be used
-//    EOS_CoolProp(const EOS_CoolProp&);
 
     //! Destructor method
     ~EOS_CoolProp();
 
     //! Getter methods
-    const AString& table_name()   const ;
-    const AString& version_name() const ;
-    const AString& phase_name()   const ;
+    const AString& table_name()    const ;
+    const AString& version_name()  const ;
+    const AString& phase_name()    const ;
+    const AString& fluid_name()    const ;
+    const AString& equation_name() const ;
 
-    //! for initialisation :
-    //
-    const AString& fluid_name() const;
-    const AString& equation_name() const;
-
-    //! initializers
-    int init(const Strings&);
+    //! Initialisation from the index.eos reference
+    /*!
+     * \param[in] strings { CoolProp fluid name, "phase_liquid" or "phase_gas" }
+     * \return EOS_Error::good on success, EOS_Error::error otherwise
+     */
+    int init(const Strings& strings);
+    //! Not supported by this model : returns EOS_Error::error
     int init(const Strings&, const Strings&);
-    int init(const Strings&, const Strings&, const double, const double, const double, const double) ;
- 
-    void _update_state(double in1, double in2,
-                       CoolProp::input_pairs input_pair_key,
-                       long& errcode) const;
-    void _invalidate_state_cache() const;
-    double _update_and_compute_from_pair(double in1, double in2,
-                                      CoolProp::input_pairs input_pair_key,
-                                      CoolProp::parameters  output_key,
-                                      long& errcode) const;
-    //! Compute calculations from fields
+    //! Not supported by this model : returns EOS_Error::error
+    int init(const Strings&, const Strings&, const double, const double, const double, const double);
+
+    //! Compute saturation properties from one input field
     /*!
-     * \param[in] in input field. Currently supported are : P
-     * \param[in,out] out output field array. All fields must have the correct size.
+     * \param[in] input input field. Currently supported are : p (also p_sat, p_lim), T (also T_sat)
+     * \param[in,out] outputs output field array. All fields must have the correct size.
      * \param[in,out] err error field. Must have the correct size.
      * \return worst error found in error field
      */
-//    EOS_Error compute(const EOS_Field& in, EOS_Fields& out, EOS_Error_Field& err) const;
+    EOS_Error compute(const EOS_Field& input, EOS_Fields& outputs, EOS_Error_Field& err) const;
 
-    //! Compute calculations from fields
+    //! Compute one saturation property from one input field
     /*!
-     * \param[in] in input field. Currently supported are : P, h
-     * \param[in,out] out output field . Must have the correct size.
+     * \param[in] input input field. Currently supported are : p (also p_sat, p_lim), T (also T_sat)
+     * \param[in,out] output output field. Must have the correct size.
      * \param[in,out] err error field. Must have the correct size.
      * \return worst error found in error field
      */
-//    EOS_Error compute(const EOS_Field& in, EOS_Field& out, EOS_Error_Field& err) const;
+    EOS_Error compute(const EOS_Field& input, EOS_Field& output, EOS_Error_Field& err) const;
 
-    //! Compute calculations from fields
+    //! Compute properties from two input fields
     /*!
-     * \param[in] in1 input field. Currently supported are : P, h, T
-     * \param[in] in2 input field. Currently supported are : P, h, T
-     * \param[in,out] out output field array. All fields must have the correct size.
+     * \param[in] input1 input field. Currently supported are : p, h, T, s
+     * \param[in] input2 input field. Currently supported are : p, h, T, s
+     * \param[in,out] outputs output field array. All fields must have the correct size.
      * \param[in,out] err error field. Must have the correct size.
      * \return worst error found in error field
      */
-//    EOS_Error compute(const EOS_Field& in1, const EOS_Field& in2, EOS_Fields& out, EOS_Error_Field& err) const;
+    EOS_Error compute(const EOS_Field& input1, const EOS_Field& input2, EOS_Fields& outputs, EOS_Error_Field& err) const;
 
-    //! Compute calculations from fields
+    //! Compute one property from two input fields
     /*!
-     * \param[in] in1 input field. Currently supported are : P, h, T
-     * \param[in] in2 input field. Currently supported are : P, h, T
-     * \param[in,out] out output field . Must have the correct size.
+     * \param[in] input1 input field. Currently supported are : p, h, T, s
+     * \param[in] input2 input field. Currently supported are : p, h, T, s
+     * \param[in,out] output output field. Must have the correct size.
      * \param[in,out] err error field. Must have the correct size.
      * \return worst error found in error field
      */
-//    EOS_Error compute(const EOS_Field& in1, const EOS_Field& in2, EOS_Field& out, EOS_Error_Field& err) const;
+    EOS_Error compute(const EOS_Field& input1, const EOS_Field& input2, EOS_Field& output, EOS_Error_Field& err) const;
 
-    //! Global methods
-    EOS_Error compute_Ph(const char* const property_name, double in1, double in2, double& out) const ;
-    EOS_Error compute_PT(const char* const property_name, double in1, double in2, double& out) const ;
-    EOS_Error compute_Ph(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
-    EOS_Error compute_PT(const char* const property_name, const int property_number, double in1, double in2, double& out) const ;
-    //Saturation methods
-    // T_sat(P)
-    EOS_Internal_Error compute_T_sat_p(double p, double& T_sat) const ;
-
-    EOS_Internal_Error compute_p_sat_T(double T, double& r) const;
-
-    // rho_lsat(P), rho_vsat(P)
-    EOS_Internal_Error compute_rho_l_sat_p(double p, double& rho_l_sat) const ;
-    EOS_Internal_Error compute_rho_v_sat_p(double p, double& rho_v_sat) const ;
-
-    EOS_Internal_Error compute_rho_l_sat_T(double T, double& r) const;
-    EOS_Internal_Error compute_rho_v_sat_T(double T, double& r) const;
-
-    // h_lsat(P), h_vsat(P)
-    EOS_Internal_Error compute_h_l_sat_p(double p, double& h_l_sat) const ;
-    EOS_Internal_Error compute_h_v_sat_p(double p, double& h_v_sat) const ;
-    // cp_lsat(P), cp_vsat(P)
-    EOS_Internal_Error compute_cp_l_sat_p(double p, double& cp_sat) const ;
-    EOS_Internal_Error compute_cp_v_sat_p(double p, double& cp_sat) const ;
-
-    EOS_Internal_Error compute_cp_l_sat_T(double T, double& r) const;
-    EOS_Internal_Error compute_cp_v_sat_T(double T, double& r) const;
-
-    // h_lsat(T), h_vsat(T)
-    EOS_Internal_Error compute_h_l_sat_T(double T, double& h_lsat) const ;
-    EOS_Internal_Error compute_h_v_sat_T(double T, double& h_vsat) const ;
-
-    //ph functions
-    //! Pr(p,h)
-    EOS_Internal_Error compute_pr_ph(double p, double h, double&) const;
-
-    //! h(p,T)
-    EOS_Internal_Error compute_h_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_T_ph(double p, double h, double&) const;
-
-    //! rho(p,T)
-    EOS_Internal_Error compute_rho_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_rho_ph(double p, double h, double&) const;
-
-    //! u(p,T)
-    EOS_Internal_Error compute_u_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_u_ph(double p, double h, double&) const;
-
-    //! s(p,T)
-    EOS_Internal_Error compute_s_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_s_ph(double p, double h, double&) const;
-
-    //! mu(p,T)
-    EOS_Internal_Error compute_mu_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_mu_ph(double p, double h, double&) const;
-
-    //! lambda(p,T)
-    EOS_Internal_Error compute_lambda_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_lambda_ph(double p, double h, double&) const;
-
-    //! cp(p,T)
-    EOS_Internal_Error compute_cp_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_cp_ph(double p, double h, double&) const;
-
-    //! cv(p,T)
-    EOS_Internal_Error compute_cv_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_cv_ph(double p, double h, double&) const;
-
-    //! sigma(p,T)
-    EOS_Internal_Error compute_sigma_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_sigma_ph(double p, double h, double&) const;
-
-    //! w(p,T)
-    EOS_Internal_Error compute_w_pT(double p, double T, double&) const;
-    EOS_Internal_Error compute_w_ph(double p, double h, double&) const;
-
-    //! g(p,T)
-    EOS_Internal_Error compute_g_pT(double p, double T, double& g) const;
-    EOS_Internal_Error compute_g_ph(double p, double h, double& g) const;
-
-    //! f(p,T)
-    EOS_Internal_Error compute_f_pT(double p, double T, double& f) const;
-    EOS_Internal_Error compute_f_ph(double p, double h, double& f) const;
-
-    EOS_Internal_Error compute_beta_pT(double p, double T, double& r) const;
-    EOS_Internal_Error compute_beta_ph(double p, double h, double& r) const;
-
-    //! Gamma(p,h) and Gamma(p,T)
-    EOS_Internal_Error compute_gamma_ph(double p, double h, double& r) const;
-
-    EOS_Internal_Error compute_gamma_pT(double p, double T, double& r) const;
-
-    //! Compute Prandtl(p,T)
-    EOS_Internal_Error compute_pr_pT(double p, double T, double& pr) const;
-
-    //General fluid properties
+    //! General fluid properties, evaluated once at initialisation
     virtual EOS_Internal_Error get_T_min(double&) const;
     virtual EOS_Internal_Error get_T_max(double&) const;
-    virtual EOS_Internal_Error get_p_max(double&) const;
     virtual EOS_Internal_Error get_p_min(double&) const;
+    virtual EOS_Internal_Error get_p_max(double&) const;
     virtual EOS_Internal_Error get_h_min(double&) const;
     virtual EOS_Internal_Error get_h_max(double&) const;
-
     virtual EOS_Internal_Error get_T_crit(double&) const;
     virtual EOS_Internal_Error get_p_crit(double&) const;
     virtual EOS_Internal_Error get_h_crit(double&) const;
-
-    /* Get molar mass in kg/mol */
+    //! Molar mass (kg/mol)
     virtual EOS_Internal_Error get_mm(double&) const;
-
-    /* Partial derivatives (P,H) */
-    virtual EOS_Internal_Error compute_d_T_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_T_d_h_p_ph(double p, double h, double& r) const;
-
-    /*
-     * Not used since too "touchy"
-    virtual EOS_Internal_Error compute_d_rho_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_rho_d_h_p_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_u_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_u_d_h_p_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_s_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_s_d_h_p_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_mu_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_mu_d_h_p_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_lambda_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_lambda_d_h_p_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_cp_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_cp_d_h_p_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_cv_d_p_h_ph(double p, double h, double& r) const;
-    virtual EOS_Internal_Error compute_d_cv_d_h_p_ph(double p, double h, double& r) const;
-    */
-
-    /* Partial derivatives (P,T) */
-    virtual EOS_Internal_Error compute_d_h_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_h_d_T_p_pT(double p, double T, double& r) const;
-
-    /*
-     * Not used since too "touchy"
-    virtual EOS_Internal_Error compute_d_rho_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_rho_d_T_p_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_u_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_u_d_T_p_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_s_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_s_d_T_p_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_mu_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_mu_d_T_p_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_lambda_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_lambda_d_T_p_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_cp_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_cp_d_T_p_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_cv_d_p_T_pT(double p, double T, double& r) const;
-    virtual EOS_Internal_Error compute_d_cv_d_T_p_pT(double p, double T, double& r) const;
-    */
 
     //
     //  Other methods
@@ -282,31 +137,29 @@ namespace NEPTUNE_EOS
     istream& read_On (istream& stream=cin);
     //! see Language
     const Type_Info& get_Type_Info () const;
-
-    //Error metod
+    //! Error method
     void describe_error(const EOS_Internal_Error error, AString & description) const;
 
-
-  protected:
-    //! Abstract handle for low-level Coolprop API
-    long abstract_state_handle_;
-
-    double sat_quality_;
-    //! Handle phase id : phase_unkown, phase_gas or phase_liquid
-    AString handle_phase_;
-    //! Backend
-    AString backend_ ;
-
-    AString fluid_name_; //!< Name of fluid
-    AString fluid_name_phase_ ; //!< Name of fluid with phase
-
-    mutable long   cached_pair_ = -1;
-    mutable double cached_in1_  = std::numeric_limits<double>::quiet_NaN();
-    mutable double cached_in2_  = std::numeric_limits<double>::quiet_NaN();
   private:
-    double molar_mass_; // Molar mass (kg/mol)
-    static int type_Id;
+    //! Record a CoolProp failure for point idata and keep its message for describe_error()
+    void record_failure(EOS_Error_Field& err, int idata, const std::exception& e) const;
 
+    std::unique_ptr<CoolProp::AbstractState> state_ ;
+    bool                liquid_ ;         //!< Phase imposed to the single-phase flashes : liquid or gas
+    AString             fluid_name_ ;     //!< CoolProp fluid name
+    AString             phase_name_ ;     //!< "phase_liquid" or "phase_gas"
+    mutable std::string last_message_ ;   //!< Message of the last CoolProp exception
+
+    double p_min_  ;
+    double p_max_  ;
+    double T_min_  ;
+    double T_max_  ;
+    double h_min_  ;
+    double h_max_  ;
+    double p_crit_ ;
+    double T_crit_ ;
+    double h_crit_ ;  //!< NaN when CoolProp could not evaluate it
+    double mm_     ;
   };
 }
 #endif

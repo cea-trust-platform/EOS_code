@@ -14,2933 +14,827 @@
 *****************************************************************************/
 
 
-// CoolProp headers
-extern "C" {
-#include "CoolPropLib.h"
-}
-#include "DataStructures.h"
+
 
 #include "EOS_CoolProp.hxx"
 
 #include "Language/API/RegisterType.hxx"
-#include "Language/API/Types_Info.hxx"
-#include "EOS/API/EOS_Config.hxx"
-#include <fstream>
+#include <AbstractState.h>
+
+#include <algorithm>
+#include <cassert>
+#include <cmath>
+#include <iostream>
+#include <limits>
+#include <vector>
 
 namespace NEPTUNE_EOS
 {
-  const AString UnknownStr("Unknown");
-  //const AString DefaultBackend_("TTSE&HEOS");
-  const AString DefaultBackend_("HEOS");
-
   // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  static inline void
-  print_error_message_(char message_buffer[])
-  {
-    cerr << "EOS_CoolProp error:" << endl;
-    cerr << "  " << message_buffer << endl;
-  }
-
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  static void
-  get_coolprop_ids_from_eos_(EOS_Fields &fields,
-                             std::vector<long> &coolprop_ids)
-  {
-    assert(static_cast<size_t>(fields.size()) == coolprop_ids.size());
-    for (int i = 0; i < fields.size(); i++)
-    {
-      /* Regular property */
-      switch (fields[i].get_property())
-      {
-      case NEPTUNE::p:
-      {
-        coolprop_ids[i] = (long)CoolProp::iP;
-        break;
-      }
-      case NEPTUNE::T:
-      {
-        coolprop_ids[i] = (long)CoolProp::iT;
-        break;
-      }
-      case NEPTUNE::rho:
-      {
-        coolprop_ids[i] = (long)CoolProp::iDmass;
-        break;
-      }
-      case NEPTUNE::cp:
-      {
-        coolprop_ids[i] = (long)CoolProp::iCpmass;
-        break;
-      }
-      case NEPTUNE::cv:
-      {
-        coolprop_ids[i] = (long)CoolProp::iCvmass;
-        break;
-      }
-      case NEPTUNE::mu:
-      {
-        coolprop_ids[i] = (long)CoolProp::iviscosity;
-        break;
-      }
-      case NEPTUNE::lambda:
-      {
-        coolprop_ids[i] = (long)CoolProp::iconductivity;
-        break;
-      }
-      case NEPTUNE::sigma:
-      {
-        coolprop_ids[i] = (long)CoolProp::isurface_tension;
-        break;
-      }
-      case NEPTUNE::beta:
-      {
-        coolprop_ids[i] = (long)CoolProp::iisobaric_expansion_coefficient;
-        break;
-      }
-      case NEPTUNE::f:
-      case NEPTUNE::g:
-      {
-        coolprop_ids[i] = (long)CoolProp::iGmass;
-        break;
-      }
-      case NEPTUNE::w:
-      {
-        coolprop_ids[i] = (long)CoolProp::ispeed_sound;
-        break;
-      }
-      case NEPTUNE::u:
-      {
-        coolprop_ids[i] = (long)CoolProp::iUmass;
-        break;
-      }
-      case NEPTUNE::s:
-      {
-        coolprop_ids[i] = (long)CoolProp::iSmass;
-        break;
-      }
-      default:
-      {
-        coolprop_ids[i] = (long)CoolProp::INVALID_PARAMETER;
-        break;
-      }
-      case NEPTUNE::p_sat:
-      {
-        coolprop_ids[i] = (long)CoolProp::iP;
-        break;
-      }
-      case NEPTUNE::T_sat:
-      {
-        coolprop_ids[i] = (long)CoolProp::iT;
-        break;
-      }
-      case NEPTUNE::h_l_sat:
-      case NEPTUNE::h_v_sat:
-      {
-        coolprop_ids[i] = (long)CoolProp::iHmass;
-        break;
-      }
-      case NEPTUNE::rho_v_sat:
-      case NEPTUNE::rho_l_sat:
-      {
-        coolprop_ids[i] = (long)CoolProp::iDmass;
-        break;
-      }
-      case NEPTUNE::cp_l_sat:
-      case NEPTUNE::cp_v_sat:
-      {
-        coolprop_ids[i] = (long)CoolProp::iCpmass;
-        break;
-      }
-      case NEPTUNE::p_lim:
-      {
-        coolprop_ids[i] = (long)CoolProp::iP;
-        break;
-      }
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  //! Set the state of the CoolProp handle to (in1, in2)
-  /*!
-   * Every AbstractState_update on abstract_state_handle_ must go through this
-   * function : it is the only one allowed to touch the cache (cached_pair_,
-   * cached_in1_, cached_in2_), which has to describe the state actually held
-   * by the handle.
-   */
-  void EOS_CoolProp::_update_state(const double           in1,
-                                   const double           in2,
-                                   CoolProp::input_pairs  input_pair_key,
-                                   long&                  errcode) const
-  {
-    errcode = 0;
-    char message_buffer[512];
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode, message_buffer, 511);
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return;
-    }
-
-    const bool same_state = (cached_pair_ == (long)input_pair_key)
-                        && (cached_in1_  == in1)
-                        && (cached_in2_  == in2);
-
-    if (same_state)
-      return;
-
-    // The state of the handle is undefined if the update fails
-    _invalidate_state_cache();
-
-    AbstractState_update(abstract_state_handle_,
-                        (long)input_pair_key,
-                        in1, in2,
-                        &errcode, message_buffer, 511);
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return;
-    }
-    cached_pair_ = (long)input_pair_key;
-    cached_in1_  = in1;
-    cached_in2_  = in2;
-  }
-
-  void EOS_CoolProp::_invalidate_state_cache() const
-  {
-    cached_pair_ = -1;
-    cached_in1_  = std::numeric_limits<double>::quiet_NaN();
-    cached_in2_  = std::numeric_limits<double>::quiet_NaN();
-  }
-
-  //! Internal function to compute values from CoolProp
-  //TODO: Switch directly to ABstractState instead of using the handle
-  double  EOS_CoolProp::_update_and_compute_from_pair(const double           in1,
-                                const double           in2,
-                                CoolProp::input_pairs  input_pair_key,
-                                CoolProp::parameters   output_key,
-                                long&                  errcode) const
-  {
-    double retval = -99999.;
-    char message_buffer[512];
-
-    _update_state(in1, in2, input_pair_key, errcode);
-    if (errcode != 0)
-      return retval;
-
-    retval = AbstractState_keyed_output(abstract_state_handle_,
-                                        (long)output_key,
-                                        &errcode,
-                                        message_buffer,
-                                        511);
-
-    if (errcode != 0)
-      print_error_message_(message_buffer);
-
-    return retval;
-  }
-
-  static inline double
-  _compute_param(long                   handle_,
-                 CoolProp::parameters   output_key,
-                 long&                  errcode)
-  {
-    double retval = -99999.;
-    errcode = 0;
-    char message_buffer[512];
-
-    retval = AbstractState_keyed_output(handle_,
-                                        (long)output_key,
-                                        &errcode,
-                                        message_buffer,
-                                        511);
-
-    if (errcode != 0)
-      print_error_message_(message_buffer);
-
-    return retval;
-  }
-
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  template <bool calc_from_PH>
-  static EOS_Error
-  compute_list_from_pair_(long             handle_,
-                          const EOS_Field& in1,
-                          const EOS_Field& in2,
-                          EOS_Fields&      out,
-                          EOS_Error_Field& err)
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    ArrOfInt err_array(in1.size());
-    EOS_Error_Field err_tmp(err_array);
-    int _n_vals = out.size();
-
-    std::vector<long> tmp_ids(_n_vals, -1);
-
-    get_coolprop_ids_from_eos_(out, tmp_ids);
-
-    long _compute_pair_id = -1;
-
-    EOS_Error retval = EOS_Error::good;
-
-    if (calc_from_PH)
-      _compute_pair_id = (long)CoolProp::HmassP_INPUTS;
-    else
-      _compute_pair_id = (long)CoolProp::PT_INPUTS;
-
-    for (int i = 0; i < in1.size(); i++) {
-      AbstractState_update(handle_, _compute_pair_id,
-                           in1[i], in2[i],
-                           &errcode, message_buffer, 511);
-
-      if (errcode == 0) {
-        long _errcode = 0;
-        for (int i_val = 0; i_val < _n_vals; i_val++) {
-          out[i_val][i] =
-            AbstractState_keyed_output(handle_,
-                                       tmp_ids[i_val],
-                                       &_errcode, message_buffer, 511);
-          if (_errcode != 0) {
-            err_array[i] = _errcode;
-            retval = EOS_Error::error;
-          }
-        }
-      }
-      else {
-        err_array[i] = errcode;
-        retval = EOS_Error::error;
-      }
-
-    }
-
-    return retval;
-  }
-
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  template <bool calc_from_P>
-  static EOS_Error
-  compute_list_at_sat_(long             handle_,
-                       const EOS_Field& in,
-                       const double     Q_,
-                       EOS_Fields&      out,
-                       EOS_Error_Field& err)
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    ArrOfInt err_array(in.size());
-    EOS_Error_Field err_tmp(err_array);
-    int _n_vals = out.size();
-
-    std::vector<long> tmp_ids(_n_vals, -1);
-
-    get_coolprop_ids_from_eos_(out, tmp_ids);
-
-    EOS_Error retval = EOS_Error::good;
-
-    for (int i = 0; i < in.size(); i++) {
-      if (calc_from_P) {
-        AbstractState_update(handle_, CoolProp::PQ_INPUTS,
-                             in[i], Q_,
-                             &errcode, message_buffer, 511);
-      }
-      else {
-        AbstractState_update(handle_, CoolProp::QT_INPUTS,
-                             Q_, in[i],
-                             &errcode, message_buffer, 511);
-      }
-      if (errcode == 0) {
-        long _errcode = 0;
-        for (int i_val = 0; i_val < _n_vals; i_val++) {
-          out[i_val][i] =
-            AbstractState_keyed_output(handle_,
-                                       tmp_ids[i_val],
-                                       &_errcode, message_buffer, 511);
-          if (_errcode != 0) {
-            err_array[i] = _errcode;
-            retval = EOS_Error::error;
-          }
-        }
-      }
-      else {
-        err_array[i] = errcode;
-        retval = EOS_Error::error;
-      }
-    }
-
-    return retval;
-  }
-
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  // Number of the first internal error for EOS_Fluid object:
-  static const int EOS_Fluid_Error_base = 2000;
-  // Definition of internal errors in EOS_Fluid:
-  // The following errors leads to EOS_Error=bad
-  static const EOS_Internal_Error COMPUTE_ERROR_ = EOS_Internal_Error(EOS_Fluid_Error_base + 0, EOS_Error::error);
-  static const EOS_Internal_Error NOT_IMPLEMENTED_ = EOS_Internal_Error(EOS_Fluid_Error_base + 1, EOS_Error::bad);
-  static const EOS_Internal_Error WRONG_INPUT_TYPE_ = EOS_Internal_Error(EOS_Fluid_Error_base + 2, EOS_Error::bad);
-
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  EOS_CoolProp::EOS_CoolProp() :
-    abstract_state_handle_(-1),
-    handle_phase_(UnknownStr),
-    backend_(DefaultBackend_),
-    fluid_name_(UnknownStr),
-    fluid_name_phase_(UnknownStr)
-  {
-  }
-
-  // ---------------------------------------------------------------------------
+  // Registration
   // ---------------------------------------------------------------------------
 
   static RegisteredClass& EOS_CoolProp_create()
-  { return *(new EOS_CoolProp());
+  { return *(new EOS_CoolProp()) ;
   }
 
-  int EOS_CoolProp::type_Id = (
+  static const int CoolProp_type_Id =
       RegisterType("EOS_CoolProp", "EOS_Fluid",
                    "Equation Of States for CoolProp",
                    sizeof(EOS_CoolProp),
-                   EOS_CoolProp_create)
-      );
+                   EOS_CoolProp_create) ;
 
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
+  namespace
+  {
+    // -------------------------------------------------------------------------
+    // Internal errors of EOS_CoolProp, numbered from 2000 like the other models
+    // -------------------------------------------------------------------------
 
-  const AString EOS_CoolProp::TMStr("Coolprop");
-  const AString EOS_CoolProp::MVStr("6.4");
+    const int EOS_CoolProp_Error_base = 2000 ;
+    //! CoolProp raised an exception : describe_error() gives its message
+    const EOS_Internal_Error COMPUTE_ERROR_(EOS_CoolProp_Error_base + 0, EOS_Error::error) ;
+    //! The input fields are not a pair CoolProp can flash from
+    const EOS_Internal_Error WRONG_INPUT_TYPE_(EOS_CoolProp_Error_base + 2, EOS_Error::bad) ;
 
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
+    // -------------------------------------------------------------------------
+    // Correspondence between the EOS properties and CoolProp
+    // -------------------------------------------------------------------------
 
-  const AString& EOS_CoolProp::table_name()const
-  { return TMStr ;
+    //! Step of the centred differences : relative, with an absolute floor so
+    //! that it never vanishes near a zero of the variable (reference state).
+    double difference_step(double x)
+    { return std::max(1.0e-3, 1.0e-6 * std::fabs(x)) ;
+    }
+
+    //! CoolProp key of an EOS property, INVALID_PARAMETER when CoolProp has none
+    CoolProp::parameters coolprop_key(int property)
+    { switch (property)
+         { case NEPTUNE::p :
+           case NEPTUNE::p_sat :
+           case NEPTUNE::p_lim :     return CoolProp::iP ;
+           case NEPTUNE::h :
+           case NEPTUNE::h_l_sat :
+           case NEPTUNE::h_v_sat :   return CoolProp::iHmass ;
+           case NEPTUNE::T :
+           case NEPTUNE::T_sat :     return CoolProp::iT ;
+           case NEPTUNE::rho :
+           case NEPTUNE::rho_l_sat :
+           case NEPTUNE::rho_v_sat : return CoolProp::iDmass ;
+           case NEPTUNE::u :         return CoolProp::iUmass ;
+           case NEPTUNE::s :         return CoolProp::iSmass ;
+           case NEPTUNE::mu :        return CoolProp::iviscosity ;
+           case NEPTUNE::lambda :    return CoolProp::iconductivity ;
+           case NEPTUNE::cp :
+           case NEPTUNE::cp_l_sat :
+           case NEPTUNE::cp_v_sat :  return CoolProp::iCpmass ;
+           case NEPTUNE::cv :        return CoolProp::iCvmass ;
+           case NEPTUNE::sigma :     return CoolProp::isurface_tension ;
+           case NEPTUNE::w :         return CoolProp::ispeed_sound ;
+           case NEPTUNE::g :         return CoolProp::iGmass ;
+           case NEPTUNE::f :         return CoolProp::iHelmholtzmass ;
+           case NEPTUNE::pr :        return CoolProp::iPrandtl ;
+           case NEPTUNE::beta :      return CoolProp::iisobaric_expansion_coefficient ;
+           default :                 return CoolProp::INVALID_PARAMETER ;
+         }
+    }
+
+    //! Whether CoolProp differentiates this property analytically
+    //! (AbstractState::first_partial_deriv handles T, p, rho, h, s, u and g)
+    bool has_analytic_derivatives(int property)
+    { switch (property)
+         { case NEPTUNE::p :
+           case NEPTUNE::T :
+           case NEPTUNE::rho :
+           case NEPTUNE::h :
+           case NEPTUNE::s :
+           case NEPTUNE::u :
+           case NEPTUNE::g :  return true ;
+           default :          return false ;
+         }
+    }
+
+    //! Value of a property on the current state
+    double evaluate(CoolProp::AbstractState& state, int property)
+    { if (property == NEPTUNE::gamma)  return state.cpmass() / state.cvmass() ;
+      return state.keyed_output(coolprop_key(property)) ;
+    }
+
+    //! Specific enthalpy at (p, T) on the current state, fallback when CoolProp fails
+    double enthalpy_or(CoolProp::AbstractState& state, double p, double T, double fallback)
+    { try
+         { state.update(CoolProp::PT_INPUTS, p, T) ;
+           return state.hmass() ;
+         }
+      catch (const std::exception&)
+         { return fallback ;
+         }
+    }
+
+    //! CoolProp phase imposed to the single-phase flashes of the object
+    CoolProp::phases imposed_phase(bool liquid)
+    { return liquid ? CoolProp::iphase_liquid : CoolProp::iphase_gas ;
+    }
+
+    //! Vapour quality of the saturated state on the branch of the imposed phase
+    double saturation_quality(bool liquid)
+    { return liquid ? 0.0 : 1.0 ;
+    }
+
+    //! Set the state to (value1, value2) in the imposed phase
+    /*!
+     * CoolProp drops the imposed phase inside some of its flash routines,
+     * so the phase is imposed again before every single-phase update.
+     */
+    void update_state(CoolProp::AbstractState& state, bool liquid,
+                      CoolProp::input_pairs pair, double value1, double value2)
+    { state.specify_phase(imposed_phase(liquid)) ;
+      state.update(pair, value1, value2) ;
+    }
+
+    //! Set the state to (value1, value2) on the saturation curve, the phase left free
+    void update_saturation_state(CoolProp::AbstractState& state,
+                                 CoolProp::input_pairs pair, double value1, double value2)
+    { state.unspecify_phase() ;
+      state.update(pair, value1, value2) ;
+    }
+
+    //! A first derivative d_X_d_Y_Z : X with respect to Y at constant Z
+    struct DerivativeRule
+    { int property ;
+      int quantity ;
+      int wrt ;
+      int constant ;
+    } ;
+
+    const DerivativeRule derivative_rules[] =
+    { { NEPTUNE::d_T_d_p_h,      NEPTUNE::T,      NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_T_d_h_p,      NEPTUNE::T,      NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_rho_d_p_h,    NEPTUNE::rho,    NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_rho_d_h_p,    NEPTUNE::rho,    NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_u_d_p_h,      NEPTUNE::u,      NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_u_d_h_p,      NEPTUNE::u,      NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_s_d_p_h,      NEPTUNE::s,      NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_s_d_h_p,      NEPTUNE::s,      NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_mu_d_p_h,     NEPTUNE::mu,     NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_mu_d_h_p,     NEPTUNE::mu,     NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_lambda_d_p_h, NEPTUNE::lambda, NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_lambda_d_h_p, NEPTUNE::lambda, NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_cp_d_p_h,     NEPTUNE::cp,     NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_cp_d_h_p,     NEPTUNE::cp,     NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_cv_d_p_h,     NEPTUNE::cv,     NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_cv_d_h_p,     NEPTUNE::cv,     NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_sigma_d_p_h,  NEPTUNE::sigma,  NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_sigma_d_h_p,  NEPTUNE::sigma,  NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_w_d_p_h,      NEPTUNE::w,      NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_w_d_h_p,      NEPTUNE::w,      NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_g_d_p_h,      NEPTUNE::g,      NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_g_d_h_p,      NEPTUNE::g,      NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_f_d_p_h,      NEPTUNE::f,      NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_f_d_h_p,      NEPTUNE::f,      NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_pr_d_p_h,     NEPTUNE::pr,     NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_pr_d_h_p,     NEPTUNE::pr,     NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_beta_d_p_h,   NEPTUNE::beta,   NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_beta_d_h_p,   NEPTUNE::beta,   NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_gamma_d_p_h,  NEPTUNE::gamma,  NEPTUNE::p, NEPTUNE::h },
+      { NEPTUNE::d_gamma_d_h_p,  NEPTUNE::gamma,  NEPTUNE::h, NEPTUNE::p },
+      { NEPTUNE::d_rho_d_p_T,    NEPTUNE::rho,    NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_rho_d_T_p,    NEPTUNE::rho,    NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_u_d_T_p,      NEPTUNE::u,      NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_s_d_T_p,      NEPTUNE::s,      NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_s_d_p_T,      NEPTUNE::s,      NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_mu_d_T_p,     NEPTUNE::mu,     NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_mu_d_p_T,     NEPTUNE::mu,     NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_lambda_d_p_T, NEPTUNE::lambda, NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_lambda_d_T_p, NEPTUNE::lambda, NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_cp_d_T_p,     NEPTUNE::cp,     NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_cp_d_p_T,     NEPTUNE::cp,     NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_cv_d_T_p,     NEPTUNE::cv,     NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_cv_d_p_T,     NEPTUNE::cv,     NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_sigma_d_T_p,  NEPTUNE::sigma,  NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_w_d_T_p,      NEPTUNE::w,      NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_w_d_p_T,      NEPTUNE::w,      NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_g_d_T_p,      NEPTUNE::g,      NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_f_d_T_p,      NEPTUNE::f,      NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_pr_d_T_p,     NEPTUNE::pr,     NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_beta_d_T_p,   NEPTUNE::beta,   NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_gamma_d_T_p,  NEPTUNE::gamma,  NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_h_d_T_p,      NEPTUNE::h,      NEPTUNE::T, NEPTUNE::p },
+      { NEPTUNE::d_h_d_p_T,      NEPTUNE::h,      NEPTUNE::p, NEPTUNE::T },
+      { NEPTUNE::d_h_d_p_s,      NEPTUNE::h,      NEPTUNE::p, NEPTUNE::s },
+      { NEPTUNE::d_h_d_s_p,      NEPTUNE::h,      NEPTUNE::s, NEPTUNE::p } } ;
+
+    //! A cross derivative d2_X_d_p_d_h
+    struct CrossRule
+    { int property ;
+      int quantity ;
+    } ;
+
+    const CrossRule cross_rules[] =
+    { { NEPTUNE::d2_T_d_p_d_h,      NEPTUNE::T      },
+      { NEPTUNE::d2_rho_d_p_d_h,    NEPTUNE::rho    },
+      { NEPTUNE::d2_u_d_p_d_h,      NEPTUNE::u      },
+      { NEPTUNE::d2_s_d_p_d_h,      NEPTUNE::s      },
+      { NEPTUNE::d2_mu_d_p_d_h,     NEPTUNE::mu     },
+      { NEPTUNE::d2_lambda_d_p_d_h, NEPTUNE::lambda },
+      { NEPTUNE::d2_cp_d_p_d_h,     NEPTUNE::cp     },
+      { NEPTUNE::d2_cv_d_p_d_h,     NEPTUNE::cv     },
+      { NEPTUNE::d2_sigma_d_p_d_h,  NEPTUNE::sigma  },
+      { NEPTUNE::d2_w_d_p_d_h,      NEPTUNE::w      },
+      { NEPTUNE::d2_g_d_p_d_h,      NEPTUNE::g      },
+      { NEPTUNE::d2_f_d_p_d_h,      NEPTUNE::f      },
+      { NEPTUNE::d2_pr_d_p_d_h,     NEPTUNE::pr     },
+      { NEPTUNE::d2_beta_d_p_d_h,   NEPTUNE::beta   },
+      { NEPTUNE::d2_gamma_d_p_d_h,  NEPTUNE::gamma  } } ;
+
+    //! Saturated branch a saturation property refers to
+    enum Branch
+    { liquid_branch  = 0,  //!< vapour quality 0
+      vapor_branch   = 1,  //!< vapour quality 1
+      imposed_branch = 2   //!< the branch of the phase imposed to the object
+    } ;
+
+    //! A saturation property : quantity read on a saturated state, and its
+    //! derivation order with respect to pressure along the saturation curve
+    struct SaturationRule
+    { int property ;
+      int quantity ;
+      int branch ;
+      int order ;
+    } ;
+
+    const SaturationRule saturation_rules[] =
+    { { NEPTUNE::p_sat,            NEPTUNE::p,   imposed_branch, 0 },
+      { NEPTUNE::T_sat,            NEPTUNE::T,   imposed_branch, 0 },
+      { NEPTUNE::rho_l_sat,        NEPTUNE::rho, liquid_branch,  0 },
+      { NEPTUNE::rho_v_sat,        NEPTUNE::rho, vapor_branch,   0 },
+      { NEPTUNE::h_l_sat,          NEPTUNE::h,   liquid_branch,  0 },
+      { NEPTUNE::h_v_sat,          NEPTUNE::h,   vapor_branch,   0 },
+      { NEPTUNE::cp_l_sat,         NEPTUNE::cp,  liquid_branch,  0 },
+      { NEPTUNE::cp_v_sat,         NEPTUNE::cp,  vapor_branch,   0 },
+      { NEPTUNE::d_T_sat_d_p,      NEPTUNE::T,   imposed_branch, 1 },
+      { NEPTUNE::d_rho_l_sat_d_p,  NEPTUNE::rho, liquid_branch,  1 },
+      { NEPTUNE::d_rho_v_sat_d_p,  NEPTUNE::rho, vapor_branch,   1 },
+      { NEPTUNE::d_h_l_sat_d_p,    NEPTUNE::h,   liquid_branch,  1 },
+      { NEPTUNE::d_h_v_sat_d_p,    NEPTUNE::h,   vapor_branch,   1 },
+      { NEPTUNE::d_cp_l_sat_d_p,   NEPTUNE::cp,  liquid_branch,  1 },
+      { NEPTUNE::d_cp_v_sat_d_p,   NEPTUNE::cp,  vapor_branch,   1 },
+      { NEPTUNE::d2_T_sat_d_p_d_p, NEPTUNE::T,   imposed_branch, 2 } } ;
+
+    // -------------------------------------------------------------------------
+    // Evaluation plan of a two-input compute
+    // -------------------------------------------------------------------------
+
+    //! How one output of a two-input compute is obtained from the state
+    struct Output
+    { enum Kind
+         { value,                  //!< property of the state
+           analytic,               //!< first_partial_deriv on the state
+           cross,                  //!< second_partial_deriv d2/dp.dh on the state
+           difference,             //!< centred difference on one perturbed input
+           saturation,             //!< property of the saturated state at the same pressure
+           saturation_difference,  //!< centred difference of that property in pressure
+           zero                    //!< identically zero
+         } ;
+      int                  index ;      //!< position in the output fields
+      Kind                 kind ;
+      int                  quantity ;   //!< EOS property to evaluate
+      CoolProp::parameters wrt ;        //!< derivation variable (analytic)
+      CoolProp::parameters constant ;   //!< variable held constant (analytic)
+      int                  perturbed ;  //!< input perturbed by the difference : 0 or 1
+    } ;
+
+    //! Classify an output of a two-input compute
+    /*!
+     * The surface tension is a property of the saturation curve : it is read
+     * on the saturated state at the input pressure, depends on nothing else,
+     * and so has a zero derivative with respect to h or T.
+     * \param[in] property EOS property of the output
+     * \param[in] input    EOS properties of the two inputs
+     * \param[in] p_input  index of the pressure input, -1 if none
+     * \param[out] out     plan entry, filled when the function returns true
+     * \return false when the output must be left to the EOS_Fluid implementation
+     */
+    bool classify_output(int property, const int input[2], int p_input, Output& out)
+    { if ( (property < NEPTUNE::p) || (property > NEPTUNE::lastTProperty) )  return false ;
+      out.quantity  = property ;
+      out.perturbed = -1 ;
+      out.wrt       = CoolProp::INVALID_PARAMETER ;
+      out.constant  = CoolProp::INVALID_PARAMETER ;
+
+      if (property == NEPTUNE::sigma)
+         { if (p_input < 0)  return false ;
+           out.kind = Output::saturation ;
+           return true ;
+         }
+      if ( (property == NEPTUNE::gamma) || (coolprop_key(property) != CoolProp::INVALID_PARAMETER) )
+         { out.kind = Output::value ;
+           return true ;
+         }
+
+      for (const DerivativeRule& rule : derivative_rules)
+         { if (rule.property != property)  continue ;
+           out.quantity = rule.quantity ;
+           if (rule.quantity == NEPTUNE::sigma)
+              { if (rule.wrt != NEPTUNE::p)
+                   { out.kind = Output::zero ;
+                     return true ;
+                   }
+                if (p_input < 0)  return false ;
+                out.kind = Output::saturation_difference ;
+                return true ;
+              }
+           if (has_analytic_derivatives(rule.quantity))
+              { out.kind     = Output::analytic ;
+                out.wrt      = coolprop_key(rule.wrt) ;
+                out.constant = coolprop_key(rule.constant) ;
+                return true ;
+              }
+           // Centred difference : the derivation variable must be one input
+           // and the variable held constant the other one
+           for (int k = 0; k < 2; k++)
+              { if ( (input[k] == rule.wrt) && (input[1-k] == rule.constant) )
+                   { out.kind      = Output::difference ;
+                     out.perturbed = k ;
+                     return true ;
+                   }
+              }
+           return false ;
+         }
+
+      for (const CrossRule& rule : cross_rules)
+         { if (rule.property != property)  continue ;
+           out.quantity = rule.quantity ;
+           if (rule.quantity == NEPTUNE::sigma)
+              { out.kind = Output::zero ;
+                return true ;
+              }
+           if (!has_analytic_derivatives(rule.quantity))  return false ;
+           out.kind = Output::cross ;
+           return true ;
+         }
+      return false ;
+    }
+
+    // -------------------------------------------------------------------------
+    // Evaluation plan of a saturation compute
+    // -------------------------------------------------------------------------
+
+    //! How one output of a saturation compute is obtained from a saturated state
+    struct SaturationOutput
+    { enum Kind
+         { value,       //!< property of the saturated state
+           analytic,    //!< first_saturation_deriv on the saturated state
+           second,      //!< second_saturation_deriv on the saturated state
+           difference   //!< centred difference in pressure along the saturation curve
+         } ;
+      int  index ;      //!< position in the output fields
+      Kind kind ;
+      int  quantity ;   //!< EOS property to evaluate
+      int  branch ;     //!< liquid_branch or vapor_branch
+    } ;
+
+    //! Classify an output of a saturation compute
+    /*!
+     * \param[in] property  EOS property of the output
+     * \param[in] imposed   branch of the phase imposed to the object
+     * \param[out] out      plan entry, filled when the function returns true
+     * \return false when the output must be left to the EOS_Fluid implementation
+     */
+    bool classify_saturation_output(int property, int imposed, SaturationOutput& out)
+    { for (const SaturationRule& rule : saturation_rules)
+         { if (rule.property != property)  continue ;
+           out.quantity = rule.quantity ;
+           out.branch   = (rule.branch == imposed_branch) ? imposed : rule.branch ;
+           switch (rule.order)
+              { case 0 :  out.kind = SaturationOutput::value ;  break ;
+                case 1 :  out.kind = has_analytic_derivatives(rule.quantity) ? SaturationOutput::analytic
+                                                                             : SaturationOutput::difference ;  break ;
+                default : out.kind = SaturationOutput::second ; break ;
+              }
+           return true ;
+         }
+      return false ;
+    }
   }
 
   // ---------------------------------------------------------------------------
+  // Construction and initialisation
   // ---------------------------------------------------------------------------
 
-  const AString& EOS_CoolProp::version_name()const
-  { return MVStr ;
+  EOS_CoolProp::EOS_CoolProp() :
+    liquid_(true),
+    fluid_name_("Unknown"),
+    phase_name_("Unknown"),
+    p_min_(0.0), p_max_(0.0), T_min_(0.0), T_max_(0.0),
+    h_min_(0.0), h_max_(0.0), p_crit_(0.0), T_crit_(0.0),
+    h_crit_(std::numeric_limits<double>::quiet_NaN()),
+    mm_(0.0)
+  {
+  }
+
+  EOS_CoolProp::~EOS_CoolProp() = default ;
+
+  int EOS_CoolProp::init(const Strings& strings)
+  { if (strings.size() != 2)
+       { cerr << " EOS_CoolProp::init(strings) : Reference with size " << strings.size()
+              << " is not implemented for EOS_CoolProp ! " << endl ;
+         return EOS_Error::error ;
+       }
+    fluid_name_ = strings[0] ;
+    phase_name_ = strings[1] ;
+
+    if (phase_name_ == "phase_liquid")
+       liquid_ = true ;
+    else if (phase_name_ == "phase_gas")
+       liquid_ = false ;
+    else
+       { cerr << " EOS_CoolProp::init(strings) : unknown phase " << phase_name_.aschar()
+              << " (expected phase_liquid or phase_gas)" << endl ;
+         return EOS_Error::error ;
+       }
+
+    try
+       { state_.reset(CoolProp::AbstractState::factory("HEOS", fluid_name_.aschar())) ;
+         p_min_  = state_->p_triple() ;
+         p_max_  = state_->pmax() ;
+         T_min_  = state_->Tmin() ;
+         T_max_  = state_->Tmax() ;
+         p_crit_ = state_->p_critical() ;
+         T_crit_ = state_->T_critical() ;
+         mm_     = state_->molar_mass() ;
+       }
+    catch (const std::exception& e)
+       { cerr << " EOS_CoolProp::init(strings) : " << e.what() << endl ;
+         state_.reset() ;
+         return EOS_Error::error ;
+       }
+
+    // Enthalpy bounds. The flashes at (p_max, T_max) and at the critical point
+    // only converge with the phase left free. The one at (p_min, T_min) lies on
+    // the saturation curve and only converges with the phase imposed, which
+    // also selects the bound relevant to the phase of this object.
+    h_max_  = enthalpy_or(*state_, p_max_, T_max_, 1.0e20) ;
+    h_crit_ = enthalpy_or(*state_, p_crit_, T_crit_, std::numeric_limits<double>::quiet_NaN()) ;
+    state_->specify_phase(imposed_phase(liquid_)) ;
+    h_min_  = enthalpy_or(*state_, p_min_, T_min_, 1.0) ;
+
+    return EOS_Error::good ;
+  }
+
+  int EOS_CoolProp::init(const Strings&, const Strings&)
+  { return EOS_Error::error ;
+  }
+
+  int EOS_CoolProp::init(const Strings&, const Strings&,
+                         const double, const double, const double, const double)
+  { return EOS_Error::error ;
   }
 
   // ---------------------------------------------------------------------------
+  // Description
   // ---------------------------------------------------------------------------
 
-  ostream& EOS_CoolProp::print_On (ostream& stream) const
-  { return stream;
+  const AString& EOS_CoolProp::table_name() const
+  { static const AString TMStr("Coolprop") ;
+    return TMStr ;
   }
 
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  istream& EOS_CoolProp::read_On (istream& stream)
-  { return stream;
+  const AString& EOS_CoolProp::version_name() const
+  { static const AString MVStr("6.4") ;
+    return MVStr ;
   }
 
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
+  const AString& EOS_CoolProp::phase_name() const
+  { return phase_name_ ;
+  }
 
   const AString& EOS_CoolProp::fluid_name() const
   { return fluid_name_ ;
   }
 
-  // ---------------------------------------------------------------------------
-  // ---------------------------------------------------------------------------
-
-  const AString& EOS_CoolProp::equation_name()const
-  { return fluid_name_phase_ ;
+  const AString& EOS_CoolProp::equation_name() const
+  { return fluid_name_ ;
   }
 
-//  EOS_CoolProp::EOS_CoolProp(const EOS_CoolProp&)
-//  { assert(0);
-//  }
-
-  EOS_CoolProp::~EOS_CoolProp()
-  {
-    if (abstract_state_handle_ != -1) {
-      long errcode = 0;
-      char message_buffer[512];
-      AbstractState_free(abstract_state_handle_,
-                         &errcode, message_buffer, 511);
-      abstract_state_handle_ = -1;
-    }
+  ostream& EOS_CoolProp::print_On(ostream& stream) const
+  { return stream ;
   }
 
-  const Type_Info& EOS_CoolProp::get_Type_Info () const
-  { return (Types_Info::instance())[type_Id];
+  istream& EOS_CoolProp::read_On(istream& stream)
+  { return stream ;
   }
 
-  const AString& EOS_CoolProp::phase_name()const
-  { return handle_phase_;
+  const Type_Info& EOS_CoolProp::get_Type_Info() const
+  { return (Types_Info::instance())[CoolProp_type_Id] ;
   }
 
-  void
-  EOS_CoolProp::describe_error(const EOS_Internal_Error error,
-                               AString& description) const
-  {
-    if (error == EOS_Internal_Error::OK)
-      description = "OK";
+  void EOS_CoolProp::describe_error(const EOS_Internal_Error error, AString& description) const
+  { if (error == COMPUTE_ERROR_)
+       description = AString(last_message_.empty() ? "CoolProp : computation failed" : last_message_.c_str()) ;
+    else if (error == WRONG_INPUT_TYPE_)
+       description = AString("EOS_CoolProp : unsupported input properties") ;
     else
-      description = "Something went horribly wrong in CoolProp...";
+       EOS_Fluid::describe_error(error, description) ;
   }
 
-  int EOS_CoolProp::init(const Strings& strings)
-  { EOS_Internal_Error err ;
-    AString desc_err ;
+  // ---------------------------------------------------------------------------
+  // General fluid properties
+  // ---------------------------------------------------------------------------
 
-    // test strings
-    int sz_strings = strings.size();
-    if (sz_strings != 2)
-       { cerr << " EOS_CoolProp::init(strings) : Reference with size " << sz_strings
-              << " is not implemented for EOS_CoolProp ! " << endl;
-         assert(0) ;
-         exit(-1) ;
-         return EOS_Error::error ;
+  EOS_Internal_Error EOS_CoolProp::get_p_min(double& p_min) const
+  { p_min = p_min_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_p_max(double& p_max) const
+  { p_max = p_max_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_T_min(double& T_min) const
+  { T_min = T_min_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_T_max(double& T_max) const
+  { T_max = T_max_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_h_min(double& h_min) const
+  { h_min = h_min_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_h_max(double& h_max) const
+  { h_max = h_max_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_p_crit(double& p_crit) const
+  { p_crit = p_crit_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_T_crit(double& T_crit) const
+  { T_crit = T_crit_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_h_crit(double& h_crit) const
+  { if (std::isnan(h_crit_))  return COMPUTE_ERROR_ ;
+    h_crit = h_crit_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  EOS_Internal_Error EOS_CoolProp::get_mm(double& mm) const
+  { mm = mm_ ;
+    return EOS_Internal_Error::OK ;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Error reporting
+  // ---------------------------------------------------------------------------
+
+  void EOS_CoolProp::record_failure(EOS_Error_Field& err, int idata, const std::exception& e) const
+  { err.set(idata, COMPUTE_ERROR_) ;
+    last_message_ = std::string("CoolProp : ") + e.what() ;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Field methods
+  // ---------------------------------------------------------------------------
+
+  EOS_Error EOS_CoolProp::compute(const EOS_Field& input, EOS_Fields& outputs, EOS_Error_Field& err) const
+  { const int size = input.size() ;
+    assert(err.size() == size) ;
+    err = EOS_Internal_Error::OK ;
+
+    const CoolProp::parameters input_key = coolprop_key(input.get_property_number()) ;
+    if ( !state_ || ((input_key != CoolProp::iP) && (input_key != CoolProp::iT)) )
+       { err = WRONG_INPUT_TYPE_ ;
+         return err.find_worst_error().generic_error() ;
+       }
+    // Argument order CoolProp expects for (input, vapour quality)
+    int first = 0, second = 1 ;
+    const CoolProp::input_pairs pair = CoolProp::generate_update_pair(input_key, 0, CoolProp::iQ, 1, first, second) ;
+    const int imposed = liquid_ ? liquid_branch : vapor_branch ;
+
+    // Sort the outputs once for the whole field : which saturated states are
+    // needed, and what is read on each of them
+    std::vector<SaturationOutput> plan ;
+    std::vector<int>              delegated ;
+    bool needed[2]     = { false, false } ;
+    bool difference[2] = { false, false } ;
+    for (int i = 0; i < outputs.size(); i++)
+       { SaturationOutput out ;
+         out.index = i ;
+         if (!classify_saturation_output(outputs[i].get_property_number(), imposed, out))
+            { delegated.push_back(i) ;
+              continue ;
+            }
+         plan.push_back(out) ;
+         needed[out.branch] = true ;
+         if (out.kind == SaturationOutput::difference)  difference[out.branch] = true ;
        }
 
-    // fluide name : FluidStr
-    fluid_name_ = AString(strings[0]) ;
-
-    // Check for phase type
-    handle_phase_ = AString(strings[1]);
-
-    if (handle_phase_ == "phase_gas")
-      sat_quality_ = 1;
-    else
-      sat_quality_ = 0;
-
-
-    // equation of state name : EosStr
-    fluid_name_phase_ =  fluid_name_;
-
-    // Get handles
-
-    long errcode = 0;
-    char message_buffer[512];
-    _invalidate_state_cache();
-    abstract_state_handle_ = AbstractState_factory(backend_.aschar(),
-                                                   fluid_name_.aschar(),
-                                                   &errcode,
-                                                   message_buffer,
-                                                   511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return EOS_Error::error;
-    }
-
-    errcode = 0;
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return EOS_Error::error;
-    }
-
-    /* Initialize molar_mass */
-
-    molar_mass_ = AbstractState_keyed_output(abstract_state_handle_,
-                                             (long)CoolProp::imolar_mass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return EOS_Error::error;
-    }
-
-    //[Patch]Init ph plan for v6.4.3 of coolprop, if not done get_h_max(h_max) don't work.
-    double rho;
-    double p=1.0e7;
-    double h=800000;
-    compute_rho_ph(p, h, rho);
-
-    return EOS_Error::good ;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  int EOS_CoolProp::init([[maybe_unused]] const Strings& strings, [[maybe_unused]] const Strings& values)
-  {
-    // avoid warnings
-    throw std::runtime_error("not implemented yet...");
-    return EOS_Error::error;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  int EOS_CoolProp::init([[maybe_unused]]const Strings& strings, [[maybe_unused]]const Strings& values,
-                         [[maybe_unused]]const double href0, [[maybe_unused]]const double sref0, [[maybe_unused]]const double tref0, [[maybe_unused]]const double pref0)
-  {
-    // avoid warnings
-    throw std::runtime_error("not implemented yet...");
-    return EOS_Error::error;
-  }
-
-  // ---------------------------------------------------------------------------
-  //! Compute several outputs based on a single input
-  //
-  /*
-  EOS_Error EOS_CoolProp::compute(const EOS_Field& in,
-                                  EOS_Fields&      out,
-                                  EOS_Error_Field& err) const
-  {
-    assert(abstract_state_handle_ != -1);
-
-    if ( in.get_property() == NEPTUNE::p ||
-         in.get_sat_property() == NEPTUNE::p_sat ||
-         in.get_lim_property() == NEPTUNE::p_lim) {
-      return compute_list_at_sat_<true>(abstract_state_handle_,
-                                        in, sat_quality_,
-                                        out, err);
-    }
-    else if (in.get_property() == NEPTUNE::T ||
-             in.get_sat_property() == NEPTUNE::T_sat) {
-      return compute_list_at_sat_<false>(abstract_state_handle_,
-                                         in, sat_quality_,
-                                         out, err);
-    }
-    else
-      return EOS_Error::error;
-  }
-  */
-
-  // ---------------------------------------------------------------------------
-  //! Compute on output based on a single input
-  // ---------------------------------------------------------------------------
-  /*
-  EOS_Error EOS_CoolProp::compute(const EOS_Field& in,
-                                  EOS_Field& out,
-                                  EOS_Error_Field& err) const
-  {
-    int compute_from_p = 0;
-    int compute_from_T = 0;
-    if ( in.get_property() == NEPTUNE::p ||
-         in.get_sat_property() == NEPTUNE::p_sat ||
-         in.get_lim_property() == NEPTUNE::p_lim) {
-      compute_from_p = 1;
-    }
-    else if (in.get_property() == NEPTUNE::T ||
-             in.get_sat_property() == NEPTUNE::T_sat) {
-      compute_from_T = 1;
-    }
-    else {
-      err = EOS_Internal_Error::NOT_IMPLEMENTED;
-      return EOS_Error::error;
-    }
-
-    EOS_saturprop propsat = out.get_sat_property();
-
-    const int _size = p.size();
-
-    if (compute_from_p) {
-      switch (propsat) {
-        case NEPTUNE::rho_l_sat:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_rho_l_sat_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::rho_v_sat:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_rho_v_sat_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::h_l_sat:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_h_l_sat_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::h_v_sat:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_h_v_sat_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::cp_l_sat:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_cp_l_sat_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::cp_v_sat:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_cp_v_sat_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::T_sat:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_T_sat_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d_rho_l_sat_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d_rho_l_sat_d_p_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d_rho_v_sat_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d_rho_v_sat_d_p_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d_h_l_sat_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d_h_l_sat_d_p_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d_h_v_sat_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d_h_v_sat_d_p_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d_cp_l_sat_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d_cp_l_sat_d_p_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d_cp_v_sat_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d_cp_v_sat_d_p_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d_T_sat_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d_T_sat_d_p_p(in[i], out[i]));
-            break;
-          }
-        case NEPTUNE::d2_T_sat_d_p_d_p:
-          {
-            for (int i = 0; i < _size; i++)
-              err.set(i, compute_d2_T_sat_d_p_d_p_p(in[i], out[i]));
-            break;
-          }
-      }
-    }
-    else if (compute_from_T) {
-    }
-
-    EOS_Fields _fields(1);
-    _fields[0] = out;
-    return compute(in, _fields, err);
-  }
-*/
-
-  // ---------------------------------------------------------------------------
-  //! Compute several outputs based on two inputs (P/T or P/H)
-  // ---------------------------------------------------------------------------
-
-  /*
-  EOS_Error EOS_CoolProp::compute(const EOS_Field& in1,
-                                  const EOS_Field& in2,
-                                  EOS_Fields&      out,
-                                  EOS_Error_Field& err) const
-  {
-    assert(abstract_state_handle_ != -1);
-
-    // CoolProp inputs are (P,T) and (H,P) !
-    if ( (in1.get_property() == NEPTUNE::p && in2.get_property() == NEPTUNE::h)) {
-      return compute_list_from_pair_<true>(abstract_state_handle_, in2, in1, out, err);
-    }
-    else if ((in2.get_property() == NEPTUNE::p && in1.get_property() == NEPTUNE::h)) {
-      return compute_list_from_pair_<true>(abstract_state_handle_, in1, in2, out, err);
-    }
-    else if ((in1.get_property() == NEPTUNE::p && in2.get_property() == NEPTUNE::T)) {
-      return compute_list_from_pair_<false>(abstract_state_handle_, in1, in2, out, err);
-    }
-    else if ((in2.get_property() == NEPTUNE::p && in1.get_property() == NEPTUNE::T)) {
-      return compute_list_from_pair_<false>(abstract_state_handle_, in2, in1, out, err);
-    }
-    else {
-      return EOS_Error::error;
-    }
-  }
-  */
-
-  /*
-  EOS_Error EOS_CoolProp::compute(const EOS_Field& in1,
-                                  const EOS_Field& in2,
-                                  EOS_Field&      out,
-                                  EOS_Error_Field& err) const
-  {
-    EOS_Fields _fields(1);
-    _fields[0] = out;
-    return compute(in1, in2, _fields, err);
-  }
-  */
-
-  // ---------------------------------------------------------------------------
-  //! Dedicated functions for specific properties
-  // ---------------------------------------------------------------------------
-
-  EOS_Error
-  EOS_CoolProp::compute_Ph(const char* const property_name,
-                           double in1, double in2, double& out) const
-  {
-    const int property_number = gen_property_number(property_name);
-    return EOS_CoolProp::compute_Ph(property_name,property_number,in1,in2,out);
-  }
-  
-  EOS_Error
-  EOS_CoolProp::compute_Ph(const char* const property_name,
-                           const int property_number,
-                           double in1, double in2, double& out) const
-  {
-    
-    int ierr;
-    EOS_Error er;
-
-    EOS_Field fP("P", "P",NEPTUNE::p, 1, &in1);
-    EOS_Field fh("h", "h",NEPTUNE::h, 1, &in2);
-    EOS_Field fout(property_name,property_name,property_number,1,&out);
-    EOS_Error_Field ferr(1, &ierr);
-
-    er = compute(fP, fh, fout, ferr);
-    return er;
-  }
-
-
-  EOS_Error
-  EOS_CoolProp::compute_PT(const char* const property_name,
-                           double in1, double in2, double& out) const
-  {
-    const int property_number = gen_property_number(property_name);
-    return EOS_CoolProp::compute_PT(property_name,property_number,in1,in2,out);
-  }
-
-  EOS_Error
-  EOS_CoolProp::compute_PT(const char* const property_name,
-                           const int property_number,
-                           double in1, double in2, double& out) const
-  {
-    int ierr;
-    EOS_Error er;
-
-    EOS_Field fP("P", "P",NEPTUNE::p, 1, &in1);
-    EOS_Field fT("T", "T",NEPTUNE::T, 1, &in2);
-    EOS_Field fout(property_name,property_name,property_number,1,&out); 
-    EOS_Error_Field ferr(1, &ierr);
-
-    er = compute(fP, fT, fout, ferr);
-    return er;
-  }
-
-  // ---------------------------------------------------------------------------
-  //! Dedicated functions for specific properties
-  // ---------------------------------------------------------------------------
-  //
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_pr_ph(double p, double h, double& pr) const
-  {
-    long err_ = 0;
-
-    pr = _update_and_compute_from_pair(
-                                       h, p,
-                                       CoolProp::HmassP_INPUTS,
-                                       CoolProp::iPrandtl,
-                                       err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_pr_pT(double p, double T, double& pr) const
-  {
-    long err_ = 0;
-
-    pr = _update_and_compute_from_pair(
-                                       p, T,
-                                       CoolProp::PT_INPUTS,
-                                       CoolProp::iPrandtl,
-                                       err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_h_pT(double p, double T, double& h) const
-  {
-    long err_ = 0;
-
-    h = _update_and_compute_from_pair(p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iHmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_T_ph(double p, double h, double& T) const
-  {
-    long err_ = 0;
-
-    T = _update_and_compute_from_pair(h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iT,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_gamma_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    double cv = _update_and_compute_from_pair(h, p,
-                                              CoolProp::HmassP_INPUTS,
-                                              CoolProp::iCvmass, err_);
-
-    if (cv <= 0.e0 || err_ != 0) return COMPUTE_ERROR_;
-
-    /* No need to reset h,p */
-    double cp = _compute_param(abstract_state_handle_,
-                               CoolProp::iCpmass,
-                               err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    r = cp / cv;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_gamma_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    double cv = _update_and_compute_from_pair(p, T,
-                                              CoolProp::PT_INPUTS,
-                                              CoolProp::iCvmass, err_);
-
-    if (cv <= 0.e0 || err_ != 0) return COMPUTE_ERROR_;
-
-    double cp = _compute_param(abstract_state_handle_,
-                               CoolProp::iCpmass,
-                               err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    r = cp / cv;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_rho_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iDmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_rho_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iDmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_u_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iUmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_u_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iUmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_s_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iSmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_s_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iSmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_mu_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iviscosity,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_mu_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iviscosity,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_lambda_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iconductivity,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_lambda_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iconductivity,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cp_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iCpmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cp_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iCpmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cv_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iCvmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cv_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iCvmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_sigma_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-    (void)T;
-    r = _update_and_compute_from_pair(
-                                      p, sat_quality_,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::isurface_tension,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_sigma_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-    (void)h;//h not used
-    r = _update_and_compute_from_pair(
-                                      p, sat_quality_,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::isurface_tension,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_w_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::ispeed_sound,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_w_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::ispeed_sound,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_g_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iGmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_g_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iGmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_f_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iGmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_f_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iGmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_beta_pT(double p, double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, T,
-                                      CoolProp::PT_INPUTS,
-                                      CoolProp::iisobaric_expansion_coefficient,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_beta_ph(double p, double h, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      h, p,
-                                      CoolProp::HmassP_INPUTS,
-                                      CoolProp::iisobaric_expansion_coefficient,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_rho_l_sat_p(double p, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, 0.,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::iDmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_rho_l_sat_T(double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      0., T,
-                                      CoolProp::QT_INPUTS,
-                                      CoolProp::iDmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_rho_v_sat_p(double p, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, 1.,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::iDmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_rho_v_sat_T(double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      1., T,
-                                      CoolProp::QT_INPUTS,
-                                      CoolProp::iDmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_h_l_sat_p(double p, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, 0.,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::iHmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_h_l_sat_T(double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      0., T,
-                                      CoolProp::QT_INPUTS,
-                                      CoolProp::iHmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_h_v_sat_p(double p, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, 1.,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::iHmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_h_v_sat_T(double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      1., T,
-                                      CoolProp::QT_INPUTS,
-                                      CoolProp::iHmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cp_l_sat_p(double p, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, 0.,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::iCpmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cp_l_sat_T(double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      0., T,
-                                      CoolProp::QT_INPUTS,
-                                      CoolProp::iCpmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cp_v_sat_p(double p, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, 1.,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::iCpmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_cp_v_sat_T(double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      1., T,
-                                      CoolProp::QT_INPUTS,
-                                      CoolProp::iCpmass,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_T_sat_p(double p, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      p, sat_quality_,
-                                      CoolProp::PQ_INPUTS,
-                                      CoolProp::iT,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_p_sat_T(double T, double& r) const
-  {
-    long err_ = 0;
-
-    r = _update_and_compute_from_pair(
-                                      sat_quality_, T,
-                                      CoolProp::QT_INPUTS,
-                                      CoolProp::iP,
-                                      err_);
-
-    if (err_ != 0) return COMPUTE_ERROR_;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_p_min(double& p_min) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    /* Trivial output, doesnt need a state set ! */
-    p_min = AbstractState_keyed_output(abstract_state_handle_,
-                                       (long)CoolProp::iP_min,
-                                       &errcode,
-                                       message_buffer,
-                                       511);
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    if (p_min < 1000.)
-      p_min = 1000;
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_p_max(double& p_max) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    /* Trivial output, doesnt need a state set ! */
-    p_max = AbstractState_keyed_output(abstract_state_handle_,
-                                       (long)CoolProp::iP_max,
-                                       &errcode,
-                                       message_buffer,
-                                       511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_T_min(double& T_min) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    /* Trivial output, doesnt need a state set ! */
-    T_min = AbstractState_keyed_output(abstract_state_handle_,
-                                       (long)CoolProp::iT_min,
-                                       &errcode,
-                                       message_buffer,
-                                       511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_T_max(double& T_max) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    /* Trivial output, doesnt need a state set ! */
-    T_max = AbstractState_keyed_output(abstract_state_handle_,
-                                       (long)CoolProp::iT_max,
-                                       &errcode,
-                                       message_buffer,
-                                       511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_h_min(double& h_min) const
-  {
-    EOS_Internal_Error err_ = EOS_Internal_Error::OK;
-
-    /* Trivial output, doesnt need a state set ! */
-    double T;
-    err_ = get_T_min(T);
-
-    if (err_ != EOS_Internal_Error::OK)
-      return err_;
-
-    /* Trivial output, doesnt need a state set ! */
-    double P;
-    err_ = get_p_min(P);
-
-    if (err_ != EOS_Internal_Error::OK)
-      return err_;
-
-    err_ = compute_h_pT(P, T, h_min);
-    if (err_ != EOS_Internal_Error::OK) {
-      h_min = 1.;
-      err_ = EOS_Internal_Error::OK;
-    }
-
-    return err_;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_h_max(double& h_max) const
-  {
-    EOS_Internal_Error err_ = EOS_Internal_Error::OK;
-
-    /* Trivial output, doesnt need a state set ! */
-    double T;
-    err_ = get_T_max(T);
-
-    if (err_ != EOS_Internal_Error::OK)
-      return err_;
-
-    /* Trivial output, doesnt need a state set ! */
-    double P;
-    err_ = get_p_max(P);
-
-    if (err_ != EOS_Internal_Error::OK)
-      return err_;
-
-    err_ = compute_h_pT(P*0.95, T*0.95, h_max);
-    if (err_ != EOS_Internal_Error::OK) {
-      h_max = 1.e20;
-      err_ = EOS_Internal_Error::OK;
-    }
-
-    return err_;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_p_crit(double& p_crit) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    /* Trivial output, doesnt need a state set ! */
-    p_crit = AbstractState_keyed_output(abstract_state_handle_,
-                                       (long)CoolProp::iP_critical,
-                                       &errcode,
-                                       message_buffer,
-                                       511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_T_crit(double& T_crit) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    /* Trivial output, doesnt need a state set ! */
-    T_crit = AbstractState_keyed_output(abstract_state_handle_,
-                                       (long)CoolProp::iT_critical,
-                                       &errcode,
-                                       message_buffer,
-                                       511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_h_crit(double& h_crit) const
-  {
-    EOS_Internal_Error err_ = EOS_Internal_Error::OK;
-
-    /* Trivial output, doesnt need a state set ! */
-    double T;
-    err_ = get_T_crit(T);
-
-    if (err_ != EOS_Internal_Error::OK)
-      return err_;
-
-    /* Trivial output, doesnt need a state set ! */
-    double P;
-    err_ = get_p_crit(P);
-
-    if (err_ != EOS_Internal_Error::OK)
-      return err_;
-
-    err_ = compute_h_pT(P, T, h_crit);
-
-    return err_;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::get_mm(double& mm) const
-  {
-    /* Molar moss does not depend on parameters */
-    mm = molar_mass_;
-    return EOS_Internal_Error::OK;
-  }
-
-  /* ------------------------------------------------------------------------ */
-  /* Partial derivative functions (P,H)*/
-  /* ------------------------------------------------------------------------ */
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_T_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    _update_state(h, p, CoolProp::HmassP_INPUTS, errcode);
-    if (errcode != 0) return COMPUTE_ERROR_;
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_T_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    _update_state(h, p, CoolProp::HmassP_INPUTS, errcode);
-    if (errcode != 0) return COMPUTE_ERROR_;
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  /*
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_rho_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iDmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_rho_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iDmass,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_u_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iUmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_u_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iUmass,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_s_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iSmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_s_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iSmass,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_mu_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iviscosity,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_mu_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iviscosity,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_lambda_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iconductivity,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_lambda_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iviscosity,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cp_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCpmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cp_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCpmass,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cv_d_p_h_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCvmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iHmass,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cv_d_h_p_ph(double p, double h, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::HmassP_INPUTS,
-                         h, p,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCvmass,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-  */
-
-  /* ------------------------------------------------------------------------ */
-  /* Partial derivative functions (P,T)*/
-  /* ------------------------------------------------------------------------ */
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_h_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    _update_state(p, T, CoolProp::PT_INPUTS, errcode);
-    if (errcode != 0) return COMPUTE_ERROR_;
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_h_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    _update_state(p, T, CoolProp::PT_INPUTS, errcode);
-    if (errcode != 0) return COMPUTE_ERROR_;
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iHmass,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  // ---------------------------------------------------------------------------
-
-  /*
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_rho_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iDmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_rho_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iDmass,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_u_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iUmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_u_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iUmass,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_s_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iSmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_s_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iSmass,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_mu_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iviscosity,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_mu_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iviscosity,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_lambda_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iconductivity,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_lambda_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iviscosity,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cp_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCpmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cp_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCpmass,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cv_d_p_T_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCvmass,
-                                             (long)CoolProp::iP,
-                                             (long)CoolProp::iT,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
-  }
-
-  EOS_Internal_Error
-  EOS_CoolProp::compute_d_cv_d_T_p_pT(double p, double T, double& r) const
-  {
-    long errcode = 0;
-    char message_buffer[512];
-
-    AbstractState_update(abstract_state_handle_,
-                         (long)CoolProp::PT_INPUTS,
-                         p, T,
-                         &errcode, message_buffer, 511);
-
-    AbstractState_specify_phase(abstract_state_handle_,
-                                handle_phase_.aschar(),
-                                &errcode,
-                                message_buffer,
-                                511);
-
-    r = AbstractState_first_partial_deriv(abstract_state_handle_,
-                                             (long)CoolProp::iCvmass,
-                                             (long)CoolProp::iT,
-                                             (long)CoolProp::iP,
-                                             &errcode,
-                                             message_buffer,
-                                             511);
-
-    if (errcode != 0) {
-      print_error_message_(message_buffer);
-      return COMPUTE_ERROR_;
-    }
-
-    return EOS_Internal_Error::OK;
+    for (int idata = 0; idata < size; idata++)
+       { double x = input[idata] ;
+         // CoolProp has no saturated state outside [p_triple, p_crit]
+         if (input_key == CoolProp::iP)  x = std::min(std::max(x, p_min_), p_crit_) ;
+         try
+            { for (int branch = 0; branch < 2; branch++)
+                 { if (!needed[branch])  continue ;
+                   const double values[2] = { x, double(branch) } ;
+                   update_saturation_state(*state_, pair, values[first], values[second]) ;
+                   for (const SaturationOutput& out : plan)
+                      { if (out.branch != branch)  continue ;
+                        double& result = outputs[out.index][idata] ;
+                        switch (out.kind)
+                           { case SaturationOutput::value :
+                                result = evaluate(*state_, out.quantity) ;
+                                break ;
+                             case SaturationOutput::analytic :
+                                result = state_->first_saturation_deriv(coolprop_key(out.quantity), CoolProp::iP) ;
+                                break ;
+                             case SaturationOutput::second :
+                                result = state_->second_saturation_deriv(coolprop_key(out.quantity), CoolProp::iP, CoolProp::iP) ;
+                                break ;
+                             default :
+                                break ;
+                           }
+                      }
+                   if (!difference[branch])  continue ;
+                   // Centred difference along the saturation curve : two more flashes
+                   const double p   = state_->p() ;
+                   const double eps = difference_step(p) ;
+                   update_saturation_state(*state_, CoolProp::PQ_INPUTS, p + eps, double(branch)) ;
+                   for (const SaturationOutput& out : plan)
+                      { if ( (out.branch == branch) && (out.kind == SaturationOutput::difference) )
+                           outputs[out.index][idata] = evaluate(*state_, out.quantity) ;
+                      }
+                   update_saturation_state(*state_, CoolProp::PQ_INPUTS, p - eps, double(branch)) ;
+                   for (const SaturationOutput& out : plan)
+                      { if ( (out.branch == branch) && (out.kind == SaturationOutput::difference) )
+                           outputs[out.index][idata] = (outputs[out.index][idata] - evaluate(*state_, out.quantity)) / (2.0 * eps) ;
+                      }
+                 }
+            }
+         catch (const std::exception& e)
+            { record_failure(err, idata, e) ;
+            }
+       }
+
+    // Outputs CoolProp cannot evaluate : generic EOS_Fluid implementation, field by field
+    if (!delegated.empty())
+       { ArrOfInt err_data(size) ;
+         EOS_Error_Field err_field(err_data) ;
+         for (int i : delegated)
+            { EOS_Fluid::compute(input, outputs[i], err_field) ;
+              err.set_worst_error(err_field) ;
+            }
+       }
+    return err.find_worst_error().generic_error() ;
+  }
+
+  EOS_Error EOS_CoolProp::compute(const EOS_Field& input, EOS_Field& output, EOS_Error_Field& err) const
+  { EOS_Fields outputs(1) ;
+    outputs[0] = output ;
+    return compute(input, outputs, err) ;
+  }
+
+  EOS_Error EOS_CoolProp::compute(const EOS_Field& input1, const EOS_Field& input2,
+                                  EOS_Fields& outputs, EOS_Error_Field& err) const
+  { const int size = input1.size() ;
+    assert(input2.size() == size) ;
+    assert(err.size() == size) ;
+    err = EOS_Internal_Error::OK ;
+
+    // Input pair, in the argument order CoolProp expects
+    const int input_property[2] = { input1.get_property_number(), input2.get_property_number() } ;
+    int first = 0, second = 1 ;
+    const CoolProp::input_pairs pair = CoolProp::generate_update_pair(coolprop_key(input_property[0]), 0,
+                                                                      coolprop_key(input_property[1]), 1,
+                                                                      first, second) ;
+    if ( !state_ || (pair == CoolProp::INPUT_PAIR_INVALID) )
+       { err = WRONG_INPUT_TYPE_ ;
+         return err.find_worst_error().generic_error() ;
+       }
+    int p_input = -1 ;
+    if      (input_property[0] == NEPTUNE::p)  p_input = 0 ;
+    else if (input_property[1] == NEPTUNE::p)  p_input = 1 ;
+
+    // Sort the outputs once for the whole field : what is read on the state
+    // of the point, which inputs have to be perturbed, whether the saturated
+    // state at the same pressure is needed
+    std::vector<Output> plan ;
+    std::vector<int>    delegated ;
+    bool difference[2]         = { false, false } ;
+    bool saturation            = false ;
+    bool saturation_difference = false ;
+    for (int i = 0; i < outputs.size(); i++)
+       { Output out ;
+         out.index = i ;
+         if (!classify_output(outputs[i].get_property_number(), input_property, p_input, out))
+            { delegated.push_back(i) ;
+              continue ;
+            }
+         plan.push_back(out) ;
+         switch (out.kind)
+            { case Output::difference :             difference[out.perturbed] = true ;  break ;
+              case Output::saturation :             saturation = true ;                 break ;
+              case Output::saturation_difference :  saturation = saturation_difference = true ;  break ;
+              default :                             break ;
+            }
+       }
+
+    for (int idata = 0; idata < size; idata++)
+       { const double values[2] = { input1[idata], input2[idata] } ;
+         try
+            { update_state(*state_, liquid_, pair, values[first], values[second]) ;
+              for (const Output& out : plan)
+                 { double& result = outputs[out.index][idata] ;
+                   switch (out.kind)
+                      { case Output::value :
+                           result = evaluate(*state_, out.quantity) ;
+                           break ;
+                        case Output::analytic :
+                           result = state_->first_partial_deriv(coolprop_key(out.quantity), out.wrt, out.constant) ;
+                           break ;
+                        case Output::cross :
+                           result = state_->second_partial_deriv(coolprop_key(out.quantity),
+                                                                 CoolProp::iP, CoolProp::iHmass,
+                                                                 CoolProp::iHmass, CoolProp::iP) ;
+                           break ;
+                        case Output::zero :
+                           result = 0.0 ;
+                           break ;
+                        default :
+                           break ;
+                      }
+                 }
+
+              // Centred differences : two more flashes per perturbed input,
+              // shared by all the derivatives taken with respect to it
+              for (int k = 0; k < 2; k++)
+                 { if (!difference[k])  continue ;
+                   const double eps = difference_step(values[k]) ;
+                   double shifted[2] = { values[0], values[1] } ;
+                   shifted[k] = values[k] + eps ;
+                   update_state(*state_, liquid_, pair, shifted[first], shifted[second]) ;
+                   for (const Output& out : plan)
+                      { if ( (out.kind == Output::difference) && (out.perturbed == k) )
+                           outputs[out.index][idata] = evaluate(*state_, out.quantity) ;
+                      }
+                   shifted[k] = values[k] - eps ;
+                   update_state(*state_, liquid_, pair, shifted[first], shifted[second]) ;
+                   for (const Output& out : plan)
+                      { if ( (out.kind == Output::difference) && (out.perturbed == k) )
+                           outputs[out.index][idata] = (outputs[out.index][idata] - evaluate(*state_, out.quantity)) / (2.0 * eps) ;
+                      }
+                 }
+
+              // Surface tension : read on the saturated state at the same pressure
+              if (saturation)
+                 { const double p = values[p_input] ;
+                   const double quality = saturation_quality(liquid_) ;
+                   update_saturation_state(*state_, CoolProp::PQ_INPUTS, p, quality) ;
+                   const double sigma = state_->surface_tension() ;
+                   double d_sigma_d_p = 0.0 ;
+                   if (saturation_difference)
+                      { const double eps = difference_step(p) ;
+                        update_saturation_state(*state_, CoolProp::PQ_INPUTS, p + eps, quality) ;
+                        d_sigma_d_p = state_->surface_tension() ;
+                        update_saturation_state(*state_, CoolProp::PQ_INPUTS, p - eps, quality) ;
+                        d_sigma_d_p = (d_sigma_d_p - state_->surface_tension()) / (2.0 * eps) ;
+                      }
+                   for (const Output& out : plan)
+                      { if      (out.kind == Output::saturation)             outputs[out.index][idata] = sigma ;
+                        else if (out.kind == Output::saturation_difference)  outputs[out.index][idata] = d_sigma_d_p ;
+                      }
+                 }
+            }
+         catch (const std::exception& e)
+            { record_failure(err, idata, e) ;
+            }
+       }
+
+    // Outputs CoolProp cannot evaluate : generic EOS_Fluid implementation, field by field
+    if (!delegated.empty())
+       { ArrOfInt err_data(size) ;
+         EOS_Error_Field err_field(err_data) ;
+         for (int i : delegated)
+            { EOS_Fluid::compute(input1, input2, outputs[i], err_field) ;
+              err.set_worst_error(err_field) ;
+            }
+       }
+    return err.find_worst_error().generic_error() ;
+  }
+
+  EOS_Error EOS_CoolProp::compute(const EOS_Field& input1, const EOS_Field& input2,
+                                  EOS_Field& output, EOS_Error_Field& err) const
+  { EOS_Fields outputs(1) ;
+    outputs[0] = output ;
+    return compute(input1, input2, outputs, err) ;
   }
-  */
-
 }
