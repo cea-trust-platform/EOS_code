@@ -103,16 +103,11 @@ namespace NEPTUNE
   }
 
   istream & operator>>(istream &stream,AString &object)
-  { if (object.str)  delete[] object.str ;
-    unsigned int n = 1048576 ; // 1024*1024
-    static char *tmp = new char[n];
+  { std::string tmp ;
     stream >> tmp ;
-    if (strlen(tmp) > (n-1))
-       { cerr << "String too long " << endl;
-         exit(-1);
-       }
-    object.str = new char[strlen(tmp)+1] ;
-    strcpy(object.str, tmp) ;
+    if (object.str)  delete[] object.str ;
+    object.str = new char[tmp.size()+1] ;
+    strcpy(object.str, tmp.c_str()) ;
     return stream ;
   }
 
