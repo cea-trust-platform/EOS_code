@@ -92,7 +92,7 @@ namespace NEPTUNE
     {ZoneScopedN("gen_property_number inside init");
     property_number = gen_property_number(namep)   ;
     }
-    data            = ArrOfDouble(x.size(), &x[0]) ;
+    data.set_ptr(x.size(), &x[0]) ;
     return good ;
   }
   int EOS_Field::init(const char* const namet, 
@@ -104,7 +104,7 @@ namespace NEPTUNE
     property_title  = namet ;
     property_name   = namep ;
     property_number = prop_numb  ;
-    data            = ArrOfDouble(x.size(), &x[0]) ;
+    data.set_ptr(x.size(), &x[0]) ;
     return good ;
   }
 
@@ -117,7 +117,7 @@ namespace NEPTUNE
     property_title  = namet ;
     property_name   = namep ;
     property_number = prop_numb  ;
-    data            = ArrOfDouble(nsz, ptr) ;
+    data.set_ptr(nsz, ptr) ;
     return good ;
   }
 
@@ -151,7 +151,7 @@ namespace NEPTUNE
     property_title  = namet ;
     property_name   = namep ;
     property_number = gen_property_number(namep)   ;
-    data            = ArrOfDouble(nsz, ptr) ;
+    data.set_ptr(nsz, ptr) ;
     return good ;
   }
 
